@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 import { createApiClient } from "@neondatabase/api-client";
 import * as unzipper from "unzipper";
-import { eq, sql } from "drizzle-orm";
+import { count, eq, getTableColumns, sql } from "drizzle-orm";
 
 config();
 
@@ -82,45 +82,62 @@ app.get('/chatbots', async (request, reply) => {
   const { limit = 10, page = 1 } = request.query as { limit?: number; page?: number };
   
   // Convert to numbers and validate
-  const limitNum = Math.min(Math.max(1, Number(limit)), 100); // Limit between 1 and 100
+  if (limit > 100) {
+    return reply.status(400).send({
+      error: 'Limit cannot exceed 100'
+    });
+  }
+  const pagesize = Math.min(Math.max(1, Number(limit)), 100); // Limit between 1 and 100
   const pageNum = Math.max(1, Number(page));
-  const offset = (pageNum - 1) * limitNum;
+  const offset = (pageNum - 1) * pagesize;
 
-  const bots = await db
-    .select()
-    .from(chatbots)
-    .limit(limitNum)
-    .offset(offset);
+  const { telegramBotToken, ...columns } = getTableColumns(chatbots)
 
-  const totalCount = await db
+  const countResultP = db
     .select({ count: sql`count(*)` })
     .from(chatbots);
+
+  const botsP = db
+    .select(columns)
+    .from(chatbots)
+    .orderBy(chatbots.createdAt)
+    .limit(pagesize)
+    .offset(offset);
+
+  const [countResult, bots] = await Promise.all([countResultP, botsP]);
+
+  const totalCount = Number(countResult[0]?.count || 0)
 
   return {
     data: bots,
     pagination: {
-      total: Number(totalCount[0].count),
+      total: totalCount,
       page: pageNum,
-      limit: limitNum,
-      totalPages: Math.ceil(Number(totalCount[0].count) / limitNum)
+      limit: pagesize,
+      totalPages: Math.ceil(totalCount / pagesize)
     }
   };
 })
 
-app.get('/chatbots/:id', async (request) => {
+app.get('/chatbots/:id', async (request, reply) => {
   const { id } = request.params as { id:string }
-  const bot = await db.select().from(chatbots).where(eq(chatbots.id, id))
+  const { telegramBotToken, ...columns } = getTableColumns(chatbots)
+  const bot = await db.select(columns).from(chatbots).where(eq(chatbots.id, id))
   if (!bot) {
-    throw new Error("Not chatbot found")
+    return reply.status(404).send({
+      error: 'Chatbot not found'
+    });
   }
   return bot
 })
 
-app.get('/chatbots/:id/view-url', async (request, reply) => {
+app.get('/chatbots/:id/read-url', async (request, reply) => {
   const { id } = request.params as { id:string }
-  const bot = await db.select().from(chatbots).where(eq(chatbots.id, id))
+  const bot = await db.select({}).from(chatbots).where(eq(chatbots.id, id))
   if (!bot) {
-    throw new Error("Not chatbot found")
+    return reply.status(404).send({
+      error: 'Chatbot not found'
+    });
   }
   return getReadPresignedUrls(id)
 })
