@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
-import fastify from "fastify";
+import fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { chatbots } from "./db/schema";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -30,6 +30,22 @@ const s3Client = new S3Client({
 const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
 });
+
+function validateAuth(request: FastifyRequest, reply: FastifyReply) {
+  const authHeader = request.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    reply.status(401).send({ error: 'Missing or invalid authorization header' });
+    return false;
+  }
+
+  const token = authHeader.split(' ')[1];
+  if (token !== process.env.PLATFORM_INTERNAL_API_KEY) {
+    reply.status(401).send({ error: 'Invalid authorization token' });
+    return false;
+  }
+
+  return true;
+}
 
 function getS3DirectoryParams(botId: string) {
   const key = `bots/${botId}/source_code.zip`;
@@ -79,6 +95,8 @@ const app = fastify({
 const db = drizzle(process.env.DATABASE_URL!);
 
 app.get('/chatbots', async (request, reply) => {
+  if (!validateAuth(request, reply)) return;
+
   const { limit = 10, page = 1 } = request.query as { limit?: number; page?: number };
   
   // Convert to numbers and validate
@@ -120,6 +138,8 @@ app.get('/chatbots', async (request, reply) => {
 })
 
 app.get('/chatbots/:id', async (request, reply) => {
+  if (!validateAuth(request, reply)) return;
+
   const { id } = request.params as { id:string }
   const { telegramBotToken, ...columns } = getTableColumns(chatbots)
   const bot = await db.select(columns).from(chatbots).where(eq(chatbots.id, id))
@@ -132,6 +152,8 @@ app.get('/chatbots/:id', async (request, reply) => {
 })
 
 app.get('/chatbots/:id/read-url', async (request, reply) => {
+  if (!validateAuth(request, reply)) return;
+
   const { id } = request.params as { id:string }
   const bot = await db.select({id: chatbots.id}).from(chatbots).where(eq(chatbots.id, id))
   if (!bot && !bot?.[0]) {

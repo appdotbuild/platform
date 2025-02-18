@@ -12,25 +12,12 @@ import { Card, CardContent } from "@repo/design/shadcn/card";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Chatbot } from "../types";
-import { getChatbotReadUrl } from "../actions";
+import { getChatbot, getChatbotReadUrl } from "../actions";
 import { useState } from "react";
 import ViewCodeButton from "../components/view-code-button";
 
 function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
-
-async function getChatbot(id: string): Promise<Chatbot> {
-  try {
-    const response = await fetch(`${process.env.PLATFORM_API_URL}/chatbots/${id}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch chatbot');
-    }
-    return response.json();
-  } catch (error) {
-    console.error("Error fetching chatbot:", error);
-    throw error;
-  }
 }
 
 export default async function ChatbotPage({ params }: { params: { id: string } }) {
