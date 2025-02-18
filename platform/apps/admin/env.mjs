@@ -4,7 +4,6 @@ import { z } from "zod";
 // Dependencies envs:
 import "@repo/auth/env.mjs";
 import "@repo/db/env.mjs";
-import "@repo/logger/env.mjs";
 
 // Utilities:
 const bool = z

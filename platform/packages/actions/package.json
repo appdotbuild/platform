@@ -22,14 +22,12 @@
   },
   "devDependencies": {
     "@repo/auth": "workspace:*",
-    "@repo/logger": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@vercel/node": "^5.0.2",
     "next": "15.1.4",
     "react-hook-form": "^7.53.0"
   },
   "peerDependencies": {
-    "@repo/logger": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "react-hook-form": "^7.53.0"
   }

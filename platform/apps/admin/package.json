@@ -28,7 +28,6 @@
     "@repo/core": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/design": "workspace:*",
-    "@repo/logger": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "ai": "^4.1.6",
