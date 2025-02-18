@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 import { createApiClient } from "@neondatabase/api-client";
 import * as unzipper from "unzipper";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 config();
 
@@ -31,14 +31,19 @@ const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
 });
 
-async function createS3DirectoryWithPresignedUrls(
-  botId: string
-): Promise<{ writeUrl: string; readUrl: string }> {
+function getS3DirectoryParams(botId: string) {
   const key = `bots/${botId}/source_code.zip`;
   const baseParams = {
     Bucket: process.env.AWS_BUCKET_NAME!,
     Key: key,
   };
+  return baseParams
+}
+
+async function createS3DirectoryWithPresignedUrls(
+  botId: string
+): Promise<{ writeUrl: string; readUrl: string }> {
+  const baseParams = getS3DirectoryParams(botId)
 
   const writeCommand = new PutObjectCommand(baseParams);
   const readCommand = new GetObjectCommand(baseParams);
@@ -53,11 +58,72 @@ async function createS3DirectoryWithPresignedUrls(
   return { writeUrl, readUrl };
 }
 
+async function getReadPresignedUrls(
+  botId: string
+): Promise<{ readUrl: string }> {
+  const baseParams = getS3DirectoryParams(botId);
+
+  const readCommand = new GetObjectCommand(baseParams);
+
+  const readUrl = await getSignedUrl(s3Client, readCommand, {
+    expiresIn: 3600,
+  });
+
+  return { readUrl };
+}
+
 const app = fastify({
   logger: true,
 });
 
 const db = drizzle(process.env.DATABASE_URL!);
+
+app.get('/chatbots', async (request, reply) => {
+  const { limit = 10, page = 1 } = request.query as { limit?: number; page?: number };
+  
+  // Convert to numbers and validate
+  const limitNum = Math.min(Math.max(1, Number(limit)), 100); // Limit between 1 and 100
+  const pageNum = Math.max(1, Number(page));
+  const offset = (pageNum - 1) * limitNum;
+
+  const bots = await db
+    .select()
+    .from(chatbots)
+    .limit(limitNum)
+    .offset(offset);
+
+  const totalCount = await db
+    .select({ count: sql`count(*)` })
+    .from(chatbots);
+
+  return {
+    data: bots,
+    pagination: {
+      total: Number(totalCount[0].count),
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(Number(totalCount[0].count) / limitNum)
+    }
+  };
+})
+
+app.get('/chatbots/:id', async (request) => {
+  const { id } = request.params as { id:string }
+  const bot = await db.select().from(chatbots).where(eq(chatbots.id, id))
+  if (!bot) {
+    throw new Error("Not chatbot found")
+  }
+  return bot
+})
+
+app.get('/chatbots/:id/view-url', async (request, reply) => {
+  const { id } = request.params as { id:string }
+  const bot = await db.select().from(chatbots).where(eq(chatbots.id, id))
+  if (!bot) {
+    throw new Error("Not chatbot found")
+  }
+  return getReadPresignedUrls(id)
+})
 
 app.post("/generate", async (request, reply) => {
   try {
