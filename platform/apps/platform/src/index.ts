@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 import { createApiClient } from "@neondatabase/api-client";
 import * as unzipper from "unzipper";
-import { count, eq, getTableColumns, sql } from "drizzle-orm";
+import { count, desc, eq, getTableColumns, sql } from "drizzle-orm";
 
 config();
 
@@ -100,7 +100,7 @@ app.get('/chatbots', async (request, reply) => {
   const botsP = db
     .select(columns)
     .from(chatbots)
-    .orderBy(chatbots.createdAt)
+    .orderBy(desc(chatbots.createdAt))
     .limit(pagesize)
     .offset(offset);
 
@@ -123,23 +123,23 @@ app.get('/chatbots/:id', async (request, reply) => {
   const { id } = request.params as { id:string }
   const { telegramBotToken, ...columns } = getTableColumns(chatbots)
   const bot = await db.select(columns).from(chatbots).where(eq(chatbots.id, id))
-  if (!bot) {
+  if (!bot || !bot.length) {
     return reply.status(404).send({
       error: 'Chatbot not found'
     });
   }
-  return bot
+  return bot[0]
 })
 
 app.get('/chatbots/:id/read-url', async (request, reply) => {
   const { id } = request.params as { id:string }
-  const bot = await db.select({}).from(chatbots).where(eq(chatbots.id, id))
-  if (!bot) {
+  const bot = await db.select({id: chatbots.id}).from(chatbots).where(eq(chatbots.id, id))
+  if (!bot && !bot?.[0]) {
     return reply.status(404).send({
       error: 'Chatbot not found'
     });
   }
-  return getReadPresignedUrls(id)
+  return getReadPresignedUrls(bot[0].id)
 })
 
 app.post("/generate", async (request, reply) => {

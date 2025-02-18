@@ -99,6 +99,7 @@ export function DataTable<TData, TValue>({
     columns: tableColumns,
     pageCount,
     rowCount: totalCount,
+    enableSorting: false,
     state: {
       sorting,
       columnVisibility,

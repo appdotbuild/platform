@@ -41,11 +41,6 @@ let authActionClient = actionClientWithMeta.use(async ({ next, metadata, clientI
     console.log("Redirecting to signin");
     throw new UnauthorizedError();
   }
-  if ((clientInput as any).orgId) {
-    if (session.user.organizationId !== (clientInput as any).orgId) {
-      throw new UnauthorizedError();
-    }
-  }
   return next({
     ctx: {
       session,

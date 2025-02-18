@@ -1,27 +1,45 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import db from "@repo/db";
-import { eq, sql, count } from "@repo/db/drizzle";
-import { authActionClient } from "@repo/actions";
-import { chatbots } from "@repo/db/schema";
+import { Chatbot, Pagination } from "./types";
 
-export async function getAllChatbots({ search }: { search?: string } = {}) {
+const PLATFORM_API_URL = process.env.PLATFORM_API_URL;
+export async function getAllChatbots({ 
+  page = 1, 
+  pageSize = 10 
+}: { 
+  search?: string;
+  page?: number;
+  pageSize?: number;
+} = {}): Promise<{data: Chatbot[], pagination?: Pagination }> {
   try {
-    const data = await db.select().from(chatbots);
-    return { data };
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: pageSize.toString(),
+    });
+
+    const response = await fetch(`${PLATFORM_API_URL}/chatbots?${queryParams}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch chatbots');
+    }
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Error fetching chatbots:", error);
-    return { data: [] };
+    return { 
+      data: []
+    };
   }
 }
 
-export async function removeChatbotsAction(ids: string[]) {
+export async function getChatbotReadUrl(id: string): Promise<{ readUrl: string }> {
   try {
-    await db.delete(chatbots).where(eq(chatbots.id, ids[0]));
-    return { success: true };
+    const response = await fetch(`${PLATFORM_API_URL}/chatbots/${id}/read-url`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch chatbot read URL');
+    }
+    return response.json();
   } catch (error) {
-    console.error("Error removing chatbots:", error);
-    return { success: false };
+    console.error("Error fetching chatbot read URL:", error);
+    throw error;
   }
 }

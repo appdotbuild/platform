@@ -3,7 +3,6 @@ import { z } from "zod";
 
 // Dependencies envs:
 import "@repo/auth/env.mjs";
-import "@repo/db/env.mjs";
 
 // Utilities:
 const bool = z
@@ -17,7 +16,9 @@ const optional = z
   .refine((s) => s === undefined || s.length > 0, { message: "Can't be empty" });
 
 export const env = createEnv({
-  server: {},
+  server: {
+    PLATFORM_API_URL: z.string().url()
+  },
   client: {},
   shared: {},
 });
