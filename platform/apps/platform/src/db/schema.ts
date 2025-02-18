@@ -8,4 +8,5 @@ export const chatbots = pgTable("chatbots", {
     ownerId: text("userId").notNull(),
     telegramBotToken: text(),
     flyAppId: text(),
+    traceId: text()
 });
