@@ -5,7 +5,7 @@ import Providers from "./providers";
 import "./global.css";
 
 export const metadata: Metadata = {
-  title: "Bot",
+  title: "Chatbots",
   description: "",
 };
 
