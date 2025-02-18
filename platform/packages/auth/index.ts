@@ -1,16 +1,6 @@
 import NextAuth, { DefaultSession, NextAuthResult, Session } from "./auth";
 import authConfig from "./config";
 import { redirect } from "next/navigation";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import db from "@repo/db";
-import {
-  User,
-  usersTable,
-  accountsTable,
-  sessionsTable,
-  verificationTokensTable,
-  authenticatorsTable,
-} from "@repo/db/schema";
 
 
 declare module "next-auth" {
@@ -24,13 +14,6 @@ declare module "next-auth" {
 console.log({ providers: authConfig.providers.map((p) => p?.name) }, "Auth config");
 
 const result: NextAuthResult = NextAuth({
-  adapter: DrizzleAdapter(db, {
-    usersTable,
-    accountsTable,
-    sessionsTable,
-    verificationTokensTable,
-    authenticatorsTable,
-  }),
   ...authConfig,
   callbacks: {
     /** Extends the session.user object to keep also the id and organizationId values */
@@ -38,24 +21,6 @@ const result: NextAuthResult = NextAuth({
       session.user.id = token.sub as string;
       session.user.organizationId = token.orgId as number;
       return session;
-    },
-
-    /** Extends the JWT token to keep also the orgId value */
-    async jwt({ token, account, user }) {
-      if (account && user && "organizationId" in user) {
-        if (!user.organizationId) {
-          const defaultOrg = await db.query.organizationsTable.findFirst();
-          if (defaultOrg) {
-            user.organizationId = defaultOrg.id;
-            await db.insert(usersTable).values({
-              where: { id: user.id },
-              data: { organizationId: defaultOrg.id },
-            });
-          }
-        }
-        token.orgId = user.organizationId;
-      }
-      return token;
     },
   },
   logger: {

@@ -1,26 +1,8 @@
 {
   "name": "@repo/db",
   "version": "0.0.1",
-  "description": "",
-  "main": "index.ts",
-  "scripts": {
-    "dev": "pnpm db:fg",
-    "db:start": "./scripts/start-database.sh -d",
-    "db:fg": "./scripts/start-database.sh",
-    "stop": "./scripts/stop-database.sh",
-    "delete": "./scripts/delete-database.sh",
-    "reset": "./scripts/reset-database.sh",
-    "seed": "tsx ./seeds.ts"
-  },
-  "exports": {
-    ".": "./index.ts",
-    "./schema": "./schema/index.ts",
-    "./drizzle": "./drizzle.ts",
-    "./env.mjs": "./env.mjs"
-  },
-  "keywords": [],
   "author": "",
-  "license": "ISC",
+  "main": "index.ts",
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.11.1",
     "@vercel/postgres": "^0.10.0",
@@ -33,14 +15,28 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@repo/logger": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.10.7",
     "@types/pg": "^8.11.10",
     "dotenv": "^16.4.7",
     "dotenv-expand": "^12.0.1"
   },
-  "peerDependencies": {
-    "@repo/logger": "workspace:*"
+  "exports": {
+    ".": "./index.ts",
+    "./schema": "./schema/index.ts",
+    "./drizzle": "./drizzle.ts",
+    "./env.mjs": "./env.mjs"
+  },
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "scripts": {
+    "dev": "pnpm db:fg",
+    "db:start": "./scripts/start-database.sh -d",
+    "db:fg": "./scripts/start-database.sh",
+    "stop": "./scripts/stop-database.sh",
+    "delete": "./scripts/delete-database.sh",
+    "reset": "./scripts/reset-database.sh",
+    "seed": "tsx ./seeds.ts"
   }
 }
