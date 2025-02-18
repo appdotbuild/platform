@@ -1,0 +1,164 @@
+Code Style and Structure:
+
+- Write concise, technical TypeScript code with accurate examples
+- Prefer iteration and modularization over code duplication
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError)
+
+Fullstack development:
+
+- The main app is saas/app
+- Use the packages/auth package for authentication, which exposes an auth function, eg: const session = await authOrLogin(); const email = session.user.email
+- Put the components for the UI in the packages/design package: put them in packages/design/components/_section name_/
+- Put the data schema in the packages/db package using DrizzleORM and PostgreSQL. The db can be acquired with `import db from "@repo/db"`, the schema with `import { usersTable } from "@repo/db/schema"`, the DrizzleOrm utilities with `import { eq } from "@repo/db/drizzle"`
+- When updating the db schema, run `cd apps/saas && pnpm drizzle-kit generate` to generate the new migrations while `pnpm drizzle-kit migrate` to apply them to the db.
+- For API routes prefer using Server Actions in the apps/saas app directly, inside the same folder as the page and route
+- For Server Actions, uses the this uses next-safe-action package and prefer using the authActionClient from the packages/actions package, eg: const result = await authActionClient.schema(mySchema).metadata({ name: "myAction" }).action(async ({ parsedInput, ctx }) => { ... });
+- Calling a Server Action from a page can be done directly eg: const { data: result } = await myAction({}); or const { executeAsync} = useAction(myAction); const { data } = await executeAsync();
+
+Naming Conventions:
+
+- Use lowercase with dashes for directories (e.g., components/auth-wizard)
+- Favor named exports for components
+
+TypeScript Usage:
+
+- Use TypeScript for all code; prefer interfaces over types
+- Avoid enums; use maps instead
+- Use functional components with TypeScript interfaces, eg `export default function MyComponent({ myProp }: { myProp: string }) { ... }`
+
+Syntax and Formatting:
+
+- Use the "function" keyword for pure functions
+- Use declarative JSX
+
+Error Handling and Validation:
+
+- Prioritize error handling: handle errors and edge cases early
+- Use early returns and guard clauses
+- Implement proper error logging and user-friendly messages
+- Use Zod for form validation
+- Model expected errors as return values in Server Actions
+- Use error boundaries for unexpected errors
+
+UI and Styling:
+
+- Use Shadcn UI, Radix, and Tailwind Aria for components and styling
+- Implement responsive design with Tailwind CSS; use a mobile-first approach
+- Put the components for the UI in the @repo/design/ package
+- Use the cn function for tailwind classes from @repo/design/lib/utils
+- Use the import "@repo/design/..." always instead of @/, eg import { Button } from "@repo/design/shadcn/button"
+- To import design components, use the path: "@repo/design/components/...". For Shadcn components, use the path: "@repo/design/shadcn/..."
+- To import icons, use the path: "@repo/design/base/icons" this exposes lucide-react icons.
+- Always generate also a Storybook story for each component, put it next to the component file.
+- For Forms, use the EasyForm component from the @repo/design/components/form package.
+
+An Example Storybook story:
+
+```
+import { Meta, StoryObj } from "@storybook/react";
+import { Badge } from "../badge";
+
+const meta: Meta<typeof Badge> = {
+  title: "UI/Custom/Badge",
+  component: Badge,
+  argTypes: {
+    variant: {
+      control: "select",
+      options: ["default", "primary", "secondary", "success", "warning", "danger"],
+    },
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof Badge>;
+
+export const Default: Story = {
+  args: {
+    children: "Default Badge",
+  },
+};
+```
+
+And example of an EasyForm:
+
+```
+const form = useForm<IndexFormValues>({
+  resolver: zodResolver(addIndexSchema),
+  defaultValues: { urls: [{ value: "" }] },
+  mode: "onChange",
+});
+
+// Multi field array:
+const urlsFieldArray = useFieldArray({
+  name: "urls",
+  control: form.control,
+});
+
+<EasyForm form={form} onSubmit={onSubmit} message="Form submitted successfully">
+  <EasyFormFieldText
+    form={form}
+    name="name"
+    title="Name"
+    description="Please enter your full name"
+    placeholder="John Doe"
+  />
+  <EasyFormFieldText
+    form={form}
+    name="email"
+    title="Email"
+    description="Enter your email address"
+    placeholder="john@example.com"
+  />
+  <EasyFormMultiTextField
+    form={form}
+    field={field}
+    name="multiField"
+    title="Multi Field"
+    description="This is a multi EasyFormFieldText component"
+    placeholder="Enter some text"
+  />
+  <EasyFormFieldSwitch form={form} name="switch" title="Switch" label="Switch Label" />
+  <EasyFormSubmit form={form} isExecuting={false} />
+</EasyForm>
+```
+
+An example of a Server Action actions.ts file:
+
+```
+import { addIndexSchema } from "./schema.actions";
+export const addIndex = authActionClient.schema(addIndexSchema).metadata({ name: "addIndex" }).action(async ({ parsedInput, ctx }) => {
+  // ...
+});
+```
+
+and add a schema file for the actions: schema.actions.ts:
+
+```
+export const addIndexSchema = z.object({
+  urls: z.array(z.string()).min(1),
+});
+```
+
+how to call the action from a page:
+
+```
+const result = await addIndex({ urls: ["https://example.com", "https://example.org"] });
+```
+
+Performance Optimization:
+
+- Minimize 'use client', 'useEffect', and 'setState'; favor React Server Components (RSC)
+- Wrap client components in Suspense with fallback
+- Use dynamic loading for non-critical components
+- Optimize images: use WebP format, include size data, implement lazy loading
+
+Key Conventions:
+
+- Use 'nuqs' for URL search parameter state management
+- Optimize Web Vitals (LCP, CLS, FID)
+- Limit 'use client':
+  - Favor server components and Next.js SSR
+  - Use only for Web API access in small components
+  - Avoid for data fetching or state management
+
+Follow Next.js docs for Data Fetching, Rendering, and Routing

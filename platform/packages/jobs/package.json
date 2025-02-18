@@ -1,0 +1,29 @@
+{
+  "name": "@repo/jobs",
+  "version": "0.0.1",
+  "description": "",
+  "scripts": {
+    "dev": "pnpm dlx trigger.dev@latest dev",
+    "jobs:deploy": "pnpm dlx trigger.dev@latest deploy",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@repo/core": "workspace:*",
+    "@repo/db": "workspace:*",
+    "@repo/logger": "workspace:*",
+    "@repo/rag": "workspace:*",
+    "@t3-oss/env-nextjs": "^0.11.1",
+    "@trigger.dev/sdk": "3.2.0",
+    "pino": "^9.4.0",
+    "pino-pretty": "^11.2.2",
+    "pnpm": "^9.12.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@trigger.dev/build": "3.2.0"
+  }
+}

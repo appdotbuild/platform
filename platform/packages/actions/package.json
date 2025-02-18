@@ -1,0 +1,36 @@
+{
+  "name": "@repo/actions",
+  "version": "0.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./actions/test-action": "./actions/test-action.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
+    "@next-safe-action/adapter-react-hook-form": "^1.0.13",
+    "@repo/core": "workspace:*",
+    "next-safe-action": "^7.10.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@repo/auth": "workspace:*",
+    "@repo/logger": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@vercel/node": "^5.0.2",
+    "next": "15.1.4",
+    "react-hook-form": "^7.53.0"
+  },
+  "peerDependencies": {
+    "@repo/logger": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "react-hook-form": "^7.53.0"
+  }
+}
