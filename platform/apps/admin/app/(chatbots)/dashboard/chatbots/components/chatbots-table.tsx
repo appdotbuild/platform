@@ -60,21 +60,11 @@ export default function ChatbotsTable({ initialData }: ChatbotsTableProps) {
       accessorKey: "telegramBotToken",
       size: 200,
       ...columnText({ id: "telegramBotToken", title: "Telegram Token" }),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {row.getValue("telegramBotToken") ? "Configured" : "Not configured"}
-        </span>
-      ),
     },
     {
       accessorKey: "flyAppId",
       size: 200,
       ...columnText({ id: "flyAppId", title: "Fly App" }),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {row.getValue("flyAppId") ? "Deployed" : "Not deployed"}
-        </span>
-      ),
     },
     {
       size: 50,

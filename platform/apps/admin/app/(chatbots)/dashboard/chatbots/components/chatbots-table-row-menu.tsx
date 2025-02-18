@@ -1,7 +1,7 @@
 "use client";
 
 import { Row } from "@tanstack/react-table";
-import { Pencil, MoreHorizontal, Trash2 } from "lucide-react";
+import { Pencil, MoreHorizontal, Trash2, ExternalLink, FileSearch2 } from "lucide-react";
 import { Button } from "@repo/design/shadcn/button";
 import {
   DropdownMenu,
@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/design/shadcn/dropdown-menu";
+import Link from "next/link";
 
 interface ChatbotsTableRowMenuProps {
   row: Row<any>;
@@ -22,6 +23,13 @@ export default function ChatbotsTableRowMenu({ row, onDelete }: ChatbotsTableRow
   };
 
   return (
+    <div className="flex items-center gap-1">
+      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+        <Link href={`/dashboard/chatbots/${row.original.id}`}>
+          <FileSearch2 className="h-4 w-4" />
+          <span className="sr-only">View</span>
+        </Link>
+      </Button>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -30,6 +38,12 @@ export default function ChatbotsTableRowMenu({ row, onDelete }: ChatbotsTableRow
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/dashboard/chatbots/${row.original.id}`}>
+            <ExternalLink className="mr-2 h-4 w-4" />
+            View Details
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => {
             // TODO: Implement edit functionality
@@ -48,5 +62,6 @@ export default function ChatbotsTableRowMenu({ row, onDelete }: ChatbotsTableRow
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </div>
   );
 } 
