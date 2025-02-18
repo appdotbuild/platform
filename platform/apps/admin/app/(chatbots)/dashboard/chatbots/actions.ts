@@ -14,28 +14,21 @@ export async function getAllChatbots({
   page?: number;
   pageSize?: number;
 } = {}): Promise<{data: Chatbot[], pagination?: Pagination }> {
-  try {
-    const queryParams = new URLSearchParams({
-      page: page.toString(),
-      limit: pageSize.toString(),
-    });
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    limit: pageSize.toString(),
+  });
 
-    const response = await fetch(`${PLATFORM_API_URL}/chatbots?${queryParams}`, {
-      headers: {
-        Authorization: `Bearer ${PLATFORM_INTERNAL_API_KEY}`,
-      },
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch chatbots');
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching chatbots:", error);
-    return { 
-      data: []
-    };
+  const response = await fetch(`${PLATFORM_API_URL}/chatbots?${queryParams}`, {
+    headers: {
+      Authorization: `Bearer ${PLATFORM_INTERNAL_API_KEY}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch chatbots');
   }
+  const data = await response.json();
+  return data;
 }
 
 export async function getChatbotReadUrl(id: string): Promise<{ readUrl: string }> {
