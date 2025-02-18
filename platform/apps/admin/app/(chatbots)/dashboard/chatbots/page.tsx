@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function ChatbotsPage() {
   const session = await authOrLogin();
-  const { data: chatbots } = await getAllChatbots({});
+  const { data: chatbots, pagination } = await getAllChatbots({ page: 1, pageSize: 10 });
 
   return (
     <>
@@ -23,7 +23,10 @@ export default async function ChatbotsPage() {
         <div className="flex items-center space-x-2">
         </div>
       </div>
-      <ChatbotsTable initialData={chatbots} />
+      <ChatbotsTable 
+        initialData={chatbots} 
+        initialTotalCount={pagination.total}
+      />
     </>
   );
 }

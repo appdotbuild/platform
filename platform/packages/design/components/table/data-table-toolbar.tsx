@@ -21,19 +21,21 @@ export function DataTableToolbar<TData>({
   table,
   columns,
   textSearchColumn,
-}: DataTableToolbarProps<TData> & { columns: ColumnDefToolbar<TData, any>[]; textSearchColumn: string }) {
+}: DataTableToolbarProps<TData> & { columns: ColumnDefToolbar<TData, any>[]; textSearchColumn?: string }) {
   const isFiltered = table.getState().columnFilters.length > 0;
   const isSelected = Object.values(table.getState().rowSelection).length > 0;
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
-        <Input
-          placeholder="Search..."
-          value={(table.getColumn(textSearchColumn)?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn(textSearchColumn)?.setFilterValue(event.target.value)}
-          className="h-8 w-[150px] lg:w-[250px]"
-        />
+        {textSearchColumn && (
+          <Input
+            placeholder="Search..."
+            value={(table.getColumn(textSearchColumn)?.getFilterValue() as string) ?? ""}
+            onChange={(event) => table.getColumn(textSearchColumn)?.setFilterValue(event.target.value)}
+            className="h-8 w-[150px] lg:w-[250px]"
+          />
+        )}
         {columns.map((column) => {
           if (column.facetedToolbar) {
             return <div key={"tb-" + (column.id || column.accessorKey)}>{column.facetedToolbar({ table })}</div>;

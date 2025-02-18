@@ -6,7 +6,6 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "dev:utils": "turbo db:fg db:studio",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "clean": "rimraf -g ./**/node_modules ./**/dist ./**/.turbo ./**/.coverage ./**/.next",

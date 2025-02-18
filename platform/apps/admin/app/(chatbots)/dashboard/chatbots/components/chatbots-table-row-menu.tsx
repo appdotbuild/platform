@@ -10,16 +10,26 @@ import {
   DropdownMenuTrigger,
 } from "@repo/design/shadcn/dropdown-menu";
 import Link from "next/link";
+import { useState } from "react";
+import { getChatbotReadUrl } from "../actions";
 
 interface ChatbotsTableRowMenuProps {
   row: Row<any>;
-  onDelete: ({ ids }: { ids: string[] }) => Promise<{ success: boolean }>;
 }
 
-export default function ChatbotsTableRowMenu({ row, onDelete }: ChatbotsTableRowMenuProps) {
-  const handleDelete = async () => {
-    const id = row.original.id;
-    await onDelete({ ids: [id] });
+export default function ChatbotsTableRowMenu({ row }: ChatbotsTableRowMenuProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleViewCode = async () => {
+    setIsLoading(true);
+    try {
+      const { readUrl } = await getChatbotReadUrl(row.original.id);
+      window.open(readUrl, '_blank');
+    } catch (error) {
+      console.error('Failed to get read URL:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -38,27 +48,9 @@ export default function ChatbotsTableRowMenu({ row, onDelete }: ChatbotsTableRow
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/dashboard/chatbots/${row.original.id}`}>
-            <ExternalLink className="mr-2 h-4 w-4" />
-            View Details
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => {
-            // TODO: Implement edit functionality
-            console.log("Edit chatbot:", row.original.id);
-          }}
-        >
-          <Pencil className="mr-2 h-4 w-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={handleDelete}
-          className="text-destructive focus:text-destructive"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
+        <DropdownMenuItem onSelect={handleViewCode} disabled={isLoading}>
+          <ExternalLink className="mr-2 h-4 w-4" />
+          {isLoading ? 'Loading...' : 'View Code'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

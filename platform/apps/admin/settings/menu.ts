@@ -22,23 +22,6 @@ export const sidebarMenu: MenuGroup[] = [
 
     ],
   },
-
-  {
-    groupLabel: "Settings",
-    menus: [
-      {
-        href: "/dashboard/user/profile",
-        label: "User",
-        icon: Users,
-      },
-      // Uncomment if needed:
-      /*{
-        href: "/user/account",
-        label: "Account",
-        icon: Settings,
-      },*/
-    ],
-  },
 ];
 
 export const headerMenu = [
