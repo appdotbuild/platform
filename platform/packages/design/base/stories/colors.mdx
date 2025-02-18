@@ -1,0 +1,91 @@
+import { Meta } from "@storybook/blocks";
+import { ColorPalette, ColorItem } from "@storybook/blocks";
+
+<Meta title="Base/Colors" />
+
+<ColorPalette>
+  <ColorItem
+    title="background"
+    colors={{
+      background: "hsl(var(--background))",
+      foreground: "hsl(var(--foreground))",
+    }}
+  />
+  <ColorItem
+    title="primary"
+    colors={{
+      DEFAULT: "hsl(var(--primary))",
+      foreground: "hsl(var(--primary-foreground))",
+    }}
+  />
+  <ColorItem
+    title="secondary"
+    colors={{
+      DEFAULT: "hsl(var(--secondary))",
+      foreground: "hsl(var(--secondary-foreground))",
+    }}
+  />
+  <ColorItem
+    title="muted"
+    colors={{
+      DEFAULT: "hsl(var(--muted))",
+      foreground: "hsl(var(--muted-foreground))",
+    }}
+  />
+  <ColorItem
+    title="accent"
+    colors={{
+      DEFAULT: "hsl(var(--accent))",
+      foreground: "hsl(var(--accent-foreground))",
+    }}
+  />
+  <ColorItem
+    title="destructive"
+    colors={{
+      DEFAULT: "hsl(var(--destructive))",
+      foreground: "hsl(var(--destructive-foreground))",
+    }}
+  />
+  <ColorItem
+    title="card"
+    colors={{
+      DEFAULT: "hsl(var(--card))",
+      foreground: "hsl(var(--card-foreground))",
+    }}
+  />
+  <ColorItem
+    title="popover"
+    colors={{
+      DEFAULT: "hsl(var(--popover))",
+      foreground: "hsl(var(--popover-foreground))",
+    }}
+  />
+  <ColorItem
+    title="border"
+    colors={{
+      DEFAULT: "hsl(var(--border))",
+    }}
+  />
+  <ColorItem
+    title="input"
+    colors={{
+      DEFAULT: "hsl(var(--input))",
+    }}
+  />
+  <ColorItem
+    title="ring"
+    colors={{
+      DEFAULT: "hsl(var(--ring))",
+    }}
+  />
+  <ColorItem
+    title="chart"
+    colors={{
+      "1": "hsl(var(--chart-1))",
+      "2": "hsl(var(--chart-2))",
+      "3": "hsl(var(--chart-3))",
+      "4": "hsl(var(--chart-4))",
+      "5": "hsl(var(--chart-5))",
+    }}
+  />
+</ColorPalette>

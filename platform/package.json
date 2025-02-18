@@ -1,35 +1,34 @@
 {
-  "name": "platform",
-  "module": "index.ts",
-  "type": "module",
-  "devDependencies": {
-    "@flydotio/dockerfile": "^0.7.4",
-    "@types/adm-zip": "^0.5.7",
-    "@types/bun": "latest",
-    "@types/pg": "^8.11.11",
-    "@types/unzipper": "^0.10.10",
-    "drizzle-kit": "^0.30.3",
-    "tsx": "^4.19.2"
-  },
+  "name": "bot.new",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "start": "bun run src/index.ts",
-    "dev": "bun run --watch src/index.ts",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "dev:utils": "turbo db:fg db:studio",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "clean": "rimraf -g ./**/node_modules ./**/dist ./**/.turbo ./**/.coverage ./**/.next",
+    "db": "cd packages/db && ./scripts/start-database.sh -d",
+    "db:stop": "cd packages/db && ./scripts/stop-database.sh",
+    "db:reset": "cd packages/db && ./scripts/reset-database.sh",
+    "db:delete": "cd packages/db && ./scripts/delete-database.sh",
+    "db:fg": "cd packages/db && ./scripts/start-database.sh",
+    "syncpack:fix": "syncpack fix-mismatches",
+    "syncpack:update": "syncpack update"
   },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "syncpack": "^13.0.0",
+    "turbo": "^2.1.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.735.0",
-    "@aws-sdk/s3-request-presigner": "^3.735.0",
-    "@neondatabase/api-client": "^1.11.5",
-    "@neondatabase/serverless": "^0.10.4",
-    "aws-sdk": "^2.1692.0",
-    "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.39.0",
-    "fastify": "^5.2.1",
-    "unzipper": "^0.12.3",
-    "uuid": "^11.0.5"
-  }
+    "rimraf": "^6.0.1"
+  },
+  "packageManager": "bun@1.1.26"
 }

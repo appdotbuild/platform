@@ -1,0 +1,29 @@
+import { Meta } from "@storybook/blocks";
+import { ColorPalette, ColorItem } from "@storybook/blocks";
+/*
+import resolveConfig from "tailwindcss/resolveConfig";
+import tailwindConfig from "../../../tailwind.config.ts";
+
+export const fullConfig = resolveConfig(tailwindConfig);
+export const borders = Object.keys(tailwindConfig.theme.extend.borderRadius);
+*/
+export const borders = ["xs", "sm", "md", "lg", "xl"];
+
+<Meta title="Base/Borders" />
+
+# Rounded Borders
+
+**Sizes:** { borders.join(", ") }
+
+<div className="flex flex-wrap gap-4">
+  <div key="default" className="flex flex-col items-center">
+    <div className={`w-16 h-16 border-2 rounded`}></div>
+    <span className="mt-2 text-sm">default</span>
+  </div>
+  {borders.map((border) => (
+    <div key={border} className="flex flex-col items-center">
+      <div className={`w-16 h-16 border-2 rounded-${border}`}></div>
+      <span className="mt-2 text-sm">{border}</span>
+    </div>
+  ))}
+</div>
