@@ -16,10 +16,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <SWRConfig
         value={{
           fetcher: (resource, init) => {
-            // FIX: for SWR not working with SDK AI https://github.com/vercel/ai/issues/3214
-            if (resource.startsWith("/chat/ui/api")) {
-              return [];
-            }
             return fetch(resource, init).then((res) => res.json());
           },
         }}
