@@ -17,7 +17,6 @@ export interface MenuGroup {
 
 interface ConfigContextType {
   sidebarMenu?: MenuGroup[];
-  headerMenu?: MenuItem[];
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
