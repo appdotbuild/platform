@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { authOrLogin } from "@repo/auth";
 import { Separator } from "@repo/design/shadcn/separator";
 import ChatbotsTable from "./components/chatbots-table";
 import { getAllChatbots } from "./actions";
@@ -10,7 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default async function ChatbotsPage() {
-  const session = await authOrLogin();
   const { data: chatbots, pagination } = await getAllChatbots({ page: 1, pageSize: 10 });
 
   return (

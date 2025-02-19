@@ -18,11 +18,8 @@ const csv = z
 
 export const env = createEnv({
   server: {
-    AUTH_SECRET: required,
-    GOOGLE_CLIENT_ID: optional,
-    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_ID ? required : optional,
-    SIMULATE_EMAILS: bool,
-    AUTH_USERNAME: optional,
-    AUTH_PASSWORD: process.env.AUTH_USERNAME ? required : optional,
+    NEXT_PUBLIC_STACK_PROJECT_ID: required,
+    NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: required,
+    STACK_SECRET_SERVER_KEY: required,
   },
 });

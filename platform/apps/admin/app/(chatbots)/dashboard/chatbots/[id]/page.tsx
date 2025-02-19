@@ -1,4 +1,3 @@
-import { authOrLogin } from "@repo/auth";
 import {
   ArrowLeft,
   Calendar,
@@ -14,12 +13,7 @@ import { notFound } from "next/navigation";
 import { getChatbot } from "../actions";
 import ViewCodeButton from "../components/view-code-button";
 
-function capitalize(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
-
 export default async function ChatbotPage({ params }: { params: { id: string } }) {
-  const session = await authOrLogin();
   const { id } = params;
 
   const chatbot = await getChatbot(id);

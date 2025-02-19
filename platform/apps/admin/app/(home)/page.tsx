@@ -1,10 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/design/shadcn/card";
+import { ArrowRight, MessageSquare } from "@repo/design/base/icons";
 import { Button } from "@repo/design/shadcn/button";
-import Link from "next/link";
-import { ArrowRight, Database, Bot, Code2, MessageSquare, Settings, Code, BookOpen } from "@repo/design/base/icons";
-import { LucideIcon } from "@repo/design/base/icons";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/design/shadcn/card";
 import { Metadata } from "next";
-import { authOrLogin } from "@repo/auth";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Bot",
