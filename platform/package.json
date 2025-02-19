@@ -7,7 +7,7 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,md,js,jsx,json,css}\"",
     "clean": "rimraf -g ./**/node_modules ./**/dist ./**/.turbo ./**/.coverage ./**/.next",
     "db": "cd packages/db && ./scripts/start-database.sh -d",
     "db:stop": "cd packages/db && ./scripts/stop-database.sh",
