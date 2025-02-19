@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@repo/design/shadcn/button";
-import { FileSearch2 } from "lucide-react";
+import { Download, FileSearch2 } from "lucide-react";
 import { useState } from "react";
 import { getChatbotReadUrl } from "../actions";
 
@@ -16,22 +16,18 @@ export default function ViewCodeButton({ chatbotId }: ViewCodeButtonProps) {
     setIsLoading(true);
     try {
       const { readUrl } = await getChatbotReadUrl(chatbotId);
-      window.open(readUrl, '_blank');
+      window.open(readUrl, "_blank");
     } catch (error) {
-      console.error('Failed to get read URL:', error);
+      console.error("Failed to get read URL:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Button 
-      variant="outline" 
-      onClick={handleViewCode}
-      disabled={isLoading}
-    >
-      <FileSearch2 className="h-4 w-4 mr-2" />
-      {isLoading ? 'Loading...' : 'View Code'}
+    <Button variant="outline" onClick={handleViewCode} disabled={isLoading}>
+      <Download className="h-4 w-4 mr-2" />
+      {isLoading ? "Loading..." : "Download"}
     </Button>
   );
-} 
+}
