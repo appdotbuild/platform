@@ -7,3 +7,10 @@ export type Chatbot = {
   updatedAt: Date;
   ownerId: string;
 };
+export type Paginated<T> = {
+  data: T[],
+  pagination: Pagination
+}
+export type ReadUrl = {
+  readUrl: string
+}

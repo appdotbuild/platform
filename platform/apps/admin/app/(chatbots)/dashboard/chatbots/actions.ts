@@ -1,6 +1,6 @@
 "use server";
 
-import { Chatbot, Pagination } from "./types";
+import { Chatbot, Paginated, ReadUrl } from "@repo/core/types/api";
 import { env } from "@/env.mjs";
 
 const PLATFORM_API_URL = env.PLATFORM_API_URL;
@@ -13,7 +13,7 @@ export async function getAllChatbots({
   search?: string;
   page?: number;
   pageSize?: number;
-} = {}): Promise<{data: Chatbot[], pagination?: Pagination }> {
+} = {}): Promise<Paginated<Chatbot>> {
   const queryParams = new URLSearchParams({
     page: page.toString(),
     limit: pageSize.toString(),
@@ -31,7 +31,7 @@ export async function getAllChatbots({
   return data;
 }
 
-export async function getChatbotReadUrl(id: string): Promise<{ readUrl: string }> {
+export async function getChatbotReadUrl(id: string): Promise<ReadUrl> {
   try {
     const response = await fetch(`${PLATFORM_API_URL}/chatbots/${id}/read-url`, {
       headers: {

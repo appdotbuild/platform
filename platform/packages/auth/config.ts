@@ -13,39 +13,11 @@ const config: NextAuthConfig = {
   providers: [],
 };
 
-if (env.GITHUB_ID) {
-  config.providers.push(
-    GitHub({
-      clientId: env.GITHUB_ID,
-      clientSecret: env.GITHUB_SECRET,
-    })
-  );
-}
-
 if (env.GOOGLE_CLIENT_ID) {
   config.providers.push(
     Google({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
-    })
-  );
-}
-
-if (env.RESEND_AUTH) {
-  config.providers.push(
-    Resend({
-      apiKey: env.RESEND_API_KEY,
-      normalizeIdentifier(identifier) {
-        if (env.RESEND_ALLOWED_EMAILS && !env.RESEND_ALLOWED_EMAILS.includes(identifier)) {
-          throw new Error("Email not allowed");
-        }
-        return identifier;
-      },
-      ...(env.SIMULATE_EMAILS && {
-        sendVerificationRequest: async ({ identifier, url, provider }) => {
-          console.log(`🔗 TO LOGIN CLICK HERE 👇\n\n${url}\n`);
-        },
-      }),
     })
   );
 }

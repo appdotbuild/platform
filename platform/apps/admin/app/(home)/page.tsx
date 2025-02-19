@@ -7,8 +7,8 @@ import { Metadata } from "next";
 import { authOrLogin } from "@repo/auth";
 
 export const metadata: Metadata = {
-  title: "RagRabbit",
-  description: "Your all-in-one solution for building powerful RAG applications.",
+  title: "Bot",
+  description: "Your chatbot generating bot",
 };
 
 const sections = [

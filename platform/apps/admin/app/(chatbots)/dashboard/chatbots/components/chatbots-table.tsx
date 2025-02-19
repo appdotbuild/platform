@@ -7,7 +7,7 @@ import {
 } from "@repo/design/components/table/utils/default-columns";
 import { getAllChatbots } from "../actions";
 import ChatbotsTableRowMenu from "./chatbots-table-row-menu";
-import { Chatbot } from "../types";
+import { Chatbot } from "@repo/core/types/api";
 import { toast } from "@repo/design/hooks/use-toast";
 
 interface ChatbotsTableProps {
