@@ -29,7 +29,7 @@ const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
 });
 const jwks = jose.createRemoteJWKSet(
-  new URL("https://api.stack-auth.com/api/v1/projects/<your-project-id>/.well-known/jwks.json")
+  new URL(`https://api.stack-auth.com/api/v1/projects/${process.env.STACK_PROJECT_ID}/.well-known/jwks.json`)
 );
 
 async function validateAuth(request: FastifyRequest, reply: FastifyReply) {
@@ -43,6 +43,7 @@ async function validateAuth(request: FastifyRequest, reply: FastifyReply) {
   try {
     const { payload } = await jose.jwtVerify(accessToken, jwks);
     console.log("Authenticated user with ID:", payload.sub);
+    return true;
   } catch (error) {
     console.error(error);
     console.log("Invalid user");
@@ -94,7 +95,7 @@ const app = fastify({
 const db = drizzle(process.env.DATABASE_URL!);
 
 app.get("/chatbots", async (request, reply): Promise<Paginated<Chatbot>> => {
-  if (!validateAuth(request, reply)) {
+  if (!(await validateAuth(request, reply))) {
     reply.status(400).send({ error: "Validation error" });
   }
 
@@ -119,7 +120,6 @@ app.get("/chatbots", async (request, reply): Promise<Paginated<Chatbot>> => {
   const [countResult, bots] = await Promise.all([countResultP, botsP]);
 
   const totalCount = Number(countResult[0]?.count || 0);
-
   return {
     data: bots,
     pagination: {
@@ -132,7 +132,7 @@ app.get("/chatbots", async (request, reply): Promise<Paginated<Chatbot>> => {
 });
 
 app.get("/chatbots/:id", async (request, reply): Promise<Chatbot> => {
-  if (!validateAuth(request, reply)) {
+  if (!(await validateAuth(request, reply))) {
     reply.status(400).send({ error: "Validation error" });
   }
 
@@ -148,7 +148,7 @@ app.get("/chatbots/:id", async (request, reply): Promise<Chatbot> => {
 });
 
 app.get("/chatbots/:id/read-url", async (request, reply): Promise<ReadUrl> => {
-  if (!validateAuth(request, reply)) {
+  if (!(await validateAuth(request, reply))) {
     reply.status(400).send({ error: "Validation error" });
   }
 
