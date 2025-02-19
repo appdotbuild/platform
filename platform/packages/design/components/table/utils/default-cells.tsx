@@ -9,7 +9,12 @@ import {
   StopwatchIcon,
 } from "@radix-ui/react-icons";
 
-export type cellConfig = { value: string; label: string; icon?: React.ElementType; className?: string };
+export type cellConfig = {
+  value: string;
+  label: string;
+  icon?: React.ElementType;
+  className?: string;
+};
 
 /**
  * Commonly used labels and icons for cells data

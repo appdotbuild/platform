@@ -13,14 +13,22 @@ export function SideSubNav({
   activePage,
 }: SideSubNavProps) {
   return (
-    <nav className="grid gap-4 text-sm text-muted-foreground" x-chunk="dashboard-04-chunk-0">
+    <nav
+      className="grid gap-4 text-sm text-muted-foreground"
+      x-chunk="dashboard-04-chunk-0"
+    >
       {pages.map((page) => (
         <Link
           key={page.to}
           href={page.to}
-          className={cn(activePage === page.to ? "text-primary font-semibold" : "", "justify-start flex items-center")}
+          className={cn(
+            activePage === page.to ? "text-primary font-semibold" : "",
+            "justify-start flex items-center",
+          )}
         >
-          <span className="mr-2 w-4 h-4">{React.createElement(page.icon, { size: 16 })}</span>
+          <span className="mr-2 w-4 h-4">
+            {React.createElement(page.icon, { size: 16 })}
+          </span>
           {page.title}
         </Link>
       ))}

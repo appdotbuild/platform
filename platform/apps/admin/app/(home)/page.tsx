@@ -1,6 +1,12 @@
 import { ArrowRight, MessageSquare } from "@repo/design/base/icons";
 import { Button } from "@repo/design/shadcn/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/design/shadcn/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/design/shadcn/card";
 import { Metadata } from "next";
 import Link from "next/link";
 
@@ -25,7 +31,6 @@ export default async function Home() {
       {/* Hero Section */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold">Welcome to Bot.New!</h1>
-        
       </div>
 
       {/* Tools Grid */}
@@ -33,7 +38,10 @@ export default async function Home() {
         {sections.map((section) => {
           const Icon = section.icon;
           return (
-            <Card key={section.href} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={section.href}
+              className="hover:shadow-lg transition-shadow"
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Icon className="w-5 h-5" />
@@ -43,7 +51,10 @@ export default async function Home() {
               </CardHeader>
               <CardContent>
                 <Link href={section.href}>
-                  <Button className="w-full" variant={section.secondary ? "secondary" : "default"}>
+                  <Button
+                    className="w-full"
+                    variant={section.secondary ? "secondary" : "default"}
+                  >
                     Go to {section.title}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>

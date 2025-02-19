@@ -35,12 +35,21 @@ interface ChatConfigProviderProps {
   initialData?: Partial<ChatContextType>;
 }
 
-function ChatConfigProvider({ children, initialData = {} }: ChatConfigProviderProps) {
+function ChatConfigProvider({
+  children,
+  initialData = {},
+}: ChatConfigProviderProps) {
   const [agentMode, setAgentMode] = useState(initialData.agentMode ?? false);
-  const [welcomeMessage, setWelcomeMessage] = useState(initialData.welcomeMessage ?? "");
-  const [suggestedQueries, setSuggestedQueries] = useState<string[]>(initialData.suggestedQueries ?? []);
+  const [welcomeMessage, setWelcomeMessage] = useState(
+    initialData.welcomeMessage ?? "",
+  );
+  const [suggestedQueries, setSuggestedQueries] = useState<string[]>(
+    initialData.suggestedQueries ?? [],
+  );
   const [logoUrl, setLogoUrl] = useState(initialData.logoUrl ?? "");
-  const [chat, setChat] = useState<ReturnType<typeof useChat> | undefined>(undefined);
+  const [chat, setChat] = useState<ReturnType<typeof useChat> | undefined>(
+    undefined,
+  );
   const [modalMode, setModalMode] = useState(initialData.modalMode ?? false);
 
   const value = {

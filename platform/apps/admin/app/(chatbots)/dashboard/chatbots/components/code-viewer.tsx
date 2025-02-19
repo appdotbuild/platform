@@ -11,7 +11,10 @@ interface CodeViewerProps {
 
 export default function CodeViewer({ chatbotId }: CodeViewerProps) {
   const [files, setFiles] = useState<any[]>([]);
-  const [currentFile, setCurrentFile] = useState<{ path: string; content: string } | null>(null);
+  const [currentFile, setCurrentFile] = useState<{
+    path: string;
+    content: string;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,9 +45,16 @@ export default function CodeViewer({ chatbotId }: CodeViewerProps) {
 
   return (
     <div className="flex flex-1 min-h-0 overflow-x-hidden">
-      <FileTree files={files} selectedFile={currentFile?.path ?? ""} onSelectFile={handleFileSelect} />
+      <FileTree
+        files={files}
+        selectedFile={currentFile?.path ?? ""}
+        onSelectFile={handleFileSelect}
+      />
       <div className="flex-1 min-h-0 overflow-auto">
-        <CodeEditor content={currentFile?.content ?? ""} isLoading={isLoading} />
+        <CodeEditor
+          content={currentFile?.content ?? ""}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );

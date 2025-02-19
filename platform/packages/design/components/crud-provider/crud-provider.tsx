@@ -32,7 +32,13 @@ export function createCRUDProvider<T extends WithId>({
     return context;
   }
 
-  function CRUDProvider({ children, initialData }: { children: React.ReactNode; initialData: T[] }) {
+  function CRUDProvider({
+    children,
+    initialData,
+  }: {
+    children: React.ReactNode;
+    initialData: T[];
+  }) {
     const [data, setData] = useState<T[]>(initialData);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -51,7 +57,9 @@ export function createCRUDProvider<T extends WithId>({
 
     async function patch(data: Partial<T>[]) {
       const ids = data.map((d) => d.id);
-      setData((prev) => prev.map((i) => (ids.includes(i.id) ? Object.assign(i, data) : i)));
+      setData((prev) =>
+        prev.map((i) => (ids.includes(i.id) ? Object.assign(i, data) : i)),
+      );
     }
 
     async function replace(data: T[]) {
@@ -77,7 +85,9 @@ export function createCRUDProvider<T extends WithId>({
       add,
     };
 
-    return <CustomContext.Provider value={value}>{children}</CustomContext.Provider>;
+    return (
+      <CustomContext.Provider value={value}>{children}</CustomContext.Provider>
+    );
   }
 
   return {

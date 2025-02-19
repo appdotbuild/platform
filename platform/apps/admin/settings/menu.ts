@@ -19,7 +19,6 @@ export const sidebarMenu: MenuGroup[] = [
         icon: MessageSquare,
         submenus: [],
       },
-
     ],
   },
 ];

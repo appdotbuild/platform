@@ -2,7 +2,13 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { EasyForm, EasyFormFieldSwitch, EasyFormFieldText, EasyFormMultiTextField, EasyFormSubmit } from "./easy-form";
+import {
+  EasyForm,
+  EasyFormFieldSwitch,
+  EasyFormFieldText,
+  EasyFormMultiTextField,
+  EasyFormSubmit,
+} from "./easy-form";
 import React from "react";
 
 const formSchema = z.object({
@@ -32,7 +38,11 @@ const EasyFormExample = () => {
   };
 
   return (
-    <EasyForm form={form} onSubmit={onSubmit} message="Form submitted successfully">
+    <EasyForm
+      form={form}
+      onSubmit={onSubmit}
+      message="Form submitted successfully"
+    >
       <EasyFormFieldText
         form={form}
         name="name"
@@ -55,7 +65,12 @@ const EasyFormExample = () => {
         description="This is a multi EasyFormFieldText component"
         placeholder="Enter some text"
       />
-      <EasyFormFieldSwitch form={form} name="switch" title="Switch" label="Switch Label" />
+      <EasyFormFieldSwitch
+        form={form}
+        name="switch"
+        title="Switch"
+        label="Switch Label"
+      />
       <EasyFormSubmit form={form} isExecuting={false} />
     </EasyForm>
   );
@@ -80,8 +95,18 @@ export const Loading: Story = {
 
     return (
       <EasyForm form={form} onSubmit={async () => {}} message="Form submitted">
-        <EasyFormFieldText form={form} name="name" title="Name" description="Please enter your full name" />
-        <EasyFormFieldText form={form} name="email" title="Email" description="Enter your email address" />
+        <EasyFormFieldText
+          form={form}
+          name="name"
+          title="Name"
+          description="Please enter your full name"
+        />
+        <EasyFormFieldText
+          form={form}
+          name="email"
+          title="Email"
+          description="Enter your email address"
+        />
         <EasyFormSubmit form={form} isExecuting={true} />
       </EasyForm>
     );
@@ -118,7 +143,9 @@ export const FormSubmit: Story = {
 
 export const MultiTextField: Story = {
   render: () => {
-    const form = useForm<any>({ defaultValues: { multiField: [{ value: "" }] } });
+    const form = useForm<any>({
+      defaultValues: { multiField: [{ value: "" }] },
+    });
     const field = useFieldArray({ control: form.control, name: "multiField" });
 
     return (

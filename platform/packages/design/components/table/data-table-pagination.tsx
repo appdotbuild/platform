@@ -1,15 +1,29 @@
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@repo/design/base/icons";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "@repo/design/base/icons";
 import { Table } from "@tanstack/react-table";
 
 import { Button } from "@repo/design/shadcn/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/design/shadcn/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/design/shadcn/select";
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   totalCount?: number;
 }
 
-export function DataTablePagination<TData>({ table, totalCount }: DataTablePaginationProps<TData>) {
+export function DataTablePagination<TData>({
+  table,
+  totalCount,
+}: DataTablePaginationProps<TData>) {
   const pages = totalCount ? [10, 20, 30, 40, 50] : [10, 50, 100, 200, 500];
 
   return (
@@ -17,8 +31,9 @@ export function DataTablePagination<TData>({ table, totalCount }: DataTablePagin
       <div className="flex-1 text-sm text-muted-foreground">
         {totalCount
           ? `${table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}-${Math.min(
-              (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-              totalCount
+              (table.getState().pagination.pageIndex + 1) *
+                table.getState().pagination.pageSize,
+              totalCount,
             )} of ${totalCount} rows`
           : `${table.getFilteredSelectedRowModel().rows.length} of ${
               table.getFilteredRowModel().rows.length
@@ -46,7 +61,8 @@ export function DataTablePagination<TData>({ table, totalCount }: DataTablePagin
           </Select>
         </div>
         <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {table.getPageCount()}
         </div>
         <div className="flex items-center space-x-2">
           <Button

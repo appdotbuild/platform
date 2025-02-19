@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { CustomColumnDev, DataTable } from "@repo/design/components/table/data-table";
+import {
+  CustomColumnDev,
+  DataTable,
+} from "@repo/design/components/table/data-table";
 import { columnText } from "@repo/design/components/table/utils/default-columns";
 import { getAllChatbots } from "../actions";
 import ChatbotsTableRowMenu from "./chatbots-table-row-menu";
@@ -19,7 +22,10 @@ interface ChatbotsTableProps {
   initialTotalCount;
 }
 
-export default function ChatbotsTable({ initialData, initialTotalCount }: ChatbotsTableProps) {
+export default function ChatbotsTable({
+  initialData,
+  initialTotalCount,
+}: ChatbotsTableProps) {
   const [data, setData] = useState(initialData);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [loading, setLoading] = useState(false);

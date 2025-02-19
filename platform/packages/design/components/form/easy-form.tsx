@@ -67,7 +67,13 @@ export function EasyFormGlobalErrors({ form }: { form: any }) {
   );
 }
 
-export function EasyFormSubmit({ form, className }: { form: any; className?: string }) {
+export function EasyFormSubmit({
+  form,
+  className,
+}: {
+  form: any;
+  className?: string;
+}) {
   // Ensure the loading animation isn't too fast:
   const [isSaving, setIsSaving] = React.useState(false);
   const [savingTimeout, setSavingTimeout] = React.useState<any>(null);
@@ -94,13 +100,17 @@ export function EasyFormSubmit({ form, className }: { form: any; className?: str
 
   return (
     <div>
-      <Button type="submit" disabled={isExecuting} className={cn("min-w-24 pr-5 relative", className)}>
+      <Button
+        type="submit"
+        disabled={isExecuting}
+        className={cn("min-w-24 pr-5 relative", className)}
+      >
         <span className="inline-flex items-center justify-center w-full">
           <span>Save</span>
           <span
             className={cn(
               "absolute right-3 inline-flex items-center justify-center h-4 w-4 transition-opacity duration-300",
-              isExecuting || isSaving ? "opacity-100" : "opacity-0"
+              isExecuting || isSaving ? "opacity-100" : "opacity-0",
             )}
           >
             <Loader2 className={`h-4 w-4 animate-spin`} />
@@ -140,11 +150,30 @@ export function EasyFormFieldText({
   );
 }
 
-export function EasyFormFieldNumber({ form, name, title, description }: EasyFormFieldProps) {
-  return <EasyFormFieldText form={form} name={name} title={title} description={description} type="number" />;
+export function EasyFormFieldNumber({
+  form,
+  name,
+  title,
+  description,
+}: EasyFormFieldProps) {
+  return (
+    <EasyFormFieldText
+      form={form}
+      name={name}
+      title={title}
+      description={description}
+      type="number"
+    />
+  );
 }
 
-export function EasyFormFieldSwitch({ form, name, title, label, description }: EasyFormFieldProps & { label: string }) {
+export function EasyFormFieldSwitch({
+  form,
+  name,
+  title,
+  label,
+  description,
+}: EasyFormFieldProps & { label: string }) {
   return (
     <FormField
       control={form.control}
@@ -152,8 +181,16 @@ export function EasyFormFieldSwitch({ form, name, title, label, description }: E
       render={({ field }) => (
         <EasyFormFieldTemplate title={title} description={description}>
           <div className="flex items-center space-x-2">
-            <Switch {...field} checked={field.value} onCheckedChange={field.onChange} />
-            <Label htmlFor={name} className="cursor-pointer" onClick={() => field.onChange(!field.value)}>
+            <Switch
+              {...field}
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+            <Label
+              htmlFor={name}
+              className="cursor-pointer"
+              onClick={() => field.onChange(!field.value)}
+            >
               {label}
             </Label>
           </div>
@@ -201,12 +238,23 @@ export function EasyFormMultiTextField({
           name={`${name}.${index}.value`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={cn(index !== 0 && "sr-only")}>{title}</FormLabel>
-              {description && <FormDescription className={cn(index !== 0 && "sr-only")}>{description}</FormDescription>}
+              <FormLabel className={cn(index !== 0 && "sr-only")}>
+                {title}
+              </FormLabel>
+              {description && (
+                <FormDescription className={cn(index !== 0 && "sr-only")}>
+                  {description}
+                </FormDescription>
+              )}
               <FormControl>
                 <div className="flex w-full max-w-sm items-center space-x-2">
                   <Input placeholder={placeholder || title} {...field} />
-                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => remove(index)}
+                  >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -216,7 +264,13 @@ export function EasyFormMultiTextField({
           )}
         />
       ))}
-      <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ value: "" })}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="mt-2"
+        onClick={() => append({ value: "" })}
+      >
         {addButtonLabel || "Add"}
       </Button>
     </div>

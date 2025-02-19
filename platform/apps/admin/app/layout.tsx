@@ -18,11 +18,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+      >
         <ProvidersServer>
-          <ProvidersClient>
-            {children}
-          </ProvidersClient>
+          <ProvidersClient>{children}</ProvidersClient>
         </ProvidersServer>
       </body>
     </html>

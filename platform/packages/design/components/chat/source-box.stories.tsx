@@ -14,7 +14,8 @@ export const Default: Story = {
   args: {
     title: "Introduction to React",
     url: "https://react.dev/learn",
-    abstract: "Learn how to build user interfaces with React, the popular JavaScript library.",
+    abstract:
+      "Learn how to build user interfaces with React, the popular JavaScript library.",
     score: 0.95,
   },
 };
@@ -33,7 +34,8 @@ export const LowScore: Story = {
   args: {
     title: "Getting Started with Next.js",
     url: "https://nextjs.org/docs",
-    abstract: "A quick introduction to building web applications with Next.js, the React framework for production.",
+    abstract:
+      "A quick introduction to building web applications with Next.js, the React framework for production.",
     score: 0.45,
   },
 };
@@ -42,11 +44,13 @@ const sources = [
   {
     title: "Introduction to React",
     url: "https://react.dev/learn",
-    abstract: "Learn how to build user interfaces with React, the popular JavaScript library.",
+    abstract:
+      "Learn how to build user interfaces with React, the popular JavaScript library.",
     score: 0.95,
   },
   {
-    title: "Advanced TypeScript Patterns And very long title that goes really too long",
+    title:
+      "Advanced TypeScript Patterns And very long title that goes really too long",
     url: "https://www.typescriptlang.org/docs/handbook/advanced-types.html",
     abstract:
       "Deep dive into advanced TypeScript patterns including conditional types, mapped types, template literal types, and more.",
@@ -55,7 +59,8 @@ const sources = [
   {
     title: "Getting Started with Next.js",
     url: "https://nextjs.org/docs",
-    abstract: "A quick introduction to building web applications with Next.js, the React framework for production.",
+    abstract:
+      "A quick introduction to building web applications with Next.js, the React framework for production.",
     score: 0.45,
   },
 ];
@@ -67,13 +72,25 @@ const shortSource = {
   score: 0.45,
 };
 export const SourceBoxListStory: StoryObj<typeof SourceBoxList> = {
-  render: () => <SourceBoxList className="h-40 my-8 max-w-4xl pr-12" sources={sources} />,
+  render: () => (
+    <SourceBoxList className="h-40 my-8 max-w-4xl pr-12" sources={sources} />
+  ),
 };
 
 export const SourceBoxListStoryPlusOne: StoryObj<typeof SourceBoxList> = {
-  render: () => <SourceBoxList className="h-40 my-8 max-w-4xl pr-12" sources={[...sources, shortSource]} />,
+  render: () => (
+    <SourceBoxList
+      className="h-40 my-8 max-w-4xl pr-12"
+      sources={[...sources, shortSource]}
+    />
+  ),
 };
 
 export const SourceBoxListStoryWithMore: StoryObj<typeof SourceBoxList> = {
-  render: () => <SourceBoxList className="h-40 my-8 max-w-4xl pr-12" sources={[...sources, ...sources]} />,
+  render: () => (
+    <SourceBoxList
+      className="h-40 my-8 max-w-4xl pr-12"
+      sources={[...sources, ...sources]}
+    />
+  ),
 };

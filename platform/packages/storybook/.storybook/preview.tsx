@@ -32,7 +32,9 @@ const preview: Preview = {
   },
   decorators: [
     (Story) => (
-      <main className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+      <main
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+      >
         <Story />
       </main>
     ),

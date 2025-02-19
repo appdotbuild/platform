@@ -3,7 +3,12 @@
 import styles from "./source-box.module.css";
 import { cn } from "@repo/design/lib/utils";
 
-export type Source = { title: string; url: string; abstract: string; score: number };
+export type Source = {
+  title: string;
+  url: string;
+  abstract: string;
+  score: number;
+};
 
 export function SourceBox(props: Source) {
   return (
@@ -11,12 +16,19 @@ export function SourceBox(props: Source) {
       <div className="flex flex-col justify-between h-full gap-2">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold line-clamp-2 leading-normal">
-            <a href={props.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+            <a
+              href={props.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
               {props.title}
             </a>
           </h3>
         </div>
-        <p className="text-sm text-muted-foreground line-clamp-2 overflow-hidden mt-auto">{props.abstract}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2 overflow-hidden mt-auto">
+          {props.abstract}
+        </p>
         <div className="flex items-center justify-between">
           <a
             href={props.url}
@@ -100,20 +112,35 @@ export function SourceBoxList(props: {
         >
           <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 h-full">
             <div className="flex flex-col gap-2 h-full justify-between">
-              {props.sources.slice(initialShow, initialShow + 2).map((source) => (
-                <div key={source.url} className="flex flex-col first:border-b first:pb-2">
-                  <h4 className="font-medium text-sm line-clamp-1">
-                    <a href={source.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                      {source.title}
-                    </a>
-                  </h4>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{source.abstract}</p>
-                </div>
-              ))}
+              {props.sources
+                .slice(initialShow, initialShow + 2)
+                .map((source) => (
+                  <div
+                    key={source.url}
+                    className="flex flex-col first:border-b first:pb-2"
+                  >
+                    <h4 className="font-medium text-sm line-clamp-1">
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline"
+                      >
+                        {source.title}
+                      </a>
+                    </h4>
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                      {source.abstract}
+                    </p>
+                  </div>
+                ))}
 
               <div className="mt-auto pt-1">
                 {props.sources.length > initialShow + 2 ? (
-                  <a href={props.showMoreUrl} className="text-sm text-primary cursor-pointer">
+                  <a
+                    href={props.showMoreUrl}
+                    className="text-sm text-primary cursor-pointer"
+                  >
                     And {props.sources.length - initialShow - 2} more...
                   </a>
                 ) : (

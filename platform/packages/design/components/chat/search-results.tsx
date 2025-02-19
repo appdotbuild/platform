@@ -27,7 +27,9 @@ export const SearchResults: FC<SearchResultsProps> = ({ results }) => {
         >
           <div className="space-y-1">
             <div className="font-medium text-foreground">{result.title}</div>
-            <div className="text-xs text-muted-foreground truncate">{result.url}</div>
+            <div className="text-xs text-muted-foreground truncate">
+              {result.url}
+            </div>
             <div className="text-muted-foreground">{result.description}</div>
           </div>
         </a>

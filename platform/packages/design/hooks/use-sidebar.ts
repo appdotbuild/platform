@@ -37,13 +37,13 @@ export const useSidebar = create(
         set(
           produce((state: SidebarStore) => {
             state.settings = { ...state.settings, ...settings };
-          })
+          }),
         );
-      }
+      },
     }),
     {
       name: "sidebar",
-      storage: createJSONStorage(() => localStorage)
-    }
-  )
+      storage: createJSONStorage(() => localStorage),
+    },
+  ),
 );

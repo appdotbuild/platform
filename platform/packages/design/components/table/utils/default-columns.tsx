@@ -37,7 +37,12 @@ export function SelectionDeleteButton({
     const ids = getIdsFromMultiselect(table);
     const resp = await deleteAction({ ids });
 
-    if (resp.serverError || resp.validationErrors || resp.bindArgsValidationErrors || !(resp.data as any).success) {
+    if (
+      resp.serverError ||
+      resp.validationErrors ||
+      resp.bindArgsValidationErrors ||
+      !(resp.data as any).success
+    ) {
       toast({ title: "Failed to delete elements", variant: "destructive" });
     } else {
       await optimisticAction?.(ids, resp);
@@ -65,12 +70,20 @@ export function SelectionDeleteButton({
  * const { executeAsync: deleteAction } = useAction(onDelete);
  * columnMultiselect({ deleteAction })
  */
-export function columnMultiselect({ deleteAction }: { deleteAction?: any }): Partial<ColumnDefToolbar<any, any>> {
+export function columnMultiselect({
+  deleteAction,
+}: {
+  deleteAction?: any;
+}): Partial<ColumnDefToolbar<any, any>> {
   const res: Partial<ColumnDefToolbar<any, any>> = {
     size: 30,
     header: ({ table }) => (
       <Checkbox
-        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate") || false}
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate") ||
+          false
+        }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
         className="translate-y-[2px]"
@@ -90,39 +103,71 @@ export function columnMultiselect({ deleteAction }: { deleteAction?: any }): Par
   };
 
   if (deleteAction) {
-    res.multiselectToolbar = ({ table }) => <SelectionDeleteButton table={table} deleteAction={deleteAction} />;
+    res.multiselectToolbar = ({ table }) => (
+      <SelectionDeleteButton table={table} deleteAction={deleteAction} />
+    );
   }
 
   return res;
 }
 
-export function columnText({ id, title, fieldConfig }: { id: string; title: string; fieldConfig?: cellConfig[] }) {
+export function columnText({
+  id,
+  title,
+  fieldConfig,
+}: {
+  id: string;
+  title: string;
+  fieldConfig?: cellConfig[];
+}) {
   return {
     ...(fieldConfig
       ? {
           facetedToolbar: ({ table }) => (
-            <DataTableFacetedFilter column={table.getColumn(id)} title={title} options={fieldConfig} />
+            <DataTableFacetedFilter
+              column={table.getColumn(id)}
+              title={title}
+              options={fieldConfig}
+            />
           ),
         }
       : {}),
-    header: ({ column }) => <DataTableColumnHeader column={column} title={title} />,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={title} />
+    ),
     cell: ({ row }) => <span className="hyphens-auto">{row.getValue(id)}</span>,
     enableSorting: true,
     enableHiding: true,
   };
 }
 
-export function columnIcon({ id, title, fieldConfig }: { id: string; title: string; fieldConfig: cellConfig[] }) {
+export function columnIcon({
+  id,
+  title,
+  fieldConfig,
+}: {
+  id: string;
+  title: string;
+  fieldConfig: cellConfig[];
+}) {
   return {
     size: 100,
     title: title,
     facetedToolbar: ({ table }) => (
-      <DataTableFacetedFilter column={table.getColumn(id)} title={title} options={fieldConfig} />
+      <DataTableFacetedFilter
+        column={table.getColumn(id)}
+        title={title}
+        options={fieldConfig}
+      />
     ),
 
-    header: ({ column }) => <DataTableColumnHeader column={column} title={title} />,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={title} />
+    ),
     cell: ({ row }) => {
-      const config = fieldConfig.find((status) => status.value.toString() == row.getValue(id).toString());
+      const config = fieldConfig.find(
+        (status) => status.value.toString() == row.getValue(id).toString(),
+      );
 
       return (
         <div className={cn("flex w-[100px] items-center", config?.className)}>

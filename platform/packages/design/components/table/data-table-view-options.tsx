@@ -18,11 +18,17 @@ interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
 }
 
-export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps<TData>) {
+export function DataTableViewOptions<TData>({
+  table,
+}: DataTableViewOptionsProps<TData>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="ml-auto hidden h-8 lg:flex">
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto hidden h-8 lg:flex"
+        >
           <MixerHorizontalIcon className="mr-2 h-4 w-4" />
           View
         </Button>
@@ -32,7 +38,10 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
         <DropdownMenuSeparator />
         {table
           .getAllColumns()
-          .filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide())
+          .filter(
+            (column) =>
+              typeof column.accessorFn !== "undefined" && column.getCanHide(),
+          )
           .map((column) => {
             return (
               <DropdownMenuCheckboxItem
@@ -41,7 +50,8 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {(column.columnDef as CustomColumnDev<TData, any>).title || column.id}
+                {(column.columnDef as CustomColumnDev<TData, any>).title ||
+                  column.id}
               </DropdownMenuCheckboxItem>
             );
           })}

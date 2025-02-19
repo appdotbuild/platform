@@ -19,11 +19,17 @@ export default function AdminPanelLayout({
   return (
     <>
       <Sidebar signOut={signOut} />
-      <div className={cn(!settings.disabled && (!getOpenState() ? "lg:ml-[90px]" : "lg:ml-72"))}>{children}</div>
+      <div
+        className={cn(
+          !settings.disabled && (!getOpenState() ? "lg:ml-[90px]" : "lg:ml-72"),
+        )}
+      >
+        {children}
+      </div>
       <footer
         className={cn(
           "transition-[margin-left] ease-in-out duration-300",
-          !settings.disabled && (!getOpenState() ? "lg:ml-[90px]" : "lg:ml-72")
+          !settings.disabled && (!getOpenState() ? "lg:ml-[90px]" : "lg:ml-72"),
         )}
       ></footer>
     </>
@@ -37,7 +43,12 @@ export interface DashboardLayoutProps {
   signOut: () => Promise<void>;
 }
 
-export function DashboardLayoutSubNav({ children, title, userMenu, signOut }: DashboardLayoutProps) {
+export function DashboardLayoutSubNav({
+  children,
+  title,
+  userMenu,
+  signOut,
+}: DashboardLayoutProps) {
   return (
     <AdminPanelLayout signOut={signOut}>
       <div className="flex min-h-screen w-full flex-col">
@@ -55,7 +66,15 @@ export function DashboardLayoutSubNav({ children, title, userMenu, signOut }: Da
   );
 }
 
-export function DashboardLayout({ children, userMenu , signOut}: { children: React.ReactNode; userMenu: React.ReactNode, signOut: () => Promise<void> }) {
+export function DashboardLayout({
+  children,
+  userMenu,
+  signOut,
+}: {
+  children: React.ReactNode;
+  userMenu: React.ReactNode;
+  signOut: () => Promise<void>;
+}) {
   return (
     <div>
       <DashboardHeader userMenu={userMenu} />

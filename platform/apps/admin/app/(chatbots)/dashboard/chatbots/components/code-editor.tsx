@@ -9,7 +9,10 @@ interface CodeEditorProps {
   isLoading?: boolean;
 }
 
-export default function CodeEditor({ content, isLoading = false }: CodeEditorProps) {
+export default function CodeEditor({
+  content,
+  isLoading = false,
+}: CodeEditorProps) {
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Loading code...</div>;
   }

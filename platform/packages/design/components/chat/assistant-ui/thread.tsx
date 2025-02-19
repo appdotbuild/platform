@@ -50,7 +50,7 @@ export const MyThread: FC = () => {
       className={cn(
         "bg-background h-full w-full min-h-[0] transition-all duration-700 ease-in-out",
         doHideWelcome && "min-h-[100dvh]",
-        modalMode && "pt-4 pb-8"
+        modalMode && "pt-4 pb-8",
       )}
     >
       <ThreadPrimitive.Viewport className="flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4">
@@ -72,7 +72,11 @@ export const MyThread: FC = () => {
           <MyThreadScrollToBottom />
           <ThreadPrimitive.If empty={false}>
             <ThreadPrimitive.If running={false}>
-              <Button variant="outline" className="mb-4" onClick={() => threads.switchToNewThread()}>
+              <Button
+                variant="outline"
+                className="mb-4"
+                onClick={() => threads.switchToNewThread()}
+              >
                 Start new chat
               </Button>
             </ThreadPrimitive.If>
@@ -93,8 +97,17 @@ const MySuggestedPromptsInitial: FC = () => {
       {chatConfig.suggestedQueries && (
         <div className="mt-4 text-center">
           {chatConfig.suggestedQueries.map((query) => (
-            <ThreadPrimitive.Suggestion prompt={query} method="replace" autoSend asChild key={query}>
-              <Button variant="outline" className="flex-1 py-1 md:py-2 mr-2 mb-2">
+            <ThreadPrimitive.Suggestion
+              prompt={query}
+              method="replace"
+              autoSend
+              asChild
+              key={query}
+            >
+              <Button
+                variant="outline"
+                className="flex-1 py-1 md:py-2 mr-2 mb-2"
+              >
                 {query}
               </Button>
             </ThreadPrimitive.Suggestion>
@@ -107,13 +120,21 @@ const MySuggestedPromptsInitial: FC = () => {
 
 const MySuggestedPrompts: FC = () => {
   const lastMessage = useThread((t) => t.messages.at(-1));
-  const annotation: any = lastMessage?.metadata?.unstable_annotations?.find((a: any) => a.type === "suggested-prompts");
+  const annotation: any = lastMessage?.metadata?.unstable_annotations?.find(
+    (a: any) => a.type === "suggested-prompts",
+  );
   const suggestions = annotation?.data;
   if (!suggestions) return null;
   return (
     <div className="mt-4 text-center">
       {suggestions.map((query) => (
-        <ThreadPrimitive.Suggestion prompt={query} method="replace" autoSend asChild key={query}>
+        <ThreadPrimitive.Suggestion
+          prompt={query}
+          method="replace"
+          autoSend
+          asChild
+          key={query}
+        >
           <Button variant="outline" className="flex-1 py-1 md:py-2 mr-2 mb-2">
             {query}
           </Button>
@@ -144,17 +165,23 @@ const MyThreadWelcome: FC<{ hideWelcome: boolean }> = ({ hideWelcome }) => {
     <div
       className={cn(
         "flex flex-col items-center justify-center transition-all duration-300 ease-in-out",
-        hideWelcome ? "max-h-0 mb-0 opacity-0 scale-95 pointer-events-none" : "max-h-[200px] mb-8 opacity-100 scale-100"
+        hideWelcome
+          ? "max-h-0 mb-0 opacity-0 scale-95 pointer-events-none"
+          : "max-h-[200px] mb-8 opacity-100 scale-100",
       )}
     >
       <div className="flex flex-col items-center">
-        {chatConfig.logoUrl && <Image src={chatConfig.logoUrl} alt="Logo" width={40} height={40} />}
+        {chatConfig.logoUrl && (
+          <Image src={chatConfig.logoUrl} alt="Logo" width={40} height={40} />
+        )}
         {!chatConfig.logoUrl && (
           <Avatar>
             <AvatarFallback>C</AvatarFallback>
           </Avatar>
         )}
-        <p className="mt-4 font-medium">{chatConfig.welcomeMessage || "What do you want to know?"}</p>
+        <p className="mt-4 font-medium">
+          {chatConfig.welcomeMessage || "What do you want to know?"}
+        </p>
       </div>
     </div>
   );
@@ -244,7 +271,13 @@ export const MyComposer: FC<MyComposerProps> = ({ setActive }) => {
           <>
             <div className="w-full text-sm text-muted-foreground mt-2 ml-6 flex items-center">
               Submit to ask AI
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <path
                   d="M15.5 9.00001V15H8.5M8.5 15L9.5 14M8.5 15L9.5 16M13 5H17.5C18.0523 5 18.5 5.44772 18.5 6V18C18.5 18.5523 18.0523 19 17.5 19H6.5C5.94772 19 5.5 18.5523 5.5 18V12C5.5 11.4477 5.94772 11 6.5 11H12V6C12 5.44771 12.4477 5 13 5Z"
                   stroke="#464455"
@@ -310,7 +343,9 @@ const MyEditComposer: FC = () => {
 
 const MyAssistantMessage: FC = () => {
   const message = useMessage();
-  const annotation: any = message?.metadata?.unstable_annotations?.find((a: any) => a.type === "sources");
+  const annotation: any = message?.metadata?.unstable_annotations?.find(
+    (a: any) => a.type === "sources",
+  );
   const sources = annotation?.data;
 
   // Show skeleton loading state when message is empty
@@ -396,7 +431,10 @@ const MyBranchPicker: FC<any> = ({ className, ...rest }) => {
   return (
     <BranchPickerPrimitive.Root
       hideWhenSingleBranch
-      className={cn("text-muted-foreground inline-flex items-center text-xs", className)}
+      className={cn(
+        "text-muted-foreground inline-flex items-center text-xs",
+        className,
+      )}
       {...rest}
     >
       <BranchPickerPrimitive.Previous asChild>
@@ -418,7 +456,13 @@ const MyBranchPicker: FC<any> = ({ className, ...rest }) => {
 
 const CircleStopIcon = () => {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="16" height="16">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      width="16"
+      height="16"
+    >
       <rect width="10" height="10" x="3" y="3" rx="2" />
     </svg>
   );

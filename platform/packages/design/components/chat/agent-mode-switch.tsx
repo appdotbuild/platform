@@ -2,7 +2,12 @@ import { Switch } from "@repo/design/shadcn/switch";
 import { useChatConfig } from "./chat-config-provider";
 import { BotMessageSquareIcon, SearchIcon } from "lucide-react";
 import { cn } from "@repo/design/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@repo/design/shadcn/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@repo/design/shadcn/tooltip";
 
 export const AgentModeSwitch = () => {
   const { agentMode, setAgentMode } = useChatConfig();
@@ -21,7 +26,10 @@ export const AgentModeSwitch = () => {
 
             <label
               htmlFor="agent-mode"
-              className={cn("text-sm cursor-pointer", agentMode ? "text-foreground" : "text-muted-foreground")}
+              className={cn(
+                "text-sm cursor-pointer",
+                agentMode ? "text-foreground" : "text-muted-foreground",
+              )}
               onClick={() => setAgentMode(!agentMode)}
             >
               <BotMessageSquareIcon />

@@ -12,7 +12,8 @@ export function hyphenateUrl(url: string) {
 
   // Extract domain and subdomain
   const domainParts = domain.split(".");
-  domain = domainParts.length > 3 ? "..." + domainParts.slice(-3).join(".") : domain;
+  domain =
+    domainParts.length > 3 ? "..." + domainParts.slice(-3).join(".") : domain;
 
   // Process path
   const pathParts = path.split("/").filter(Boolean);

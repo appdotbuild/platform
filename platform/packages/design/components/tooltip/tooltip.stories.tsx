@@ -39,7 +39,8 @@ export const WithDelay: Story = {
 export const WithLongContent: Story = {
   args: {
     children: "Hover for long content",
-    tooltip: "This is a longer tooltip that demonstrates how the component handles multiple lines of text content",
+    tooltip:
+      "This is a longer tooltip that demonstrates how the component handles multiple lines of text content",
   },
 };
 

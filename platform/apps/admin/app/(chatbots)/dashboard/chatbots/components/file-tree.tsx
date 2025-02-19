@@ -17,7 +17,12 @@ interface FileTreeProps {
   className?: string;
 }
 
-export function FileTree({ files, selectedFile, onSelectFile, className }: FileTreeProps) {
+export function FileTree({
+  files,
+  selectedFile,
+  onSelectFile,
+  className,
+}: FileTreeProps) {
   const renderNode = (node: FileEntry, level: number = 0) => {
     const isSelected = node.path === selectedFile;
     const isDirectory = node.type === "directory";
@@ -33,7 +38,7 @@ export function FileTree({ files, selectedFile, onSelectFile, className }: FileT
           className={cn(
             "flex items-center gap-2 w-full px-2 py-1 hover:bg-accent rounded-sm text-sm",
             isSelected && "bg-accent",
-            "text-left"
+            "text-left",
           )}
         >
           {isDirectory ? (
@@ -48,13 +53,19 @@ export function FileTree({ files, selectedFile, onSelectFile, className }: FileT
           )}
           {node.path.split("/").pop()}
         </button>
-        {isDirectory && node.children?.map((child) => renderNode(child, level + 1))}
+        {isDirectory &&
+          node.children?.map((child) => renderNode(child, level + 1))}
       </div>
     );
   };
 
   return (
-    <div className={cn("min-w-[200px] max-w-[300px] max-h-[600px] border-r overflow-auto", className)}>
+    <div
+      className={cn(
+        "min-w-[200px] max-w-[300px] max-h-[600px] border-r overflow-auto",
+        className,
+      )}
+    >
       <div className="p-2">{files.map((file) => renderNode(file))}</div>
     </div>
   );

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "../../shadcn/button";
@@ -15,7 +15,9 @@ export function ShowHide({ content, className = "" }: ShowHideProps) {
   return (
     <div className="space-y-1">
       <div className="group">
-        <p className={`transition-all duration-200 ${!expanded ? "line-clamp-1" : "break-all"} ${className}`}>
+        <p
+          className={`transition-all duration-200 ${!expanded ? "line-clamp-1" : "break-all"} ${className}`}
+        >
           {content}
         </p>
         <Button
@@ -37,4 +39,4 @@ export function ShowHide({ content, className = "" }: ShowHideProps) {
       </div>
     </div>
   );
-} 
+}

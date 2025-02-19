@@ -5,7 +5,11 @@ import { SWRConfig } from "swr";
 import { ConfigProvider } from "@repo/design/components/providers/config-provider";
 import { sidebarMenu } from "../settings/menu";
 
-export default function ProvidersClient({ children }: { children: React.ReactNode }) {
+export default function ProvidersClient({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <ConfigProvider
       value={{

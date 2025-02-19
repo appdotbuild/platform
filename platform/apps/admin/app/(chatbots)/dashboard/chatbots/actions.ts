@@ -39,11 +39,14 @@ export async function getChatbotReadUrl(id: string): Promise<ReadUrl> {
   try {
     const user = await stackServerApp.getUser();
     const { accessToken } = await user.getAuthJson();
-    const response = await fetch(`${PLATFORM_API_URL}/chatbots/${id}/read-url`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+    const response = await fetch(
+      `${PLATFORM_API_URL}/chatbots/${id}/read-url`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       },
-    });
+    );
     if (!response.ok) {
       throw new Error("Failed to fetch chatbot read URL");
     }
@@ -141,7 +144,7 @@ export async function getChatbotCode(chatbotId: string) {
         promises.push(
           file.async("string").then((content) => {
             files[path] = content;
-          })
+          }),
         );
       }
     });

@@ -1,15 +1,29 @@
-import { ArrowLeft, Calendar, User, ExternalLink } from "@repo/design/base/icons";
+import {
+  ArrowLeft,
+  Calendar,
+  User,
+  ExternalLink,
+} from "@repo/design/base/icons";
 import { ShowHide } from "@repo/design/components/show-hide/show-hide";
 import { Button } from "@repo/design/shadcn/button";
 import { Card, CardContent } from "@repo/design/shadcn/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/design/shadcn/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/design/shadcn/tabs";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getChatbot } from "../actions";
 import ViewCodeButton from "../components/view-code-button";
 import CodeViewer from "../components/code-viewer";
 
-export default async function ChatbotPage({ params }: { params: { id: string } }) {
+export default async function ChatbotPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const { id } = await params;
 
   const chatbot = await getChatbot(id);
@@ -28,9 +42,13 @@ export default async function ChatbotPage({ params }: { params: { id: string } }
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
-            <h2 className="text-2xl font-bold tracking-tight truncate max-w-[300px]">{chatbot.name}</h2>
+            <h2 className="text-2xl font-bold tracking-tight truncate max-w-[300px]">
+              {chatbot.name}
+            </h2>
           </div>
-          <p className="text-muted-foreground">View and manage chatbot details</p>
+          <p className="text-muted-foreground">
+            View and manage chatbot details
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {chatbot.flyAppId && (
@@ -71,7 +89,10 @@ export default async function ChatbotPage({ params }: { params: { id: string } }
               <div className="space-y-4">
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold">Chatbot Details</h3>
-                  <ShowHide content={chatbot.name} className="text-sm text-muted-foreground" />
+                  <ShowHide
+                    content={chatbot.name}
+                    className="text-sm text-muted-foreground"
+                  />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -80,7 +101,9 @@ export default async function ChatbotPage({ params }: { params: { id: string } }
                       <Calendar className="h-4 w-4" />
                       Created
                     </div>
-                    <div className="font-medium">{new Date(chatbot.createdAt)?.toLocaleString()}</div>
+                    <div className="font-medium">
+                      {new Date(chatbot.createdAt)?.toLocaleString()}
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1">
@@ -103,7 +126,9 @@ export default async function ChatbotPage({ params }: { params: { id: string } }
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <h3 className="text-lg font-semibold">Deployment</h3>
-                    <p className="text-sm text-muted-foreground">Fly.io App ID: {chatbot.flyAppId}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Fly.io App ID: {chatbot.flyAppId}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -111,7 +136,9 @@ export default async function ChatbotPage({ params }: { params: { id: string } }
           ) : (
             <Card>
               <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">No deployment information available</p>
+                <p className="text-sm text-muted-foreground">
+                  No deployment information available
+                </p>
               </CardContent>
             </Card>
           )}

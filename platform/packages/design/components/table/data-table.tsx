@@ -16,10 +16,20 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/design/shadcn/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/design/shadcn/table";
 
 import { DataTablePagination } from "@repo/design/components/table/data-table-pagination";
-import { ColumnDefToolbar, DataTableToolbar } from "@repo/design/components/table/data-table-toolbar";
+import {
+  ColumnDefToolbar,
+  DataTableToolbar,
+} from "@repo/design/components/table/data-table-toolbar";
 import { Skeleton } from "@repo/design/shadcn/skeleton";
 
 /**
@@ -60,10 +70,15 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const defaultVisibility = Object.fromEntries(
-    columns.filter((c) => c.defaultVisible === false).map((c: any) => [c.accessorKey, false])
+    columns
+      .filter((c) => c.defaultVisible === false)
+      .map((c: any) => [c.accessorKey, false]),
   );
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(defaultVisibility);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>(defaultVisibility);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [{ pageIndex, pageSize }, setPagination] = React.useState({
     pageIndex: 0,
@@ -76,16 +91,21 @@ export function DataTable<TData, TValue>({
   }, [data, totalCount, pageSize]);
 
   // Loading Skeleton:
-  const tableData = React.useMemo(() => (loading ? Array(pageSize).fill({}) : data), [loading, data, pageSize]);
+  const tableData = React.useMemo(
+    () => (loading ? Array(pageSize).fill({}) : data),
+    [loading, data, pageSize],
+  );
   const tableColumns = React.useMemo(
     () =>
       loading
         ? columns.map((column) => ({
             ...column,
-            cell: ({ row }) => <Skeleton className="h-[14px] w-[60%] rounded-sm" />,
+            cell: ({ row }) => (
+              <Skeleton className="h-[14px] w-[60%] rounded-sm" />
+            ),
           }))
         : columns,
-    [loading, columns]
+    [loading, columns],
   );
 
   React.useEffect(() => {
@@ -127,7 +147,11 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <DataTableToolbar textSearchColumn={textSearchColumn} table={table} columns={columns} />
+      <DataTableToolbar
+        textSearchColumn={textSearchColumn}
+        table={table}
+        columns={columns}
+      />
       <div className="rounded-md border">
         <Table className="bg-background">
           <TableHeader>
@@ -136,7 +160,12 @@ export function DataTable<TData, TValue>({
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id} colSpan={header.colSpan}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   );
                 })}
@@ -146,17 +175,30 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} width={cell.column.columnDef.size} className="">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    <TableCell
+                      key={cell.id}
+                      width={cell.column.columnDef.size}
+                      className=""
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>

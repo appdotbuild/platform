@@ -21,8 +21,16 @@ interface ConfigContextType {
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
-export function ConfigProvider({ children, value }: { children: ReactNode; value: ConfigContextType }) {
-  return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;
+export function ConfigProvider({
+  children,
+  value,
+}: {
+  children: ReactNode;
+  value: ConfigContextType;
+}) {
+  return (
+    <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>
+  );
 }
 
 export function useConfig() {

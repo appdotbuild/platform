@@ -9,5 +9,9 @@ export default function Layout({ children }) {
   const segment = useSelectedLayoutSegments();
   const user = useUser();
 
-  return <DashboardLayout userMenu={<UserButton />} signOut={() => user.signOut()}>{children}</DashboardLayout>;
+  return (
+    <DashboardLayout userMenu={<UserButton />} signOut={() => user.signOut()}>
+      {children}
+    </DashboardLayout>
+  );
 }

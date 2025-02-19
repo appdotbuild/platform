@@ -2,7 +2,11 @@ import { drizzle } from "drizzle-orm/neon-serverless";
 import fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { chatbots } from "./db/schema";
 import { v4 as uuidv4 } from "uuid";
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { config } from "dotenv";
 import { execSync } from "child_process";
@@ -29,13 +33,17 @@ const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
 });
 const jwks = jose.createRemoteJWKSet(
-  new URL(`https://api.stack-auth.com/api/v1/projects/${process.env.STACK_PROJECT_ID}/.well-known/jwks.json`)
+  new URL(
+    `https://api.stack-auth.com/api/v1/projects/${process.env.STACK_PROJECT_ID}/.well-known/jwks.json`,
+  ),
 );
 
 async function validateAuth(request: FastifyRequest, reply: FastifyReply) {
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    reply.status(401).send({ error: "Missing or invalid authorization header" });
+    reply
+      .status(401)
+      .send({ error: "Missing or invalid authorization header" });
     return false;
   }
 
@@ -60,7 +68,9 @@ function getS3DirectoryParams(botId: string) {
   return baseParams;
 }
 
-async function createS3DirectoryWithPresignedUrls(botId: string): Promise<{ writeUrl: string; readUrl: string }> {
+async function createS3DirectoryWithPresignedUrls(
+  botId: string,
+): Promise<{ writeUrl: string; readUrl: string }> {
   const baseParams = getS3DirectoryParams(botId);
 
   const writeCommand = new PutObjectCommand(baseParams);
@@ -76,7 +86,9 @@ async function createS3DirectoryWithPresignedUrls(botId: string): Promise<{ writ
   return { writeUrl, readUrl };
 }
 
-async function getReadPresignedUrls(botId: string): Promise<{ readUrl: string }> {
+async function getReadPresignedUrls(
+  botId: string,
+): Promise<{ readUrl: string }> {
   const baseParams = getS3DirectoryParams(botId);
 
   const readCommand = new GetObjectCommand(baseParams);
@@ -99,7 +111,10 @@ app.get("/chatbots", async (request, reply): Promise<Paginated<Chatbot>> => {
     reply.status(400).send({ error: "Validation error" });
   }
 
-  const { limit = 10, page = 1 } = request.query as { limit?: number; page?: number };
+  const { limit = 10, page = 1 } = request.query as {
+    limit?: number;
+    page?: number;
+  };
 
   // Convert to numbers and validate
   if (limit > 100) {
@@ -115,7 +130,12 @@ app.get("/chatbots", async (request, reply): Promise<Paginated<Chatbot>> => {
 
   const countResultP = db.select({ count: sql`count(*)` }).from(chatbots);
 
-  const botsP = db.select(columns).from(chatbots).orderBy(desc(chatbots.createdAt)).limit(pagesize).offset(offset);
+  const botsP = db
+    .select(columns)
+    .from(chatbots)
+    .orderBy(desc(chatbots.createdAt))
+    .limit(pagesize)
+    .offset(offset);
 
   const [countResult, bots] = await Promise.all([countResultP, botsP]);
 
@@ -138,7 +158,10 @@ app.get("/chatbots/:id", async (request, reply): Promise<Chatbot> => {
 
   const { id } = request.params as { id: string };
   const { telegramBotToken, ...columns } = getTableColumns(chatbots);
-  const bot = await db.select(columns).from(chatbots).where(eq(chatbots.id, id));
+  const bot = await db
+    .select(columns)
+    .from(chatbots)
+    .where(eq(chatbots.id, id));
   if (!bot || !bot.length) {
     return reply.status(404).send({
       error: "Chatbot not found",
@@ -153,7 +176,10 @@ app.get("/chatbots/:id/read-url", async (request, reply): Promise<ReadUrl> => {
   }
 
   const { id } = request.params as { id: string };
-  const bot = await db.select({ id: chatbots.id }).from(chatbots).where(eq(chatbots.id, id));
+  const bot = await db
+    .select({ id: chatbots.id })
+    .from(chatbots)
+    .where(eq(chatbots.id, id));
   if (!bot && !bot?.[0]) {
     return reply.status(404).send({
       error: "Chatbot not found",
@@ -172,7 +198,8 @@ app.post("/generate", async (request, reply) => {
     };
 
     const botId = uuidv4();
-    const { writeUrl, readUrl } = await createS3DirectoryWithPresignedUrls(botId);
+    const { writeUrl, readUrl } =
+      await createS3DirectoryWithPresignedUrls(botId);
 
     const newBot = await db
       .insert(chatbots)
@@ -185,7 +212,9 @@ app.post("/generate", async (request, reply) => {
       .returning();
 
     try {
-      let AGENT_API_URL = useStaging ? "http://44.244.252.49:8080" : "http://44.244.252.49:8080";
+      let AGENT_API_URL = useStaging
+        ? "http://44.244.252.49:8080"
+        : "http://44.244.252.49:8080";
 
       const compileResponse = await fetch(`${AGENT_API_URL}/compile`, {
         method: "POST",
@@ -244,7 +273,9 @@ app.post("/generate", async (request, reply) => {
       const files = execSync(`ls -la ${extractDir}`).toString();
       console.log("Extracted files:", files);
 
-      const packageJsonPath = execSync(`find ${extractDir} -name package.json -maxdepth 2 -print -quit`)
+      const packageJsonPath = execSync(
+        `find ${extractDir} -name package.json -maxdepth 2 -print -quit`,
+      )
         .toString()
         .trim();
       const packageJsonDirectory = path.dirname(packageJsonPath);
@@ -308,7 +339,7 @@ COPY --from=build /app /app
 EXPOSE 3000
 
 CMD [ "bun", "run", "start" ]
-`
+`,
       );
 
       // Find existing app with `telegramBotToken`
@@ -330,7 +361,7 @@ CMD [ "bun", "run", "start" ]
                 `${flyBinary} apps destroy ${existingBot.flyAppId} --yes --access-token '${process.env.FLY_IO_TOKEN!}' || true`,
                 {
                   stdio: "inherit",
-                }
+                },
               );
             } catch (error) {
               console.error("Error destroying fly app:", error);
@@ -342,7 +373,7 @@ CMD [ "bun", "run", "start" ]
       const flyAppName = `app-${botId}`;
       execSync(
         `${flyBinary} launch -y --env TELEGRAM_BOT_TOKEN=${telegramBotToken} --env APP_DATABASE_URL='${connectionString}' --env AWS_ACCESS_KEY_ID=${process.env.DEPLOYED_BOT_AWS_ACCESS_KEY_ID!} --env AWS_SECRET_ACCESS_KEY=${process.env.DEPLOYED_BOT_AWS_SECRET_ACCESS_KEY!} --access-token '${process.env.FLY_IO_TOKEN!}' --max-concurrent 1 --ha=false --no-db --no-deploy --name '${flyAppName}'`,
-        { cwd: packageJsonDirectory, stdio: "inherit" }
+        { cwd: packageJsonDirectory, stdio: "inherit" },
       );
 
       await db.update(chatbots).set({
@@ -351,13 +382,19 @@ CMD [ "bun", "run", "start" ]
 
       const flyTomlPath = path.join(packageJsonDirectory, "fly.toml");
       const flyTomlContent = fs.readFileSync(flyTomlPath, "utf8");
-      const updatedContent = flyTomlContent.replace("min_machines_running = 0", "min_machines_running = 1");
+      const updatedContent = flyTomlContent.replace(
+        "min_machines_running = 0",
+        "min_machines_running = 1",
+      );
       fs.writeFileSync(flyTomlPath, updatedContent);
 
-      execSync(`${flyBinary} deploy --ha=false --max-concurrent 1 --access-token '${process.env.FLY_IO_TOKEN!}'`, {
-        cwd: packageJsonDirectory,
-        stdio: "inherit",
-      });
+      execSync(
+        `${flyBinary} deploy --ha=false --max-concurrent 1 --access-token '${process.env.FLY_IO_TOKEN!}'`,
+        {
+          cwd: packageJsonDirectory,
+          stdio: "inherit",
+        },
+      );
 
       if (process.env.NODE_ENV === "production") {
         if (fs.existsSync(downloadDir)) {

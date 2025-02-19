@@ -1,5 +1,9 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript", "plugin:storybook/recommended"],
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript",
+    "plugin:storybook/recommended"
+  ],
   "plugins": ["tailwindcss"],
   "rules": {
     "@next/next/no-html-link-for-pages": "off",
