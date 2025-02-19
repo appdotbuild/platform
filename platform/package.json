@@ -2,18 +2,16 @@
   "name": "bot.new",
   "version": "0.0.1",
   "private": true,
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,js,jsx,json,css}\"",
     "clean": "rimraf -g ./**/node_modules ./**/dist ./**/.turbo ./**/.coverage ./**/.next",
-    "db": "cd packages/db && ./scripts/start-database.sh -d",
-    "db:stop": "cd packages/db && ./scripts/stop-database.sh",
-    "db:reset": "cd packages/db && ./scripts/reset-database.sh",
-    "db:delete": "cd packages/db && ./scripts/delete-database.sh",
-    "db:fg": "cd packages/db && ./scripts/start-database.sh",
     "syncpack:fix": "syncpack fix-mismatches",
     "syncpack:update": "syncpack update"
   },
