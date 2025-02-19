@@ -6,12 +6,17 @@ Code Style and Structure:
 
 Fullstack development:
 
-- The main app is saas/app
-- Use the packages/auth package for authentication, which exposes an auth function, eg: const session = await authOrLogin(); const email = session.user.email
+- The apps are: 
+  - platform/apps/platform the API backend
+  - platform/apps/admin the admin interface
+  - platform/apps/site the public site
+- Use the packages/auth package for authentication, using @stackframe/stack. to get the user use:
+  - in client components: `import { useUser } from "@stackframe/stack"  export function MyClientComponent() {  const user = useUser(); }`
+  - in server components: `import { stackServerApp } from "@repo/auth"  export async function MyServerComponent() {  const user = await stackServerApp.getUser(); }`
 - Put the components for the UI in the packages/design package: put them in packages/design/components/_section name_/
-- Put the data schema in the packages/db package using DrizzleORM and PostgreSQL. The db can be acquired with `import db from "@repo/db"`, the schema with `import { usersTable } from "@repo/db/schema"`, the DrizzleOrm utilities with `import { eq } from "@repo/db/drizzle"`
-- When updating the db schema, run `cd apps/saas && pnpm drizzle-kit generate` to generate the new migrations while `pnpm drizzle-kit migrate` to apply them to the db.
-- For API routes prefer using Server Actions in the apps/saas app directly, inside the same folder as the page and route
+- Put the data schema in the apps/platform/platform/src/db package using DrizzleORM and PostgreSQL.
+- When updating the db schema, run `cd apps/platform && bun drizzle-kit generate` to generate the new migrations while `bun drizzle-kit migrate` to apply them to the db.
+- For API routes prefer using Server Actions in the apps/platform app directly, inside the same folder as the page and route
 - For Server Actions, uses the this uses next-safe-action package and prefer using the authActionClient from the packages/actions package, eg: const result = await authActionClient.schema(mySchema).metadata({ name: "myAction" }).action(async ({ parsedInput, ctx }) => { ... });
 - Calling a Server Action from a page can be done directly eg: const { data: result } = await myAction({}); or const { executeAsync} = useAction(myAction); const { data } = await executeAsync();
 

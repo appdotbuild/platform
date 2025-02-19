@@ -1,9 +1,9 @@
 {
-  "name": "admin",
+  "name": "site",
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3001",
+    "dev": "next dev --port 3000",
     "build": "next build",
     "vercel-build": "bun db:migrate && next build",
     "start": "next start",
@@ -16,7 +16,6 @@
     "db:studio": "bun drizzle-kit studio"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^1.1.3",
     "@hookform/resolvers": "^3.9.0",
     "@next-safe-action/adapter-react-hook-form": "^1.0.13",
     "@radix-ui/react-dropdown-menu": "^2.1.2",

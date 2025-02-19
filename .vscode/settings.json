@@ -1,0 +1,17 @@
+{
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "eslint.workingDirectories": [
+      {
+        "mode": "auto"
+      }
+    ],
+    "files.associations": {
+      "*.css": "tailwindcss"
+    },
+    "prettier.printWidth": 120
+  }
+  
