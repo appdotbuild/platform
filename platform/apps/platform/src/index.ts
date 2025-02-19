@@ -15,7 +15,7 @@ import path from "path";
 import { createApiClient } from "@neondatabase/api-client";
 import * as unzipper from "unzipper";
 import { count, desc, eq, getTableColumns, sql } from "drizzle-orm";
-
+import type { Paginated, Chatbot, ReadUrl } from "@repo/core/types/api"
 config();
 
 const s3Client = new S3Client({
@@ -94,8 +94,10 @@ const app = fastify({
 
 const db = drizzle(process.env.DATABASE_URL!);
 
-app.get('/chatbots', async (request, reply) => {
-  if (!validateAuth(request, reply)) return;
+app.get('/chatbots', async (request, reply): Promise<Paginated<Chatbot>> => {
+  if (!validateAuth(request, reply)) {
+    reply.status(400).send({error: "Validation error"})
+  };
 
   const { limit = 10, page = 1 } = request.query as { limit?: number; page?: number };
   
@@ -137,8 +139,10 @@ app.get('/chatbots', async (request, reply) => {
   };
 })
 
-app.get('/chatbots/:id', async (request, reply) => {
-  if (!validateAuth(request, reply)) return;
+app.get('/chatbots/:id', async (request, reply): Promise<Chatbot> => {
+  if (!validateAuth(request, reply)) {
+    reply.status(400).send({error: "Validation error"})
+  }
 
   const { id } = request.params as { id:string }
   const { telegramBotToken, ...columns } = getTableColumns(chatbots)
@@ -151,8 +155,10 @@ app.get('/chatbots/:id', async (request, reply) => {
   return bot[0]
 })
 
-app.get('/chatbots/:id/read-url', async (request, reply) => {
-  if (!validateAuth(request, reply)) return;
+app.get('/chatbots/:id/read-url', async (request, reply): Promise<ReadUrl> => {
+  if (!validateAuth(request, reply)) {
+    reply.status(400).send({error: "Validation error"})
+  }
 
   const { id } = request.params as { id:string }
   const bot = await db.select({id: chatbots.id}).from(chatbots).where(eq(chatbots.id, id))
