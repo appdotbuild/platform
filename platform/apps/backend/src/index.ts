@@ -557,6 +557,11 @@ app.post(
       const { writeUrl, readUrl } =
         await createS3DirectoryWithPresignedUrls(botId);
 
+      const existingBot = await db
+        .select()
+        .from(chatbots)
+        .where(eq(chatbots.id, botId));
+
       await db
         .insert(chatbots)
         .values({
@@ -565,6 +570,13 @@ app.post(
           ownerId: userId,
           telegramBotToken,
           runMode,
+        })
+        .onConflictDoUpdate({
+          target: chatbots.id,
+          set: {
+            telegramBotToken,
+            runMode,
+          },
         })
         .returning();
 
@@ -582,12 +594,13 @@ app.post(
         .from(chatbotPrompts)
         .where(eq(chatbotPrompts.chatbotId, botId));
 
+      console.log("allPrompts", allPrompts);
       if (allPrompts.length < 1) {
         throw new Error("Failed to insert prompt into chatbot_prompts");
       }
 
       try {
-        // If sourceCodeFile is provided, upload it directly to S3 and skip the /compile endpoint
+        // If sourceCodeFile is provided, upload it directly to S3 and skip the /prepare/compile endpoints
         if (sourceCodeFile) {
           console.log(
             `Uploading source code file directly to S3 for bot ${botId}`,
@@ -632,30 +645,71 @@ app.post(
             ? "http://18.237.53.81:8080"
             : "http://54.245.178.56:8080";
 
-          const compileResponse = await fetch(`${AGENT_API_URL}/compile`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH!}`,
-            },
-            body: JSON.stringify({
-              prompt,
-              writeUrl,
-              botId,
-              readUrl,
-              allPrompts,
-            }),
-          });
-          console.log("compileResponse", compileResponse);
+          if (existingBot && existingBot[0].typespecSchema) {
+            const compileResponse = await fetch(`${AGENT_API_URL}/compile`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH!}`,
+              },
+              body: JSON.stringify({
+                prompt,
+                writeUrl,
+                readUrl,
+                prompts: allPrompts,
+                typespecSchema: existingBot[0].typespecSchema,
+              }),
+            });
+            console.log("compileResponse", compileResponse);
 
-          if (!compileResponse.ok) {
-            throw new Error(
-              `HTTP error in /compile, status: ${compileResponse.status}`,
-            );
+            if (!compileResponse.ok) {
+              throw new Error(
+                `HTTP error in /compile, status: ${compileResponse.status}`,
+              );
+            }
+
+            return reply.send({ newBot: { id: botId } });
+          } else {
+            const prepareResponse = await fetch(`${AGENT_API_URL}/prepare`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH!}`,
+              },
+              body: JSON.stringify({
+                prompts: allPrompts,
+                writeUrl,
+                readUrl,
+                capabilities: [],
+              }),
+            });
+
+            if (!prepareResponse.ok) {
+              throw new Error(
+                `HTTP error in /prepare, status: ${prepareResponse.status}`,
+              );
+            }
+
+            const prepareResponseJson: {
+              message: string;
+              typespec: string;
+            } = await prepareResponse.json();
+
+            await db
+              .update(chatbots)
+              .set({
+                typespecSchema: prepareResponseJson.typespec,
+              })
+              .where(eq(chatbots.id, botId));
+
+            return reply.send({
+              newBot: {
+                id: botId,
+                message: prepareResponseJson.message,
+              },
+            });
           }
         }
-
-        return reply.send({ newBot: { id: botId } });
       } catch (error) {
         console.error("Error compiling bot:", error);
         return reply
