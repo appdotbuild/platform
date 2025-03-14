@@ -705,8 +705,8 @@ app.post(
             return reply.send({
               newBot: {
                 id: botId,
-                message: prepareResponseJson.message,
               },
+              message: prepareResponseJson.message,
             });
           }
         }

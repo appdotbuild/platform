@@ -221,24 +221,10 @@ async function chatbotIteration({
 
     if (response.ok) {
       const generateResult: {
-        readUrl: string;
-        writeUrl: string;
         newBot: {
           id: string;
-          name: string;
-          // more stuff here
         };
-        compileResult: {
-          status: string;
-          message: string;
-          metadata: {
-            functions: Array<{
-              name: string;
-              description: string;
-              examples: Array<string>;
-            }>;
-          };
-        };
+        message: string;
       } = await response.json();
 
       console.log("generateResult", generateResult);
@@ -249,7 +235,7 @@ async function chatbotIteration({
       await app.client.chat.postMessage({
         channel: channelId,
         thread_ts: threadTs,
-        text: sourceCodeFileId ? `Bot deployment in progress! Chatbot ID: ${chatbotId}` : `Bot generation in progress! Chatbot ID: ${chatbotId}`,
+        text: `Received ${generateResult.message} from the agent. ${sourceCodeFileId ? `Uploading bot right away` : `Generating bot source code`}`
       });
 
       await db
