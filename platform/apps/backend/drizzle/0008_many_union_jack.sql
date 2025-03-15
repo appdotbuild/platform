@@ -1,0 +1,1 @@
+ALTER TABLE "chatbot_prompts" ADD COLUMN "kind" text;

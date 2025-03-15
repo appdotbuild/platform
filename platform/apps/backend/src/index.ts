@@ -584,12 +584,14 @@ app.post(
         id: uuidv4(),
         prompt,
         chatbotId: botId,
+        kind: "user",
       });
 
       const allPrompts = await db
         .select({
           prompt: chatbotPrompts.prompt,
           createdAt: chatbotPrompts.createdAt,
+          kind: chatbotPrompts.kind,
         })
         .from(chatbotPrompts)
         .where(eq(chatbotPrompts.chatbotId, botId));
@@ -693,6 +695,9 @@ app.post(
             const prepareResponseJson: {
               message: string;
               typespec: string;
+              metadata: {
+                reasoning: string;
+              };
             } = await prepareResponse.json();
 
             await db
@@ -701,6 +706,13 @@ app.post(
                 typespecSchema: prepareResponseJson.typespec,
               })
               .where(eq(chatbots.id, botId));
+
+            await db.insert(chatbotPrompts).values({
+              id: uuidv4(),
+              prompt: prepareResponseJson.metadata.reasoning,
+              chatbotId: botId,
+              kind: "agent",
+            });
 
             return reply.send({
               newBot: {

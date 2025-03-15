@@ -1,6 +1,6 @@
 {
-  "id": "e4a71d5c-1a02-40b2-8fad-76c9045a6026",
-  "prevId": "b2507c8f-e61c-434a-9f2c-4dcbbea0e283",
+  "id": "c118e397-583d-4cc3-86ea-ec42bd4c5fb6",
+  "prevId": "e4a71d5c-1a02-40b2-8fad-76c9045a6026",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -32,6 +32,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

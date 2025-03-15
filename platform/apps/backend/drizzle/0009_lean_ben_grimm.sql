@@ -1,0 +1,1 @@
+ALTER TABLE "chatbot_prompts" ALTER COLUMN "kind" SET DEFAULT 'user';--> statement-breakpoint

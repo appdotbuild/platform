@@ -24,4 +24,5 @@ export const chatbotPrompts = pgTable("chatbot_prompts", {
   createdAt: timestamp("createdAt", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  kind: text(), // "user" or "agent"
 });
