@@ -646,7 +646,7 @@ app.post(
             : "http://54.245.178.56:8080";
 
           if (existingBot && existingBot[0] && existingBot[0].typespecSchema) {
-            const compileResponse = await fetch(`${AGENT_API_URL}/compile`, {
+            const compileResponse = await fetch(`${AGENT_API_URL}/recompile`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
