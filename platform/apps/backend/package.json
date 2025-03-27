@@ -4,9 +4,9 @@
   "type": "module",
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/pg": "^8.11.11",
-    "drizzle-kit": "^0.30.3",
-    "tsx": "^4.19.2"
+    "@types/pg": "8.11.11",
+    "drizzle-kit": "0.30.3",
+    "tsx": "4.19.2"
   },
   "scripts": {
     "start": "bun run src/index.ts",
@@ -15,21 +15,21 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "5.0.0"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.735.0",
-    "@aws-sdk/s3-request-presigner": "^3.735.0",
-    "@fastify/schedule": "^6.0.0",
-    "@neondatabase/api-client": "^1.11.5",
-    "@neondatabase/serverless": "^0.10.4",
+    "@aws-sdk/client-s3": "3.735.0",
+    "@aws-sdk/s3-request-presigner": "3.735.0",
+    "@fastify/schedule": "6.0.0",
+    "@neondatabase/api-client": "1.11.5",
+    "@neondatabase/serverless": "0.10.4",
     "@repo/core": "workspace:*",
-    "aws-sdk": "^2.1692.0",
-    "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.39.0",
-    "fastify": "^5.2.1",
-    "jose": "^5.10.0",
-    "toad-scheduler": "^3.0.1",
-    "uuid": "^11.0.5"
+    "aws-sdk": "2.1692.0",
+    "dotenv": "16.4.7",
+    "drizzle-orm": "0.39.0",
+    "fastify": "5.2.1",
+    "jose": "5.10.0",
+    "toad-scheduler": "3.0.1",
+    "uuid": "11.0.5"
   }
 }
