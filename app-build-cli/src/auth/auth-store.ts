@@ -1,6 +1,6 @@
 import type { User } from '@stackframe/js';
 import { create } from 'zustand';
-import { tokenStorage, type Token } from './auth-storage.js';
+import { type Token } from './auth-storage.js';
 
 interface AuthState {
   user: User | null;

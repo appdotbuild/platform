@@ -1,7 +1,8 @@
-export const BACKEND_PRODUCTION_API_HOST =
-  'https://platform-muddy-meadow-938.fly.dev';
-export const BACKEND_MOCKED_API_HOST = 'http://127.0.0.1:4444';
-export const AUTH_HOST = 'http://localhost:3001';
+const BACKEND_PRODUCTION_API_HOST = 'https://platform-muddy-meadow-938.fly.dev';
+const BACKEND_MOCKED_API_HOST = 'http://127.0.0.1:4444';
+
+const AUTH_HOST_PRODUCTION = 'https://admin.chatbot.build';
+const AUTH_HOST_DEV = 'http://localhost:3001';
 
 export function getBackendHost() {
   if (process.env.NODE_ENV === 'production') {
@@ -15,8 +16,8 @@ export function getBackendHost() {
 
 export function getAuthHost() {
   if (process.env.NODE_ENV === 'production') {
-    return AUTH_HOST;
+    return AUTH_HOST_PRODUCTION;
   } else {
-    return AUTH_HOST;
+    return AUTH_HOST_DEV;
   }
 }
