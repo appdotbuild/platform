@@ -46,12 +46,8 @@
           "name": "app_prompts_appId_apps_id_fk",
           "tableFrom": "app_prompts",
           "tableTo": "apps",
-          "columnsFrom": [
-            "appId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["appId"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

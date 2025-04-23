@@ -144,7 +144,7 @@ export const getApp = async (appId: string) => {
   }
 };
 
-export const listApps = async ({pageParam}: {pageParam: number}) => {
+export const listApps = async ({ pageParam }: { pageParam: number }) => {
   try {
     const response = await fetch(`${BACKEND_API_HOST}/apps?page=${pageParam}`, {
       headers: {

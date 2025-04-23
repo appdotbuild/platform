@@ -21,15 +21,15 @@ export type SelectProps<T extends string> = {
   options: SelectItem<T>[];
   showPrompt?: boolean;
 } & (
-    | StatusProps
-    | {
+  | StatusProps
+  | {
       status?: never;
       errorMessage?: never;
       loadingText?: never;
       retryMessage?: never;
       successMessage?: never;
     }
-  );
+);
 
 export const Select = <T extends string>({
   question,
@@ -63,8 +63,8 @@ export const Select = <T extends string>({
         status === 'error'
           ? 'error'
           : status === 'success'
-            ? 'success'
-            : 'default'
+          ? 'success'
+          : 'default'
       }
       boxProps={{ width: '100%' }}
     >
@@ -97,14 +97,14 @@ export const Select = <T extends string>({
               )}
             </Box>
           ) : (
-              <InkSelect
-                options={options}
-                onChange={(value) => {
-                  setSelectedValue(value);
-                  onSubmit(value as T);
-                }}
-                onFetchMore={onFetchMore}
-              />
+            <InkSelect
+              options={options}
+              onChange={(value) => {
+                setSelectedValue(value);
+                onSubmit(value as T);
+              }}
+              onFetchMore={onFetchMore}
+            />
           )}
         </Box>
         {status === 'pending' && (
