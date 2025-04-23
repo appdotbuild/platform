@@ -1,1 +1,0 @@
-ALTER TABLE "threads" ADD COLUMN "s3Checksum" text;

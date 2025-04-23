@@ -1,0 +1,10 @@
+{
+  "name": "root",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "clean": "rm -rf node_modules packages/app-build-cli/node_modules packages/app-build-cli/bun.lockb"
+  }
+}

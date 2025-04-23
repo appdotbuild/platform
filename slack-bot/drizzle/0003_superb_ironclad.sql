@@ -1,1 +1,0 @@
-ALTER TABLE "threads" ALTER COLUMN "channelId" DROP NOT NULL;
