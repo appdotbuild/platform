@@ -29,7 +29,7 @@ jobs:
         run: bun install
 
       - name: Install Dependencies for Mocked Agent
-        working-directory: mocked-agent
+        working-directory: platform/mocked-agent
         run: bun install
 
       - name: Run Lint
