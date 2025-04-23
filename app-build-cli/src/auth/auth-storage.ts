@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { useAuthStore } from './auth-store.js';
 import { decodeJwt } from 'jose';
 
-// Define schema for token configuration
 const tokenConfigSchema = z.object({
   refreshToken: z
     .object({
@@ -20,7 +19,6 @@ const tokenConfigSchema = z.object({
     .optional(),
 });
 
-// Type inference from the schema
 type TokenConfig = z.infer<typeof tokenConfigSchema>;
 export type Token = TokenConfig['accessToken'];
 
@@ -188,6 +186,9 @@ export class TokenStorage {
     } catch (error) {
       // If we can't read the config, just write an empty one
       this.writeConfig({});
+    } finally {
+      useAuthStore.getState().setRefreshToken(undefined);
+      useAuthStore.getState().setAccessToken(undefined);
     }
 
     // Clear memory
