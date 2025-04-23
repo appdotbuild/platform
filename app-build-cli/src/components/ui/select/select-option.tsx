@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Box, Text } from 'ink';
 import figures from 'figures';
 import { useComponentTheme } from '@inkjs/ui';

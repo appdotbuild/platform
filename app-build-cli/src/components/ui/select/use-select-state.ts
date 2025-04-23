@@ -7,8 +7,8 @@ import {
   useState,
   useEffect,
 } from 'react';
-import { type Option } from './types.js';
-import OptionMap from './option-map.js';
+import { type Option } from '@inkjs/ui';
+import { OptionMap } from './option-map.js';
 
 type State = {
   /**

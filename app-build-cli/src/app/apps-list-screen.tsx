@@ -48,20 +48,13 @@ const formatAppLabel = (app: {
 
 export const AppsListScreen = () => {
   const { safeNavigate } = useSafeNavigate();
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isFetching,
-  } = useListApps();
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetching } =
+    useListApps();
 
   const apps = data?.pages.flatMap((page) => page.data);
 
   const onFetchMore = () => {
-    if (hasNextPage && !isFetchingNextPage && !isFetching) {
+    if (hasNextPage && !isFetching) {
       fetchNextPage();
     }
   };

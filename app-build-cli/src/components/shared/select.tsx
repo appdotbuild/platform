@@ -15,7 +15,6 @@ type StatusProps = {
 
 export type SelectProps<T extends string> = {
   question: string;
-  focusedValue?: string;
   onSubmit: (value: T) => void;
   onFetchMore?: () => void;
   options: SelectItem<T>[];

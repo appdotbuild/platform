@@ -1,7 +1,6 @@
 import { type ReactNode } from 'react';
 import { Box, Text } from 'ink';
-import { useComponentTheme } from '@inkjs/ui';
-import { type Option } from './types.js';
+import { useComponentTheme, type Option } from '@inkjs/ui';
 import { SelectOption } from './select-option.js';
 import { useSelectState } from './use-select-state.js';
 import { useSelect } from './use-select.js';
@@ -18,7 +17,7 @@ export type SelectProps = {
   /**
    * Number of visible options.
    *
-   * @default 5
+   * @default 10
    */
   readonly visibleOptionCount?: number;
 

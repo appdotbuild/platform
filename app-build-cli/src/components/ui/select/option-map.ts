@@ -1,4 +1,4 @@
-import { type Option } from './types.js';
+import { type Option } from '@inkjs/ui';
 
 type OptionMapItem = Option & {
   previous: OptionMapItem | undefined;
@@ -6,7 +6,7 @@ type OptionMapItem = Option & {
   index: number;
 };
 
-export default class OptionMap extends Map<string, OptionMapItem> {
+export class OptionMap extends Map<string, OptionMapItem> {
   readonly first: OptionMapItem | undefined;
 
   constructor(options: Option[]) {
