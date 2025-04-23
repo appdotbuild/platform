@@ -1,23 +1,16 @@
 import { config } from 'dotenv';
-import fetch from 'node-fetch';
 import os from 'os';
 import chalk from 'chalk';
 import { EventSource } from 'eventsource';
-import { error } from 'console';
+import console, { error } from 'console';
+import { getBackendHost } from '../environment.js';
+import { apiClient } from './api-client.js';
+import { authenticate } from '../auth/auth.js';
 
 // Load environment variables from .env file
 config();
 
-let BACKEND_API_HOST: string;
-if (process.env.NODE_ENV === 'production') {
-  BACKEND_API_HOST = 'https://platform-muddy-meadow-938.fly.dev';
-} else if (process.env.USE_MOCKED_AGENT === 'true') {
-  BACKEND_API_HOST = 'http://127.0.0.1:4444';
-} else {
-  BACKEND_API_HOST = 'https://platform-muddy-meadow-938.fly.dev';
-}
-
-const BACKEND_BEARER_TOKEN = 'bOvfvvt3km3aJGYm6wvc25zy5wFZpiT1';
+const BACKEND_API_HOST = getBackendHost();
 
 function generateMachineId(): string {
   const hostname = os.hostname();
@@ -58,45 +51,25 @@ export type AppGenerationResult = {
 
 export const generateApp = async (params: AppGenerationParams) => {
   try {
-    const requestBody = {
+    const response = await apiClient.post<{
+      newApp: {
+        id: string;
+      };
+      message: string;
+    }>('/generate', {
       prompt: params.prompt,
       userId: generateMachineId(),
       useStaging: params.useStaging,
       appId: params.appId,
       clientSource: 'cli',
       useMockedAgent: process.env.USE_MOCKED_AGENT === 'true',
-    };
-
-    const response = await fetch(`${BACKEND_API_HOST}/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
     });
 
-    if (response.ok) {
-      const generateResult: {
-        newApp: {
-          id: string;
-        };
-        message: string;
-      } = (await response.json()) as {
-        newApp: {
-          id: string;
-        };
-        message: string;
-      };
-
-      return {
-        appId: generateResult.newApp.id,
-        message: generateResult.message,
-        readUrl: '',
-      };
-    } else {
-      const errorMessage = await response.text();
-      throw new Error(errorMessage);
-    }
+    return {
+      appId: response.data.newApp.id,
+      message: response.data.message,
+      readUrl: '',
+    };
   } catch (error) {
     console.error('generate endpoint error', error);
 
@@ -123,20 +96,13 @@ export const generateAppSpec = async (
 
 export const getApp = async (appId: string) => {
   try {
-    const appStatus = await fetch(`${BACKEND_API_HOST}/apps/${appId}`, {
-      headers: {
-        // TODO: remove this
-        Authorization: `Bearer ${BACKEND_BEARER_TOKEN}`,
-      },
-    });
-
-    const appStatusJson = (await appStatus.json()) as App & {
-      readUrl: string;
-    };
+    const appStatus = await apiClient.get<App & { readUrl: string }>(
+      `/apps/${appId}`
+    );
 
     return {
-      isDeployed: appStatusJson.deployStatus === 'deployed',
-      ...appStatusJson,
+      isDeployed: appStatus.data.deployStatus === 'deployed',
+      ...appStatus.data,
     };
   } catch (error) {
     console.error('Error checking app deployment status:', error);
@@ -146,17 +112,8 @@ export const getApp = async (appId: string) => {
 
 export const listApps = async ({ pageParam }: { pageParam: number }) => {
   try {
-    const response = await fetch(`${BACKEND_API_HOST}/apps?page=${pageParam}`, {
-      headers: {
-        Authorization: `Bearer ${BACKEND_BEARER_TOKEN}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch applications: ${response.statusText}`);
-    }
-
-    const apps = (await response.json()) as {
+    const response = await apiClient.get('/apps');
+    const apps = response.data as {
       data: App[];
       pagination: {
         total: number;
@@ -186,32 +143,19 @@ export async function sendMessage({
   message,
   applicationId,
 }: SendMessageParams): Promise<SendMessageResult> {
-  const response = await fetch(`${BACKEND_API_HOST}/message`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      message,
-      clientSource: 'cli',
-      userId: generateMachineId(),
-      applicationId,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = (await response.json()) as {
-      error: string;
-    };
-    throw new Error(errorData.error || 'Unknown error');
-  }
-
-  const result = (await response.json()) as {
+  const response = await apiClient.post<{
     applicationId: string;
     traceId: string;
-  };
+  }>('/message', {
+    message,
+    clientSource: 'cli',
+    userId: generateMachineId(),
+    applicationId,
+  });
 
   return {
-    applicationId: result.applicationId,
-    traceId: result.traceId,
+    applicationId: response.data.applicationId,
+    traceId: response.data.traceId,
   };
 }
 
@@ -230,7 +174,22 @@ export function subscribeToMessages(
   }
 ) {
   const es = new EventSource(
-    `${BACKEND_API_HOST}/message?applicationId=${applicationId}&traceId=${traceId}`
+    `${BACKEND_API_HOST}/message?applicationId=${applicationId}&traceId=${traceId}`,
+    {
+      fetch: async (input, init) => {
+        // Add your auth token to the request
+        const token = await authenticate(); // Your token retrieval method
+
+        // Call your apiClient.get with proper headers
+        return fetch(input, {
+          ...init,
+          headers: {
+            ...init?.headers,
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      },
+    }
   );
 
   let assistantResponse = '';

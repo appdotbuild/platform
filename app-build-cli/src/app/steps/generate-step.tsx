@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import { InfiniteFreeText } from '../../components/shared/free-text.js';
 import { ProgressSteps } from '../../components/ui/progress-steps.js';
-import { type AppGenerationResult } from '../application.js';
+import { type AppGenerationResult } from '../../api/application.js';
 import { useApplication, useGenerateApp } from '../use-application.js';
 import { useCreateAppWizardStore } from '../store.js';
 import { useSafeSearchParams } from '../../routes.js';

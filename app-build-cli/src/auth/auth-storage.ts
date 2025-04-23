@@ -1,0 +1,213 @@
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { z } from 'zod';
+import { useAuthStore } from './auth-store.js';
+
+// Define schema for token configuration
+const tokenConfigSchema = z.object({
+  refreshToken: z
+    .object({
+      value: z.string(),
+      expiry: z.number().catch(Date.now() + 31536000000), // 1 year
+    })
+    .optional(),
+  accessToken: z
+    .object({
+      value: z.string(),
+      expiry: z.number(),
+    })
+    .optional(),
+});
+
+// Type inference from the schema
+type TokenConfig = z.infer<typeof tokenConfigSchema>;
+export type Token = TokenConfig['accessToken'];
+
+export class TokenStorage {
+  private configDir: string;
+  private configFile: string;
+  private _accessToken: Token | null = null;
+
+  constructor() {
+    this.configDir = path.join(os.homedir(), '.config', 'app-dot-build-cli');
+    this.configFile = path.join(this.configDir, 'config.json');
+
+    // Create config directory if it doesn't exist
+    if (!fs.existsSync(this.configDir)) {
+      fs.mkdirSync(this.configDir, { recursive: true, mode: 0o700 });
+    }
+
+    // Initialize empty config if file doesn't exist
+    if (!fs.existsSync(this.configFile)) {
+      this.writeConfig({});
+    } else {
+      // Validate existing config file
+      try {
+        this.readConfig();
+      } catch (error) {
+        console.error('Invalid config file detected. Creating new config.');
+        this.writeConfig({});
+      }
+    }
+  }
+
+  // Read config with Zod validation
+  private readConfig(): TokenConfig {
+    try {
+      const data = fs.readFileSync(this.configFile, 'utf8');
+      const parsedData = JSON.parse(data);
+
+      // Validate with Zod schema
+      const validatedConfig = tokenConfigSchema.parse(parsedData);
+      return validatedConfig;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(`Config file validation failed: ${error.message}`);
+      }
+      if (error instanceof SyntaxError) {
+        throw new Error(`Invalid JSON in config file: ${error.message}`);
+      }
+      throw new Error(
+        `Error reading config file: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  // Write config
+  private writeConfig(config: TokenConfig): void {
+    // Validate config before writing
+    try {
+      tokenConfigSchema.parse(config);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(`Invalid config data: ${error.message}`);
+      }
+      throw error;
+    }
+
+    fs.writeFileSync(
+      this.configFile,
+      JSON.stringify(config, null, 2),
+      { mode: 0o600 } // Restricting permissions for the config file
+    );
+  }
+
+  // Save tokens
+  saveTokens({
+    accessToken,
+    refreshToken,
+  }: {
+    accessToken: {
+      value: string;
+      expiry: number;
+    };
+    refreshToken?: {
+      value: string;
+      expiry: number;
+    };
+  }): void {
+    // Update config with all token information
+    const config = this.readConfig();
+
+    if (refreshToken) {
+      config.refreshToken = {
+        value: refreshToken.value,
+        expiry: refreshToken.expiry,
+      };
+    }
+
+    config.accessToken = {
+      value: accessToken.value,
+      expiry: accessToken.expiry,
+    };
+    this.writeConfig(config);
+
+    if (config.refreshToken) {
+      useAuthStore.getState().setRefreshToken(config.refreshToken);
+    }
+    useAuthStore.getState().setAccessToken(config.accessToken);
+
+    // Keep access token in memory as well for quick access
+    this._accessToken = accessToken;
+  }
+
+  // Get refresh token
+  getRefreshToken(): Token | null {
+    try {
+      const config = this.readConfig();
+      return config.refreshToken || null;
+    } catch (error) {
+      console.error('Error retrieving refresh token:', error);
+      return null;
+    }
+  }
+
+  // Get access token (from memory or file)
+  getAccessToken(): Token | null {
+    // Check if we have a valid access token in memory first
+    if (this._accessToken && this._accessToken.expiry > Date.now()) {
+      return this._accessToken;
+    }
+
+    // If not in memory or expired, try to get from config file
+    try {
+      const config = this.readConfig();
+      const token = config.accessToken;
+
+      // Check if token exists and is not expired
+      if (token?.value && token.expiry > Date.now()) {
+        // Store in memory for future quick access
+        this._accessToken = token;
+        return token;
+      }
+    } catch (error) {
+      console.error('Error retrieving access token from config:', error);
+    }
+
+    return null;
+  }
+
+  // Check if we have tokens stored
+  hasTokens(): boolean {
+    return Boolean(this.getRefreshToken());
+  }
+
+  // Clear all tokens
+  clearTokens(): void {
+    // Clear from config
+    try {
+      const config = this.readConfig();
+      delete config.refreshToken;
+      delete config.accessToken;
+      this.writeConfig(config);
+    } catch (error) {
+      // If we can't read the config, just write an empty one
+      this.writeConfig({});
+    }
+
+    // Clear memory
+    this._accessToken = null;
+  }
+
+  // Get the token expiry time
+  getTokenExpiry(): number {
+    try {
+      const config = this.readConfig();
+      return config.accessToken?.expiry || 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  // Check if token is expired or will expire soon
+  isTokenExpired(bufferSeconds: number = 300): boolean {
+    const expiry = this.getTokenExpiry();
+    return Date.now() + bufferSeconds * 1000 >= expiry;
+  }
+}
+
+// Export a singleton instance
+export const tokenStorage = new TokenStorage();

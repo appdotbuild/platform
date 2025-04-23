@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "zod": "3.24.1",
-    "@stackframe/stack": "2.7.16"
+    "@stackframe/stack": "2.8.6"
   },
   "peerDependencies": {
     "next": "15.1.4"

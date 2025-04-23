@@ -10,7 +10,7 @@ import {
   subscribeToMessages,
   type SendMessageParams,
   type SendMessageResult,
-} from '../application.js';
+} from '../../api/application.js';
 import { useEffect } from 'react';
 import { applicationQueryKeys } from '../use-application.js';
 

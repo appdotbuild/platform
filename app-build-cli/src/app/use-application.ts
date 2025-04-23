@@ -10,12 +10,12 @@ import {
   generateAppSpec,
   getApp,
   listApps,
-} from './application.js';
+} from '../api/application.js';
 import type {
   AppGenerationParams,
   AppGenerationResult,
   AppSpecsGenerationParams,
-} from './application.js';
+} from '../api/application.js';
 import { useSafeSearchParams } from '../routes.js';
 
 export const applicationQueryKeys = {

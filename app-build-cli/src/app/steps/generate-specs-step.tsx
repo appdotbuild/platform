@@ -2,7 +2,7 @@ import { Box } from 'ink';
 import { InfiniteFreeText } from '../../components/shared/free-text.js';
 import { useGenerateAppSpecs } from '../use-application.js';
 import { useCreateAppWizardStore } from '../store.js';
-import { type AppGenerationResult } from '../application.js';
+import { type AppGenerationResult } from '../../api/application.js';
 
 type GenerateSpecsStepProps = {
   onSuccess: (result: AppGenerationResult, prompt: string) => void;

@@ -1,10 +1,9 @@
 import { Box, Text } from 'ink';
-import { Select } from '../components/shared/select.js';
 import { useSafeNavigate, type RoutePath } from '../routes.js';
+import { Select } from '../components/shared/select.js';
 
 const items = [
   { label: '🆕 Create new app (MOCKED AGENT)', value: '/app/build' as const },
-
   { label: '🆕 Create new app', value: '/app/create' as const },
   {
     label: '📋 List and iterate existing applications',

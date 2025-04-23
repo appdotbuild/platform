@@ -6,7 +6,7 @@ import { SuccessStep } from './steps/success-step.js';
 import { steps } from './steps/steps.js';
 import { WizardHistory } from '../components/ui/wizard-history.js';
 import { useCreateAppWizardStore } from './store.js';
-import type { AppGenerationResult } from './application.js';
+import type { AppGenerationResult } from '../api/application.js';
 import { useSafeNavigate, useSafeSearchParams } from '../routes.js';
 
 export const CreateAppScreen = () => {

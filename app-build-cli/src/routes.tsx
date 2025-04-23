@@ -20,7 +20,6 @@ import {
 } from './app/steps/steps.js';
 import { useCallback, useMemo } from 'react';
 import { ShortcutHints } from './components/ui/shortcut-hints.js';
-import { Banner } from './components/ui/Banner.js';
 import { AppBuildScreen } from './app/app-build-screen.js';
 
 export type RoutePath = RouterDefinition[number]['path'];
@@ -205,7 +204,6 @@ export function useRouteParams<T extends RoutePath>(_route: T) {
 export function AppRouter() {
   return (
     <MemoryRouter>
-      <Banner />
       <Routes>
         {ROUTES_DEFINITIONS.map((route) => (
           <Route key={route.path} path={route.path} element={route.element} />

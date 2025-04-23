@@ -17,5 +17,5 @@ npm run dev
 2. Run the CLI
 
 ```bash
-node ./dist/cli.js
+bun ./dist/cli.js
 ```

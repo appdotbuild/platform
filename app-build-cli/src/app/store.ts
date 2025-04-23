@@ -20,7 +20,7 @@ interface WizardState {
   addMessageToAppHistory: (stage: GenerationStage, message: string) => void;
 }
 
-export const useCreateAppWizardStore = create<WizardState>(((set) => ({
+export const useCreateAppWizardStore = create<WizardState>((set) => ({
   config: {
     useStaging: false,
     prompt: '',
@@ -53,4 +53,4 @@ export const useCreateAppWizardStore = create<WizardState>(((set) => ({
         history: [...newHistory, { question, answer }],
       };
     }),
-})) as StateCreator<WizardState>);
+}));

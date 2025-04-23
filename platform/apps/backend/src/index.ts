@@ -16,12 +16,12 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { createApiClient } from "@neondatabase/api-client";
-import { desc, eq, getTableColumns, sql, gt } from "drizzle-orm";
+import { desc, eq, getTableColumns, sql, gt, and } from "drizzle-orm";
 import type { Paginated, ReadUrl } from "@repo/core/types/api";
-import * as jose from "jose";
 import winston from "winston";
 import { FastifySSEPlugin } from "fastify-sse-v2";
 import { EventSource } from "eventsource";
+import { validateAuth } from "./auth-strategy";
 
 // Define the App type locally since it's not exported from @repo/core/types/api
 type App = {
@@ -41,7 +41,7 @@ type App = {
 };
 
 // Configure Winston logger
-const logger = winston.createLogger({
+export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || "info",
   format: winston.format.combine(
     winston.format.timestamp(),
@@ -86,80 +86,6 @@ const s3Client = new S3Client({
 const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
 });
-
-const jwks = jose.createRemoteJWKSet(
-  new URL(
-    `https://api.stack-auth.com/api/v1/projects/${process.env.STACK_PROJECT_ID}/.well-known/jwks.json`,
-  ),
-);
-
-async function validateAuth(
-  request: FastifyRequest,
-  reply: FastifyReply,
-): Promise<FastifyReply | undefined> {
-  const authHeader = request.headers.authorization;
-
-  // special-case for slack-bot->backend communication
-  if (authHeader === `Bearer ${process.env.BACKEND_API_SECRET}`) {
-    return;
-  }
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return reply
-      .status(401)
-      .send({ error: "Missing or invalid authorization header" });
-  }
-
-  const accessToken = authHeader.split(" ")[1];
-
-  let payload;
-  try {
-    payload = (await jose.jwtVerify(accessToken, jwks)).payload;
-  } catch (error) {
-    logger.error("JWT verification failed", { error });
-    return reply.status(401).send({ error: "Invalid authentication token" });
-  }
-
-  if (!payload.sub) {
-    logger.warn("No subject found in JWT payload");
-    return reply.status(401).send({ error: "Invalid authentication token" });
-  }
-
-  try {
-    const response = await fetch(
-      `https://api.stack-auth.com/api/v1/users/${payload.sub}`,
-      {
-        method: "GET",
-        headers: {
-          "X-Stack-Project-Id": process.env.STACK_PROJECT_ID!,
-          "X-Stack-Access-Type": "server",
-          "X-Stack-Publishable-Client-Key":
-            process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY!,
-          "X-Stack-Secret-Server-Key": process.env.STACK_SECRET_SERVER_KEY!,
-        },
-      },
-    );
-
-    if (!response.ok) {
-      logger.error("Failed to fetch user data from Stack Auth", {
-        statusText: response.statusText,
-        status: response.status,
-      });
-      return reply.status(401).send({ error: "Failed to validate user" });
-    }
-
-    const responseJson = await response.json();
-    if (!responseJson.primary_email.endsWith("@neon.tech")) {
-      logger.warn("Unauthorized email domain attempt", {
-        email: responseJson.primary_email,
-      });
-      return reply.status(403).send({ error: "Unauthorized email domain" });
-    }
-  } catch (error) {
-    logger.error("Stack Auth API call failed", { error });
-    return reply.status(500).send({ error: "Authentication service error" });
-  }
-}
 
 function getS3DirectoryParams(appId: string) {
   const key = `apps/${appId}/source_code.zip`;
@@ -524,9 +450,11 @@ app.ready().then(() => {
 });
 
 app.get("/apps", async (request, reply): Promise<Paginated<App>> => {
-  const authCheck = await validateAuth(request, reply);
-  if (authCheck) {
-    return authCheck;
+  const authResponse = await validateAuth(request, reply);
+  if ("error" in authResponse) {
+    return reply.status(authResponse.statusCode).send({
+      error: authResponse.error,
+    });
   }
 
   const { limit = 10, page = 1 } = request.query as {
@@ -546,11 +474,17 @@ app.get("/apps", async (request, reply): Promise<Paginated<App>> => {
 
   const { ...columns } = getTableColumns(apps);
 
-  const countResultP = db.select({ count: sql`count(*)` }).from(apps);
+  const countResultP = db
+    .select({ count: sql`count(*)` })
+    .from(apps)
+    .where(eq(apps.ownerId, authResponse.id));
+
+  console.log(authResponse.id);
 
   const appsP = db
     .select(columns)
     .from(apps)
+    .where(eq(apps.ownerId, authResponse.id))
     .orderBy(desc(apps.createdAt))
     .limit(pagesize)
     .offset(offset);
@@ -570,9 +504,11 @@ app.get("/apps", async (request, reply): Promise<Paginated<App>> => {
 });
 
 app.get("/apps/:id", async (request, reply): Promise<App> => {
-  const authCheck = await validateAuth(request, reply);
-  if (authCheck) {
-    return authCheck;
+  const authResponse = await validateAuth(request, reply);
+  if ("error" in authResponse) {
+    return reply.status(authResponse.statusCode).send({
+      error: authResponse.error,
+    });
   }
 
   const { id } = request.params as { id: string };
@@ -583,7 +519,7 @@ app.get("/apps/:id", async (request, reply): Promise<App> => {
       s3Checksum: apps.s3Checksum,
     })
     .from(apps)
-    .where(eq(apps.id, id));
+    .where(and(eq(apps.id, id), eq(apps.ownerId, authResponse.id)));
   if (!app || !app.length) {
     return reply.status(404).send({
       error: "App not found",
@@ -593,16 +529,18 @@ app.get("/apps/:id", async (request, reply): Promise<App> => {
 });
 
 app.get("/apps/:id/read-url", async (request, reply): Promise<ReadUrl> => {
-  const authCheck = await validateAuth(request, reply);
-  if (authCheck) {
-    return authCheck;
+  const authResponse = await validateAuth(request, reply);
+  if ("error" in authResponse) {
+    return reply.status(authResponse.statusCode).send({
+      error: authResponse.error,
+    });
   }
 
   const { id } = request.params as { id: string };
   const app = await db
     .select({ id: apps.id })
     .from(apps)
-    .where(eq(apps.id, id));
+    .where(and(eq(apps.id, id), eq(apps.ownerId, authResponse.id)));
   if (!app && !app?.[0]) {
     return reply.status(404).send({
       error: "App not found",
@@ -630,15 +568,21 @@ app.post(
     try {
       const {
         prompt,
-        userId,
         useStaging,
         useMockedAgent,
         sourceCodeFile,
         clientSource,
       } = request.body;
 
+      const authResponse = await validateAuth(request, reply);
+      if ("error" in authResponse) {
+        return reply.status(authResponse.statusCode).send({
+          error: authResponse.error,
+        });
+      }
+
       logger.info("Generate request received", {
-        userId,
+        userId: authResponse.id,
         useStaging,
         useMockedAgent,
         clientSource,
@@ -664,7 +608,7 @@ app.post(
       const existingApp = await db
         .select()
         .from(apps)
-        .where(eq(apps.id, appId));
+        .where(and(eq(apps.id, appId), eq(apps.ownerId, authResponse.id)));
 
       if (existingApp && existingApp[0]) {
         logger.info("Found existing app", {
@@ -679,7 +623,7 @@ app.post(
         .values({
           id: appId,
           name: prompt,
-          ownerId: userId,
+          ownerId: authResponse.id,
           clientSource,
         })
         .onConflictDoUpdate({
@@ -692,7 +636,7 @@ app.post(
 
       logger.info("Upserted app in database", {
         appId,
-        userId,
+        userId: authResponse.id,
       });
 
       await db.insert(appPrompts).values({
@@ -975,7 +919,12 @@ app.post(
 // Platform endpoint that forwards to the agent and streams back responses
 app.post("/message", async (request, reply) => {
   try {
-    console.log("WTFFfffffffffffff");
+    const authResponse = await validateAuth(request, reply);
+    if ("error" in authResponse) {
+      return reply.status(authResponse.statusCode).send({
+        error: authResponse.error,
+      });
+    }
 
     const applicationTraceId = (appId: string | undefined) =>
       appId ? `app-${appId}.req-${request.id}` : `temp.req-${request.id}`;
@@ -987,11 +936,25 @@ app.post("/message", async (request, reply) => {
       message: string;
       applicationId?: string;
       clientSource: string;
-      userId: string;
     };
 
     const allMessages: string[] = [];
     if (requestBody.applicationId) {
+      const application = await db
+        .select()
+        .from(apps)
+        .where(
+          and(
+            eq(apps.id, requestBody.applicationId),
+            eq(apps.ownerId, authResponse.id),
+          ),
+        );
+      if (!application.length) {
+        return reply.status(404).send({
+          error: "Application not found",
+        });
+      }
+
       // get the history of prompts
       const historyPrompts = await db
         .select({
@@ -1037,7 +1000,7 @@ app.post("/message", async (request, reply) => {
         id: newAppId,
         name: requestBody.message,
         clientSource: requestBody.clientSource,
-        ownerId: requestBody.userId,
+        ownerId: authResponse.id,
         traceId: applicationTraceId(newAppId),
       });
       applicationId = newAppId;
@@ -1079,6 +1042,13 @@ app.post("/message", async (request, reply) => {
 // GET endpoint for SSE streaming
 app.get("/message", async (request, reply) => {
   try {
+    const authResponse = await validateAuth(request, reply);
+    if ("error" in authResponse) {
+      return reply.status(authResponse.statusCode).send({
+        error: authResponse.error,
+      });
+    }
+
     const { applicationId, traceId } = request.query as any;
 
     // Validate applicationId
