@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppRouter } from './routes.js';
 import { authenticate } from './auth/auth.js';
 import { useAuth } from './auth/use-auth.js';
-import { Box } from 'ink';
+import { Box, Text } from 'ink';
 import { Banner } from './components/ui/Banner.js';
 
 const queryClient = new QueryClient();
@@ -31,6 +31,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !data?.isLoggedIn) {
+      console.log('Authenticating...');
       void authenticate();
     }
   }, [data, isLoading]);
@@ -38,7 +39,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   let content = null;
 
   if (error) {
-    content = <div>Error: {error.message}</div>;
+    content = <Text color="red">Error: {error.message}</Text>;
   } else if (!data?.isLoggedIn) {
     content = null;
   } else {

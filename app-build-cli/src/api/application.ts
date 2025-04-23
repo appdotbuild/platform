@@ -112,7 +112,7 @@ export const getApp = async (appId: string) => {
 
 export const listApps = async ({ pageParam }: { pageParam: number }) => {
   try {
-    const response = await apiClient.get('/apps');
+    const response = await apiClient.get(`/apps?page=${pageParam}`);
     const apps = response.data as {
       data: App[];
       pagination: {

@@ -12,6 +12,7 @@ export const apiClient = axios.create({
 // Auth token injection
 apiClient.interceptors.request.use(async (config) => {
   const token = await authenticate();
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

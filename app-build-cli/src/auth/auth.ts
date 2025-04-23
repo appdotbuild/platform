@@ -71,7 +71,7 @@ export async function authenticate(): Promise<string> {
   if (storedRefreshToken) {
     try {
       // Try to refresh the token
-      const { value: accessTokenVal, expiresAt } = await fetchAccessToken(
+      const { value: accessTokenVal } = await fetchAccessToken(
         storedRefreshToken.value
       );
 
@@ -79,7 +79,6 @@ export async function authenticate(): Promise<string> {
       tokenStorage.saveTokens({
         accessToken: {
           value: accessTokenVal,
-          expiry: expiresAt,
         },
       });
 
@@ -107,7 +106,6 @@ export async function authenticate(): Promise<string> {
     tokenStorage.saveTokens({
       accessToken: {
         value: newAccessToken.value,
-        expiry: newAccessToken.expiresAt,
       },
       refreshToken: {
         value: newRefreshTokenResponse.data,

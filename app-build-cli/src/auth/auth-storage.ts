@@ -3,6 +3,7 @@ import path from 'path';
 import os from 'os';
 import { z } from 'zod';
 import { useAuthStore } from './auth-store.js';
+import { decodeJwt } from 'jose';
 
 // Define schema for token configuration
 const tokenConfigSchema = z.object({
@@ -15,7 +16,6 @@ const tokenConfigSchema = z.object({
   accessToken: z
     .object({
       value: z.string(),
-      expiry: z.number(),
     })
     .optional(),
 });
@@ -102,7 +102,6 @@ export class TokenStorage {
   }: {
     accessToken: {
       value: string;
-      expiry: number;
     };
     refreshToken?: {
       value: string;
@@ -121,7 +120,6 @@ export class TokenStorage {
 
     config.accessToken = {
       value: accessToken.value,
-      expiry: accessToken.expiry,
     };
     this.writeConfig(config);
 
@@ -147,21 +145,25 @@ export class TokenStorage {
 
   // Get access token (from memory or file)
   getAccessToken(): Token | null {
-    // Check if we have a valid access token in memory first
-    if (this._accessToken && this._accessToken.expiry > Date.now()) {
-      return this._accessToken;
-    }
-
     // If not in memory or expired, try to get from config file
     try {
+      if (this._accessToken) {
+        if (!this.isTokenExpired(this._accessToken.value)) {
+          return this._accessToken;
+        }
+      }
+
       const config = this.readConfig();
-      const token = config.accessToken;
+      const configAccessToken = config.accessToken;
+      if (!configAccessToken?.value) {
+        return null;
+      }
 
       // Check if token exists and is not expired
-      if (token?.value && token.expiry > Date.now()) {
+      if (!this.isTokenExpired(configAccessToken.value)) {
         // Store in memory for future quick access
-        this._accessToken = token;
-        return token;
+        this._accessToken = configAccessToken;
+        return configAccessToken;
       }
     } catch (error) {
       console.error('Error retrieving access token from config:', error);
@@ -193,19 +195,29 @@ export class TokenStorage {
   }
 
   // Get the token expiry time
-  getTokenExpiry(): number {
+  getTokenExpiryInMS(accessToken: string): number {
     try {
-      const config = this.readConfig();
-      return config.accessToken?.expiry || 0;
+      if (!accessToken) {
+        return 0;
+      }
+      const decodedJwt = decodeJwt(accessToken);
+
+      if (!decodedJwt.exp) {
+        return 0;
+      }
+
+      return decodedJwt.exp * 1000;
     } catch (error) {
       return 0;
     }
   }
 
   // Check if token is expired or will expire soon
-  isTokenExpired(bufferSeconds: number = 300): boolean {
-    const expiry = this.getTokenExpiry();
-    return Date.now() + bufferSeconds * 1000 >= expiry;
+  isTokenExpired(accessToken: string): boolean {
+    const expiry = this.getTokenExpiryInMS(accessToken);
+
+    const bufferMs = 300 * 1000;
+    return Date.now() >= expiry - bufferMs;
   }
 }
 
