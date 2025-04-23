@@ -48,7 +48,15 @@ const formatAppLabel = (app: {
 
 export const AppsListScreen = () => {
   const { safeNavigate } = useSafeNavigate();
-  const { data: apps, isLoading, error } = useListApps();
+  const {data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching} = useListApps();
+
+  const apps = data?.pages.flatMap((page) => page.data);
+
+  const onFetchMore = () => {
+    if (hasNextPage && !isFetchingNextPage && !isFetching) {
+      fetchNextPage();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -67,7 +75,7 @@ export const AppsListScreen = () => {
     );
   }
 
-  if (!apps?.data.length) {
+  if (!apps?.length) {
     return (
       <Box justifyContent="center" paddingY={1}>
         <Text>📭 No apps found</Text>
@@ -75,7 +83,7 @@ export const AppsListScreen = () => {
     );
   }
 
-  const items: SelectItem[] = apps.data.map((app) => ({
+  const items: SelectItem[] = apps.map((app) => ({
     label: formatAppLabel(app),
     value: app.id,
   }));
@@ -95,6 +103,7 @@ export const AppsListScreen = () => {
             params: { appId: item },
           });
         }}
+        onFetchMore={onFetchMore}        
       />
     </Box>
   );

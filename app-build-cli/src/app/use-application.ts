@@ -1,6 +1,7 @@
 import {
   useMutation,
   useQuery,
+  useInfiniteQuery,
   useQueryClient,
   type UseQueryOptions,
 } from '@tanstack/react-query';
@@ -35,9 +36,11 @@ export const useApplication = (
 };
 
 export const useListApps = () => {
-  return useQuery({
+  return useInfiniteQuery({
+    initialPageParam: 1,
     queryKey: applicationQueryKeys.apps,
     queryFn: listApps,
+    getNextPageParam: (lastPage) => lastPage?.pagination.page + 1,
   });
 };
 

@@ -1,8 +1,9 @@
 import { Box, Text, Newline } from 'ink';
 import { type SelectItem } from './types.js';
-import { Select as InkSelect, Spinner } from '@inkjs/ui';
+import { Spinner } from '@inkjs/ui';
 import { Panel } from './panel.js';
 import { useState } from 'react';
+import { Select as InkSelect } from '../ui/select/index.js';
 
 type StatusProps = {
   status: 'pending' | 'success' | 'error' | 'idle';
@@ -14,23 +15,26 @@ type StatusProps = {
 
 export type SelectProps<T extends string> = {
   question: string;
+  focusedValue?: string;
   onSubmit: (value: T) => void;
+  onFetchMore?: () => void;
   options: SelectItem<T>[];
   showPrompt?: boolean;
 } & (
-  | StatusProps
-  | {
+    | StatusProps
+    | {
       status?: never;
       errorMessage?: never;
       loadingText?: never;
       retryMessage?: never;
       successMessage?: never;
     }
-);
+  );
 
 export const Select = <T extends string>({
   question,
   onSubmit,
+  onFetchMore,
   options,
   status = 'idle',
   loadingText,
@@ -59,8 +63,8 @@ export const Select = <T extends string>({
         status === 'error'
           ? 'error'
           : status === 'success'
-          ? 'success'
-          : 'default'
+            ? 'success'
+            : 'default'
       }
       boxProps={{ width: '100%' }}
     >
@@ -93,13 +97,14 @@ export const Select = <T extends string>({
               )}
             </Box>
           ) : (
-            <InkSelect
-              options={options}
-              onChange={(value) => {
-                setSelectedValue(value);
-                onSubmit(value as T);
-              }}
-            />
+              <InkSelect
+                options={options}
+                onChange={(value) => {
+                  setSelectedValue(value);
+                  onSubmit(value as T);
+                }}
+                onFetchMore={onFetchMore}
+              />
           )}
         </Box>
         {status === 'pending' && (

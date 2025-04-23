@@ -1,6 +1,0 @@
-import { jsxs as _jsxs, jsx as _jsx } from "react/jsx-runtime";
-import { Box, Text } from 'ink';
-export const SuccessMessage = ({ title, message, details = [], }) => {
-    return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [_jsxs(Box, { flexDirection: "column", borderStyle: "round", borderColor: "green", padding: 1, marginBottom: 1, children: [_jsxs(Box, { children: [_jsxs(Text, { backgroundColor: "green", color: "black", bold: true, children: [' ', "SUCCESS", ' '] }), _jsxs(Text, { color: "green", bold: true, children: [' ', title] })] }), _jsx(Box, { marginLeft: 2, marginTop: 1, children: _jsx(Text, { children: message }) })] }), details.length > 0 && (_jsx(Box, { flexDirection: "column", borderStyle: "round", borderColor: "blue", padding: 1, children: details.map((detail, index) => (_jsxs(Box, { marginTop: index === 0 ? 0 : 1, children: [_jsxs(Text, { dimColor: true, children: [detail.label, ": "] }), _jsx(Text, { color: detail.color || 'white', bold: true, children: detail.value })] }, index))) }))] }));
-};
-//# sourceMappingURL=success-message.js.map

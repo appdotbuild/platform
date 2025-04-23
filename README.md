@@ -1,0 +1,5 @@
+# Requirements
+
+- pnpm
+- bun
+- flyctl
