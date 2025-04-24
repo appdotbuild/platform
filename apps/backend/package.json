@@ -8,6 +8,7 @@
     "drizzle-kit": "0.30.6"
   },
   "scripts": {
+    "clean": "rm -rf node_modules",
     "start": "bun run src/index.ts",
     "dev": "bun run --watch src/index.ts",
     "db:generate": "drizzle-kit generate",
@@ -15,7 +16,7 @@
     "test": "bun test"
   },
   "peerDependencies": {
-    "typescript": "5.0.0"
+    "typescript": "5.8.2"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.735.0",

@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "clean": "rm -rf node_modules",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {

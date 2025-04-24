@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3001",
+    "clean": "rm -rf node_modules .next",
     "build": "next build",
     "vercel-build": "next build",
     "start": "next start",
@@ -28,8 +29,8 @@
     "jszip": "3.10.1",
     "next": "15.1.4",
     "next-safe-action": "7.10.2",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "react": "18.3.0",
+    "react-dom": "18.3.0",
     "react-hook-form": "7.53.0",
     "swr": "2.2.5",
     "timeago.js": "4.0.2",
@@ -40,16 +41,16 @@
     "@storybook/nextjs": "8.4.7",
     "@storybook/react": "8.4.7",
     "@types/node": "22.10.6",
-    "@types/react": "19.0.7",
-    "@types/react-dom": "19.0.3",
+    "@types/react": "18.3.0",
+    "@types/react-dom": "18.3.0",
     "@vercel/node": "5.0.2",
     "cross-env": "7.0.3",
     "eslint": "9.18.0",
-    "eslint-config-next": "15.1.4",
+    "eslint-config-next": "14.1.0",
     "eslint-plugin-react": "7.36.1",
     "eslint-plugin-tailwindcss": "3.17.4",
     "postcss": "8.5.1",
     "tailwindcss": "3.4.17",
-    "typescript": "5.7.2"
+    "typescript": "5.8.2"
   }
 }

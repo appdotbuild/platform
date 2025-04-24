@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "clean": "rm -rf node_modules",
     "dev": "bun run --watch index.ts"
   },
   "devDependencies": {

@@ -2,9 +2,56 @@
   "name": "root",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
-    "clean": "rm -rf node_modules packages/app-build-cli/node_modules packages/app-build-cli/bun.lockb"
+    "clean": "bun --filter '*' clean",
+    "dev": "bun --filter './apps/*' dev",
+    "clidev": "bun --filter './apps/cli' dev",
+    "backend": "bun --filter './apps/backend' dev",
+    "admin": "bun --filter './apps/admin' dev",
+    "cli": "bun --env-file=./apps/cli/.env ./apps/cli/dist/cli.js"
+  },
+  "dependencies": {
+    "@inkjs/ui": "2.0.0",
+    "@stackframe/js": "^2.8.6",
+    "@tanstack/react-query": "5.69.0",
+    "axios": "^1.8.4",
+    "dotenv": "^16.4.7",
+    "eventsource": "^3.0.6",
+    "ink": "5.2.0",
+    "ink-divider": "^4.1.1",
+    "ink-markdown": "^1.0.4",
+    "ink-spinner": "^5.0.0",
+    "ink-syntax-highlight": "2.0.2",
+    "ink-text-input": "^6.0.0",
+    "jose": "^6.0.10",
+    "meow": "13.2.0",
+    "node-fetch": "3.3.2",
+    "query-string": "^9.1.1",
+    "react": "18.3.0",
+    "react-markdown": "^10.1.0",
+    "react-router": "^7.4.1",
+    "zod": "^3.24.2",
+    "zustand": "5.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.23.0",
+    "@sindresorhus/tsconfig": "^3.0.1",
+    "@tanstack/eslint-plugin-query": "^5.68.0",
+    "@types/node": "^22.14.1",
+    "@types/react": "18.3.0",
+    "bun": "1.2.5",
+    "chalk": "4.1.2",
+    "eslint": "9.23.0",
+    "eslint-plugin-react": "7.37.4",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "ink-testing-library": "^3.0.0",
+    "prettier": "^2.8.7",
+    "react-devtools-core": "^6.1.1",
+    "typescript": "5.8.2",
+    "typescript-eslint": "8.28.0",
+    "xo": "^0.53.1"
   }
 }

@@ -9,7 +9,9 @@
   },
   "scripts": {
     "build": "tsc",
+    "clean": "rm -rf node_modules dist",
     "dev": "tsc --watch",
+    "devnew": "bun --watch src/cli.tsx",
     "test": "prettier --check . && xo && ava",
     "format": "prettier --write .",
     "start": "node dist/cli.js",
@@ -35,7 +37,7 @@
     "meow": "13.2.0",
     "node-fetch": "3.3.2",
     "query-string": "^9.1.1",
-    "react": "^18.2.0",
+    "react": "18.3.0",
     "react-markdown": "^10.1.0",
     "react-router": "^7.4.1",
     "zod": "^3.24.2",
@@ -46,7 +48,7 @@
     "@sindresorhus/tsconfig": "^3.0.1",
     "@tanstack/eslint-plugin-query": "^5.68.0",
     "@types/node": "^22.14.1",
-    "@types/react": "^18.0.32",
+    "@types/react": "18.3.0",
     "bun": "1.2.5",
     "chalk": "4.1.2",
     "eslint": "9.23.0",
@@ -60,7 +62,7 @@
     "xo": "^0.53.1"
   },
   "patchedDependencies": {
-    "@tanstack/query-core@5.69.0": "patches/@tanstack%2Fquery-core@5.69.0.patch",
-    "ink-markdown@1.0.4": "patches/ink-markdown@1.0.4.patch"
+    "@tanstack/query-core@5.69.0": "apps/cli/patches/@tanstack%2Fquery-core@5.69.0.patch",
+    "ink-markdown@1.0.4": "apps/cli/patches/ink-markdown@1.0.4.patch"
   }
 }

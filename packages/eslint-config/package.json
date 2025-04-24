@@ -7,6 +7,9 @@
     "next.js",
     "react-internal.js"
   ],
+  "scripts": {
+    "clean": "rm -rf node_modules"
+  },
   "devDependencies": {
     "@vercel/style-guide": "5.2.0",
     "eslint-config-turbo": "2.0.0",
