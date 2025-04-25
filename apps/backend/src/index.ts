@@ -371,7 +371,9 @@ export const app = fastify({
   genReqId: () => uuidv4(),
 });
 
-const db = drizzle(process.env.DATABASE_URL!);
+const connectionString =
+  process.env.DATABASE_URL_DEV ?? process.env.DATABASE_URL!;
+const db = drizzle(connectionString);
 
 const deployTask = new AsyncTask("deploy task", async (taskId) => {
   const allApps = await db

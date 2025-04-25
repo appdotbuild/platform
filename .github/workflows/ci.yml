@@ -24,21 +24,11 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install Dependencies for Platform
-        working-directory: platform
-        run: bun install
-
-      - name: Install Dependencies for Mocked Agent
-        working-directory: platform/mocked-agent
+      - name: Install Dependencies
         run: bun install
 
       - name: Run Lint
-        working-directory: platform
         run: bun run lint
-
-      - name: Backend - Install Dependencies
-        working-directory: platform/apps/backend
-        run: bun install
 
       - name: Install Fly CLI
         run: curl -L https://fly.io/install.sh | sh

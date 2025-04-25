@@ -41,12 +41,61 @@ curl -L https://fly.io/install.sh | sh
 
 Docs [here](https://fly.io/docs/flyctl/install/)
 
-## Starting the project
+## 1Password CLI
 
-First of all run
+Run
 
 ```bash
-bun install
+brew install 1password-cli
 ```
 
-TBD
+Docs [here](https://developer.1password.com/docs/cli/get-started)
+
+
+## Setting up the project
+
+First of all, go to [Neon console](https://console.neon.tech/app/projects/damp-surf-76179452/branches/br-proud-wave-a84j8pq6?branchId=br-proud-wave-a84j8pq6&database=neondb) into the Chatbots metadata Organization
+
+![Organization Picker](docs/images/organization-picker.png)
+
+If you don't have access, please ask a member of the team to invite you, and wait until you have access to continue this instructions.
+
+Now go into branches, and create a branch with the following structure `dev-<yourname>`
+
+![Branch creation](docs/images/branch-creation.png)
+
+Now go into your branch, and click on `Connect`, copy your connection string, and execute the following command
+
+```bash
+op item create --category "API Credential" --vault "App.build" --title "DATABASE_URL_$(echo "$USER" | tr '[:lower:]' '[:upper:]')" 'credential=<connection-string>' 'expires=2099-12-31'
+```
+
+Now you can run the following command to setup your environment
+
+```bash
+bun setup
+```
+
+## Starting the project
+
+Now you will need to run 2 different terminals, one with all the necessary servers, and the other one with the CLI.
+
+In the first terminal run 
+
+```bash
+bun dev
+```
+
+In the second terminal, you can choose to run the CLI in two ways:
+
+- Compiled version: This has a process in the background that is recompiling it everytime you make a change. But you will need to run the command again after doing changes.
+
+```bash
+bun cli
+```
+
+- Watched version: This allows you to directly see the changes you are applying (is not HMR for now).
+
+```bash
+bun cli:watch
+```
