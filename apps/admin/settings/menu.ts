@@ -6,8 +6,8 @@ import {
   MessageSquareCode,
   FileText,
   BookOpen,
-} from "@repo/design/base/icons";
-import type { MenuGroup } from "@repo/design/components/providers/config-provider";
+} from "@appdotbuild/design/base/icons";
+import type { MenuGroup } from "@appdotbuild/design/components/providers/config-provider";
 
 export const sidebarMenu: MenuGroup[] = [
   {

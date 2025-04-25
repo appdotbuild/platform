@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@repo/design/shadcn/button";
+import { Button } from "@appdotbuild/design/shadcn/button";
 import { Download } from "lucide-react";
 import { useState } from "react";
 import { getChatbotReadUrl } from "../actions";

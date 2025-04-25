@@ -1,5 +1,5 @@
 import type { Preview } from "@storybook/react";
-import "@repo/design/globals.css";
+import "@appdotbuild/design/globals.css";
 import "../app/global.css";
 
 const preview: Preview = {

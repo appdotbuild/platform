@@ -4,7 +4,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@repo/design/lib/utils";
+import { cn } from "@appdotbuild/design/lib/utils";
 
 import { useEffect, useState } from "react";
 

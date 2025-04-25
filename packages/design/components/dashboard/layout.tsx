@@ -2,9 +2,9 @@ import React from "react";
 import { DashboardHeader } from "./header";
 
 import { Sidebar } from "./sidebar/sidebar";
-import { useSidebar } from "@repo/design/hooks/use-sidebar";
-import { useStore } from "@repo/design/hooks/use-store";
-import { cn } from "@repo/design/lib/utils";
+import { useSidebar } from "@appdotbuild/design/hooks/use-sidebar";
+import { useStore } from "@appdotbuild/design/hooks/use-store";
+import { cn } from "@appdotbuild/design/lib/utils";
 
 export default function AdminPanelLayout({
   children,

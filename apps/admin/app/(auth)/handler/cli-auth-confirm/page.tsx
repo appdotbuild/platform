@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, CardContent } from "@repo/design/shadcn/card";
-import { Button } from "@repo/design/shadcn/button";
+import { Card, CardContent } from "@appdotbuild/design/shadcn/card";
+import { Button } from "@appdotbuild/design/shadcn/button";
 import { useState } from "react";
-import { useUser } from "@repo/auth/stack";
+import { useUser } from "@appdotbuild/auth/stack";
 
 export default function CliAuthConfirmPage() {
   const [authorizing, setAuthorizing] = useState(false);

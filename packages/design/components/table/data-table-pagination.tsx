@@ -3,17 +3,17 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-} from "@repo/design/base/icons";
+} from "@appdotbuild/design/base/icons";
 import { Table } from "@tanstack/react-table";
 
-import { Button } from "@repo/design/shadcn/button";
+import { Button } from "@appdotbuild/design/shadcn/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@repo/design/shadcn/select";
+} from "@appdotbuild/design/shadcn/select";
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { toast } from "@repo/design/hooks/use-toast";
+import { toast } from "@appdotbuild/design/hooks/use-toast";
 import { createContext, useContext, useState } from "react";
 
 export type WithId = {

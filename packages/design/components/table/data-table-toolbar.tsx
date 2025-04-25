@@ -3,8 +3,8 @@
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { ColumnDef, Table } from "@tanstack/react-table";
 
-import { Button } from "@repo/design/shadcn/button";
-import { Input } from "@repo/design/shadcn/input";
+import { Button } from "@appdotbuild/design/shadcn/button";
+import { Input } from "@appdotbuild/design/shadcn/input";
 import { DataTableViewOptions } from "./data-table-view-options";
 
 interface DataTableToolbarProps<TData> {

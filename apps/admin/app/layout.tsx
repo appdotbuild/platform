@@ -1,5 +1,5 @@
-import { geistMono, geistSans } from "@repo/design/base/fonts";
-import "@repo/design/globals.css";
+import { geistMono, geistSans } from "@appdotbuild/design/base/fonts";
+import "@appdotbuild/design/globals.css";
 import type { Metadata } from "next";
 import "./global.css";
 import ProvidersServer from "./providers.server";

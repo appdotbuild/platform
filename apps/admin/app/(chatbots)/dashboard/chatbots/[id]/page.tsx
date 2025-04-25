@@ -3,16 +3,16 @@ import {
   Calendar,
   User,
   ExternalLink,
-} from "@repo/design/base/icons";
-import { ShowHide } from "@repo/design/components/show-hide/show-hide";
-import { Button } from "@repo/design/shadcn/button";
-import { Card, CardContent } from "@repo/design/shadcn/card";
+} from "@appdotbuild/design/base/icons";
+import { ShowHide } from "@appdotbuild/design/components/show-hide/show-hide";
+import { Button } from "@appdotbuild/design/shadcn/button";
+import { Card, CardContent } from "@appdotbuild/design/shadcn/card";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@repo/design/shadcn/tabs";
+} from "@appdotbuild/design/shadcn/tabs";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getChatbot } from "../actions";

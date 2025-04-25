@@ -1,5 +1,5 @@
 {
-  "name": "@repo/eslint-config",
+  "name": "@appdotbuild/eslint-config",
   "version": "0.0.1",
   "private": true,
   "files": [
@@ -8,7 +8,9 @@
     "react-internal.js"
   ],
   "scripts": {
-    "clean": "rm -rf node_modules"
+    "clean": "rm -rf node_modules",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write ."
   },
   "devDependencies": {
     "@vercel/style-guide": "5.2.0",

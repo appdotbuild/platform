@@ -14,7 +14,7 @@
     "incremental": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@repo/*": ["../../packages/*"]
+      "@appdotbuild/*": ["../../packages/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],

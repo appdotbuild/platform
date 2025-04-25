@@ -11,10 +11,10 @@
     "prefix": ""
   },
   "aliases": {
-    "components": "@repo/design/",
-    "utils": "@repo/design/lib/utils",
-    "ui": "@repo/design/shadcn",
-    "lib": "@repo/design/lib",
-    "hooks": "@repo/design/hooks"
+    "components": "@appdotbuild/design/",
+    "utils": "@appdotbuild/design/lib/utils",
+    "ui": "@appdotbuild/design/shadcn",
+    "lib": "@appdotbuild/design/lib",
+    "hooks": "@appdotbuild/design/hooks"
   }
 }

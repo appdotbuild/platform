@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./source-box.module.css";
-import { cn } from "@repo/design/lib/utils";
+import { cn } from "@appdotbuild/design/lib/utils";
 
 export type Source = {
   title: string;

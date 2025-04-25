@@ -1,12 +1,12 @@
-import { ArrowRight, MessageSquare } from "@repo/design/base/icons";
-import { Button } from "@repo/design/shadcn/button";
+import { ArrowRight, MessageSquare } from "@appdotbuild/design/base/icons";
+import { Button } from "@appdotbuild/design/shadcn/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@repo/design/shadcn/card";
+} from "@appdotbuild/design/shadcn/card";
 import { Metadata } from "next";
 import Link from "next/link";
 

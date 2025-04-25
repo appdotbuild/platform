@@ -7,9 +7,9 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@repo/design/shadcn/tooltip";
-import { Button, ButtonProps } from "@repo/design/shadcn/button";
-import { cn } from "@repo/design/lib/utils";
+} from "@appdotbuild/design/shadcn/tooltip";
+import { Button, ButtonProps } from "@appdotbuild/design/shadcn/button";
+import { cn } from "@appdotbuild/design/lib/utils";
 
 export type TooltipIconButtonProps = ButtonProps & {
   tooltip: string;

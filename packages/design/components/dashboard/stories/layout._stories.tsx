@@ -2,7 +2,7 @@ import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { DashboardLayoutSubNav } from "../layout";
 import { ConfigProvider } from "../../providers/config-provider";
-import { Home } from "@repo/design/base/icons";
+import { Home } from "@appdotbuild/design/base/icons";
 
 const mockConfig = {
   sidebarMenu: [

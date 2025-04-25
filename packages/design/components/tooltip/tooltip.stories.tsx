@@ -1,6 +1,6 @@
 import { Meta, StoryObj } from "@storybook/react";
 import { EasyTooltip } from "./tooltip";
-import { Button } from "@repo/design/shadcn/button";
+import { Button } from "@appdotbuild/design/shadcn/button";
 
 const meta: Meta<typeof EasyTooltip> = {
   title: "UI/Custom/Tooltip",

@@ -1,5 +1,5 @@
 import multiavatar from "@multiavatar/multiavatar/esm";
-import { Avatar } from "@repo/design/shadcn/avatar";
+import { Avatar } from "@appdotbuild/design/shadcn/avatar";
 
 export function HashAvatar({ hash }: { hash: string }) {
   let svgCode = multiavatar(hash);

@@ -1,9 +1,13 @@
 {
-  "name": "@repo/typescript-config",
+  "name": "@appdotbuild/typescript-config",
   "version": "0.0.1",
   "private": true,
   "license": "MIT",
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write ."
   }
 }

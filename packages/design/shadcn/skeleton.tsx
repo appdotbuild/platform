@@ -1,4 +1,4 @@
-import { cn } from "@repo/design/lib/utils";
+import { cn } from "@appdotbuild/design/lib/utils";
 
 function Skeleton({
   className,

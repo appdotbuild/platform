@@ -1,7 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 
-import { cn } from "@repo/design/lib/utils";
-import { Button } from "@repo/design/shadcn/button";
+import { cn } from "@appdotbuild/design/lib/utils";
+import { Button } from "@appdotbuild/design/shadcn/button";
 
 interface SidebarToggleProps {
   isOpen: boolean | undefined;

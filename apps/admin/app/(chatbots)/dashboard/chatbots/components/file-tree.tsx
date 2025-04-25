@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRight, File, Folder } from "lucide-react";
-import { cn } from "@repo/design/lib/utils";
+import { cn } from "@appdotbuild/design/lib/utils";
 
 interface FileEntry {
   path: string;

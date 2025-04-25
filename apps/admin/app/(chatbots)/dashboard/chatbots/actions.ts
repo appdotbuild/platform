@@ -1,8 +1,8 @@
 "use server";
 
-import { Chatbot, Paginated, ReadUrl } from "@repo/core/types/api";
+import { Chatbot, Paginated, ReadUrl } from "@appdotbuild/core/types/api";
 import JSZip from "jszip";
-import { stackServerApp } from "@repo/auth";
+import { stackServerApp } from "@appdotbuild/auth";
 
 const PLATFORM_API_URL = process.env.PLATFORM_API_URL;
 

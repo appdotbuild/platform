@@ -17,13 +17,13 @@ import fs from "fs";
 import path from "path";
 import { createApiClient } from "@neondatabase/api-client";
 import { desc, eq, getTableColumns, sql, gt, and } from "drizzle-orm";
-import type { Paginated, ReadUrl } from "@repo/core/types/api";
+import type { Paginated, ReadUrl } from "@appdotbuild/core/types/api";
 import winston from "winston";
 import { FastifySSEPlugin } from "fastify-sse-v2";
 import { EventSource } from "eventsource";
 import { validateAuth } from "./auth-strategy";
 
-// Define the App type locally since it's not exported from @repo/core/types/api
+// Define the App type locally since it's not exported from @appdotbuild/core/types/api
 type App = {
   id: string;
   name: string;

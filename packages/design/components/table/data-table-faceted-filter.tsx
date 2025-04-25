@@ -2,9 +2,9 @@ import * as React from "react";
 import { CheckIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { Column } from "@tanstack/react-table";
 
-import { cn } from "@repo/design/lib/utils";
-import { Badge } from "@repo/design/shadcn/badge";
-import { Button } from "@repo/design/shadcn/button";
+import { cn } from "@appdotbuild/design/lib/utils";
+import { Badge } from "@appdotbuild/design/shadcn/badge";
+import { Button } from "@appdotbuild/design/shadcn/button";
 import {
   Command,
   CommandEmpty,
@@ -13,13 +13,13 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@repo/design/shadcn/command";
+} from "@appdotbuild/design/shadcn/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@repo/design/shadcn/popover";
-import { Separator } from "@repo/design/shadcn/separator";
+} from "@appdotbuild/design/shadcn/popover";
+import { Separator } from "@appdotbuild/design/shadcn/separator";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;

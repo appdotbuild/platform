@@ -4,16 +4,16 @@ import Link from "next/link";
 import { Ellipsis, LogOut } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-import { cn } from "@repo/design/lib/utils";
-import { Button } from "@repo/design/shadcn/button";
-import { ScrollArea } from "@repo/design/shadcn/scroll-area";
+import { cn } from "@appdotbuild/design/lib/utils";
+import { Button } from "@appdotbuild/design/shadcn/button";
+import { ScrollArea } from "@appdotbuild/design/shadcn/scroll-area";
 import { CollapseMenuButton } from "./collapse-menu-button";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
-} from "@repo/design/shadcn/tooltip";
+} from "@appdotbuild/design/shadcn/tooltip";
 import { useConfig } from "../../providers/config-provider";
 
 interface MenuProps {

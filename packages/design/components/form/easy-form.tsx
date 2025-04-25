@@ -7,15 +7,15 @@ import {
   FormDescription,
   FormMessage,
   Form,
-} from "@repo/design/shadcn/form";
-import { Input } from "@repo/design/shadcn/input";
-import { toast } from "@repo/design/hooks/use-toast";
-import { Button } from "@repo/design/shadcn/button";
+} from "@appdotbuild/design/shadcn/form";
+import { Input } from "@appdotbuild/design/shadcn/input";
+import { toast } from "@appdotbuild/design/hooks/use-toast";
+import { Button } from "@appdotbuild/design/shadcn/button";
 import { Delete, Loader2, Trash, Trash2, X } from "lucide-react";
-import { cn } from "@repo/design/lib/utils";
+import { cn } from "@appdotbuild/design/lib/utils";
 import { UseFieldArrayReturn } from "react-hook-form";
-import { Switch } from "@repo/design/shadcn/switch";
-import { Label } from "@repo/design/shadcn/label";
+import { Switch } from "@appdotbuild/design/shadcn/switch";
+import { Label } from "@appdotbuild/design/shadcn/label";
 
 export function EasyForm({
   form,

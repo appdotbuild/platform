@@ -7,7 +7,8 @@
     "clean": "rm -rf node_modules",
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write .",
     "preview": "vite preview"
   },
   "dependencies": {

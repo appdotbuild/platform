@@ -1,8 +1,8 @@
 "use client";
 
-import { UserButton } from "@repo/auth/stack";
-import { DashboardLayout } from "@repo/design/components/dashboard/layout";
-import { useUser } from "@repo/auth/stack";
+import { UserButton } from "@appdotbuild/auth/stack";
+import { DashboardLayout } from "@appdotbuild/design/components/dashboard/layout";
+import { useUser } from "@appdotbuild/auth/stack";
 
 export default function Layout({ children }) {
   const user = useUser();

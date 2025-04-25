@@ -1,13 +1,13 @@
-import { Switch } from "@repo/design/shadcn/switch";
+import { Switch } from "@appdotbuild/design/shadcn/switch";
 import { useChatConfig } from "./chat-config-provider";
 import { BotMessageSquareIcon, SearchIcon } from "lucide-react";
-import { cn } from "@repo/design/lib/utils";
+import { cn } from "@appdotbuild/design/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@repo/design/shadcn/tooltip";
+} from "@appdotbuild/design/shadcn/tooltip";
 
 export const AgentModeSwitch = () => {
   const { agentMode, setAgentMode } = useChatConfig();

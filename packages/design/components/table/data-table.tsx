@@ -23,14 +23,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@repo/design/shadcn/table";
+} from "@appdotbuild/design/shadcn/table";
 
-import { DataTablePagination } from "@repo/design/components/table/data-table-pagination";
+import { DataTablePagination } from "@appdotbuild/design/components/table/data-table-pagination";
 import {
   ColumnDefToolbar,
   DataTableToolbar,
-} from "@repo/design/components/table/data-table-toolbar";
-import { Skeleton } from "@repo/design/shadcn/skeleton";
+} from "@appdotbuild/design/components/table/data-table-toolbar";
+import { Skeleton } from "@appdotbuild/design/shadcn/skeleton";
 
 /**
  * A column definition that allows for additional properties.

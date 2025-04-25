@@ -1,8 +1,8 @@
 "use client";
 import type * as React from "react";
-import { Toaster } from "@repo/design/shadcn/toaster";
+import { Toaster } from "@appdotbuild/design/shadcn/toaster";
 import { SWRConfig } from "swr";
-import { ConfigProvider } from "@repo/design/components/providers/config-provider";
+import { ConfigProvider } from "@appdotbuild/design/components/providers/config-provider";
 import { sidebarMenu } from "../settings/menu";
 
 export default function ProvidersClient({

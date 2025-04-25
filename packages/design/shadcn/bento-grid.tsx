@@ -1,8 +1,8 @@
 import { ReactNode } from "react";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 
-import { cn } from "@repo/design/lib/utils";
-import { Button } from "@repo/design/shadcn/button";
+import { cn } from "@appdotbuild/design/lib/utils";
+import { Button } from "@appdotbuild/design/shadcn/button";
 
 type BentoGridProps = {
   children: ReactNode;

@@ -11,9 +11,9 @@
     "build": "tsc",
     "clean": "rm -rf node_modules dist",
     "dev": "tsc --watch",
-    "devnew": "bun --watch src/cli.tsx",
     "test": "prettier --check . && xo && ava",
-    "format": "prettier --write .",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write .",
     "start": "node dist/cli.js",
     "start:inspect": "node --inspect dist/cli.js"
   },

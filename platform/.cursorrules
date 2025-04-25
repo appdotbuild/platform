@@ -14,7 +14,7 @@ Fullstack development:
   - platform/apps/site the public site
 - Use the packages/auth package for authentication, using @stackframe/stack. to get the user use:
   - in client components: `import { useUser } from "@stackframe/stack"  export function MyClientComponent() {  const user = useUser(); }`
-  - in server components: `import { stackServerApp } from "@repo/auth"  export async function MyServerComponent() {  const user = await stackServerApp.getUser(); }`
+  - in server components: `import { stackServerApp } from "@appdotbuild/auth"  export async function MyServerComponent() {  const user = await stackServerApp.getUser(); }`
 - Put the components for the UI in the packages/design package: put them in packages/design/components/_section name_/
 - Put the data schema in the apps/backend/src/db package using DrizzleORM and PostgreSQL.
 - When updating the db schema, run `cd apps/platform && bun drizzle-kit generate` to generate the new migrations while `bun drizzle-kit migrate` to apply them to the db.
@@ -52,13 +52,13 @@ UI and Styling:
 
 - Use Shadcn UI, Radix, and Tailwind Aria for components and styling
 - Implement responsive design with Tailwind CSS; use a mobile-first approach
-- Put the components for the UI in the @repo/design/ package
-- Use the cn function for tailwind classes from @repo/design/lib/utils
-- Use the import "@repo/design/..." always instead of @/, eg import { Button } from "@repo/design/shadcn/button"
-- To import design components, use the path: "@repo/design/components/...". For Shadcn components, use the path: "@repo/design/shadcn/..."
-- To import icons, use the path: "@repo/design/base/icons" this exposes lucide-react icons.
+- Put the components for the UI in the @appdotbuild/design/ package
+- Use the cn function for tailwind classes from @appdotbuild/design/lib/utils
+- Use the import "@appdotbuild/design/..." always instead of @/, eg import { Button } from "@appdotbuild/design/shadcn/button"
+- To import design components, use the path: "@appdotbuild/design/components/...". For Shadcn components, use the path: "@appdotbuild/design/shadcn/..."
+- To import icons, use the path: "@appdotbuild/design/base/icons" this exposes lucide-react icons.
 - Always generate also a Storybook story for each component, put it next to the component file.
-- For Forms, use the EasyForm component from the @repo/design/components/form package.
+- For Forms, use the EasyForm component from the @appdotbuild/design/components/form package.
 
 An Example Storybook story:
 

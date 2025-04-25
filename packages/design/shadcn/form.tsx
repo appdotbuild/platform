@@ -12,8 +12,8 @@ import {
   useFormContext,
 } from "react-hook-form";
 
-import { cn } from "@repo/design/lib/utils";
-import { Label } from "@repo/design/shadcn/label";
+import { cn } from "@appdotbuild/design/lib/utils";
+import { Label } from "@appdotbuild/design/shadcn/label";
 
 type FormProvider = typeof FormProvider;
 

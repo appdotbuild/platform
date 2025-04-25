@@ -2,13 +2,13 @@
 
 import { Row } from "@tanstack/react-table";
 import { MoreHorizontal, ExternalLink, FileSearch2 } from "lucide-react";
-import { Button } from "@repo/design/shadcn/button";
+import { Button } from "@appdotbuild/design/shadcn/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/design/shadcn/dropdown-menu";
+} from "@appdotbuild/design/shadcn/dropdown-menu";
 import Link from "next/link";
 import { useState } from "react";
 import { getChatbotReadUrl } from "../actions";

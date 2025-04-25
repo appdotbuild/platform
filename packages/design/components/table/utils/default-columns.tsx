@@ -1,12 +1,12 @@
-import { Checkbox } from "@repo/design/shadcn/checkbox";
+import { Checkbox } from "@appdotbuild/design/shadcn/checkbox";
 import { DataTableColumnHeader } from "../data-table-column-header";
 import { cellConfig } from "./default-cells";
 import { DataTableFacetedFilter } from "../data-table-faceted-filter";
-import { Button } from "@repo/design/shadcn/button";
-import { toast } from "@repo/design/hooks/use-toast";
+import { Button } from "@appdotbuild/design/shadcn/button";
+import { toast } from "@appdotbuild/design/hooks/use-toast";
 import { ColumnDefToolbar } from "../data-table-toolbar";
-import { cn } from "@repo/design/lib/utils";
-import { EasyTooltip } from "@repo/design/components/tooltip/tooltip";
+import { cn } from "@appdotbuild/design/lib/utils";
+import { EasyTooltip } from "@appdotbuild/design/components/tooltip/tooltip";
 import type { ColumnDef, Table } from "@tanstack/react-table";
 
 // Some convenient default columns configs for tanstack table

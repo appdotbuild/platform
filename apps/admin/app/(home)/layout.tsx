@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardHeader } from "@repo/design/components/dashboard/header";
+import { DashboardHeader } from "@appdotbuild/design/components/dashboard/header";
 import { UserButton } from "@stackframe/stack";
 
 export default function Layout({ children }) {

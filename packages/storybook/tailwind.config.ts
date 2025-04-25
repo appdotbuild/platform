@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import baseConfig from "@repo/design/tailwind.config";
+import baseConfig from "@appdotbuild/design/tailwind.config";
 
 export default {
   darkMode: ["class"],

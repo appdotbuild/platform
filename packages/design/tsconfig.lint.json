@@ -1,10 +1,10 @@
 {
-  "extends": "@repo/typescript-config/react-library.json",
+  "extends": "@appdotbuild/typescript-config/react-library.json",
   "compilerOptions": {
     "outDir": "dist",
     "paths": {
       "@/*": ["*"],
-      "@repo/*": ["../*"]
+      "@appdotbuild/*": ["../*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],

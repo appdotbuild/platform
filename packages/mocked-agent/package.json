@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "clean": "rm -rf node_modules",
-    "dev": "bun run --watch index.ts"
+    "dev": "bun run --watch index.ts",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write ."
   },
   "devDependencies": {
     "@types/bun": "latest"

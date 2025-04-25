@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/typescript-config/react-library.json",
+  "extends": "@appdotbuild/typescript-config/react-library.json",
   "compilerOptions": {
     "outDir": "dist",
     "baseUrl": ".",
@@ -7,7 +7,7 @@
     "moduleResolution": "Bundler",
     "paths": {
       "@/*": ["*"],
-      "@repo/*": ["../*"]
+      "@appdotbuild/*": ["../*"]
     }
   },
 

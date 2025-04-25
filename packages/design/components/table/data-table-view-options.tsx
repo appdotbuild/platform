@@ -1,17 +1,17 @@
 "use client";
 
-import { DropdownMenuTrigger } from "@repo/design/shadcn/dropdown-menu";
+import { DropdownMenuTrigger } from "@appdotbuild/design/shadcn/dropdown-menu";
 import { MixerHorizontalIcon } from "@radix-ui/react-icons";
 import { Table } from "@tanstack/react-table";
 
-import { Button } from "@repo/design/shadcn/button";
+import { Button } from "@appdotbuild/design/shadcn/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from "@repo/design/shadcn/dropdown-menu";
+} from "@appdotbuild/design/shadcn/dropdown-menu";
 import { CustomColumnDev } from "./data-table";
 
 interface DataTableViewOptionsProps<TData> {

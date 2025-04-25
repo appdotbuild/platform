@@ -14,9 +14,9 @@ import type { FC } from "react";
 import { useState, useCallback } from "react";
 import React from "react";
 
-import { cn } from "@repo/design/lib/utils";
-import { Avatar, AvatarFallback } from "@repo/design/shadcn/avatar";
-import { Button } from "@repo/design/shadcn/button";
+import { cn } from "@appdotbuild/design/lib/utils";
+import { Avatar, AvatarFallback } from "@appdotbuild/design/shadcn/avatar";
+import { Button } from "@appdotbuild/design/shadcn/button";
 import {
   ArrowDownIcon,
   CheckIcon,
@@ -34,7 +34,7 @@ import { TooltipIconButton } from "./tooltip-icon-button";
 import { useChatProvider } from "../chat-provider";
 import { SourceBoxListStory } from "../source-box.stories";
 import { Source, SourceBoxList } from "../source-box";
-import { Skeleton } from "@repo/design/shadcn/skeleton";
+import { Skeleton } from "@appdotbuild/design/shadcn/skeleton";
 import { SearchResults } from "../search-results";
 import { useDebounce } from "use-debounce";
 

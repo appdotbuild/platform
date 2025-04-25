@@ -1,5 +1,5 @@
 {
-  "name": "@repo/design",
+  "name": "@appdotbuild/design",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -7,12 +7,14 @@
     "generate:component": "turbo gen react-component",
     "storybook": "cd ../../packages/storybook && pnpm dev",
     "shadcn": "shadcn",
-    "shadcn:bump": "shadcn add --all --overwrite"
+    "shadcn:bump": "shadcn add --all --overwrite",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write ."
   },
   "devDependencies": {
     "@next/font": "14.1.0",
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
+    "@appdotbuild/eslint-config": "workspace:*",
+    "@appdotbuild/typescript-config": "workspace:*",
     "@storybook/blocks": "8.4.7",
     "@storybook/nextjs": "8.4.7",
     "@storybook/react": "8.4.7",

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
-import { stackServerApp } from "@repo/auth";
+import { stackServerApp } from "@appdotbuild/auth";
 
 export async function middleware(request: NextRequest) {
   const user = await stackServerApp.getUser();

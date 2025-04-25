@@ -4,20 +4,20 @@ import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown, Dot, LucideIcon } from "lucide-react";
 
-import { cn } from "@repo/design/lib/utils";
-import { Button } from "@repo/design/shadcn/button";
+import { cn } from "@appdotbuild/design/lib/utils";
+import { Button } from "@appdotbuild/design/shadcn/button";
 import { DropdownMenuArrow } from "@radix-ui/react-dropdown-menu";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@repo/design/shadcn/collapsible";
+} from "@appdotbuild/design/shadcn/collapsible";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
-} from "@repo/design/shadcn/tooltip";
+} from "@appdotbuild/design/shadcn/tooltip";
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuSeparator,
-} from "@repo/design/shadcn/dropdown-menu";
+} from "@appdotbuild/design/shadcn/dropdown-menu";
 import { usePathname } from "next/navigation";
 
 type Submenu = {

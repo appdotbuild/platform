@@ -4,17 +4,17 @@ import { useCallback, useState } from "react";
 import {
   CustomColumnDev,
   DataTable,
-} from "@repo/design/components/table/data-table";
-import { columnText } from "@repo/design/components/table/utils/default-columns";
+} from "@appdotbuild/design/components/table/data-table";
+import { columnText } from "@appdotbuild/design/components/table/utils/default-columns";
 import { getAllChatbots } from "../actions";
 import ChatbotsTableRowMenu from "./chatbots-table-row-menu";
-import { Chatbot } from "@repo/core/types/api";
-import { toast } from "@repo/design/hooks/use-toast";
-import { TooltipContent, TooltipTrigger } from "@repo/design/shadcn/tooltip";
-import { Tooltip } from "@repo/design/shadcn/tooltip";
-import { TooltipProvider } from "@repo/design/shadcn/tooltip";
-import { HashAvatar } from "@repo/design/components/avatar/hash-avatar";
-import { Badge } from "@repo/design/shadcn/badge";
+import { Chatbot } from "@appdotbuild/core/types/api";
+import { toast } from "@appdotbuild/design/hooks/use-toast";
+import { TooltipContent, TooltipTrigger } from "@appdotbuild/design/shadcn/tooltip";
+import { Tooltip } from "@appdotbuild/design/shadcn/tooltip";
+import { TooltipProvider } from "@appdotbuild/design/shadcn/tooltip";
+import { HashAvatar } from "@appdotbuild/design/components/avatar/hash-avatar";
+import { Badge } from "@appdotbuild/design/shadcn/badge";
 import { format } from "timeago.js";
 
 interface ChatbotsTableProps {

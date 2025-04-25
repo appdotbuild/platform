@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@repo/design/shadcn/tooltip";
+} from "@appdotbuild/design/shadcn/tooltip";
 
 export function EasyTooltip({
   children,

@@ -1,5 +1,5 @@
-import { stackServerApp } from "@repo/auth";
-import { StackProvider, StackTheme } from "@repo/auth/stack";
+import { stackServerApp } from "@appdotbuild/auth";
+import { StackProvider, StackTheme } from "@appdotbuild/auth/stack";
 import type * as React from "react";
 
 export default function ProvidersServer({
