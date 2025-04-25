@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useChat } from "ai/react";
-import { createContext, useContext, useState } from "react";
+import { useChat } from 'ai/react';
+import { createContext, useContext, useState } from 'react';
 
 export interface ChatContextType {
   chat: ReturnType<typeof useChat> | undefined;
@@ -12,7 +12,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 function useChatProvider() {
   const context = useContext(ChatContext);
   if (context === undefined) {
-    throw new Error("useChatProvider must be used within a ChatProvider");
+    throw new Error('useChatProvider must be used within a ChatProvider');
   }
   return context;
 }

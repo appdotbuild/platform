@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import styles from "./source-box.module.css";
-import { cn } from "@appdotbuild/design/lib/utils";
+import styles from './source-box.module.css';
+import { cn } from '@appdotbuild/design/lib/utils';
 
 export type Source = {
   title: string;
@@ -73,18 +73,18 @@ export function SourceBoxList(props: {
     };
 
     const handleMouseUp = () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   return (
     <div
       className={`flex flex-nowrap overflow-x-auto gap-2 justify-start w-full min-w-0 cursor-grab active:cursor-grabbing select-none pb-4 ${props.className}`}
-      style={{ WebkitOverflowScrolling: "touch" }}
+      style={{ WebkitOverflowScrolling: 'touch' }}
       onMouseDown={(e) => {
         if (window.innerWidth >= 768) return; // Only enable drag scroll on mobile
         handleMouseDown(e);
@@ -93,7 +93,7 @@ export function SourceBoxList(props: {
       {props.sources.slice(0, initialShow).map((source, index) => (
         <div
           key={source.url}
-          className={cn("flex-none w-64", styles.fadeInUp)}
+          className={cn('flex-none w-64', styles.fadeInUp)}
           style={{
             animationDelay: `${index * 150}ms`,
           }}
@@ -103,7 +103,7 @@ export function SourceBoxList(props: {
       ))}
       {props.sources.length > initialShow && (
         <div
-          className={cn("flex-none w-64 h-full", styles.fadeInUp)}
+          className={cn('flex-none w-64 h-full', styles.fadeInUp)}
           style={{
             animationDelay: `${initialShow * 150}ms`,
           }}

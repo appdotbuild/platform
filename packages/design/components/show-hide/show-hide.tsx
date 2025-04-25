@@ -1,22 +1,24 @@
-"use client";
+'use client';
 
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "../../shadcn/button";
-import { useState } from "react";
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '../../shadcn/button';
+import { useState } from 'react';
 
 interface ShowHideProps {
   content: string;
   className?: string;
 }
 
-export function ShowHide({ content, className = "" }: ShowHideProps) {
+export function ShowHide({ content, className = '' }: ShowHideProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
     <div className="space-y-1">
       <div className="group">
         <p
-          className={`transition-all duration-200 ${!expanded ? "line-clamp-1" : "break-all"} ${className}`}
+          className={`transition-all duration-200 ${
+            !expanded ? 'line-clamp-1' : 'break-all'
+          } ${className}`}
         >
           {content}
         </p>

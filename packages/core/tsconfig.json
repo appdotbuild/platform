@@ -1,0 +1,16 @@
+{
+  "extends": "@appdotbuild/typescript-config/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "baseUrl": ".",
+    "module": "preserve",
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@/*": ["*"],
+      "@appdotbuild/*": ["../*"]
+    }
+  },
+
+  "include": ["./", "./**/*.tsx", "./**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,13 +1,13 @@
-import { Checkbox } from "@appdotbuild/design/shadcn/checkbox";
-import { DataTableColumnHeader } from "../data-table-column-header";
-import { cellConfig } from "./default-cells";
-import { DataTableFacetedFilter } from "../data-table-faceted-filter";
-import { Button } from "@appdotbuild/design/shadcn/button";
-import { toast } from "@appdotbuild/design/hooks/use-toast";
-import { ColumnDefToolbar } from "../data-table-toolbar";
-import { cn } from "@appdotbuild/design/lib/utils";
-import { EasyTooltip } from "@appdotbuild/design/components/tooltip/tooltip";
-import type { ColumnDef, Table } from "@tanstack/react-table";
+import { Checkbox } from '@appdotbuild/design/shadcn/checkbox';
+import { DataTableColumnHeader } from '../data-table-column-header';
+import { cellConfig } from './default-cells';
+import { DataTableFacetedFilter } from '../data-table-faceted-filter';
+import { Button } from '@appdotbuild/design/shadcn/button';
+import { toast } from '@appdotbuild/design/hooks/use-toast';
+import { ColumnDefToolbar } from '../data-table-toolbar';
+import { cn } from '@appdotbuild/design/lib/utils';
+import { EasyTooltip } from '@appdotbuild/design/components/tooltip/tooltip';
+import type { ColumnDef, Table } from '@tanstack/react-table';
 
 // Some convenient default columns configs for tanstack table
 
@@ -43,7 +43,7 @@ export function SelectionDeleteButton({
       resp.bindArgsValidationErrors ||
       !(resp.data as any).success
     ) {
-      toast({ title: "Failed to delete elements", variant: "destructive" });
+      toast({ title: 'Failed to delete elements', variant: 'destructive' });
     } else {
       await optimisticAction?.(ids, resp);
       toast({ title: `Deleted ${ids.length} elements` });
@@ -81,7 +81,7 @@ export function columnMultiselect({
       <Checkbox
         checked={
           table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate") ||
+          (table.getIsSomePageRowsSelected() && 'indeterminate') ||
           false
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
@@ -166,11 +166,11 @@ export function columnIcon({
     ),
     cell: ({ row }) => {
       const config = fieldConfig.find(
-        (status) => status.value.toString() == row.getValue(id).toString(),
+        (status) => status.value.toString() == row.getValue(id).toString()
       );
 
       return (
-        <div className={cn("flex w-[100px] items-center", config?.className)}>
+        <div className={cn('flex w-[100px] items-center', config?.className)}>
           {config?.icon && <config.icon className="mr-2 h-4 w-4 opacity-50" />}
           <span>{config?.label || row.getValue(id)}</span>
         </div>
@@ -189,7 +189,7 @@ export function addTooltip({
   tooltip: string | ((args: any) => React.ReactNode);
   columnConfig: any;
 }): any {
-  if (typeof tooltip === "function") {
+  if (typeof tooltip === 'function') {
     return {
       ...columnConfig,
       cell: (args) => (

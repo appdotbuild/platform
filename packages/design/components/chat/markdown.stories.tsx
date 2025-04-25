@@ -1,10 +1,10 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import EasyMarkdown from "./markdown";
+import type { Meta, StoryObj } from '@storybook/react';
+import EasyMarkdown from './markdown';
 
 const meta: Meta<typeof EasyMarkdown> = {
-  title: "UI/Chat/Markdown",
+  title: 'UI/Chat/Markdown',
   component: EasyMarkdown,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
 };
 
 export default meta;
@@ -12,13 +12,13 @@ type Story = StoryObj<typeof EasyMarkdown>;
 
 export const Default: Story = {
   args: {
-    children: "Hello, how can I help you today?",
+    children: 'Hello, how can I help you today?',
   },
 };
 
 export const WithFormatting: Story = {
   args: {
-    children: "Hello, **how can** I help you today?",
+    children: 'Hello, **how can** I help you today?',
   },
 };
 

@@ -1,7 +1,7 @@
-import React from "react";
-import { DataTable, DataTableProps } from "./data-table";
-import { ColumnDef } from "@tanstack/react-table";
-import type { Meta, StoryObj } from "@storybook/react";
+import React from 'react';
+import { DataTable, DataTableProps } from './data-table';
+import { ColumnDef } from '@tanstack/react-table';
+import type { Meta, StoryObj } from '@storybook/react';
 
 // Define a sample data type
 interface User {
@@ -19,33 +19,33 @@ function generateSampleUsers(count: number): User[] {
       id: `${index + 1}`,
       name: `User ${index + 1}`,
       email: `user${index + 1}@example.com`,
-      role: index % 3 === 0 ? "Admin" : index % 3 === 1 ? "User" : "Editor",
+      role: index % 3 === 0 ? 'Admin' : index % 3 === 1 ? 'User' : 'Editor',
     }));
 }
 
 // Sample columns
-const columns: DataTableProps<User, any>["columns"] = [
+const columns: DataTableProps<User, any>['columns'] = [
   {
-    accessorKey: "name",
-    header: "Name",
+    accessorKey: 'name',
+    header: 'Name',
   },
   {
-    accessorKey: "email",
-    header: "Email",
+    accessorKey: 'email',
+    header: 'Email',
   },
   {
-    accessorKey: "role",
-    header: "Role",
+    accessorKey: 'role',
+    header: 'Role',
   },
 ];
 
 export default {
-  title: "UI/Custom/DataTable",
+  title: 'UI/Custom/DataTable',
   component: DataTable,
   argTypes: {
     textSearchColumn: {
-      control: "select",
-      options: ["name", "email", "role"],
+      control: 'select',
+      options: ['name', 'email', 'role'],
     },
   },
 } as Meta;
@@ -55,7 +55,7 @@ export const Default: Story = {
   args: {
     columns: columns as any,
     data: generateSampleUsers(10),
-    textSearchColumn: "name",
+    textSearchColumn: 'name',
   },
 };
 
@@ -63,7 +63,7 @@ export const EmptyTable: Story = {
   args: {
     columns: columns as any,
     data: [],
-    textSearchColumn: "name",
+    textSearchColumn: 'name',
   },
 };
 
@@ -71,6 +71,6 @@ export const LargeDataset: Story = {
   args: {
     columns: columns as any,
     data: generateSampleUsers(100),
-    textSearchColumn: "name",
+    textSearchColumn: 'name',
   },
 };

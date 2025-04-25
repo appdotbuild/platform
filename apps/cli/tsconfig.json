@@ -1,4 +1,5 @@
 {
+  "extends": "@appdotbuild/typescript-config/tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
 

@@ -1,12 +1,12 @@
-"use client";
-import { Menu } from "./menu";
-import { SidebarToggle } from "./sidebar-toggle";
-import { Button } from "@appdotbuild/design/shadcn/button";
-import { useSidebar } from "@appdotbuild/design/hooks/use-sidebar";
-import { useStore } from "@appdotbuild/design/hooks/use-store";
-import { cn } from "@appdotbuild/design/lib/utils";
-import { PanelsTopLeft } from "lucide-react";
-import Link from "next/link";
+'use client';
+import { Menu } from './menu';
+import { SidebarToggle } from './sidebar-toggle';
+import { Button } from '@appdotbuild/design/shadcn/button';
+import { useSidebar } from '@appdotbuild/design/hooks/use-sidebar';
+import { useStore } from '@appdotbuild/design/hooks/use-store';
+import { cn } from '@appdotbuild/design/lib/utils';
+import { PanelsTopLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export function Sidebar({ signOut }: { signOut: () => Promise<void> }) {
   const sidebar = useStore(useSidebar, (x) => x);
@@ -15,9 +15,9 @@ export function Sidebar({ signOut }: { signOut: () => Promise<void> }) {
   return (
     <aside
       className={cn(
-        "fixed top-16 left-0 z-20 h-screen -translate-x-full lg:translate-x-0 transition-[width] ease-in-out duration-300",
-        !getOpenState() ? "w-[90px]" : "w-72",
-        settings.disabled && "hidden",
+        'fixed top-16 left-0 z-20 h-screen -translate-x-full lg:translate-x-0 transition-[width] ease-in-out duration-300',
+        !getOpenState() ? 'w-[90px]' : 'w-72',
+        settings.disabled && 'hidden'
       )}
     >
       <SidebarToggle isOpen={isOpen} setIsOpen={toggleOpen} />

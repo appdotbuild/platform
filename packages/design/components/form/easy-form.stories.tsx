@@ -1,19 +1,19 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { useFieldArray, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import type { Meta, StoryObj } from '@storybook/react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   EasyForm,
   EasyFormFieldSwitch,
   EasyFormFieldText,
   EasyFormMultiTextField,
   EasyFormSubmit,
-} from "./easy-form";
-import React from "react";
+} from './easy-form';
+import React from 'react';
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
   multiField: z.array(z.object({ value: z.string() })),
 });
 
@@ -23,16 +23,16 @@ const EasyFormExample = () => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      multiField: [{ value: "" }],
+      name: '',
+      email: '',
+      multiField: [{ value: '' }],
     },
   });
 
-  const field = useFieldArray({ control: form.control, name: "multiField" });
+  const field = useFieldArray({ control: form.control, name: 'multiField' });
 
   const onSubmit = async (data: FormValues) => {
-    console.log("Form submitted:", data);
+    console.log('Form submitted:', data);
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
   };
@@ -77,9 +77,9 @@ const EasyFormExample = () => {
 };
 
 const meta: Meta<typeof EasyFormExample> = {
-  title: "UI/Custom/EasyForm",
+  title: 'UI/Custom/EasyForm',
   component: EasyFormExample,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
 };
 
 export default meta;
@@ -144,9 +144,9 @@ export const FormSubmit: Story = {
 export const MultiTextField: Story = {
   render: () => {
     const form = useForm<any>({
-      defaultValues: { multiField: [{ value: "" }] },
+      defaultValues: { multiField: [{ value: '' }] },
     });
-    const field = useFieldArray({ control: form.control, name: "multiField" });
+    const field = useFieldArray({ control: form.control, name: 'multiField' });
 
     return (
       <EasyForm form={form} onSubmit={async () => {}} message="Form submitted">

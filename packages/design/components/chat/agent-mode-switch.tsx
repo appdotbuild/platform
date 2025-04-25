@@ -1,13 +1,13 @@
-import { Switch } from "@appdotbuild/design/shadcn/switch";
-import { useChatConfig } from "./chat-config-provider";
-import { BotMessageSquareIcon, SearchIcon } from "lucide-react";
-import { cn } from "@appdotbuild/design/lib/utils";
+import { Switch } from '@appdotbuild/design/shadcn/switch';
+import { useChatConfig } from './chat-config-provider';
+import { BotMessageSquareIcon, SearchIcon } from 'lucide-react';
+import { cn } from '@appdotbuild/design/lib/utils';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@appdotbuild/design/shadcn/tooltip";
+} from '@appdotbuild/design/shadcn/tooltip';
 
 export const AgentModeSwitch = () => {
   const { agentMode, setAgentMode } = useChatConfig();
@@ -27,8 +27,8 @@ export const AgentModeSwitch = () => {
             <label
               htmlFor="agent-mode"
               className={cn(
-                "text-sm cursor-pointer",
-                agentMode ? "text-foreground" : "text-muted-foreground",
+                'text-sm cursor-pointer',
+                agentMode ? 'text-foreground' : 'text-muted-foreground'
               )}
               onClick={() => setAgentMode(!agentMode)}
             >

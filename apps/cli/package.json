@@ -2,24 +2,22 @@
   "name": "app-build-cli",
   "version": "0.0.0",
   "license": "MIT",
-  "bin": "dist/cli.js",
   "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
+  "bin": "dist/cli.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf node_modules dist",
     "dev": "tsc --watch",
-    "test": "prettier --check . && xo && ava",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
     "start": "node dist/cli.js",
-    "start:inspect": "node --inspect dist/cli.js"
+    "start:inspect": "node --inspect dist/cli.js",
+    "test": "prettier --check . && xo && ava",
+    "types:check": "tsc --noEmit"
   },
-  "files": [
-    "dist"
-  ],
   "dependencies": {
     "@inkjs/ui": "2.0.0",
     "@stackframe/js": "^2.8.6",
@@ -60,6 +58,9 @@
     "typescript": "5.8.2",
     "typescript-eslint": "8.28.0",
     "xo": "^0.53.1"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "patchedDependencies": {
     "@tanstack/query-core@5.69.0": "apps/cli/patches/@tanstack%2Fquery-core@5.69.0.patch",

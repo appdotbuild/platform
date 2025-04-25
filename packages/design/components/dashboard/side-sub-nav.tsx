@@ -1,7 +1,7 @@
-import { cn } from "../../lib/utils";
-import { Home } from "lucide-react";
-import Link from "next/link";
-import React from "react";
+import { cn } from '../../lib/utils';
+import { Home } from 'lucide-react';
+import Link from 'next/link';
+import React from 'react';
 
 export interface SideSubNavProps {
   pages: { title: string; to: string; icon }[];
@@ -9,7 +9,7 @@ export interface SideSubNavProps {
 }
 
 export function SideSubNav({
-  pages = [{ title: "Dashboard", to: "/dashboard", icon: Home }],
+  pages = [{ title: 'Dashboard', to: '/dashboard', icon: Home }],
   activePage,
 }: SideSubNavProps) {
   return (
@@ -22,8 +22,8 @@ export function SideSubNav({
           key={page.to}
           href={page.to}
           className={cn(
-            activePage === page.to ? "text-primary font-semibold" : "",
-            "justify-start flex items-center",
+            activePage === page.to ? 'text-primary font-semibold' : '',
+            'justify-start flex items-center'
           )}
         >
           <span className="mr-2 w-4 h-4">

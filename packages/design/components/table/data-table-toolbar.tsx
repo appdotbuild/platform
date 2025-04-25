@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { Cross2Icon } from "@radix-ui/react-icons";
-import { ColumnDef, Table } from "@tanstack/react-table";
+import { Cross2Icon } from '@radix-ui/react-icons';
+import { ColumnDef, Table } from '@tanstack/react-table';
 
-import { Button } from "@appdotbuild/design/shadcn/button";
-import { Input } from "@appdotbuild/design/shadcn/input";
-import { DataTableViewOptions } from "./data-table-view-options";
+import { Button } from '@appdotbuild/design/shadcn/button';
+import { Input } from '@appdotbuild/design/shadcn/input';
+import { DataTableViewOptions } from './data-table-view-options';
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -38,7 +38,7 @@ export function DataTableToolbar<TData>({
             placeholder="Search..."
             value={
               (table.getColumn(textSearchColumn)?.getFilterValue() as string) ??
-              ""
+              ''
             }
             onChange={(event) =>
               table
@@ -51,7 +51,7 @@ export function DataTableToolbar<TData>({
         {columns.map((column) => {
           if (column.facetedToolbar) {
             return (
-              <div key={"tb-" + (column.id || column.accessorKey)}>
+              <div key={'tb-' + (column.id || column.accessorKey)}>
                 {column.facetedToolbar({ table })}
               </div>
             );
@@ -74,7 +74,7 @@ export function DataTableToolbar<TData>({
           columns.map((column) => {
             if (column.multiselectToolbar) {
               return (
-                <div key={"tb-" + (column.id || column.accessorKey)}>
+                <div key={'tb-' + (column.id || column.accessorKey)}>
                   {column.multiselectToolbar({ table })}
                 </div>
               );

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -14,7 +14,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table';
 
 import {
   Table,
@@ -23,14 +23,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@appdotbuild/design/shadcn/table";
+} from '@appdotbuild/design/shadcn/table';
 
-import { DataTablePagination } from "@appdotbuild/design/components/table/data-table-pagination";
+import { DataTablePagination } from '@appdotbuild/design/components/table/data-table-pagination';
 import {
   ColumnDefToolbar,
   DataTableToolbar,
-} from "@appdotbuild/design/components/table/data-table-toolbar";
-import { Skeleton } from "@appdotbuild/design/shadcn/skeleton";
+} from '@appdotbuild/design/components/table/data-table-toolbar';
+import { Skeleton } from '@appdotbuild/design/shadcn/skeleton';
 
 /**
  * A column definition that allows for additional properties.
@@ -72,12 +72,12 @@ export function DataTable<TData, TValue>({
   const defaultVisibility = Object.fromEntries(
     columns
       .filter((c) => c.defaultVisible === false)
-      .map((c: any) => [c.accessorKey, false]),
+      .map((c: any) => [c.accessorKey, false])
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>(defaultVisibility);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
+    []
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [{ pageIndex, pageSize }, setPagination] = React.useState({
@@ -93,7 +93,7 @@ export function DataTable<TData, TValue>({
   // Loading Skeleton:
   const tableData = React.useMemo(
     () => (loading ? Array(pageSize).fill({}) : data),
-    [loading, data, pageSize],
+    [loading, data, pageSize]
   );
   const tableColumns = React.useMemo(
     () =>
@@ -105,7 +105,7 @@ export function DataTable<TData, TValue>({
             ),
           }))
         : columns,
-    [loading, columns],
+    [loading, columns]
   );
 
   React.useEffect(() => {
@@ -164,7 +164,7 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext(),
+                            header.getContext()
                           )}
                     </TableHead>
                   );
@@ -177,7 +177,7 @@ export function DataTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
+                  data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
@@ -187,7 +187,7 @@ export function DataTable<TData, TValue>({
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}

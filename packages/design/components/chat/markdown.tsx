@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import Markdown from "react-markdown";
-import rehypeKatex from "rehype-katex";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
+import Markdown from 'react-markdown';
+import rehypeKatex from 'rehype-katex';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 
-import "katex/dist/katex.min.css";
+import 'katex/dist/katex.min.css';
 
 export default function EasyMarkdown({ children }: { children: string }) {
   const markdownOpts = {

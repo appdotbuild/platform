@@ -1,6 +1,6 @@
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
 
-import Image from "next/image";
+import Image from 'next/image';
 
 export function DashboardHeader({ userMenu }: { userMenu: React.ReactNode }) {
   const router = useRouter();

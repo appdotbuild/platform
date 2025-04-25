@@ -1,1 +1,1 @@
-export * from "@assistant-ui/react/edge";
+export * from '@assistant-ui/react/edge';

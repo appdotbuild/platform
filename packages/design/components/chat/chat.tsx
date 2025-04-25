@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { MyThread } from "./assistant-ui/thread";
+import { MyThread } from './assistant-ui/thread';
 
 export default function Chat() {
   return (

@@ -2,11 +2,11 @@ import {
   AssistantRuntimeProvider,
   ThreadMessageLike,
   useExternalStoreRuntime,
-} from "@assistant-ui/react";
-import type { Meta, StoryObj } from "@storybook/react";
-import Chat from "./chat";
-import { createAI } from "ai/rsc";
-import { ChatConfigProvider } from "./chat-provider";
+} from '@assistant-ui/react';
+import type { Meta, StoryObj } from '@storybook/react';
+import Chat from './chat';
+import { createAI } from 'ai/rsc';
+import { ChatConfigProvider } from './chat-provider';
 
 function MockChat({
   messages,
@@ -32,11 +32,11 @@ function MockChat({
 }
 
 const meta: Meta<typeof MockChat> = {
-  title: "UI/Chat/Thread",
+  title: 'UI/Chat/Thread',
   component: MockChat,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
   },
 };
 
@@ -55,19 +55,19 @@ export const WithMessages: Story = {
   args: {
     messages: [
       {
-        role: "assistant",
-        content: [{ type: "text", text: "Hello, how can I help you today?" }],
+        role: 'assistant',
+        content: [{ type: 'text', text: 'Hello, how can I help you today?' }],
       },
       {
-        role: "user",
-        content: [{ type: "text", text: "I need help with my account" }],
+        role: 'user',
+        content: [{ type: 'text', text: 'I need help with my account' }],
       },
       {
-        role: "assistant",
+        role: 'assistant',
         content: [
           {
-            type: "text",
-            text: "I can help you with that. What seems to be the problem?",
+            type: 'text',
+            text: 'I can help you with that. What seems to be the problem?',
           },
         ],
       },
@@ -79,9 +79,9 @@ export const WithMarkdown: Story = {
   args: {
     messages: [
       {
-        role: "assistant",
+        role: 'assistant',
         content: [
-          { type: "text", text: "Hello, **how can** I help you today?" },
+          { type: 'text', text: 'Hello, **how can** I help you today?' },
         ],
       },
     ],

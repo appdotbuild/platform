@@ -6,7 +6,7 @@ import { Meta, Typeset } from '@storybook/blocks';
 
 export const typography = {
   type: {
-    primary: "--font-geist-sans",
+    primary: '--font-geist-sans',
   },
   weight: {
     regular: '400',
@@ -27,7 +27,8 @@ export const typography = {
   },
 };
 
-export const SampleText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+export const SampleText =
+  'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
 
 # Typography
 
@@ -38,9 +39,7 @@ export const SampleText = 'Lorem ipsum dolor sit amet, consectetur adipiscing el
 <span class="font-sans">Font sans</span>
 
 <Typeset
-  fontSizes={[
-    Number(typography.size.m1),
-  ]}
+  fontSizes={[Number(typography.size.m1)]}
   fontWeight={typography.weight.regular}
   sampleText={SampleText}
   fontFamily="serif"
@@ -51,9 +50,7 @@ export const SampleText = 'Lorem ipsum dolor sit amet, consectetur adipiscing el
 **Weights:** 400(regular), 700(bold), 800(extrabold), 900(black)
 
 <Typeset
-  fontSizes={[
-    Number(typography.size.m1),
-  ]}
+  fontSizes={[Number(typography.size.m1)]}
   fontWeight={typography.weight.regular}
   sampleText={SampleText}
   fontFamily="--font-geist-mono"
@@ -62,46 +59,43 @@ export const SampleText = 'Lorem ipsum dolor sit amet, consectetur adipiscing el
 **Font:** GeistSansVF
 
 Regular
+
 <Typeset
-  fontSizes={[
-    Number(typography.size.m1),
-  ]}
+  fontSizes={[Number(typography.size.m1)]}
   fontWeight={typography.weight.regular}
   sampleText={SampleText}
   fontFamily={typography.type.primary}
 />
 
 Bold
+
 <Typeset
-  fontSizes={[
-    Number(typography.size.m1),
-  ]}
+  fontSizes={[Number(typography.size.m1)]}
   fontWeight={typography.weight.bold}
   sampleText={SampleText}
   fontFamily={typography.type.primary}
 />
 
 Extrabold
+
 <Typeset
-  fontSizes={[
-    Number(typography.size.m1),
-  ]}
+  fontSizes={[Number(typography.size.m1)]}
   fontWeight={typography.weight.extrabold}
   sampleText={SampleText}
   fontFamily={typography.type.primary}
 />
 
 Black
+
 <Typeset
-  fontSizes={[
-    Number(typography.size.m1),
-  ]}
+  fontSizes={[Number(typography.size.m1)]}
   fontWeight={typography.weight.black}
   sampleText={SampleText}
   fontFamily={typography.type.primary}
 />
 
 Sizes
+
 <Typeset
   fontSizes={[
     Number(typography.size.s1),

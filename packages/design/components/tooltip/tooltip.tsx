@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@appdotbuild/design/shadcn/tooltip";
+} from '@appdotbuild/design/shadcn/tooltip';
 
 export function EasyTooltip({
   children,
@@ -17,7 +17,7 @@ export function EasyTooltip({
   if (!tooltip) {
     return children;
   }
-  if (typeof children === "string") {
+  if (typeof children === 'string') {
     children = <span>{children}</span>;
   }
 

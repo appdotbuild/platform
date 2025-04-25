@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useChat } from "ai/react";
-import { createContext, useContext, useState } from "react";
+import { useChat } from 'ai/react';
+import { createContext, useContext, useState } from 'react';
 
 export interface ChatContextType {
   chat: ReturnType<typeof useChat>;
@@ -25,7 +25,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 function useChatConfig() {
   const context = useContext(ChatContext);
   if (context === undefined) {
-    throw new Error("useChatConfig must be used within a ChatConfigProvider");
+    throw new Error('useChatConfig must be used within a ChatConfigProvider');
   }
   return context;
 }
@@ -41,14 +41,14 @@ function ChatConfigProvider({
 }: ChatConfigProviderProps) {
   const [agentMode, setAgentMode] = useState(initialData.agentMode ?? false);
   const [welcomeMessage, setWelcomeMessage] = useState(
-    initialData.welcomeMessage ?? "",
+    initialData.welcomeMessage ?? ''
   );
   const [suggestedQueries, setSuggestedQueries] = useState<string[]>(
-    initialData.suggestedQueries ?? [],
+    initialData.suggestedQueries ?? []
   );
-  const [logoUrl, setLogoUrl] = useState(initialData.logoUrl ?? "");
+  const [logoUrl, setLogoUrl] = useState(initialData.logoUrl ?? '');
   const [chat, setChat] = useState<ReturnType<typeof useChat> | undefined>(
-    undefined,
+    undefined
   );
   const [modalMode, setModalMode] = useState(initialData.modalMode ?? false);
 

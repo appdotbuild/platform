@@ -1,4 +1,5 @@
 {
+  "extends": "@appdotbuild/typescript-config/tsconfig.json",
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },

@@ -1,1 +1,1 @@
-export * from "@assistant-ui/react-ai-sdk";
+export * from '@assistant-ui/react-ai-sdk';

@@ -1,15 +1,16 @@
 {
   "name": "under-construction",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
+    "build": "tsc -b && vite build",
     "clean": "rm -rf node_modules",
     "dev": "vite",
-    "build": "tsc -b && vite build",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "types:check": "tsc --noEmit"
   },
   "dependencies": {
     "react": "18.3.0",

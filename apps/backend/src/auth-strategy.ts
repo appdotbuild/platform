@@ -1,6 +1,6 @@
-import type { FastifyRequest, FastifyReply } from "fastify";
-import * as jose from "jose";
-import { logger } from ".";
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import * as jose from 'jose';
+import { logger } from '.';
 
 type AuthError = {
   error: string;
@@ -39,40 +39,47 @@ type User = {
 // Bearer token authentication strategy
 export async function validateAuth(
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<User | AuthError> {
   const jwks = jose.createRemoteJWKSet(
     new URL(
-      `https://api.stack-auth.com/api/v1/projects/${process.env.STACK_PROJECT_ID}/.well-known/jwks.json`,
-    ),
+      `https://api.stack-auth.com/api/v1/projects/${process.env.STACK_PROJECT_ID}/.well-known/jwks.json`
+    )
   );
 
   const authHeader = request.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return {
-      error: "Missing or invalid authorization header",
+      error: 'Missing or invalid authorization header',
       statusCode: 401,
     };
   }
 
-  const accessToken = authHeader.split(" ")[1];
+  const accessToken = authHeader.split(' ')[1];
+
+  if (!accessToken) {
+    return {
+      error: 'Missing or invalid authorization header',
+      statusCode: 401,
+    };
+  }
 
   let payload;
   try {
     payload = (await jose.jwtVerify(accessToken, jwks)).payload;
   } catch (error) {
-    logger.error("JWT verification failed", { error });
+    logger.error('JWT verification failed', { error });
     return {
-      error: "Invalid authentication token",
+      error: 'Invalid authentication token',
       statusCode: 401,
     };
   }
 
   if (!payload.sub) {
-    logger.warn("No subject found in JWT payload");
+    logger.warn('No subject found in JWT payload');
     return {
-      error: "Invalid authentication token",
+      error: 'Invalid authentication token',
       statusCode: 401,
     };
   }
@@ -81,44 +88,44 @@ export async function validateAuth(
     const response = await fetch(
       `https://api.stack-auth.com/api/v1/users/${payload.sub}`,
       {
-        method: "GET",
+        method: 'GET',
         headers: {
-          "X-Stack-Project-Id": process.env.STACK_PROJECT_ID!,
-          "X-Stack-Access-Type": "server",
-          "X-Stack-Publishable-Client-Key":
+          'X-Stack-Project-Id': process.env.STACK_PROJECT_ID!,
+          'X-Stack-Access-Type': 'server',
+          'X-Stack-Publishable-Client-Key':
             process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY!,
-          "X-Stack-Secret-Server-Key": process.env.STACK_SECRET_SERVER_KEY!,
+          'X-Stack-Secret-Server-Key': process.env.STACK_SECRET_SERVER_KEY!,
         },
-      },
+      }
     );
 
     if (!response.ok) {
-      logger.error("Failed to fetch user data from Stack Auth", {
+      logger.error('Failed to fetch user data from Stack Auth', {
         statusText: response.statusText,
         status: response.status,
       });
       return {
-        error: "Failed to validate user",
+        error: 'Failed to validate user',
         statusCode: 401,
       };
     }
 
     const responseJson = (await response.json()) as User;
-    if (!responseJson.primary_email?.endsWith("@neon.tech")) {
-      logger.warn("Unauthorized email domain attempt", {
+    if (!responseJson.primary_email?.endsWith('@neon.tech')) {
+      logger.warn('Unauthorized email domain attempt', {
         email: responseJson.primary_email,
       });
       return {
-        error: "Unauthorized email domain",
+        error: 'Unauthorized email domain',
         statusCode: 403,
       };
     }
 
     return responseJson;
   } catch (error) {
-    logger.error("Stack Auth API call failed", { error });
+    logger.error('Stack Auth API call failed', { error });
     return {
-      error: "Authentication service error",
+      error: 'Authentication service error',
       statusCode: 500,
     };
   }

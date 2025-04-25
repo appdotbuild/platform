@@ -1,19 +1,19 @@
-import { Meta, StoryObj } from "@storybook/react";
-import { Badge } from "../badge";
+import { Meta, StoryObj } from '@storybook/react';
+import { Badge } from '../badge';
 
 const meta: Meta<typeof Badge> = {
-  title: "UI/Shadcn/Badge",
+  title: 'UI/Shadcn/Badge',
   component: Badge,
   argTypes: {
     variant: {
-      control: "select",
+      control: 'select',
       options: [
-        "default",
-        "primary",
-        "secondary",
-        "success",
-        "warning",
-        "danger",
+        'default',
+        'primary',
+        'secondary',
+        'success',
+        'warning',
+        'danger',
       ],
     },
   },
@@ -24,13 +24,13 @@ type Story = StoryObj<typeof Badge>;
 
 export const Default: Story = {
   args: {
-    children: "Default Badge",
+    children: 'Default Badge',
   },
 };
 
 export const Destructive: Story = {
   args: {
-    children: "Primary Badge",
-    variant: "destructive",
+    children: 'Primary Badge',
+    variant: 'destructive',
   },
 };

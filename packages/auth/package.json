@@ -4,16 +4,17 @@
   "private": true,
   "scripts": {
     "clean": "rm -rf node_modules",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "prettier --check .",
-    "lint:fix": "prettier --write ."
+    "lint:fix": "prettier --write .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "types:check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stackframe/stack": "2.8.6",
+    "zod": "3.24.1"
   },
   "devDependencies": {
     "next": "15.1.4"
-  },
-  "dependencies": {
-    "zod": "3.24.1",
-    "@stackframe/stack": "2.8.6"
   },
   "peerDependencies": {
     "next": "15.1.4"

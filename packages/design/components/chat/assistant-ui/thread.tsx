@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   ActionBarPrimitive,
@@ -9,14 +9,14 @@ import {
   useAssistantRuntime,
   useMessage,
   useThread,
-} from "@assistant-ui/react";
-import type { FC } from "react";
-import { useState, useCallback } from "react";
-import React from "react";
+} from '@assistant-ui/react';
+import type { FC } from 'react';
+import { useState, useCallback } from 'react';
+import React from 'react';
 
-import { cn } from "@appdotbuild/design/lib/utils";
-import { Avatar, AvatarFallback } from "@appdotbuild/design/shadcn/avatar";
-import { Button } from "@appdotbuild/design/shadcn/button";
+import { cn } from '@appdotbuild/design/lib/utils';
+import { Avatar, AvatarFallback } from '@appdotbuild/design/shadcn/avatar';
+import { Button } from '@appdotbuild/design/shadcn/button';
 import {
   ArrowDownIcon,
   CheckIcon,
@@ -26,17 +26,17 @@ import {
   ChevronRightIcon,
   RefreshCwIcon,
   PencilIcon,
-} from "lucide-react";
-import Image from "next/image";
-import { useChatConfig } from "../chat-config-provider";
-import { MarkdownText } from "./markdown-text";
-import { TooltipIconButton } from "./tooltip-icon-button";
-import { useChatProvider } from "../chat-provider";
-import { SourceBoxListStory } from "../source-box.stories";
-import { Source, SourceBoxList } from "../source-box";
-import { Skeleton } from "@appdotbuild/design/shadcn/skeleton";
-import { SearchResults } from "../search-results";
-import { useDebounce } from "use-debounce";
+} from 'lucide-react';
+import Image from 'next/image';
+import { useChatConfig } from '../chat-config-provider';
+import { MarkdownText } from './markdown-text';
+import { TooltipIconButton } from './tooltip-icon-button';
+import { useChatProvider } from '../chat-provider';
+import { SourceBoxListStory } from '../source-box.stories';
+import { Source, SourceBoxList } from '../source-box';
+import { Skeleton } from '@appdotbuild/design/shadcn/skeleton';
+import { SearchResults } from '../search-results';
+import { useDebounce } from 'use-debounce';
 
 export const MyThread: FC = () => {
   const { threads } = useAssistantRuntime();
@@ -48,13 +48,13 @@ export const MyThread: FC = () => {
   return (
     <ThreadPrimitive.Root
       className={cn(
-        "bg-background h-full w-full min-h-[0] transition-all duration-700 ease-in-out",
-        doHideWelcome && "min-h-[100dvh]",
-        modalMode && "pt-4 pb-8",
+        'bg-background h-full w-full min-h-[0] transition-all duration-700 ease-in-out',
+        doHideWelcome && 'min-h-[100dvh]',
+        modalMode && 'pt-4 pb-8'
       )}
     >
       <ThreadPrimitive.Viewport className="flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4">
-        <div className={cn(doHideWelcome && "invisible", !modalMode && "pt-8")}>
+        <div className={cn(doHideWelcome && 'invisible', !modalMode && 'pt-8')}>
           <MyThreadWelcome hideWelcome={doHideWelcome} />
         </div>
 
@@ -121,7 +121,7 @@ const MySuggestedPromptsInitial: FC = () => {
 const MySuggestedPrompts: FC = () => {
   const lastMessage = useThread((t) => t.messages.at(-1));
   const annotation: any = lastMessage?.metadata?.unstable_annotations?.find(
-    (a: any) => a.type === "suggested-prompts",
+    (a: any) => a.type === 'suggested-prompts'
   );
   const suggestions = annotation?.data;
   if (!suggestions) return null;
@@ -164,10 +164,10 @@ const MyThreadWelcome: FC<{ hideWelcome: boolean }> = ({ hideWelcome }) => {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center transition-all duration-300 ease-in-out",
+        'flex flex-col items-center justify-center transition-all duration-300 ease-in-out',
         hideWelcome
-          ? "max-h-0 mb-0 opacity-0 scale-95 pointer-events-none"
-          : "max-h-[200px] mb-8 opacity-100 scale-100",
+          ? 'max-h-0 mb-0 opacity-0 scale-95 pointer-events-none'
+          : 'max-h-[200px] mb-8 opacity-100 scale-100'
       )}
     >
       <div className="flex flex-col items-center">
@@ -180,7 +180,7 @@ const MyThreadWelcome: FC<{ hideWelcome: boolean }> = ({ hideWelcome }) => {
           </Avatar>
         )}
         <p className="mt-4 font-medium">
-          {chatConfig.welcomeMessage || "What do you want to know?"}
+          {chatConfig.welcomeMessage || 'What do you want to know?'}
         </p>
       </div>
     </div>
@@ -194,7 +194,7 @@ interface MyComposerProps {
 export const MyComposer: FC<MyComposerProps> = ({ setActive }) => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   // NB: searchValue is used only for the search results, the AI chat stores internally in ComposerPrimitive.Input
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState('');
   const [debouncedValue] = useDebounce(searchValue, 200);
 
   const handleSearch = useCallback(async (query: string) => {
@@ -204,15 +204,15 @@ export const MyComposer: FC<MyComposerProps> = ({ setActive }) => {
     }
 
     try {
-      const response = await fetch("/chat/ui/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/chat/ui/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query }),
       });
       const data = await response.json();
       setSearchResults(data.results || []);
     } catch (error) {
-      console.error("Search error:", error);
+      console.error('Search error:', error);
       setSearchResults([]);
     }
   }, []);
@@ -229,7 +229,7 @@ export const MyComposer: FC<MyComposerProps> = ({ setActive }) => {
 
   const handleSubmit = () => {
     setSearchResults([]);
-    setSearchValue("");
+    setSearchValue('');
   };
 
   return (
@@ -344,7 +344,7 @@ const MyEditComposer: FC = () => {
 const MyAssistantMessage: FC = () => {
   const message = useMessage();
   const annotation: any = message?.metadata?.unstable_annotations?.find(
-    (a: any) => a.type === "sources",
+    (a: any) => a.type === 'sources'
   );
   const sources = annotation?.data;
 
@@ -432,8 +432,8 @@ const MyBranchPicker: FC<any> = ({ className, ...rest }) => {
     <BranchPickerPrimitive.Root
       hideWhenSingleBranch
       className={cn(
-        "text-muted-foreground inline-flex items-center text-xs",
-        className,
+        'text-muted-foreground inline-flex items-center text-xs',
+        className
       )}
       {...rest}
     >

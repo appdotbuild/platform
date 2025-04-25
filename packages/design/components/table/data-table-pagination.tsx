@@ -3,17 +3,17 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-} from "@appdotbuild/design/base/icons";
-import { Table } from "@tanstack/react-table";
+} from '@appdotbuild/design/base/icons';
+import { Table } from '@tanstack/react-table';
 
-import { Button } from "@appdotbuild/design/shadcn/button";
+import { Button } from '@appdotbuild/design/shadcn/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@appdotbuild/design/shadcn/select";
+} from '@appdotbuild/design/shadcn/select';
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
@@ -30,10 +30,14 @@ export function DataTablePagination<TData>({
     <div className="flex items-center justify-between px-2">
       <div className="flex-1 text-sm text-muted-foreground">
         {totalCount
-          ? `${table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}-${Math.min(
+          ? `${
+              table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+              1
+            }-${Math.min(
               (table.getState().pagination.pageIndex + 1) *
                 table.getState().pagination.pageSize,
-              totalCount,
+              totalCount
             )} of ${totalCount} rows`
           : `${table.getFilteredSelectedRowModel().rows.length} of ${
               table.getFilteredRowModel().rows.length
@@ -61,7 +65,7 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          Page {table.getState().pagination.pageIndex + 1} of{' '}
           {table.getPageCount()}
         </div>
         <div className="flex items-center space-x-2">

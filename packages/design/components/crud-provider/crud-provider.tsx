@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { toast } from "@appdotbuild/design/hooks/use-toast";
-import { createContext, useContext, useState } from "react";
+import { toast } from '@appdotbuild/design/hooks/use-toast';
+import { createContext, useContext, useState } from 'react';
 
 export type WithId = {
   id: number;
@@ -27,7 +27,7 @@ export function createCRUDProvider<T extends WithId>({
   function useIndexes() {
     const context = useContext(CustomContext);
     if (context === undefined) {
-      throw new Error("useIndexes must be used within an IndexesProvider");
+      throw new Error('useIndexes must be used within an IndexesProvider');
     }
     return context;
   }
@@ -48,8 +48,8 @@ export function createCRUDProvider<T extends WithId>({
         const { data: freshData } = await refreshAction({});
         setData(freshData);
       } catch (error) {
-        toast({ title: "Failed to refresh", variant: "destructive" });
-        console.error("Failed to refresh:", { base: error });
+        toast({ title: 'Failed to refresh', variant: 'destructive' });
+        console.error('Failed to refresh:', { base: error });
       } finally {
         setIsLoading(false);
       }
@@ -58,7 +58,7 @@ export function createCRUDProvider<T extends WithId>({
     async function patch(data: Partial<T>[]) {
       const ids = data.map((d) => d.id);
       setData((prev) =>
-        prev.map((i) => (ids.includes(i.id) ? Object.assign(i, data) : i)),
+        prev.map((i) => (ids.includes(i.id) ? Object.assign(i, data) : i))
       );
     }
 

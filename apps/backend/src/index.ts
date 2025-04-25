@@ -1,27 +1,27 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import fastify, { type FastifyReply, type FastifyRequest } from "fastify";
-import { fastifySchedule } from "@fastify/schedule";
-import { CronJob, AsyncTask } from "toad-scheduler";
-import { appPrompts, apps } from "./db/schema";
-import { v4 as uuidv4 } from "uuid";
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
+import { fastifySchedule } from '@fastify/schedule';
+import { CronJob, AsyncTask } from 'toad-scheduler';
+import { appPrompts, apps } from './db/schema';
+import { v4 as uuidv4 } from 'uuid';
 import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { config } from "dotenv";
-import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
-import { createApiClient } from "@neondatabase/api-client";
-import { desc, eq, getTableColumns, sql, gt, and } from "drizzle-orm";
-import type { Paginated, ReadUrl } from "@appdotbuild/core/types/api";
-import winston from "winston";
-import { FastifySSEPlugin } from "fastify-sse-v2";
-import { EventSource } from "eventsource";
-import { validateAuth } from "./auth-strategy";
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { config } from 'dotenv';
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { createApiClient } from '@neondatabase/api-client';
+import { desc, eq, getTableColumns, sql, gt, and } from 'drizzle-orm';
+import type { Paginated, ReadUrl } from '@appdotbuild/core/types/api';
+import winston from 'winston';
+import { FastifySSEPlugin } from 'fastify-sse-v2';
+import { EventSource } from 'eventsource';
+import { validateAuth } from './auth-strategy';
 
 // Define the App type locally since it's not exported from @appdotbuild/core/types/api
 type App = {
@@ -42,37 +42,37 @@ type App = {
 
 // Configure Winston logger
 export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || "info",
+  level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.json(),
+    winston.format.json()
   ),
   transports: [
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.simple(),
+        winston.format.simple()
       ),
     }),
   ],
 });
 
-config({ path: ".env.local" });
+config({ path: '.env.local' });
 
 // Detects the fly binary in the system (could be just `fly`, could be `/root/.fly/bin/fly` or `/home/runner/.fly/bin/fly`) by checking for the presence of these binaries.
 function detectFlyBinary() {
-  if (fs.existsSync("/root/.fly/bin/fly")) {
-    return "/root/.fly/bin/fly";
-  } else if (fs.existsSync("/home/runner/.fly/bin/fly")) {
-    return "/home/runner/.fly/bin/fly";
+  if (fs.existsSync('/root/.fly/bin/fly')) {
+    return '/root/.fly/bin/fly';
+  } else if (fs.existsSync('/home/runner/.fly/bin/fly')) {
+    return '/home/runner/.fly/bin/fly';
   } else {
-    return "fly";
+    return 'fly';
   }
 }
 
-const MOCKED_AGENT_API_URL = "http://0.0.0.0:5575";
-const STAGING_AGENT_API_URL = "http://18.237.53.81:8080";
-const PROD_AGENT_API_URL = "http://54.245.178.56:8080";
+const MOCKED_AGENT_API_URL = 'http://0.0.0.0:5575';
+const STAGING_AGENT_API_URL = 'http://18.237.53.81:8080';
+const PROD_AGENT_API_URL = 'http://54.245.178.56:8080';
 
 const s3Client = new S3Client({
   credentials: {
@@ -97,7 +97,7 @@ function getS3DirectoryParams(appId: string) {
 }
 
 async function createS3DirectoryWithPresignedUrls(
-  appId: string,
+  appId: string
 ): Promise<{ writeUrl: string; readUrl: string }> {
   const baseParams = getS3DirectoryParams(appId);
 
@@ -115,7 +115,7 @@ async function createS3DirectoryWithPresignedUrls(
 }
 
 async function getReadPresignedUrls(
-  appId: string,
+  appId: string
 ): Promise<{ readUrl: string }> {
   const baseParams = getS3DirectoryParams(appId);
 
@@ -133,11 +133,11 @@ async function getS3Checksum(appId: string): Promise<string | null> {
     const baseParams = getS3DirectoryParams(appId);
     const headCommand = new HeadObjectCommand(baseParams);
     const headResponse = await s3Client.send(headCommand);
-    return headResponse.ETag?.replace(/"/g, "") || null; // Remove quotes from ETag
+    return headResponse.ETag?.replace(/"/g, '') || null; // Remove quotes from ETag
   } catch (error: any) {
     // Don't log if it's just a NotFound error (expected for new apps)
     if (error.$metadata?.httpStatusCode !== 404) {
-      logger.error("Error getting S3 checksum", {
+      logger.error('Error getting S3 checksum', {
         appId,
         error,
         httpStatusCode: error.$metadata?.httpStatusCode,
@@ -154,7 +154,7 @@ async function deployApp({
   appId: string;
   readUrl: string;
 }) {
-  const downloadDir = path.join(process.cwd(), "downloads");
+  const downloadDir = path.join(process.cwd(), 'downloads');
   const zipPath = path.join(downloadDir, `${appId}.zip`);
   const extractDir = path.join(downloadDir, appId);
 
@@ -170,14 +170,14 @@ async function deployApp({
   }
 
   // deployed is okay, but deploying is not
-  if (app[0].deployStatus === "deploying") {
+  if (app[0].deployStatus === 'deploying') {
     throw new Error(`App ${appId} is already being deployed`);
   }
 
   await db
     .update(apps)
     .set({
-      deployStatus: "deploying",
+      deployStatus: 'deploying',
     })
     .where(eq(apps.id, appId));
 
@@ -198,27 +198,27 @@ async function deployApp({
   execSync(`unzip -o ${zipPath} -d ${extractDir}`);
 
   const files = execSync(`ls -la ${extractDir}`).toString();
-  logger.info("Extracted files", { files });
+  logger.info('Extracted files', { files });
 
   const packageJsonPath = execSync(
-    `find ${extractDir} -maxdepth 3 -not -path "*tsp_schema*" -name package.json -print -quit`,
+    `find ${extractDir} -maxdepth 3 -not -path "*tsp_schema*" -name package.json -print -quit`
   )
     .toString()
     .trim();
   const packageJsonDirectory = path.dirname(packageJsonPath);
 
-  logger.info("Found package.json directory", { packageJsonDirectory });
+  logger.info('Found package.json directory', { packageJsonDirectory });
 
   // Create a Neon database
   const { data } = await neonClient.createProject({
     project: {},
   });
-  const connectionString = data.connection_uris[0].connection_uri;
-  logger.info("Created Neon database", { projectId: data.project.id });
+  const connectionString = data.connection_uris[0]?.connection_uri;
+  logger.info('Created Neon database', { projectId: data.project.id });
 
   // Write the `Dockerfile` to the packageJsonDirectory
   fs.writeFileSync(
-    path.join(packageJsonDirectory, "Dockerfile"),
+    path.join(packageJsonDirectory, 'Dockerfile'),
     `
 # syntax = docker/dockerfile:1
 # Adjust BUN_VERSION as desired
@@ -260,17 +260,17 @@ COPY --from=build /app /app
 EXPOSE 3000
 
 CMD [ "bun", "run", "start" ]
-`,
+`
   );
 
   fs.writeFileSync(
-    path.join(packageJsonDirectory, ".dockerignore"),
+    path.join(packageJsonDirectory, '.dockerignore'),
     `
 node_modules
 .git
 .gitignore
 .env
-`,
+`
   );
 
   const flyAppName = `app-${appId}`;
@@ -282,7 +282,7 @@ node_modules
     PICA_SECRET_KEY: process.env.DEPLOYED_BOT_PICA_SECRET_KEY!,
   };
 
-  let envVarsString = "";
+  let envVarsString = '';
   for (const [key, value] of Object.entries(envVars)) {
     if (value !== null) {
       envVarsString += `--env ${key}='${value}' `;
@@ -291,14 +291,15 @@ node_modules
 
   try {
     execSync(
-      `${detectFlyBinary} apps destroy ${flyAppName} --yes --access-token '${process.env.FLY_IO_TOKEN!}' || true`,
+      `${detectFlyBinary} apps destroy ${flyAppName} --yes --access-token '${process
+        .env.FLY_IO_TOKEN!}' || true`,
       {
-        stdio: "inherit",
+        stdio: 'inherit',
         cwd: packageJsonDirectory,
-      },
+      }
     );
   } catch (error) {
-    logger.error("Error destroying fly app", {
+    logger.error('Error destroying fly app', {
       error:
         error instanceof Error
           ? {
@@ -311,13 +312,15 @@ node_modules
     });
   }
 
-  logger.info("Starting fly launch", { flyAppName });
+  logger.info('Starting fly launch', { flyAppName });
   execSync(
-    `${detectFlyBinary()} launch -y ${envVarsString} --access-token '${process.env.FLY_IO_TOKEN!}' --max-concurrent 1 --ha=false --no-db --no-deploy --name '${flyAppName}'`,
-    { cwd: packageJsonDirectory, stdio: "inherit" },
+    `${detectFlyBinary()} launch -y ${envVarsString} --access-token '${process
+      .env
+      .FLY_IO_TOKEN!}' --max-concurrent 1 --ha=false --no-db --no-deploy --name '${flyAppName}'`,
+    { cwd: packageJsonDirectory, stdio: 'inherit' }
   );
-  logger.info("Fly launch completed", { flyAppName });
-  logger.info("Updating apps table", {
+  logger.info('Fly launch completed', { flyAppName });
+  logger.info('Updating apps table', {
     flyAppName,
     appId,
   });
@@ -329,32 +332,33 @@ node_modules
     })
     .where(eq(apps.id, appId));
 
-  const flyTomlPath = path.join(packageJsonDirectory, "fly.toml");
-  const flyTomlContent = fs.readFileSync(flyTomlPath, "utf8");
+  const flyTomlPath = path.join(packageJsonDirectory, 'fly.toml');
+  const flyTomlContent = fs.readFileSync(flyTomlPath, 'utf8');
   const updatedContent = flyTomlContent.replace(
-    "min_machines_running = 0",
-    "min_machines_running = 1",
+    'min_machines_running = 0',
+    'min_machines_running = 1'
   );
   fs.writeFileSync(flyTomlPath, updatedContent);
 
-  logger.info("Starting fly deployment", { flyAppName });
+  logger.info('Starting fly deployment', { flyAppName });
   execSync(
-    `${detectFlyBinary()} deploy --yes --ha=false --max-concurrent 1 --access-token '${process.env.FLY_IO_TOKEN!}'`,
+    `${detectFlyBinary()} deploy --yes --ha=false --max-concurrent 1 --access-token '${process
+      .env.FLY_IO_TOKEN!}'`,
     {
       cwd: packageJsonDirectory,
-      stdio: "inherit",
-    },
+      stdio: 'inherit',
+    }
   );
-  logger.info("Fly deployment completed", { flyAppName });
+  logger.info('Fly deployment completed', { flyAppName });
 
   await db
     .update(apps)
     .set({
-      deployStatus: "deployed",
+      deployStatus: 'deployed',
     })
     .where(eq(apps.id, appId));
 
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === 'production') {
     if (fs.existsSync(downloadDir)) {
       fs.rmdirSync(downloadDir, { recursive: true });
     }
@@ -375,7 +379,7 @@ const connectionString =
   process.env.DATABASE_URL_DEV ?? process.env.DATABASE_URL!;
 const db = drizzle(connectionString);
 
-const deployTask = new AsyncTask("deploy task", async (taskId) => {
+const deployTask = new AsyncTask('deploy task', async (taskId) => {
   const allApps = await db
     .select()
     .from(apps)
@@ -391,7 +395,7 @@ const deployTask = new AsyncTask("deploy task", async (taskId) => {
         continue;
       }
 
-      logger.info("App has new checksum", {
+      logger.info('App has new checksum', {
         appId: app.id,
         currentChecksum,
         previousChecksum: app.s3Checksum,
@@ -402,7 +406,7 @@ const deployTask = new AsyncTask("deploy task", async (taskId) => {
       // Verify we can fetch the source code
       const response = await fetch(readUrl);
       if (!response.ok) {
-        logger.error("Failed to fetch source code", {
+        logger.error('Failed to fetch source code', {
           appId: app.id,
           statusText: response.statusText,
           status: response.status,
@@ -421,7 +425,7 @@ const deployTask = new AsyncTask("deploy task", async (taskId) => {
         })
         .where(eq(apps.id, app.id));
     } catch (error) {
-      logger.error("Error processing app", {
+      logger.error('Error processing app', {
         appId: app.id,
         error:
           error instanceof Error
@@ -438,9 +442,9 @@ const deployTask = new AsyncTask("deploy task", async (taskId) => {
 
 const deployJob = new CronJob(
   {
-    cronExpression: "*/30 * * * * *", // Runs every 30 seconds
+    cronExpression: '*/30 * * * * *', // Runs every 30 seconds
   },
-  deployTask,
+  deployTask
 );
 
 app.register(fastifySchedule);
@@ -451,9 +455,9 @@ app.ready().then(() => {
   app.scheduler.addCronJob(deployJob);
 });
 
-app.get("/apps", async (request, reply): Promise<Paginated<App>> => {
+app.get('/apps', async (request, reply): Promise<Paginated<App>> => {
   const authResponse = await validateAuth(request, reply);
-  if ("error" in authResponse) {
+  if ('error' in authResponse) {
     return reply.status(authResponse.statusCode).send({
       error: authResponse.error,
     });
@@ -467,7 +471,7 @@ app.get("/apps", async (request, reply): Promise<Paginated<App>> => {
   // Convert to numbers and validate
   if (limit > 100) {
     return reply.status(400).send({
-      error: "Limit cannot exceed 100",
+      error: 'Limit cannot exceed 100',
     });
   }
   const pagesize = Math.min(Math.max(1, Number(limit)), 100); // Limit between 1 and 100
@@ -505,9 +509,9 @@ app.get("/apps", async (request, reply): Promise<Paginated<App>> => {
   };
 });
 
-app.get("/apps/:id", async (request, reply): Promise<App> => {
+app.get('/apps/:id', async (request, reply): Promise<App> => {
   const authResponse = await validateAuth(request, reply);
-  if ("error" in authResponse) {
+  if ('error' in authResponse) {
     return reply.status(authResponse.statusCode).send({
       error: authResponse.error,
     });
@@ -524,15 +528,15 @@ app.get("/apps/:id", async (request, reply): Promise<App> => {
     .where(and(eq(apps.id, id), eq(apps.ownerId, authResponse.id)));
   if (!app || !app.length) {
     return reply.status(404).send({
-      error: "App not found",
+      error: 'App not found',
     });
   }
   return reply.send(app[0]);
 });
 
-app.get("/apps/:id/read-url", async (request, reply): Promise<ReadUrl> => {
+app.get('/apps/:id/read-url', async (request, reply): Promise<ReadUrl> => {
   const authResponse = await validateAuth(request, reply);
-  if ("error" in authResponse) {
+  if ('error' in authResponse) {
     return reply.status(authResponse.statusCode).send({
       error: authResponse.error,
     });
@@ -543,16 +547,18 @@ app.get("/apps/:id/read-url", async (request, reply): Promise<ReadUrl> => {
     .select({ id: apps.id })
     .from(apps)
     .where(and(eq(apps.id, id), eq(apps.ownerId, authResponse.id)));
-  if (!app && !app?.[0]) {
+
+  if (!app || !app?.[0]) {
     return reply.status(404).send({
-      error: "App not found",
+      error: 'App not found',
     });
   }
+
   return getReadPresignedUrls(app[0].id);
 });
 
 app.post(
-  "/generate",
+  '/generate',
   async (
     request: FastifyRequest<{
       Body: {
@@ -565,7 +571,7 @@ app.post(
         clientSource: string;
       };
     }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) => {
     try {
       const {
@@ -577,13 +583,13 @@ app.post(
       } = request.body;
 
       const authResponse = await validateAuth(request, reply);
-      if ("error" in authResponse) {
+      if ('error' in authResponse) {
         return reply.status(authResponse.statusCode).send({
           error: authResponse.error,
         });
       }
 
-      logger.info("Generate request received", {
+      logger.info('Generate request received', {
         userId: authResponse.id,
         useStaging,
         useMockedAgent,
@@ -595,14 +601,15 @@ app.post(
       let appId = request.body.appId;
       if (!appId) {
         appId = uuidv4();
-        logger.info("Generated new app ID", { appId });
+        logger.info('Generated new app ID', { appId });
       } else {
-        logger.info("Using existing app ID", { appId });
+        logger.info('Using existing app ID', { appId });
       }
 
-      const { writeUrl, readUrl } =
-        await createS3DirectoryWithPresignedUrls(appId);
-      logger.info("Created S3 presigned URLs", {
+      const { writeUrl, readUrl } = await createS3DirectoryWithPresignedUrls(
+        appId
+      );
+      logger.info('Created S3 presigned URLs', {
         appId,
         writeUrlExpiry: new Date(Date.now() + 3600 * 1000).toISOString(),
       });
@@ -613,7 +620,7 @@ app.post(
         .where(and(eq(apps.id, appId), eq(apps.ownerId, authResponse.id)));
 
       if (existingApp && existingApp[0]) {
-        logger.info("Found existing app", {
+        logger.info('Found existing app', {
           appId,
           receivedSuccess: existingApp[0].receivedSuccess,
           recompileInProgress: existingApp[0].recompileInProgress,
@@ -636,7 +643,7 @@ app.post(
         })
         .returning();
 
-      logger.info("Upserted app in database", {
+      logger.info('Upserted app in database', {
         appId,
         userId: authResponse.id,
       });
@@ -645,9 +652,9 @@ app.post(
         id: uuidv4(),
         prompt,
         appId: appId,
-        kind: "user",
+        kind: 'user',
       });
-      logger.info("Inserted user prompt", { appId });
+      logger.info('Inserted user prompt', { appId });
 
       const allPrompts = await db
         .select({
@@ -658,21 +665,21 @@ app.post(
         .from(appPrompts)
         .where(eq(appPrompts.appId, appId));
 
-      logger.info("Retrieved all prompts", {
+      logger.info('Retrieved all prompts', {
         appId,
         promptCount: allPrompts.length,
         promptTypes: allPrompts.map((p) => p.kind),
       });
 
       if (allPrompts.length < 1) {
-        logger.error("No prompts found after insertion", { appId });
-        throw new Error("Failed to insert prompt into app_prompts");
+        logger.error('No prompts found after insertion', { appId });
+        throw new Error('Failed to insert prompt into app_prompts');
       }
 
       try {
         // If sourceCodeFile is provided, upload it directly to S3 and skip the /prepare/compile endpoints
         if (sourceCodeFile) {
-          logger.info("Starting source code file upload", {
+          logger.info('Starting source code file upload', {
             appId,
             fileName: sourceCodeFile.name,
             contentSizeBytes: sourceCodeFile.content.length,
@@ -680,33 +687,33 @@ app.post(
 
           try {
             // Decode the base64 content
-            const fileBuffer = Buffer.from(sourceCodeFile.content, "base64");
-            logger.debug("Decoded base64 content", {
+            const fileBuffer = Buffer.from(sourceCodeFile.content, 'base64');
+            logger.debug('Decoded base64 content', {
               appId,
               bufferSizeBytes: fileBuffer.length,
             });
 
             // Upload the file to S3 using the writeUrl
             const response = await fetch(writeUrl, {
-              method: "PUT",
+              method: 'PUT',
               body: fileBuffer,
               headers: {
-                "Content-Type": "application/zip",
+                'Content-Type': 'application/zip',
               },
             });
 
             if (!response.ok) {
-              logger.error("S3 upload failed", {
+              logger.error('S3 upload failed', {
                 appId,
                 status: response.status,
                 statusText: response.statusText,
               });
               throw new Error(
-                `Failed to upload file to S3: ${response.statusText}`,
+                `Failed to upload file to S3: ${response.statusText}`
               );
             }
 
-            logger.info("Successfully uploaded source code file", {
+            logger.info('Successfully uploaded source code file', {
               appId,
               status: response.status,
             });
@@ -716,12 +723,12 @@ app.post(
               message: `Source code uploaded successfully`,
             });
           } catch (uploadError) {
-            logger.error("Error uploading source code file", {
+            logger.error('Error uploading source code file', {
               appId,
               error: uploadError,
             });
             throw new Error(
-              `Failed to upload source code file: ${uploadError}`,
+              `Failed to upload source code file: ${uploadError}`
             );
           }
         } else {
@@ -729,10 +736,10 @@ app.post(
           let AGENT_API_URL = useMockedAgent
             ? MOCKED_AGENT_API_URL
             : useStaging
-              ? STAGING_AGENT_API_URL
-              : PROD_AGENT_API_URL;
+            ? STAGING_AGENT_API_URL
+            : PROD_AGENT_API_URL;
 
-          logger.info("Using agent API", {
+          logger.info('Using agent API', {
             appId,
             url: AGENT_API_URL,
             useMockedAgent,
@@ -741,22 +748,22 @@ app.post(
 
           if (existingApp && existingApp[0] && existingApp[0].receivedSuccess) {
             if (existingApp[0].recompileInProgress) {
-              logger.info("Skipping recompile - already in progress", {
+              logger.info('Skipping recompile - already in progress', {
                 appId,
               });
               return reply.send({
                 newApp: {
                   id: appId,
                 },
-                message: "Codegen already in progress",
+                message: 'Codegen already in progress',
               });
             }
 
-            logger.info("Starting recompile for existing app", { appId });
+            logger.info('Starting recompile for existing app', { appId });
             const compileResponse = await fetch(`${AGENT_API_URL}/recompile`, {
-              method: "POST",
+              method: 'POST',
               headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
                 Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH!}`,
               },
               body: JSON.stringify({
@@ -768,7 +775,7 @@ app.post(
               }),
             });
 
-            logger.info("Recompile response received", {
+            logger.info('Recompile response received', {
               appId,
               status: compileResponse.status,
               ok: compileResponse.ok,
@@ -776,7 +783,7 @@ app.post(
 
             if (!compileResponse.ok) {
               throw new Error(
-                `HTTP error in /compile, status: ${compileResponse.status}`,
+                `HTTP error in /compile, status: ${compileResponse.status}`
               );
             }
 
@@ -789,11 +796,11 @@ app.post(
               message: `Codegen started: ${compileResponseJson.message}`,
             });
           } else {
-            logger.info("Starting prepare for new app", { appId });
+            logger.info('Starting prepare for new app', { appId });
             const prepareResponse = await fetch(`${AGENT_API_URL}/prepare`, {
-              method: "POST",
+              method: 'POST',
               headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
                 Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH!}`,
               },
               body: JSON.stringify({
@@ -803,13 +810,13 @@ app.post(
             });
 
             if (!prepareResponse.ok) {
-              logger.error("Prepare request failed", {
+              logger.error('Prepare request failed', {
                 appId,
                 status: prepareResponse.status,
                 statusText: prepareResponse.statusText,
               });
               throw new Error(
-                `HTTP error in /prepare, status: ${prepareResponse.status}`,
+                `HTTP error in /prepare, status: ${prepareResponse.status}`
               );
             }
 
@@ -822,7 +829,7 @@ app.post(
               };
             } = await prepareResponse.json();
 
-            logger.info("Prepare response received", {
+            logger.info('Prepare response received', {
               appId,
               status: prepareResponseJson.status,
               hasReasoning: !!prepareResponseJson.metadata.reasoning,
@@ -835,32 +842,32 @@ app.post(
                 typespecSchema: prepareResponseJson.metadata.typespec,
               })
               .where(eq(apps.id, appId));
-            logger.info("Updated app typespec schema", { appId });
+            logger.info('Updated app typespec schema', { appId });
 
-            if (prepareResponseJson.status === "success") {
+            if (prepareResponseJson.status === 'success') {
               await db
                 .update(apps)
                 .set({
                   receivedSuccess: true,
                 })
                 .where(eq(apps.id, appId));
-              logger.info("Marked app as received success", { appId });
+              logger.info('Marked app as received success', { appId });
             }
 
             await db.insert(appPrompts).values({
               id: uuidv4(),
               prompt: prepareResponseJson.metadata.reasoning,
               appId: appId,
-              kind: "agent",
+              kind: 'agent',
             });
-            logger.info("Inserted agent reasoning prompt", { appId });
+            logger.info('Inserted agent reasoning prompt', { appId });
 
             // Deploy an under-construction page to the fly app
             const underConstructionImage =
-              "registry.fly.io/under-construction:deployment-01JQ4JD8TKSW37KP9MR44B3DNB";
+              'registry.fly.io/under-construction:deployment-01JQ4JD8TKSW37KP9MR44B3DNB';
             const flyAppName = `app-${appId}`;
 
-            logger.info("Deploying under-construction page", {
+            logger.info('Deploying under-construction page', {
               appId,
               flyAppName,
               image: underConstructionImage,
@@ -868,15 +875,16 @@ app.post(
 
             try {
               execSync(
-                `${detectFlyBinary()} launch --yes --access-token '${process.env.FLY_IO_TOKEN!}' --max-concurrent 1 --ha=false --no-db  --name '${flyAppName}' --image ${underConstructionImage} --internal-port 80 --dockerignore-from-gitignore`,
-                { stdio: "inherit" },
+                `${detectFlyBinary()} launch --yes --access-token '${process.env
+                  .FLY_IO_TOKEN!}' --max-concurrent 1 --ha=false --no-db  --name '${flyAppName}' --image ${underConstructionImage} --internal-port 80 --dockerignore-from-gitignore`,
+                { stdio: 'inherit' }
               );
-              logger.info("Successfully deployed under-construction page", {
+              logger.info('Successfully deployed under-construction page', {
                 appId,
                 flyAppName,
               });
             } catch (error) {
-              logger.error("Error deploying under-construction page", {
+              logger.error('Error deploying under-construction page', {
                 appId,
                 error: error instanceof Error ? error.message : String(error),
               });
@@ -897,7 +905,7 @@ app.post(
           }
         }
       } catch (error) {
-        logger.error("Error compiling app", {
+        logger.error('Error compiling app', {
           appId,
           error,
           errorMessage: error instanceof Error ? error.message : String(error),
@@ -907,7 +915,7 @@ app.post(
           .send({ error: `Failed to compile app: ${error}` });
       }
     } catch (error) {
-      logger.error("Error generating app", {
+      logger.error('Error generating app', {
         error,
         errorMessage: error instanceof Error ? error.message : String(error),
       });
@@ -915,14 +923,14 @@ app.post(
         .status(400)
         .send({ error: `Failed to generate app: ${error}` });
     }
-  },
+  }
 );
 
 // Platform endpoint that forwards to the agent and streams back responses
-app.post("/message", async (request, reply) => {
+app.post('/message', async (request, reply) => {
   try {
     const authResponse = await validateAuth(request, reply);
-    if ("error" in authResponse) {
+    if ('error' in authResponse) {
       return reply.status(authResponse.statusCode).send({
         error: authResponse.error,
       });
@@ -930,7 +938,7 @@ app.post("/message", async (request, reply) => {
 
     const applicationTraceId = (appId: string | undefined) =>
       appId ? `app-${appId}.req-${request.id}` : `temp.req-${request.id}`;
-    app.log.info("Received message request", {
+    app.log.info('Received message request', {
       body: request.body,
     });
 
@@ -948,12 +956,12 @@ app.post("/message", async (request, reply) => {
         .where(
           and(
             eq(apps.id, requestBody.applicationId),
-            eq(apps.ownerId, authResponse.id),
-          ),
+            eq(apps.ownerId, authResponse.id)
+          )
         );
       if (!application.length) {
         return reply.status(404).send({
-          error: "Application not found",
+          error: 'Application not found',
         });
       }
 
@@ -982,9 +990,9 @@ app.post("/message", async (request, reply) => {
 
     // Forward the request to the agent
     const agentResponse = await fetch(`${MOCKED_AGENT_API_URL}/message`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
     });
@@ -1013,7 +1021,7 @@ app.post("/message", async (request, reply) => {
       id: uuidv4(),
       prompt: requestBody.message,
       appId: applicationId,
-      kind: "user",
+      kind: 'user',
     });
 
     console.log({
@@ -1022,30 +1030,30 @@ app.post("/message", async (request, reply) => {
     });
 
     app.log.info({
-      msg: "Upgrading traceId from bootstrap to application",
+      msg: 'Upgrading traceId from bootstrap to application',
       oldTraceId: applicationTraceId(undefined),
       newTraceId: applicationTraceId(applicationId),
     });
 
     // return a success message with instructions to connect to the GET endpoint
     return {
-      status: "success",
+      status: 'success',
       traceId: applicationTraceId(applicationId),
       applicationId: applicationId,
       message:
-        "Request accepted, connect to GET /message?applicationId=YOUR_APPLICATION_ID to subscribe to updates",
+        'Request accepted, connect to GET /message?applicationId=YOUR_APPLICATION_ID to subscribe to updates',
     };
   } catch (error) {
     app.log.error(`Unhandled error: ${error}`);
-    reply.status(500).send({ error: "Internal server error" });
+    reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // GET endpoint for SSE streaming
-app.get("/message", async (request, reply) => {
+app.get('/message', async (request, reply) => {
   try {
     const authResponse = await validateAuth(request, reply);
-    if ("error" in authResponse) {
+    if ('error' in authResponse) {
       return reply.status(authResponse.statusCode).send({
         error: authResponse.error,
       });
@@ -1055,25 +1063,25 @@ app.get("/message", async (request, reply) => {
 
     // Validate applicationId
     if (!applicationId) {
-      app.log.error("Missing required query parameter: applicationId", {
+      app.log.error('Missing required query parameter: applicationId', {
         query: request.query,
         endpoint: request.url,
         method: request.method,
       });
       return reply.status(400).send({
-        error: "Missing required query parameter: applicationId",
+        error: 'Missing required query parameter: applicationId',
       });
     }
 
     // Validate traceId
     if (!traceId) {
-      app.log.error("Missing required query parameter: traceId", {
+      app.log.error('Missing required query parameter: traceId', {
         query: request.query,
         endpoint: request.url,
         method: request.method,
       });
       return reply.status(400).send({
-        error: "Missing required query parameter: traceId",
+        error: 'Missing required query parameter: traceId',
       });
     }
 
@@ -1081,7 +1089,7 @@ app.get("/message", async (request, reply) => {
     const abortController = new AbortController();
 
     // Set up cleanup when client disconnects
-    request.socket.on("close", () => {
+    request.socket.on('close', () => {
       app.log.info(`Client disconnected for applicationId: ${applicationId}`);
       abortController.abort();
     });
@@ -1092,26 +1100,26 @@ app.get("/message", async (request, reply) => {
         try {
           // Create EventSource to read from agent's GET endpoint
           const es = new EventSource(
-            `${MOCKED_AGENT_API_URL}/message?applicationId=${applicationId}&traceId=${traceId}`,
+            `${MOCKED_AGENT_API_URL}/message?applicationId=${applicationId}&traceId=${traceId}`
           );
 
           // Return a promise that resolves on each message or rejects on error
           const messagePromise = () =>
             new Promise<any>((resolve, reject) => {
               const onMessage = (event: MessageEvent) => {
-                es.removeEventListener("message", onMessage);
-                es.removeEventListener("error", onError);
+                es.removeEventListener('message', onMessage);
+                es.removeEventListener('error', onError);
                 resolve(JSON.parse(event.data));
               };
 
               const onError = (error: Event) => {
-                es.removeEventListener("message", onMessage);
-                es.removeEventListener("error", onError);
+                es.removeEventListener('message', onMessage);
+                es.removeEventListener('error', onError);
 
-                if (error && typeof error === "object" && "status" in error) {
-                  console.error("SSE error with status:", error.status);
+                if (error && typeof error === 'object' && 'status' in error) {
+                  console.error('SSE error with status:', error.status);
                 } else {
-                  console.error("Generic SSE error", {
+                  console.error('Generic SSE error', {
                     type: error?.type,
                     raw: error,
                   });
@@ -1120,12 +1128,12 @@ app.get("/message", async (request, reply) => {
                 reject(error);
               };
 
-              es.addEventListener("message", onMessage, { once: true });
-              es.addEventListener("error", onError, { once: true });
+              es.addEventListener('message', onMessage, { once: true });
+              es.addEventListener('error', onError, { once: true });
             });
 
           // Listen for abort signal to close EventSource
-          abortController.signal.addEventListener("abort", () => {
+          abortController.signal.addEventListener('abort', () => {
             es.close();
           });
 
@@ -1137,7 +1145,9 @@ app.get("/message", async (request, reply) => {
 
               // Log and forward the message
               app.log.info(
-                `Forwarding message from agent for applicationId: ${applicationId}, message: ${JSON.stringify(message)}`,
+                `Forwarding message from agent for applicationId: ${applicationId}, message: ${JSON.stringify(
+                  message
+                )}`
               );
 
               try {
@@ -1146,7 +1156,7 @@ app.get("/message", async (request, reply) => {
                   id: uuidv4(),
                   prompt: JSON.stringify(message),
                   appId: applicationId,
-                  kind: "agent",
+                  kind: 'agent',
                 });
               } catch (error) {
                 app.log.error(`Error inserting agent message: ${error}`);
@@ -1161,19 +1171,19 @@ app.get("/message", async (request, reply) => {
               };
 
               // If agent is done, close the connection
-              if (message.status === "idle") {
+              if (message.status === 'idle') {
                 yield {
-                  event: "done",
+                  event: 'done',
                   data: JSON.stringify({
                     applicationId,
-                    status: "idle",
-                    message: "Agent is idle, closing connection",
+                    status: 'idle',
+                    message: 'Agent is idle, closing connection',
                   }),
                 };
 
                 // Optional: log + cleanup
                 app.log.info(
-                  `Closing SSE connection for applicationId: ${applicationId}`,
+                  `Closing SSE connection for applicationId: ${applicationId}`
                 );
 
                 // End the generator, which closes the stream
@@ -1186,7 +1196,7 @@ app.get("/message", async (request, reply) => {
 
               // Otherwise log and propagate the error
               app.log.error(
-                `Error processing message from agent: ${JSON.stringify(error)}`,
+                `Error processing message from agent: ${JSON.stringify(error)}`
               );
               throw error;
             }
@@ -1197,40 +1207,40 @@ app.get("/message", async (request, reply) => {
           // Yield error message to client
           yield {
             data: JSON.stringify({
-              type: "message",
+              type: 'message',
               parts: [
                 {
-                  type: "text",
+                  type: 'text',
                   content: `An error occurred while processing your request: ${error}`,
                 },
               ],
               applicationId,
-              status: "idle",
+              status: 'idle',
               traceId: `error-${Date.now()}`,
             }),
           };
         }
-      })(),
+      })()
     );
   } catch (error) {
     app.log.error(`Unhandled error: ${error}`);
-    reply.status(500).send({ error: "Internal server error" });
+    reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 export const start = async () => {
   try {
-    const server = await app.listen({ port: 4444, host: "0.0.0.0" });
-    logger.info("Server started", {
-      url: "http://localhost:4444",
+    const server = await app.listen({ port: 4444, host: '0.0.0.0' });
+    logger.info('Server started', {
+      url: 'http://localhost:4444',
     });
     return server;
   } catch (err) {
-    logger.error("Server failed to start", { error: err });
+    logger.error('Server failed to start', { error: err });
     process.exit(1);
   }
 };
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== 'test') {
   start();
 }

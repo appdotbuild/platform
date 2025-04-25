@@ -6,7 +6,8 @@
     "clean": "rm -rf node_modules",
     "dev": "pnpm storybook:start",
     "storybook:start": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "types:check": "tsc --noEmit"
   },
   "dependencies": {
     "@next/font": "14.1.0",

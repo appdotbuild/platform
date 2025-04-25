@@ -1,7 +1,7 @@
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft } from 'lucide-react';
 
-import { cn } from "@appdotbuild/design/lib/utils";
-import { Button } from "@appdotbuild/design/shadcn/button";
+import { cn } from '@appdotbuild/design/lib/utils';
+import { Button } from '@appdotbuild/design/shadcn/button';
 
 interface SidebarToggleProps {
   isOpen: boolean | undefined;
@@ -19,8 +19,8 @@ export function SidebarToggle({ isOpen, setIsOpen }: SidebarToggleProps) {
       >
         <ChevronLeft
           className={cn(
-            "h-4 w-4 transition-transform ease-in-out duration-700",
-            isOpen === false ? "rotate-180" : "rotate-0",
+            'h-4 w-4 transition-transform ease-in-out duration-700',
+            isOpen === false ? 'rotate-180' : 'rotate-0'
           )}
         />
       </Button>

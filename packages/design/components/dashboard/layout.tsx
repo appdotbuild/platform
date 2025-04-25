@@ -1,10 +1,10 @@
-import React from "react";
-import { DashboardHeader } from "./header";
+import React from 'react';
+import { DashboardHeader } from './header';
 
-import { Sidebar } from "./sidebar/sidebar";
-import { useSidebar } from "@appdotbuild/design/hooks/use-sidebar";
-import { useStore } from "@appdotbuild/design/hooks/use-store";
-import { cn } from "@appdotbuild/design/lib/utils";
+import { Sidebar } from './sidebar/sidebar';
+import { useSidebar } from '@appdotbuild/design/hooks/use-sidebar';
+import { useStore } from '@appdotbuild/design/hooks/use-store';
+import { cn } from '@appdotbuild/design/lib/utils';
 
 export default function AdminPanelLayout({
   children,
@@ -21,15 +21,15 @@ export default function AdminPanelLayout({
       <Sidebar signOut={signOut} />
       <div
         className={cn(
-          !settings.disabled && (!getOpenState() ? "lg:ml-[90px]" : "lg:ml-72"),
+          !settings.disabled && (!getOpenState() ? 'lg:ml-[90px]' : 'lg:ml-72')
         )}
       >
         {children}
       </div>
       <footer
         className={cn(
-          "transition-[margin-left] ease-in-out duration-300",
-          !settings.disabled && (!getOpenState() ? "lg:ml-[90px]" : "lg:ml-72"),
+          'transition-[margin-left] ease-in-out duration-300',
+          !settings.disabled && (!getOpenState() ? 'lg:ml-[90px]' : 'lg:ml-72')
         )}
       ></footer>
     </>

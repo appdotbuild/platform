@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   FormField,
   FormItem,
@@ -7,15 +7,15 @@ import {
   FormDescription,
   FormMessage,
   Form,
-} from "@appdotbuild/design/shadcn/form";
-import { Input } from "@appdotbuild/design/shadcn/input";
-import { toast } from "@appdotbuild/design/hooks/use-toast";
-import { Button } from "@appdotbuild/design/shadcn/button";
-import { Delete, Loader2, Trash, Trash2, X } from "lucide-react";
-import { cn } from "@appdotbuild/design/lib/utils";
-import { UseFieldArrayReturn } from "react-hook-form";
-import { Switch } from "@appdotbuild/design/shadcn/switch";
-import { Label } from "@appdotbuild/design/shadcn/label";
+} from '@appdotbuild/design/shadcn/form';
+import { Input } from '@appdotbuild/design/shadcn/input';
+import { toast } from '@appdotbuild/design/hooks/use-toast';
+import { Button } from '@appdotbuild/design/shadcn/button';
+import { Delete, Loader2, Trash, Trash2, X } from 'lucide-react';
+import { cn } from '@appdotbuild/design/lib/utils';
+import { UseFieldArrayReturn } from 'react-hook-form';
+import { Switch } from '@appdotbuild/design/shadcn/switch';
+import { Label } from '@appdotbuild/design/shadcn/label';
 
 export function EasyForm({
   form,
@@ -32,12 +32,12 @@ export function EasyForm({
     const result = await onSubmit(data);
     if (result?.data?.success) {
       toast({
-        title: message || "Data saved",
+        title: message || 'Data saved',
       });
     } else {
       toast({
-        title: result?.serverError || "An error occurred",
-        variant: "destructive",
+        title: result?.serverError || 'An error occurred',
+        variant: 'destructive',
       });
     }
   }
@@ -103,14 +103,14 @@ export function EasyFormSubmit({
       <Button
         type="submit"
         disabled={isExecuting}
-        className={cn("min-w-24 pr-5 relative", className)}
+        className={cn('min-w-24 pr-5 relative', className)}
       >
         <span className="inline-flex items-center justify-center w-full">
           <span>Save</span>
           <span
             className={cn(
-              "absolute right-3 inline-flex items-center justify-center h-4 w-4 transition-opacity duration-300",
-              isExecuting || isSaving ? "opacity-100" : "opacity-0",
+              'absolute right-3 inline-flex items-center justify-center h-4 w-4 transition-opacity duration-300',
+              isExecuting || isSaving ? 'opacity-100' : 'opacity-0'
             )}
           >
             <Loader2 className={`h-4 w-4 animate-spin`} />
@@ -135,7 +135,7 @@ export function EasyFormFieldText({
   title,
   description,
   placeholder,
-  type = "text",
+  type = 'text',
 }: EasyFormFieldProps & { type?: string }) {
   return (
     <FormField
@@ -218,7 +218,7 @@ export function EasyFormMultiTextField({
   title,
   description,
   placeholder,
-  addButtonLabel = "Add",
+  addButtonLabel = 'Add',
 }: {
   form: any;
   field: UseFieldArrayReturn;
@@ -238,11 +238,11 @@ export function EasyFormMultiTextField({
           name={`${name}.${index}.value`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={cn(index !== 0 && "sr-only")}>
+              <FormLabel className={cn(index !== 0 && 'sr-only')}>
                 {title}
               </FormLabel>
               {description && (
-                <FormDescription className={cn(index !== 0 && "sr-only")}>
+                <FormDescription className={cn(index !== 0 && 'sr-only')}>
                   {description}
                 </FormDescription>
               )}
@@ -269,9 +269,9 @@ export function EasyFormMultiTextField({
         variant="outline"
         size="sm"
         className="mt-2"
-        onClick={() => append({ value: "" })}
+        onClick={() => append({ value: '' })}
       >
-        {addButtonLabel || "Add"}
+        {addButtonLabel || 'Add'}
       </Button>
     </div>
   );

@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
+    "types:check": "tsc --noEmit",
     "shadcn": "cd ../../packages/design && bun shadcn",
     "storybook": "cd ../../packages/storybook && bun dev"
   },
