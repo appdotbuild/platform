@@ -7,10 +7,11 @@ FROM oven/bun:${BUN_VERSION}-slim AS base
 LABEL fly_launch_runtime="Bun"
 
 # Bun app lives here
-WORKDIR /platform
+WORKDIR /appdotbuild
 
 # Set production environment
 ENV NODE_ENV="production"
+ENV HUSKY=0
 
 # Install packages needed to build node modules
 RUN apt-get update -qq && \
@@ -29,21 +30,21 @@ RUN apt-get update -qq && \
 RUN curl -L https://fly.io/install.sh | sh
 
 # Install node modules
-# COPY bun.lock package.json ./
+COPY bun.lock package.json ./
+COPY ./apps/backend /appdotbuild/apps/backend
+COPY ./packages/core /appdotbuild/packages/core
 
-# Copy application code
-COPY ./ /platform
-
-RUN bun install --ci --filter "backend"
+RUN bun install --filter "backend"
+# RUN bun install --frozen-lockfile
 
 # Final stage for app image
 FROM base
 
 # Copy built application
-COPY --from=build /platform /platform
+COPY --from=build /appdotbuild /appdotbuild
 COPY --from=build /root /root
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-WORKDIR /platform/apps/backend
-CMD [ "bun", "run", "start" ]
+WORKDIR /appdotbuild
+CMD [ "bun", "run", "backend:start" ]

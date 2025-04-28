@@ -1,0 +1,1 @@
+docker build -f apps/backend/Dockerfile.backend -t appdotbuild/backend:local .

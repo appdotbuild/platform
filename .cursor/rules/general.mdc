@@ -1,3 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
 Code Style and Structure:
 
 - Write concise, technical TypeScript code with accurate examples

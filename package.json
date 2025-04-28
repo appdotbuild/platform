@@ -9,6 +9,7 @@
   "scripts": {
     "admin": "bun --filter './apps/admin' dev",
     "backend": "bun --filter './apps/backend' dev",
+    "backend:start": "bun --filter './apps/backend' start",
     "clean": "bun --filter '*' clean",
     "cli": "bun --env-file=./apps/cli/.env ./apps/cli/dist/cli.js",
     "cli:watch": "bun --env-file=./apps/cli/.env --watch ./apps/cli/src/cli.tsx",
@@ -17,10 +18,11 @@
     "lint:fix": "bun --filter '*' lint:fix",
     "prepare": "husky",
     "setup": "sh ./scripts/setup.sh",
+    "test": "bun --filter '*' test",
     "types:check": "bun --filter '*' types:check"
   },
   "lint-staged": {
-    "*": [
+    "!(*.mdc)": [
       "bun lint:fix"
     ]
   },

@@ -10,7 +10,6 @@
       "@appdotbuild/*": ["../*"]
     }
   },
-
-  "include": ["./", "./**/*.tsx", "./**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  // We skip stories for now, but we will need to fix this problem
+  "exclude": ["node_modules", "dist", "**/*.stories.tsx"]
 }

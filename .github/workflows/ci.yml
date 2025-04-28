@@ -30,11 +30,13 @@ jobs:
       - name: Run Lint
         run: bun run lint
 
+      - name: Run Types Check
+        run: bun run types:check
+
       - name: Install Fly CLI
         run: curl -L https://fly.io/install.sh | sh
 
       - name: Backend - Test
-        working-directory: platform
         env:
           FLY_IO_TOKEN: ${{ secrets.FLY_IO_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -49,4 +51,4 @@ jobs:
           DEPLOYED_BOT_PERPLEXITY_API_KEY: ${{ secrets.DEPLOYED_BOT_PERPLEXITY_API_KEY }}
           DEPLOYED_BOT_PICA_SECRET_KEY: ${{ secrets.DEPLOYED_BOT_PICA_SECRET_KEY }}
           NODE_ENV: test
-        run: bun test
+        run: bun --filter './apps/backend' test
