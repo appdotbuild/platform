@@ -43,7 +43,7 @@ export const markdownOpts = {
       <h1
         className={cn(
           'mb-8 scroll-m-20 text-4xl font-extrabold tracking-tight last:mb-0',
-          className
+          className,
         )}
         {...props}
       />
@@ -52,7 +52,7 @@ export const markdownOpts = {
       <h2
         className={cn(
           'mb-4 mt-8 scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0 last:mb-0',
-          className
+          className,
         )}
         {...props}
       />
@@ -61,7 +61,7 @@ export const markdownOpts = {
       <h3
         className={cn(
           'mb-4 mt-6 scroll-m-20 text-2xl font-semibold tracking-tight first:mt-0 last:mb-0',
-          className
+          className,
         )}
         {...props}
       />
@@ -70,7 +70,7 @@ export const markdownOpts = {
       <h4
         className={cn(
           'mb-4 mt-6 scroll-m-20 text-xl font-semibold tracking-tight first:mt-0 last:mb-0',
-          className
+          className,
         )}
         {...props}
       />
@@ -79,7 +79,7 @@ export const markdownOpts = {
       <h5
         className={cn(
           'my-4 text-lg font-semibold first:mt-0 last:mb-0',
-          className
+          className,
         )}
         {...props}
       />
@@ -101,7 +101,7 @@ export const markdownOpts = {
         target="_blank"
         className={cn(
           'text-primary font-medium underline underline-offset-4',
-          className
+          className,
         )}
         {...props}
       />
@@ -131,7 +131,7 @@ export const markdownOpts = {
       <table
         className={cn(
           'my-5 w-full border-separate border-spacing-0 overflow-y-auto',
-          className
+          className,
         )}
         {...props}
       />
@@ -140,7 +140,7 @@ export const markdownOpts = {
       <th
         className={cn(
           'bg-muted px-4 py-2 text-left font-bold first:rounded-tl-lg last:rounded-tr-lg [&[align=center]]:text-center [&[align=right]]:text-right',
-          className
+          className,
         )}
         {...props}
       />
@@ -149,7 +149,7 @@ export const markdownOpts = {
       <td
         className={cn(
           'border-b border-l px-4 py-2 text-left last:border-r [&[align=center]]:text-center [&[align=right]]:text-right',
-          className
+          className,
         )}
         {...props}
       />
@@ -158,7 +158,7 @@ export const markdownOpts = {
       <tr
         className={cn(
           'm-0 border-b p-0 first:border-t [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg',
-          className
+          className,
         )}
         {...props}
       />
@@ -173,7 +173,7 @@ export const markdownOpts = {
       <pre
         className={cn(
           'overflow-x-auto rounded-b-lg bg-black p-4 text-white',
-          className
+          className,
         )}
         {...props}
       />
@@ -184,7 +184,7 @@ export const markdownOpts = {
         <code
           className={cn(
             !isCodeBlock && 'rounded border font-semibold',
-            className
+            className,
           )}
           {...props}
         />

@@ -110,7 +110,7 @@ export function EasyFormSubmit({
           <span
             className={cn(
               'absolute right-3 inline-flex items-center justify-center h-4 w-4 transition-opacity duration-300',
-              isExecuting || isSaving ? 'opacity-100' : 'opacity-0'
+              isExecuting || isSaving ? 'opacity-100' : 'opacity-0',
             )}
           >
             <Loader2 className={`h-4 w-4 animate-spin`} />

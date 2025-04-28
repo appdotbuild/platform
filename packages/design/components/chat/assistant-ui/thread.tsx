@@ -50,7 +50,7 @@ export const MyThread: FC = () => {
       className={cn(
         'bg-background h-full w-full min-h-[0] transition-all duration-700 ease-in-out',
         doHideWelcome && 'min-h-[100dvh]',
-        modalMode && 'pt-4 pb-8'
+        modalMode && 'pt-4 pb-8',
       )}
     >
       <ThreadPrimitive.Viewport className="flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4">
@@ -121,7 +121,7 @@ const MySuggestedPromptsInitial: FC = () => {
 const MySuggestedPrompts: FC = () => {
   const lastMessage = useThread((t) => t.messages.at(-1));
   const annotation: any = lastMessage?.metadata?.unstable_annotations?.find(
-    (a: any) => a.type === 'suggested-prompts'
+    (a: any) => a.type === 'suggested-prompts',
   );
   const suggestions = annotation?.data;
   if (!suggestions) return null;
@@ -167,7 +167,7 @@ const MyThreadWelcome: FC<{ hideWelcome: boolean }> = ({ hideWelcome }) => {
         'flex flex-col items-center justify-center transition-all duration-300 ease-in-out',
         hideWelcome
           ? 'max-h-0 mb-0 opacity-0 scale-95 pointer-events-none'
-          : 'max-h-[200px] mb-8 opacity-100 scale-100'
+          : 'max-h-[200px] mb-8 opacity-100 scale-100',
       )}
     >
       <div className="flex flex-col items-center">
@@ -344,7 +344,7 @@ const MyEditComposer: FC = () => {
 const MyAssistantMessage: FC = () => {
   const message = useMessage();
   const annotation: any = message?.metadata?.unstable_annotations?.find(
-    (a: any) => a.type === 'sources'
+    (a: any) => a.type === 'sources',
   );
   const sources = annotation?.data;
 
@@ -433,7 +433,7 @@ const MyBranchPicker: FC<any> = ({ className, ...rest }) => {
       hideWhenSingleBranch
       className={cn(
         'text-muted-foreground inline-flex items-center text-xs',
-        className
+        className,
       )}
       {...rest}
     >

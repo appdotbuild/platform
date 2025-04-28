@@ -166,7 +166,7 @@ export function columnIcon({
     ),
     cell: ({ row }) => {
       const config = fieldConfig.find(
-        (status) => status.value.toString() == row.getValue(id).toString()
+        (status) => status.value.toString() == row.getValue(id).toString(),
       );
 
       return (

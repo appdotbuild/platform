@@ -23,7 +23,7 @@ export function SideSubNav({
           href={page.to}
           className={cn(
             activePage === page.to ? 'text-primary font-semibold' : '',
-            'justify-start flex items-center'
+            'justify-start flex items-center',
           )}
         >
           <span className="mr-2 w-4 h-4">

@@ -1,25 +1,25 @@
-import { ArrowRight, MessageSquare } from "@appdotbuild/design/base/icons";
-import { Button } from "@appdotbuild/design/shadcn/button";
+import { ArrowRight, MessageSquare } from '@appdotbuild/design/base/icons';
+import { Button } from '@appdotbuild/design/shadcn/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@appdotbuild/design/shadcn/card";
-import { Metadata } from "next";
-import Link from "next/link";
+} from '@appdotbuild/design/shadcn/card';
+import { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: "Bot",
-  description: "Your chatbot generating bot",
+  title: 'Bot',
+  description: 'Your chatbot generating bot',
 };
 
 const sections = [
   {
-    title: "Chatbots",
-    description: "Get the chatbots list",
-    href: "/dashboard/chatbots",
+    title: 'Chatbots',
+    description: 'Get the chatbots list',
+    href: '/dashboard/chatbots',
     icon: MessageSquare,
     secondary: false,
   },
@@ -53,7 +53,7 @@ export default async function Home() {
                 <Link href={section.href}>
                   <Button
                     className="w-full"
-                    variant={section.secondary ? "secondary" : "default"}
+                    variant={section.secondary ? 'secondary' : 'default'}
                   >
                     Go to {section.title}
                     <ArrowRight className="w-4 h-4 ml-2" />

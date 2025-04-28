@@ -7,17 +7,17 @@
     "apps/*"
   ],
   "scripts": {
-    "clean": "bun --filter '*' clean",
-    "dev": "NO_COLOR=1 bun --filter='./packages/mocked-agent' --filter='./apps/**' dev",
-    "backend": "bun --filter './apps/backend' dev",
     "admin": "bun --filter './apps/admin' dev",
+    "backend": "bun --filter './apps/backend' dev",
+    "clean": "bun --filter '*' clean",
     "cli": "bun --env-file=./apps/cli/.env ./apps/cli/dist/cli.js",
     "cli:watch": "bun --env-file=./apps/cli/.env --watch ./apps/cli/src/cli.tsx",
-    "lint": "bun --filter '*' --elide-lines 0 lint",
+    "dev": "NO_COLOR=1 bun --filter='./packages/mocked-agent' --filter='./apps/**' dev",
+    "lint": "bun --filter '*' lint",
     "lint:fix": "bun --filter '*' lint:fix",
+    "prepare": "husky",
     "setup": "sh ./scripts/setup.sh",
-    "types:check": "bun --filter '*' types:check",
-    "prepare": "husky"
+    "types:check": "bun --filter '*' types:check"
   },
   "lint-staged": {
     "*": [

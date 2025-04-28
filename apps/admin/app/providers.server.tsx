@@ -1,6 +1,6 @@
-import { stackServerApp } from "@appdotbuild/auth";
-import { StackProvider, StackTheme } from "@appdotbuild/auth/stack";
-import type * as React from "react";
+import { stackServerApp } from '@appdotbuild/auth';
+import { StackProvider, StackTheme } from '@appdotbuild/auth/stack';
+import type * as React from 'react';
 
 export default function ProvidersServer({
   children,

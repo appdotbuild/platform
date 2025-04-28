@@ -80,7 +80,7 @@ export function Menu({ isOpen, signOut }: MenuProps) {
                                     'max-w-[200px] truncate',
                                     isOpen === false
                                       ? '-translate-x-96 opacity-0'
-                                      : 'translate-x-0 opacity-100'
+                                      : 'translate-x-0 opacity-100',
                                   )}
                                 >
                                   {label}
@@ -110,7 +110,7 @@ export function Menu({ isOpen, signOut }: MenuProps) {
                         isOpen={isOpen}
                       />
                     </div>
-                  )
+                  ),
               )}
             </li>
           ))}
@@ -129,7 +129,7 @@ export function Menu({ isOpen, signOut }: MenuProps) {
                     <p
                       className={cn(
                         'whitespace-nowrap',
-                        isOpen === false ? 'opacity-0 hidden' : 'opacity-100'
+                        isOpen === false ? 'opacity-0 hidden' : 'opacity-100',
                       )}
                     >
                       Sign out

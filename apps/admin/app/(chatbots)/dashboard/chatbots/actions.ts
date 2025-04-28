@@ -1,8 +1,8 @@
-"use server";
+'use server';
 
-import { Chatbot, Paginated, ReadUrl } from "@appdotbuild/core/types/api";
-import JSZip from "jszip";
-import { stackServerApp } from "@appdotbuild/auth";
+import { Chatbot, Paginated, ReadUrl } from '@appdotbuild/core/types/api';
+import JSZip from 'jszip';
+import { stackServerApp } from '@appdotbuild/auth';
 
 const PLATFORM_API_URL = process.env.PLATFORM_API_URL;
 
@@ -51,11 +51,11 @@ export async function getChatbotReadUrl(id: string): Promise<ReadUrl> {
       },
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch chatbot read URL");
+      throw new Error('Failed to fetch chatbot read URL');
     }
     return response.json();
   } catch (error) {
-    console.error("Error fetching chatbot read URL:", error);
+    console.error('Error fetching chatbot read URL:', error);
     throw error;
   }
 }
@@ -74,12 +74,12 @@ export async function getChatbot(id: string): Promise<Chatbot | null> {
       if (response.status === 404) {
         return null;
       }
-      throw new Error("Failed to fetch chatbot");
+      throw new Error('Failed to fetch chatbot');
     }
 
     return response.json();
   } catch (error) {
-    console.error("Error fetching chatbot:", error);
+    console.error('Error fetching chatbot:', error);
     throw error;
   }
 }
@@ -87,7 +87,7 @@ export async function getChatbot(id: string): Promise<Chatbot | null> {
 interface FileEntry {
   path: string;
   content: string;
-  type: "file" | "directory";
+  type: 'file' | 'directory';
   children?: FileEntry[];
 }
 
@@ -98,21 +98,21 @@ function buildFileTree(files: { [key: string]: string }): FileEntry[] {
   const paths = Object.keys(files).sort();
 
   for (const path of paths) {
-    const parts = path.split("/");
+    const parts = path.split('/');
     let current = root;
 
     // Process each part of the path
     for (let i = 0; i < parts.length; i++) {
       const isFile = i === parts.length - 1;
-      const currentPath = parts.slice(0, i + 1).join("/");
+      const currentPath = parts.slice(0, i + 1).join('/');
 
       let node = current.find((n) => n.path === currentPath);
 
       if (!node) {
         node = {
           path: currentPath,
-          type: isFile ? "file" : "directory",
-          content: isFile ? files[path] : "",
+          type: isFile ? 'file' : 'directory',
+          content: isFile ? files[path] : '',
           children: isFile ? undefined : [],
         };
         current.push(node);
@@ -144,7 +144,7 @@ export async function getChatbotCode(chatbotId: string) {
     contents.forEach((path, file) => {
       if (!file.dir) {
         promises.push(
-          file.async("string").then((content) => {
+          file.async('string').then((content) => {
             files[path] = content;
           }),
         );
@@ -154,7 +154,7 @@ export async function getChatbotCode(chatbotId: string) {
     await Promise.all(promises);
 
     if (Object.keys(files).length === 0) {
-      throw new Error("No files found in the zip");
+      throw new Error('No files found in the zip');
     }
 
     const fileTree = buildFileTree(files);
@@ -168,7 +168,7 @@ export async function getChatbotCode(chatbotId: string) {
       },
     };
   } catch (error) {
-    console.error("Error loading code:", error);
+    console.error('Error loading code:', error);
     throw error;
   }
 }

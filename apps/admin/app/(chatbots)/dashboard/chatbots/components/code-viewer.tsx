@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { getChatbotCode } from "../actions";
-import CodeEditor from "./code-editor";
-import { FileTree } from "./file-tree";
+import { useEffect, useState } from 'react';
+import { getChatbotCode } from '../actions';
+import CodeEditor from './code-editor';
+import { FileTree } from './file-tree';
 
 interface CodeViewerProps {
   chatbotId: string;
@@ -25,8 +25,8 @@ export default function CodeViewer({ chatbotId }: CodeViewerProps) {
         setFiles(files);
         setCurrentFile(currentFile);
       } catch (err) {
-        console.error("Error loading code:", err);
-        setError(err instanceof Error ? err.message : "Failed to load code");
+        console.error('Error loading code:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load code');
       } finally {
         setIsLoading(false);
       }
@@ -47,12 +47,12 @@ export default function CodeViewer({ chatbotId }: CodeViewerProps) {
     <div className="flex flex-1 min-h-0 overflow-x-hidden">
       <FileTree
         files={files}
-        selectedFile={currentFile?.path ?? ""}
+        selectedFile={currentFile?.path ?? ''}
         onSelectFile={handleFileSelect}
       />
       <div className="flex-1 min-h-0 overflow-auto">
         <CodeEditor
-          content={currentFile?.content ?? ""}
+          content={currentFile?.content ?? ''}
           isLoading={isLoading}
         />
       </div>

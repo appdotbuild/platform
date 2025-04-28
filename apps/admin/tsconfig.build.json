@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.common.json",
   "compilerOptions": {
-    "moduleResolution": "node",
-  },
+    "moduleResolution": "node"
+  }
 }

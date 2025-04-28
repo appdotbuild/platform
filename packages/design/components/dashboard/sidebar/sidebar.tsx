@@ -17,7 +17,7 @@ export function Sidebar({ signOut }: { signOut: () => Promise<void> }) {
       className={cn(
         'fixed top-16 left-0 z-20 h-screen -translate-x-full lg:translate-x-0 transition-[width] ease-in-out duration-300',
         !getOpenState() ? 'w-[90px]' : 'w-72',
-        settings.disabled && 'hidden'
+        settings.disabled && 'hidden',
       )}
     >
       <SidebarToggle isOpen={isOpen} setIsOpen={toggleOpen} />

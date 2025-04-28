@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { Card, CardContent } from "@appdotbuild/design/shadcn/card";
-import { Button } from "@appdotbuild/design/shadcn/button";
-import { useState } from "react";
-import { useUser } from "@appdotbuild/auth/stack";
+import { Card, CardContent } from '@appdotbuild/design/shadcn/card';
+import { Button } from '@appdotbuild/design/shadcn/button';
+import { useState } from 'react';
+import { useUser } from '@appdotbuild/auth/stack';
 
 export default function CliAuthConfirmPage() {
   const [authorizing, setAuthorizing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const user = useUser({ or: "redirect" });
+  const user = useUser({ or: 'redirect' });
 
   const handleAuthorize = async () => {
     if (authorizing) return;
@@ -18,22 +18,22 @@ export default function CliAuthConfirmPage() {
     try {
       // Get login code from URL query parameters
       const urlParams = new URLSearchParams(window.location.search);
-      const loginCode = urlParams.get("login_code");
+      const loginCode = urlParams.get('login_code');
 
       if (!loginCode) {
-        throw new Error("Missing login code in URL parameters");
+        throw new Error('Missing login code in URL parameters');
       }
 
       const refreshToken = (await user.currentSession.getTokens()).refreshToken;
       if (!refreshToken) {
-        throw new Error("You must be logged in to authorize CLI access");
+        throw new Error('You must be logged in to authorize CLI access');
       }
 
       // Send the CLI login request to our internal API route
-      const response = await fetch("/api/auth/cli/complete", {
-        method: "POST",
+      const response = await fetch('/api/auth/cli/complete', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           login_code: loginCode,
@@ -43,7 +43,7 @@ export default function CliAuthConfirmPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Authorization failed");
+        throw new Error(errorData.error || 'Authorization failed');
       }
 
       setSuccess(true);
@@ -109,7 +109,7 @@ export default function CliAuthConfirmPage() {
         </p>
         <div className="space-x-2">
           <Button onClick={handleAuthorize} disabled={authorizing}>
-            {authorizing ? "Authorizing..." : "Authorize"}
+            {authorizing ? 'Authorizing...' : 'Authorize'}
           </Button>
           <Button variant="outline" onClick={() => window.close()}>
             Cancel

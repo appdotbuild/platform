@@ -3,21 +3,21 @@ import {
   Calendar,
   User,
   ExternalLink,
-} from "@appdotbuild/design/base/icons";
-import { ShowHide } from "@appdotbuild/design/components/show-hide/show-hide";
-import { Button } from "@appdotbuild/design/shadcn/button";
-import { Card, CardContent } from "@appdotbuild/design/shadcn/card";
+} from '@appdotbuild/design/base/icons';
+import { ShowHide } from '@appdotbuild/design/components/show-hide/show-hide';
+import { Button } from '@appdotbuild/design/shadcn/button';
+import { Card, CardContent } from '@appdotbuild/design/shadcn/card';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@appdotbuild/design/shadcn/tabs";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getChatbot } from "../actions";
-import ViewCodeButton from "../components/view-code-button";
-import CodeViewer from "../components/code-viewer";
+} from '@appdotbuild/design/shadcn/tabs';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { getChatbot } from '../actions';
+import ViewCodeButton from '../components/view-code-button';
+import CodeViewer from '../components/code-viewer';
 
 export default async function ChatbotPage({
   params,

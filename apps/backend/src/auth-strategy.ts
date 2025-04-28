@@ -39,12 +39,12 @@ type User = {
 // Bearer token authentication strategy
 export async function validateAuth(
   request: FastifyRequest,
-  reply: FastifyReply
+  reply: FastifyReply,
 ): Promise<User | AuthError> {
   const jwks = jose.createRemoteJWKSet(
     new URL(
-      `https://api.stack-auth.com/api/v1/projects/${process.env.STACK_PROJECT_ID}/.well-known/jwks.json`
-    )
+      `https://api.stack-auth.com/api/v1/projects/${process.env.STACK_PROJECT_ID}/.well-known/jwks.json`,
+    ),
   );
 
   const authHeader = request.headers.authorization;
@@ -96,7 +96,7 @@ export async function validateAuth(
             process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY!,
           'X-Stack-Secret-Server-Key': process.env.STACK_SECRET_SERVER_KEY!,
         },
-      }
+      },
     );
 
     if (!response.ok) {

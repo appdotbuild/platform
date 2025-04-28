@@ -21,7 +21,7 @@ export default function AdminPanelLayout({
       <Sidebar signOut={signOut} />
       <div
         className={cn(
-          !settings.disabled && (!getOpenState() ? 'lg:ml-[90px]' : 'lg:ml-72')
+          !settings.disabled && (!getOpenState() ? 'lg:ml-[90px]' : 'lg:ml-72'),
         )}
       >
         {children}
@@ -29,7 +29,7 @@ export default function AdminPanelLayout({
       <footer
         className={cn(
           'transition-[margin-left] ease-in-out duration-300',
-          !settings.disabled && (!getOpenState() ? 'lg:ml-[90px]' : 'lg:ml-72')
+          !settings.disabled && (!getOpenState() ? 'lg:ml-[90px]' : 'lg:ml-72'),
         )}
       ></footer>
     </>

@@ -58,7 +58,7 @@ export function createCRUDProvider<T extends WithId>({
     async function patch(data: Partial<T>[]) {
       const ids = data.map((d) => d.id);
       setData((prev) =>
-        prev.map((i) => (ids.includes(i.id) ? Object.assign(i, data) : i))
+        prev.map((i) => (ids.includes(i.id) ? Object.assign(i, data) : i)),
       );
     }
 

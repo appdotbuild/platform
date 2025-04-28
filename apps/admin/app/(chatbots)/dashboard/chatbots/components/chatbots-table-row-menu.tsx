@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { Row } from "@tanstack/react-table";
-import { MoreHorizontal, ExternalLink, FileSearch2 } from "lucide-react";
-import { Button } from "@appdotbuild/design/shadcn/button";
+import { Row } from '@tanstack/react-table';
+import { MoreHorizontal, ExternalLink, FileSearch2 } from 'lucide-react';
+import { Button } from '@appdotbuild/design/shadcn/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@appdotbuild/design/shadcn/dropdown-menu";
-import Link from "next/link";
-import { useState } from "react";
-import { getChatbotReadUrl } from "../actions";
+} from '@appdotbuild/design/shadcn/dropdown-menu';
+import Link from 'next/link';
+import { useState } from 'react';
+import { getChatbotReadUrl } from '../actions';
 
 interface ChatbotsTableRowMenuProps {
   row: Row<any>;
@@ -26,9 +26,9 @@ export default function ChatbotsTableRowMenu({
     setIsLoading(true);
     try {
       const { readUrl } = await getChatbotReadUrl(row.original.id);
-      window.open(readUrl, "_blank");
+      window.open(readUrl, '_blank');
     } catch (error) {
-      console.error("Failed to get read URL:", error);
+      console.error('Failed to get read URL:', error);
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +52,7 @@ export default function ChatbotsTableRowMenu({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={handleViewCode} disabled={isLoading}>
             <ExternalLink className="mr-2 h-4 w-4" />
-            {isLoading ? "Loading..." : "View Code"}
+            {isLoading ? 'Loading...' : 'View Code'}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

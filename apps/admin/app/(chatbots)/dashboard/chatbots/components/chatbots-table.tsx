@@ -1,21 +1,24 @@
-"use client";
+'use client';
 
-import { useCallback, useState } from "react";
+import { useCallback, useState } from 'react';
 import {
   CustomColumnDev,
   DataTable,
-} from "@appdotbuild/design/components/table/data-table";
-import { columnText } from "@appdotbuild/design/components/table/utils/default-columns";
-import { getAllChatbots } from "../actions";
-import ChatbotsTableRowMenu from "./chatbots-table-row-menu";
-import { Chatbot } from "@appdotbuild/core/types/api";
-import { toast } from "@appdotbuild/design/hooks/use-toast";
-import { TooltipContent, TooltipTrigger } from "@appdotbuild/design/shadcn/tooltip";
-import { Tooltip } from "@appdotbuild/design/shadcn/tooltip";
-import { TooltipProvider } from "@appdotbuild/design/shadcn/tooltip";
-import { HashAvatar } from "@appdotbuild/design/components/avatar/hash-avatar";
-import { Badge } from "@appdotbuild/design/shadcn/badge";
-import { format } from "timeago.js";
+} from '@appdotbuild/design/components/table/data-table';
+import { columnText } from '@appdotbuild/design/components/table/utils/default-columns';
+import { getAllChatbots } from '../actions';
+import ChatbotsTableRowMenu from './chatbots-table-row-menu';
+import { Chatbot } from '@appdotbuild/core/types/api';
+import { toast } from '@appdotbuild/design/hooks/use-toast';
+import {
+  TooltipContent,
+  TooltipTrigger,
+} from '@appdotbuild/design/shadcn/tooltip';
+import { Tooltip } from '@appdotbuild/design/shadcn/tooltip';
+import { TooltipProvider } from '@appdotbuild/design/shadcn/tooltip';
+import { HashAvatar } from '@appdotbuild/design/components/avatar/hash-avatar';
+import { Badge } from '@appdotbuild/design/shadcn/badge';
+import { format } from 'timeago.js';
 
 interface ChatbotsTableProps {
   initialData: Chatbot[];
@@ -38,8 +41,8 @@ export default function ChatbotsTable({
       setTotalCount(result.pagination.total);
     } catch (error) {
       toast({
-        title: "Failed to fetch chatbots",
-        variant: "destructive",
+        title: 'Failed to fetch chatbots',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -48,18 +51,18 @@ export default function ChatbotsTable({
 
   const columns: CustomColumnDev<Chatbot, any>[] = [
     {
-      accessorKey: "ownerId",
+      accessorKey: 'ownerId',
       size: 20,
-      ...columnText({ id: "ownerId", title: "Owner" }),
+      ...columnText({ id: 'ownerId', title: 'Owner' }),
       cell: ({ row }) => (
         <div className="flex justify-center">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <HashAvatar hash={row.getValue("ownerId")} />
+                <HashAvatar hash={row.getValue('ownerId')} />
               </TooltipTrigger>
               <TooltipContent>
-                <p>{row.getValue("ownerId")}</p>
+                <p>{row.getValue('ownerId')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -67,17 +70,17 @@ export default function ChatbotsTable({
       ),
     },
     {
-      accessorKey: "name",
+      accessorKey: 'name',
       size: 200,
-      ...columnText({ id: "name", title: "Name" }),
+      ...columnText({ id: 'name', title: 'Name' }),
     },
 
     {
-      accessorKey: "flyAppId",
+      accessorKey: 'flyAppId',
       size: 20,
-      ...columnText({ id: "flyAppId", title: "Status" }),
+      ...columnText({ id: 'flyAppId', title: 'Status' }),
       cell: ({ row }) => {
-        const flyAppId = row.getValue("flyAppId") as string;
+        const flyAppId = row.getValue('flyAppId') as string;
         return flyAppId ? (
           <TooltipProvider>
             <Tooltip>
@@ -95,26 +98,26 @@ export default function ChatbotsTable({
       },
     },
     {
-      accessorKey: "createdAt",
+      accessorKey: 'createdAt',
       size: 50,
-      ...columnText({ id: "createdAt", title: "Created" }),
+      ...columnText({ id: 'createdAt', title: 'Created' }),
       cell: ({ row }) => {
-        const date = row.getValue("createdAt");
+        const date = row.getValue('createdAt');
         return <span>{format(date as string)}</span>;
       },
     },
     {
-      accessorKey: "updatedAt",
+      accessorKey: 'updatedAt',
       size: 50,
-      ...columnText({ id: "updatedAt", title: "Updated" }),
+      ...columnText({ id: 'updatedAt', title: 'Updated' }),
       cell: ({ row }) => {
-        const date = row.getValue("updatedAt");
+        const date = row.getValue('updatedAt');
         return <span>{format(date as string)}</span>;
       },
     },
     {
       size: 50,
-      id: "actions",
+      id: 'actions',
       cell: ({ row }) => <ChatbotsTableRowMenu row={row} />,
     },
   ];

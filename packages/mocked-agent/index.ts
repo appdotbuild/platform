@@ -167,7 +167,7 @@ fastify.post(
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
     return reply.status(200).send(mockPrepareResponse);
-  }
+  },
 );
 
 fastify.post(
@@ -178,7 +178,7 @@ fastify.post(
         writeUrl: string;
       };
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) => {
     // Add a 2-second delay before responding
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -194,7 +194,7 @@ fastify.post(
     }, 5000);
 
     return reply.status(200).send({});
-  }
+  },
 );
 
 // Main /message endpoint
@@ -365,7 +365,7 @@ fastify.get('/message', async (request, reply) => {
           traceId,
         }),
       };*/
-    })()
+    })(),
   );
 });
 

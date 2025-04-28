@@ -72,12 +72,12 @@ export function DataTable<TData, TValue>({
   const defaultVisibility = Object.fromEntries(
     columns
       .filter((c) => c.defaultVisible === false)
-      .map((c: any) => [c.accessorKey, false])
+      .map((c: any) => [c.accessorKey, false]),
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>(defaultVisibility);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [{ pageIndex, pageSize }, setPagination] = React.useState({
@@ -93,7 +93,7 @@ export function DataTable<TData, TValue>({
   // Loading Skeleton:
   const tableData = React.useMemo(
     () => (loading ? Array(pageSize).fill({}) : data),
-    [loading, data, pageSize]
+    [loading, data, pageSize],
   );
   const tableColumns = React.useMemo(
     () =>
@@ -105,7 +105,7 @@ export function DataTable<TData, TValue>({
             ),
           }))
         : columns,
-    [loading, columns]
+    [loading, columns],
   );
 
   React.useEffect(() => {
@@ -164,7 +164,7 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -187,7 +187,7 @@ export function DataTable<TData, TValue>({
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

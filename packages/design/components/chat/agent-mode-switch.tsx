@@ -28,7 +28,7 @@ export const AgentModeSwitch = () => {
               htmlFor="agent-mode"
               className={cn(
                 'text-sm cursor-pointer',
-                agentMode ? 'text-foreground' : 'text-muted-foreground'
+                agentMode ? 'text-foreground' : 'text-muted-foreground',
               )}
               onClick={() => setAgentMode(!agentMode)}
             >

@@ -45,13 +45,13 @@ export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.json()
+    winston.format.json(),
   ),
   transports: [
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.simple()
+        winston.format.simple(),
       ),
     }),
   ],
@@ -97,7 +97,7 @@ function getS3DirectoryParams(appId: string) {
 }
 
 async function createS3DirectoryWithPresignedUrls(
-  appId: string
+  appId: string,
 ): Promise<{ writeUrl: string; readUrl: string }> {
   const baseParams = getS3DirectoryParams(appId);
 
@@ -115,7 +115,7 @@ async function createS3DirectoryWithPresignedUrls(
 }
 
 async function getReadPresignedUrls(
-  appId: string
+  appId: string,
 ): Promise<{ readUrl: string }> {
   const baseParams = getS3DirectoryParams(appId);
 
@@ -201,7 +201,7 @@ async function deployApp({
   logger.info('Extracted files', { files });
 
   const packageJsonPath = execSync(
-    `find ${extractDir} -maxdepth 3 -not -path "*tsp_schema*" -name package.json -print -quit`
+    `find ${extractDir} -maxdepth 3 -not -path "*tsp_schema*" -name package.json -print -quit`,
   )
     .toString()
     .trim();
@@ -260,7 +260,7 @@ COPY --from=build /app /app
 EXPOSE 3000
 
 CMD [ "bun", "run", "start" ]
-`
+`,
   );
 
   fs.writeFileSync(
@@ -270,7 +270,7 @@ node_modules
 .git
 .gitignore
 .env
-`
+`,
   );
 
   const flyAppName = `app-${appId}`;
@@ -296,7 +296,7 @@ node_modules
       {
         stdio: 'inherit',
         cwd: packageJsonDirectory,
-      }
+      },
     );
   } catch (error) {
     logger.error('Error destroying fly app', {
@@ -317,7 +317,7 @@ node_modules
     `${detectFlyBinary()} launch -y ${envVarsString} --access-token '${process
       .env
       .FLY_IO_TOKEN!}' --max-concurrent 1 --ha=false --no-db --no-deploy --name '${flyAppName}'`,
-    { cwd: packageJsonDirectory, stdio: 'inherit' }
+    { cwd: packageJsonDirectory, stdio: 'inherit' },
   );
   logger.info('Fly launch completed', { flyAppName });
   logger.info('Updating apps table', {
@@ -336,7 +336,7 @@ node_modules
   const flyTomlContent = fs.readFileSync(flyTomlPath, 'utf8');
   const updatedContent = flyTomlContent.replace(
     'min_machines_running = 0',
-    'min_machines_running = 1'
+    'min_machines_running = 1',
   );
   fs.writeFileSync(flyTomlPath, updatedContent);
 
@@ -347,7 +347,7 @@ node_modules
     {
       cwd: packageJsonDirectory,
       stdio: 'inherit',
-    }
+    },
   );
   logger.info('Fly deployment completed', { flyAppName });
 
@@ -444,7 +444,7 @@ const deployJob = new CronJob(
   {
     cronExpression: '*/30 * * * * *', // Runs every 30 seconds
   },
-  deployTask
+  deployTask,
 );
 
 app.register(fastifySchedule);
@@ -571,7 +571,7 @@ app.post(
         clientSource: string;
       };
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) => {
     try {
       const {
@@ -607,7 +607,7 @@ app.post(
       }
 
       const { writeUrl, readUrl } = await createS3DirectoryWithPresignedUrls(
-        appId
+        appId,
       );
       logger.info('Created S3 presigned URLs', {
         appId,
@@ -709,7 +709,7 @@ app.post(
                 statusText: response.statusText,
               });
               throw new Error(
-                `Failed to upload file to S3: ${response.statusText}`
+                `Failed to upload file to S3: ${response.statusText}`,
               );
             }
 
@@ -728,7 +728,7 @@ app.post(
               error: uploadError,
             });
             throw new Error(
-              `Failed to upload source code file: ${uploadError}`
+              `Failed to upload source code file: ${uploadError}`,
             );
           }
         } else {
@@ -783,7 +783,7 @@ app.post(
 
             if (!compileResponse.ok) {
               throw new Error(
-                `HTTP error in /compile, status: ${compileResponse.status}`
+                `HTTP error in /compile, status: ${compileResponse.status}`,
               );
             }
 
@@ -816,7 +816,7 @@ app.post(
                 statusText: prepareResponse.statusText,
               });
               throw new Error(
-                `HTTP error in /prepare, status: ${prepareResponse.status}`
+                `HTTP error in /prepare, status: ${prepareResponse.status}`,
               );
             }
 
@@ -877,7 +877,7 @@ app.post(
               execSync(
                 `${detectFlyBinary()} launch --yes --access-token '${process.env
                   .FLY_IO_TOKEN!}' --max-concurrent 1 --ha=false --no-db  --name '${flyAppName}' --image ${underConstructionImage} --internal-port 80 --dockerignore-from-gitignore`,
-                { stdio: 'inherit' }
+                { stdio: 'inherit' },
               );
               logger.info('Successfully deployed under-construction page', {
                 appId,
@@ -923,7 +923,7 @@ app.post(
         .status(400)
         .send({ error: `Failed to generate app: ${error}` });
     }
-  }
+  },
 );
 
 // Platform endpoint that forwards to the agent and streams back responses
@@ -956,8 +956,8 @@ app.post('/message', async (request, reply) => {
         .where(
           and(
             eq(apps.id, requestBody.applicationId),
-            eq(apps.ownerId, authResponse.id)
-          )
+            eq(apps.ownerId, authResponse.id),
+          ),
         );
       if (!application.length) {
         return reply.status(404).send({
@@ -1100,7 +1100,7 @@ app.get('/message', async (request, reply) => {
         try {
           // Create EventSource to read from agent's GET endpoint
           const es = new EventSource(
-            `${MOCKED_AGENT_API_URL}/message?applicationId=${applicationId}&traceId=${traceId}`
+            `${MOCKED_AGENT_API_URL}/message?applicationId=${applicationId}&traceId=${traceId}`,
           );
 
           // Return a promise that resolves on each message or rejects on error
@@ -1146,8 +1146,8 @@ app.get('/message', async (request, reply) => {
               // Log and forward the message
               app.log.info(
                 `Forwarding message from agent for applicationId: ${applicationId}, message: ${JSON.stringify(
-                  message
-                )}`
+                  message,
+                )}`,
               );
 
               try {
@@ -1183,7 +1183,7 @@ app.get('/message', async (request, reply) => {
 
                 // Optional: log + cleanup
                 app.log.info(
-                  `Closing SSE connection for applicationId: ${applicationId}`
+                  `Closing SSE connection for applicationId: ${applicationId}`,
                 );
 
                 // End the generator, which closes the stream
@@ -1196,7 +1196,7 @@ app.get('/message', async (request, reply) => {
 
               // Otherwise log and propagate the error
               app.log.error(
-                `Error processing message from agent: ${JSON.stringify(error)}`
+                `Error processing message from agent: ${JSON.stringify(error)}`,
               );
               throw error;
             }
@@ -1220,7 +1220,7 @@ app.get('/message', async (request, reply) => {
             }),
           };
         }
-      })()
+      })(),
     );
   } catch (error) {
     app.log.error(`Unhandled error: ${error}`);

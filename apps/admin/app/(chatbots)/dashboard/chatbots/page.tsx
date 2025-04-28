@@ -1,9 +1,9 @@
-import { Metadata } from "next";
-import ChatbotsTable from "./components/chatbots-table";
-import { getAllChatbots } from "./actions";
+import { Metadata } from 'next';
+import ChatbotsTable from './components/chatbots-table';
+import { getAllChatbots } from './actions';
 
 export const metadata: Metadata = {
-  title: "Chatbots",
+  title: 'Chatbots',
   description: "Manage your organization's chatbots.",
 };
 

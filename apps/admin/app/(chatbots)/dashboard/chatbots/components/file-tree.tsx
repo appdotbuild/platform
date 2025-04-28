@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { ChevronRight, File, Folder } from "lucide-react";
-import { cn } from "@appdotbuild/design/lib/utils";
+import { ChevronRight, File, Folder } from 'lucide-react';
+import { cn } from '@appdotbuild/design/lib/utils';
 
 interface FileEntry {
   path: string;
   content: string;
-  type: "file" | "directory";
+  type: 'file' | 'directory';
   children?: FileEntry[];
 }
 
@@ -25,7 +25,7 @@ export function FileTree({
 }: FileTreeProps) {
   const renderNode = (node: FileEntry, level: number = 0) => {
     const isSelected = node.path === selectedFile;
-    const isDirectory = node.type === "directory";
+    const isDirectory = node.type === 'directory';
 
     return (
       <div key={node.path} style={{ marginLeft: `${level * 16}px` }}>
@@ -36,9 +36,9 @@ export function FileTree({
             }
           }}
           className={cn(
-            "flex items-center gap-2 w-full px-2 py-1 hover:bg-accent rounded-sm text-sm",
-            isSelected && "bg-accent",
-            "text-left",
+            'flex items-center gap-2 w-full px-2 py-1 hover:bg-accent rounded-sm text-sm',
+            isSelected && 'bg-accent',
+            'text-left',
           )}
         >
           {isDirectory ? (
@@ -51,7 +51,7 @@ export function FileTree({
               <File className="h-4 w-4" />
             </>
           )}
-          {node.path.split("/").pop()}
+          {node.path.split('/').pop()}
         </button>
         {isDirectory &&
           node.children?.map((child) => renderNode(child, level + 1))}
@@ -62,7 +62,7 @@ export function FileTree({
   return (
     <div
       className={cn(
-        "min-w-[200px] max-w-[300px] max-h-[600px] border-r overflow-auto",
+        'min-w-[200px] max-w-[300px] max-h-[600px] border-r overflow-auto',
         className,
       )}
     >

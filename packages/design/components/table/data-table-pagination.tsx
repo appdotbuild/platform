@@ -37,7 +37,7 @@ export function DataTablePagination<TData>({
             }-${Math.min(
               (table.getState().pagination.pageIndex + 1) *
                 table.getState().pagination.pageSize,
-              totalCount
+              totalCount,
             )} of ${totalCount} rows`
           : `${table.getFilteredSelectedRowModel().rows.length} of ${
               table.getFilteredRowModel().rows.length
