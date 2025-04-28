@@ -1,6 +1,7 @@
 {
   "name": "root",
   "private": true,
+  "type": "module",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -15,7 +16,13 @@
     "lint": "bun --filter '*' --elide-lines 0 lint",
     "lint:fix": "bun --filter '*' lint:fix",
     "setup": "sh ./scripts/setup.sh",
-    "types:check": "bun --filter '*' types:check"
+    "types:check": "bun --filter '*' types:check",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*": [
+      "bun lint:fix"
+    ]
   },
   "dependencies": {
     "@inkjs/ui": "2.0.0",
@@ -41,6 +48,8 @@
     "zustand": "5.0.3"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
     "@eslint/js": "9.23.0",
     "@sindresorhus/tsconfig": "^3.0.1",
     "@tanstack/eslint-plugin-query": "^5.68.0",
@@ -51,7 +60,9 @@
     "eslint": "9.23.0",
     "eslint-plugin-react": "7.37.4",
     "eslint-plugin-react-hooks": "5.2.0",
+    "husky": "^9.1.7",
     "ink-testing-library": "^3.0.0",
+    "lint-staged": "^15.5.1",
     "prettier": "^2.8.7",
     "react-devtools-core": "^6.1.1",
     "typescript": "5.8.2",
