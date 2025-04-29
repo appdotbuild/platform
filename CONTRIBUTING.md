@@ -51,6 +51,14 @@ brew install 1password-cli
 
 Docs [here](https://developer.1password.com/docs/cli/get-started)
 
+## Setting up 1Password
+
+Make sure you also have the app installed. Open the 1Password app, and go to settings.
+
+Activate the "Integrate with 1Password CLI
+
+![1Password CLI integration](docs/images/1password-integration.png)
+
 ## Setting up the project
 
 First of all, go to [Neon console](https://console.neon.tech/app/projects/damp-surf-76179452/branches/br-proud-wave-a84j8pq6?branchId=br-proud-wave-a84j8pq6&database=neondb) into the AppDotBuild Organization
