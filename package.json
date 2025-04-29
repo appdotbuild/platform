@@ -23,7 +23,7 @@
     "types:check": "bun --filter '*' types:check"
   },
   "lint-staged": {
-    "!(*.mdc|*.sh)": [
+    "!(*.mdc|*.sh|*.png)": [
       "bun lint:fix"
     ]
   },
