@@ -85,7 +85,7 @@ export const generateApp = async (params: AppGenerationParams) => {
 };
 
 export const generateAppSpec = async (
-  params: AppSpecsGenerationParams
+  params: AppSpecsGenerationParams,
 ): Promise<{
   appId: string;
   message: string;
@@ -97,7 +97,7 @@ export const generateAppSpec = async (
 export const getApp = async (appId: string) => {
   try {
     const appStatus = await apiClient.get<App & { readUrl: string }>(
-      `/apps/${appId}`
+      `/apps/${appId}`,
     );
 
     return {
@@ -171,7 +171,7 @@ export function subscribeToMessages(
     onNewMessage,
   }: {
     onNewMessage: (data: any) => void;
-  }
+  },
 ) {
   const es = new EventSource(
     `${BACKEND_API_HOST}/message?applicationId=${applicationId}&traceId=${traceId}`,
@@ -189,7 +189,7 @@ export function subscribeToMessages(
           },
         });
       },
-    }
+    },
   );
 
   let assistantResponse = '';

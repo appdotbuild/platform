@@ -57,6 +57,6 @@ export const useSelect = ({
         state.selectFocusedOption();
       }
     },
-    { isActive: !isDisabled }
+    { isActive: !isDisabled },
   );
 };

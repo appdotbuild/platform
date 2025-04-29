@@ -27,5 +27,5 @@ apiClient.interceptors.response.use(
       throw new Error('Unauthorized');
     }
     return Promise.reject(error);
-  }
+  },
 );

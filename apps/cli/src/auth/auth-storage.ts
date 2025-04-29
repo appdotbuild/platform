@@ -69,7 +69,7 @@ export class TokenStorage {
       throw new Error(
         `Error reading config file: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
@@ -89,7 +89,7 @@ export class TokenStorage {
     fs.writeFileSync(
       this.configFile,
       JSON.stringify(config, null, 2),
-      { mode: 0o600 } // Restricting permissions for the config file
+      { mode: 0o600 }, // Restricting permissions for the config file
     );
   }
 

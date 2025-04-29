@@ -14,6 +14,7 @@
     "cli": "bun --env-file=./apps/cli/.env ./apps/cli/dist/cli.js",
     "cli:watch": "bun --env-file=./apps/cli/.env --watch ./apps/cli/src/cli.tsx",
     "dev": "NO_COLOR=1 bun --filter='./packages/mocked-agent' --filter='./apps/**' dev",
+    "docker:build": "sh ./scripts/docker-build.sh",
     "lint": "bun --filter '*' lint",
     "lint:fix": "bun --filter '*' lint:fix",
     "prepare": "husky",
@@ -22,7 +23,7 @@
     "types:check": "bun --filter '*' types:check"
   },
   "lint-staged": {
-    "!(*.mdc)": [
+    "!(*.mdc|*.sh)": [
       "bun lint:fix"
     ]
   },

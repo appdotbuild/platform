@@ -29,7 +29,7 @@ export async function fetchAccessToken(refreshToken: string): Promise<{
           process.env.PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY!,
         'X-Stack-Refresh-Token': refreshToken,
       },
-    }
+    },
   );
 
   if (!accessTokenResponse.ok) {
@@ -40,8 +40,8 @@ export async function fetchAccessToken(refreshToken: string): Promise<{
     const statusText = accessTokenResponse.statusText;
     throw new Error(
       `Failed to refresh access token: ${status} ${statusText} - ${JSON.stringify(
-        errorData
-      )}`
+        errorData,
+      )}`,
     );
   }
 
@@ -72,7 +72,7 @@ export async function authenticate(): Promise<string> {
     try {
       // Try to refresh the token
       const { value: accessTokenVal } = await fetchAccessToken(
-        storedRefreshToken.value
+        storedRefreshToken.value,
       );
 
       // Store the new tokens with their expiry times

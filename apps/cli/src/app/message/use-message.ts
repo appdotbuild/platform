@@ -64,7 +64,7 @@ const useSubscribeToMessages = (
         applicationId: string;
         traceId: string;
       }
-    | undefined
+    | undefined,
 ) => {
   const queryClient = useQueryClient();
   const { applicationId, traceId } = params ?? {};
@@ -88,10 +88,10 @@ const useSubscribeToMessages = (
                 ...oldData,
                 messages: [...oldData.messages, data],
               };
-            }
+            },
           );
         },
-      }
+      },
     );
 
     return () => {
@@ -143,7 +143,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
     if (!appId) return undefined;
 
     const messages = queryClient.getQueryData<{ messages: Message[] }>(
-      queryKeys.applicationMessages(appId)
+      queryKeys.applicationMessages(appId),
     );
 
     return messages;

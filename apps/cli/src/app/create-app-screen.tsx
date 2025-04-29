@@ -32,7 +32,7 @@ function StepContent() {
     addToHistory(
       steps.environment.question,
       steps.environment.options.find((opt) => opt.value === environment)
-        ?.label || environment
+        ?.label || environment,
     );
     safeNavigate({
       path: '/app/create',
@@ -42,7 +42,7 @@ function StepContent() {
 
   const handleGenerateAppSpecsSuccess = (
     appSpecs: AppGenerationResult,
-    prompt: string
+    prompt: string,
   ) => {
     setConfig({ prompt });
     addToHistory('What kind of app would you like to create?', prompt);

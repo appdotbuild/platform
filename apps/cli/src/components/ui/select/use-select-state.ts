@@ -100,7 +100,7 @@ const reducer: Reducer<State, Action> = (state, action) => {
 
       const nextVisibleToIndex = Math.min(
         state.optionMap.size,
-        state.visibleToIndex + 1
+        state.visibleToIndex + 1,
       );
 
       const nextVisibleFromIndex =
@@ -302,7 +302,7 @@ export const useSelectState = ({
   const [state, dispatch] = useReducer(
     reducer,
     { visibleOptionCount, defaultValue, options, focusedValue },
-    createDefaultState
+    createDefaultState,
   );
 
   const [lastOptions, setLastOptions] = useState(options);

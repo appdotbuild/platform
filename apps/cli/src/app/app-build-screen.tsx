@@ -51,7 +51,7 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
     const currentPhase = currentMessage?.phase;
     const isStreaming = currentMessage?.status === 'streaming';
     const hasInteractive = currentMessage?.parts.some(
-      (p) => p.type === 'interactive'
+      (p) => p.type === 'interactive',
     );
 
     type PhaseGroup = {
@@ -86,18 +86,18 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
 
         return groups;
       },
-      []
+      [],
     );
 
     // Find the last group that has an interactive element
     const lastInteractiveGroupIndex = phaseGroups.reduce(
       (lastIndex, group, currentIndex) => {
         const hasInteractiveInGroup = group.messages.some((m) =>
-          m.parts.some((p) => p.type === 'interactive')
+          m.parts.some((p) => p.type === 'interactive'),
         );
         return hasInteractiveInGroup ? currentIndex : lastIndex;
       },
-      -1
+      -1,
     );
 
     return (
@@ -135,7 +135,7 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
                     return detail;
                   }
                   return null;
-                })
+                }),
               )
               .filter((msg): msg is TaskDetail => msg !== null);
 
@@ -163,7 +163,7 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
     if (!currentMessage) return null;
 
     const interactivePart = currentMessage.parts.find(
-      (p) => p.type === 'interactive'
+      (p) => p.type === 'interactive',
     );
     if (!interactivePart || !('elements' in interactivePart)) return null;
 
@@ -209,7 +209,7 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
                   content: `Selected: ${selectedOpt?.label || value}`,
                 });
               },
-            }
+            },
           );
         }}
       />
@@ -248,7 +248,7 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
           streamingMessagesData &&
             !isStreamingMessages &&
             streamingMessagesData?.messages.at(-1)?.parts.at(-1)?.type !==
-              'interactive'
+              'interactive',
         )}
       />
     </Box>

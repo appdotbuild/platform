@@ -75,7 +75,7 @@ export const InfiniteFreeText = (props: FreeTextProps) => {
         },
       ]);
     },
-    [inputsHistory]
+    [inputsHistory],
   );
 
   const onSubmitSuccess = useCallback(
@@ -92,7 +92,7 @@ export const InfiniteFreeText = (props: FreeTextProps) => {
         },
       ]);
     },
-    [inputsHistory]
+    [inputsHistory],
   );
 
   if (!props.status) return null;
@@ -110,7 +110,7 @@ export const InfiniteFreeText = (props: FreeTextProps) => {
           <FreeTextError key={index} {...input} />
         ) : (
           <FreeTextSuccess key={index} {...input} />
-        )
+        ),
       )}
       <FreeText
         {...props}

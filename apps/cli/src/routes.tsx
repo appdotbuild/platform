@@ -47,7 +47,7 @@ type SearchParamsObject<T extends RoutePath> = z.infer<
 
 type ExtractRouteParams<
   T extends string,
-  RouteParams extends Array<any> = []
+  RouteParams extends Array<any> = [],
 > = T extends `${string}/:${infer Param}/${infer Rest}`
   ? // string/:orgID/string
     [...RouteParams, Param, ...ExtractRouteParams<Rest>]
@@ -115,7 +115,7 @@ export function useSafeNavigate() {
 
         // @ts-expect-error - not worth it to fix
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        (match, param) => params?.[param] ?? match
+        (match, param) => params?.[param] ?? match,
       );
 
       void navigate({
@@ -125,7 +125,7 @@ export function useSafeNavigate() {
           : undefined,
       });
     },
-    [navigate]
+    [navigate],
   );
 
   const goBack = useCallback(() => {
@@ -136,16 +136,16 @@ export function useSafeNavigate() {
 }
 
 export function getRouteSearchParams<T extends RoutePath>(
-  routePath: T
+  routePath: T,
 ): RouteWithSearchParams<T>['searchParams'] {
   const route = ROUTES_DEFINITIONS.find(
     (routeInfo): routeInfo is RouteWithSearchParams<T> =>
-      routeInfo.path === routePath && 'searchParams' in routeInfo
+      routeInfo.path === routePath && 'searchParams' in routeInfo,
   );
 
   if (!route) {
     throw new Error(
-      'Invalid route or route does not have search params defined'
+      'Invalid route or route does not have search params defined',
     );
   }
 
@@ -177,7 +177,7 @@ export function useSafeSearchParams<T extends RoutePath>(route: T) {
     (
       searchParamsArg:
         | SearchParamsObject<T>
-        | ((currentParams: SearchParamsObject<T>) => SearchParamsObject<T>)
+        | ((currentParams: SearchParamsObject<T>) => SearchParamsObject<T>),
     ) => {
       let searchParamsObj: SearchParamsObject<T>;
       if (typeof searchParamsArg === 'function') {
@@ -189,7 +189,7 @@ export function useSafeSearchParams<T extends RoutePath>(route: T) {
       const cleanSearchParams = cleanupSearchParams(searchParamsObj);
       setURLSearchParams(queryString.stringify(cleanSearchParams));
     },
-    [safeSearchParams, setURLSearchParams]
+    [safeSearchParams, setURLSearchParams],
   );
 
   return [safeSearchParams, setSafeSearchParams] as const;

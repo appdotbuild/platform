@@ -25,7 +25,7 @@ export const applicationQueryKeys = {
 
 export const useApplication = (
   appId: string | undefined,
-  options?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApp>>>>
+  options?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApp>>>>,
 ) => {
   return useQuery({
     queryKey: applicationQueryKeys.app(appId ?? ''),
@@ -48,10 +48,10 @@ export const useGenerateAppSpecs = (
   options: {
     onSuccess?: (
       data: AppGenerationResult,
-      variable: AppSpecsGenerationParams
+      variable: AppSpecsGenerationParams,
     ) => void;
     onError?: (error: Error) => void;
-  } = {}
+  } = {},
 ) => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSafeSearchParams('/app/create');
@@ -80,7 +80,7 @@ export const useGenerateAppSpecs = (
 export const useGenerateApp = (
   options: {
     onSuccess?: (data: AppGenerationResult) => void;
-  } = {}
+  } = {},
 ) => {
   const queryClient = useQueryClient();
 
