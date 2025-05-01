@@ -48,11 +48,9 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
     if (!streamingMessagesData?.messages.length) return null;
 
     const currentMessage = streamingMessagesData.messages.at(-1);
-    const currentPhase = currentMessage?.phase;
+    const currentPhase = currentMessage?.message.kind;
     const isStreaming = currentMessage?.status === 'streaming';
-    const hasInteractive = currentMessage?.parts.some(
-      (p) => p.type === 'interactive',
-    );
+    const hasInteractive = currentMessage?.message.kind === 'RefinementRequest';
 
     type PhaseGroup = {
       phase: string;
@@ -67,12 +65,13 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         // 2. Previous message had a different phase
         if (
           index === 0 ||
-          streamingMessagesData.messages[index - 1]?.phase !== message.phase
+          streamingMessagesData.messages[index - 1]?.message.kind !==
+            message.message.kind
         ) {
           return [
             ...groups,
             {
-              phase: message.phase,
+              phase: message.message.kind,
               messages: [message],
             },
           ];
@@ -92,8 +91,8 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
     // Find the last group that has an interactive element
     const lastInteractiveGroupIndex = phaseGroups.reduce(
       (lastIndex, group, currentIndex) => {
-        const hasInteractiveInGroup = group.messages.some((m) =>
-          m.parts.some((p) => p.type === 'interactive'),
+        const hasInteractiveInGroup = group.messages.some(
+          (m) => m.message.kind === 'RefinementRequest',
         );
         return hasInteractiveInGroup ? currentIndex : lastIndex;
       },
@@ -118,25 +117,45 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
                 : 'done';
 
             const phaseMessages = group.messages
-              .flatMap((m) =>
-                m.parts.map((p, partIndex) => {
-                  if ('content' in p) {
-                    const nextPart = m.parts[partIndex + 1];
-                    const shouldHighlight =
-                      isCurrentPhase &&
-                      isLastInteractiveGroup &&
-                      nextPart?.type === 'interactive';
+              .flatMap((m) => {
+                const messageContent = JSON.parse(m.message.content);
 
-                    const detail: TaskDetail = {
-                      text: p.content,
-                      highlight: shouldHighlight,
-                      icon: shouldHighlight ? '↳' : '⎿',
+                console.log('messageContent', messageContent);
+                const details = messageContent.map((p: any) => {
+                  if ('content' in p) {
+                    return {
+                      text: p.content[0].text,
+                      highlight: false,
+                      icon: '⎿',
                     };
-                    return detail;
                   }
-                  return null;
-                }),
-              )
+                  return p.text;
+                });
+
+                return details;
+
+                return JSON.parse(m.message.content).map(
+                  (p: any, partIndex: number) => {
+                    if ('content' in p) {
+                      const nextPart = JSON.parse(m.message.content)[
+                        partIndex + 1
+                      ];
+                      const shouldHighlight =
+                        isCurrentPhase &&
+                        isLastInteractiveGroup &&
+                        nextPart?.type === 'interactive';
+
+                      const detail: TaskDetail = {
+                        text: p.content,
+                        highlight: shouldHighlight,
+                        icon: shouldHighlight ? '↳' : '⎿',
+                      };
+                      return detail;
+                    }
+                    return p.text;
+                  },
+                );
+              })
               .filter((msg): msg is TaskDetail => msg !== null);
 
             addLog({
@@ -162,37 +181,16 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
     const currentMessage = streamingMessagesData?.messages.at(-1);
     if (!currentMessage) return null;
 
-    const interactivePart = currentMessage.parts.find(
-      (p) => p.type === 'interactive',
-    );
-    if (!interactivePart || !('elements' in interactivePart)) return null;
-
-    const firstElement = interactivePart.elements[0];
-    if (!firstElement) return null;
-
-    const options = interactivePart.elements
-      .map((element) => {
-        if (element.type === 'choice') {
-          return element.options.map((opt) => ({
-            value: opt.value,
-            label: opt.label,
-          }));
-        }
-        return {
-          value: element.id,
-          label: element.label,
-        };
-      })
-      .flat();
-
-    if (options.length === 0) return null;
+    const isInteractive = currentMessage.message.kind === 'RefinementRequest';
+    if (!isInteractive) return null;
 
     return (
       <BuildingBlock
-        type="select"
-        question="Select an option"
+        type="free-text"
+        errorMessage="Error"
+        loadingText="Loading..."
+        successMessage="Success"
         status={createApplicationStatus}
-        options={options}
         onSubmit={(value: string) => {
           createApplication(
             {
@@ -201,13 +199,16 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
             },
             {
               onSuccess: () => {
-                const selectedOpt = options.find((opt) => opt.value === value);
-
-                // add the user selected option to the client state messages
-                streamingMessagesData?.messages.at(-1)?.parts?.push({
-                  type: 'text',
-                  content: `Selected: ${selectedOpt?.label || value}`,
-                });
+                // const selectedOpt = options.find(
+                //   (opt: any) => opt.value === value,
+                // );
+                // // add the user selected option to the client state messages
+                // JSON.parse(
+                //   streamingMessagesData?.messages.at(-1)?.message.content,
+                // ).push({
+                //   type: 'text',
+                //   content: `Selected: ${selectedOpt?.label || value}`,
+                // });
               },
             },
           );
@@ -247,8 +248,8 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         showPrompt={Boolean(
           streamingMessagesData &&
             !isStreamingMessages &&
-            streamingMessagesData?.messages.at(-1)?.parts.at(-1)?.type !==
-              'interactive',
+            streamingMessagesData?.messages.at(-1)?.message.kind !==
+              'RefinementRequest',
         )}
       />
     </Box>

@@ -57,7 +57,7 @@ async function sendMessageWithFetch(message: string) {
   }
 }
 
-sendMessageWithFetch('build a todo app');
+sendMessageWithFetch('build a');
 
 // app.post('/mock-stream', (req, res) => {
 //   res.raw.setHeader('Content-Type', 'text/event-stream');

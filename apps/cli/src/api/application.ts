@@ -1,16 +1,13 @@
 import { config } from 'dotenv';
 import os from 'os';
 import chalk from 'chalk';
-import { EventSource } from 'eventsource';
-import console, { error } from 'console';
-import { getBackendHost } from '../environment.js';
+import console from 'console';
 import { apiClient } from './api-client.js';
-import { authenticate } from '../auth/auth.js';
+import { parseSSE } from './sse.js';
+import type { buffer } from 'stream/consumers';
 
 // Load environment variables from .env file
 config();
-
-const BACKEND_API_HOST = getBackendHost();
 
 function generateMachineId(): string {
   const hostname = os.hostname();
@@ -132,6 +129,8 @@ export const listApps = async ({ pageParam }: { pageParam: number }) => {
 export type SendMessageParams = {
   message: string;
   applicationId?: string;
+  traceId?: string;
+  onMessage?: (data: any) => void;
 };
 
 export type SendMessageResult = {
@@ -142,107 +141,61 @@ export type SendMessageResult = {
 export async function sendMessage({
   message,
   applicationId,
+  traceId,
+  onMessage,
 }: SendMessageParams): Promise<SendMessageResult> {
-  const response = await apiClient.post<{
-    applicationId: string;
-    traceId: string;
-  }>('/message', {
-    message,
-    clientSource: 'cli',
-    userId: generateMachineId(),
-    applicationId,
-  });
-
-  return {
-    applicationId: response.data.applicationId,
-    traceId: response.data.traceId,
-  };
-}
-
-export function subscribeToMessages(
-  {
-    applicationId,
-    traceId,
-  }: {
-    applicationId: string;
-    traceId: string;
-  },
-  {
-    onNewMessage,
-  }: {
-    onNewMessage: (data: any) => void;
-  },
-) {
-  const es = new EventSource(
-    `${BACKEND_API_HOST}/message?applicationId=${applicationId}&traceId=${traceId}`,
+  const response = await apiClient.post(
+    '/message',
     {
-      fetch: async (input, init) => {
-        // Add your auth token to the request
-        const token = await authenticate(); // Your token retrieval method
-
-        // Call your apiClient.get with proper headers
-        return fetch(input, {
-          ...init,
-          headers: {
-            ...init?.headers,
-            Authorization: `Bearer ${token}`,
-          },
-        });
+      message,
+      clientSource: 'cli',
+      applicationId,
+      traceId,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
       },
+      responseType: 'stream',
     },
   );
 
-  let assistantResponse = '';
+  if (!response.data) {
+    throw new Error('No response data available');
+  }
 
-  es.addEventListener('open', () => {
-    console.log(chalk.green('🔗 Connected to SSE stream.\n'));
-  });
+  console.log(chalk.green('🔗 Connected to message stream.\n'));
 
-  es.addEventListener('message', (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      onNewMessage(data);
+  try {
+    await parseSSE(response.data, {
+      onMessage: (data) => {
+        console.log('data', data);
+        onMessage?.(data);
+      },
+      onError: (error) => {
+        console.error('error', error);
+      },
+      onEvent: (event) => {
+        console.log('event', event);
+      },
+      onClose: () => {
+        console.log('close');
+      },
+    });
+  } catch (error) {
+    console.error(
+      chalk.red(
+        `🔥 Stream Error: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ),
+    );
+    throw error;
+  }
 
-      if (data.status === 'running') {
-        assistantResponse += extractText(data.parts);
-
-        // ✅ Handle stream completion flag
-        if (data.done) {
-          es.close();
-        }
-      }
-
-      if (data.status === 'idle') {
-        assistantResponse += extractText(data.parts);
-        es.close();
-      }
-    } catch (error) {
-      console.error(chalk.red(`❌ Failed to process SSE message: ${error}`));
-    }
-  });
-
-  es.addEventListener('error', (event) => {
-    console.log({ readyState: es.readyState });
-
-    // Ignore harmless disconnects
-    if (es.readyState === 2 /* CLOSED */) {
-      console.log(chalk.gray('ℹ️ SSE connection closed cleanly.'));
-      return;
-    }
-
-    console.error(chalk.red(`🔥 SSE Error occurred: ${JSON.stringify(error)}`));
-    es.close();
-  });
-
-  return es;
-}
-
-// Helper to accumulate text for history
-function extractText(parts: any[]): string {
-  return (
-    parts
-      .filter((p) => p.type === 'text')
-      .map((p) => p.content)
-      .join('\n') + '\n'
-  );
+  return {
+    applicationId: applicationId || '',
+    traceId: '',
+  };
 }

@@ -2,8 +2,8 @@ import { fastifySchedule } from '@fastify/schedule';
 import { CronJob } from 'toad-scheduler';
 import { config } from 'dotenv';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
-import { EventSource } from 'eventsource';
 import { validateAuth } from './auth-strategy';
+import console from 'console';
 import console from 'console';
 
 config({ path: '.env' });
@@ -1011,7 +1011,6 @@ app.post('/message', async (request, reply) => {
   };
 
   let applicationId = requestBody.applicationId;
-
   let body = {
     applicationId,
     allMessages: [{ role: 'user', content: requestBody.message }],
@@ -1054,6 +1053,12 @@ app.post('/message', async (request, reply) => {
   } else {
     // Create new application if applicationId is not provided
     applicationId = uuidv4();
+    body = {
+      ...body,
+      applicationId,
+      traceId: applicationTraceId(applicationId),
+    };
+
     await db.insert(apps).values({
       id: applicationId,
       name: requestBody.message,
@@ -1086,19 +1091,18 @@ app.post('/message', async (request, reply) => {
     reply.raw.setHeader('Cache-Control', 'no-cache');
     reply.raw.setHeader('Connection', 'keep-alive');
 
-    reply.raw.write(
-      `data: ${JSON.stringify({ type: 'start', content: 'Hello' })}\n\n`,
-    );
-    reply.raw.write(
-      `data: ${JSON.stringify({ type: 'start', content: 'Hello' })}\n\n`,
-    );
+    // reply.raw.write(
+    //   `data: ${JSON.stringify({ type: 'start', content: 'Hello' })}\n\n`,
+    // );
+    // reply.raw.write(
+    //   `data: ${JSON.stringify({ type: 'start', content: 'Hello' })}\n\n`,
+    // );
 
     const agentResponse = await fetch(`${PROD_AGENT_API_URL}/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
-        Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH!}`,
       },
       body: JSON.stringify(body),
     });
@@ -1136,7 +1140,6 @@ app.post('/message', async (request, reply) => {
       buffer = messages.pop() || ''; // Keep last potentially incomplete message
 
       for (const message of messages) {
-        console.log('messagewtf', message);
         if (message.startsWith('data:')) {
           try {
             // Split on first occurrence of "data:" and take the rest
@@ -1145,6 +1148,8 @@ app.post('/message', async (request, reply) => {
 
             const jsonStr = dataStr.trim();
             const data = JSON.parse(jsonStr);
+
+            console.log('data', data);
 
             previousRequestMap.set(data.traceId, [
               ...(previousRequestMap.get(data.traceId) || []),

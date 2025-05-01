@@ -1,17 +1,6 @@
 import { useMemo, useState } from 'react';
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type UseMutationOptions,
-} from '@tanstack/react-query';
-import {
-  sendMessage,
-  subscribeToMessages,
-  type SendMessageParams,
-  type SendMessageResult,
-} from '../../api/application.js';
-import { useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { sendMessage, type SendMessageParams } from '../../api/application.js';
 import { applicationQueryKeys } from '../use-application.js';
 
 export type ChoiceElement = {
@@ -44,79 +33,60 @@ export type MessagePart =
       elements: (ChoiceElement | ActionElement)[];
     };
 
+type RequestId = string;
+type ApplicationId = string;
+type TraceId = `app-${ApplicationId}.req-${RequestId}`;
+type StringifiedMessagesArrayJson = string;
 export type Message = {
-  type: 'message';
-  parts: MessagePart[];
-  applicationId: string;
   status: 'streaming' | 'idle';
-  traceId: string;
-  id: string;
-  phase: 'typespec' | 'handlers' | 'running-tests' | 'frontend';
+  message: {
+    role: 'assistant' | 'user';
+    kind: 'RefinementRequest' | 'StageResult' | 'TestResult' | 'UserMessage';
+    content: StringifiedMessagesArrayJson;
+    agentState: any;
+    unifiedDiff: any;
+  };
+  traceId: TraceId;
 };
 
 const queryKeys = {
   applicationMessages: (id: string) => ['apps', id],
 };
 
-const useSubscribeToMessages = (
-  params:
-    | {
-        applicationId: string;
-        traceId: string;
-      }
-    | undefined,
-) => {
-  const queryClient = useQueryClient();
-  const { applicationId, traceId } = params ?? {};
-
-  useEffect(() => {
-    if (!applicationId || !traceId) return;
-
-    const eventSource = subscribeToMessages(
-      {
-        applicationId,
-        traceId,
-      },
-      {
-        onNewMessage: (data) => {
-          queryClient.setQueryData(
-            queryKeys.applicationMessages(applicationId),
-            (oldData: any) => {
-              if (!oldData) return { messages: [data] };
-
-              return {
-                ...oldData,
-                messages: [...oldData.messages, data],
-              };
-            },
-          );
-        },
-      },
-    );
-
-    return () => {
-      eventSource.close();
-    };
-  }, [queryClient, applicationId, traceId]);
-};
-
 const useSendMessage = () => {
   const queryClient = useQueryClient();
-  const [messageResult, setMessageResult] = useState<
-    | {
-        applicationId: string;
-        traceId: string;
-      }
-    | undefined
-  >(undefined);
-  useSubscribeToMessages(messageResult);
+
+  const [metadata, setMetadata] = useState<{
+    applicationId: string;
+    traceId: string;
+  } | null>(null);
 
   const result = useMutation({
-    mutationFn: async ({ message, applicationId }: SendMessageParams) => {
-      return sendMessage({ message, applicationId });
+    mutationFn: async ({ message }: SendMessageParams) => {
+      return sendMessage({
+        message,
+        applicationId: metadata?.applicationId,
+        traceId: metadata?.traceId,
+        onMessage: (data) => {
+          if (data.type === 'metadata') {
+            setMetadata(data.content);
+          } else {
+            queryClient.setQueryData(
+              queryKeys.applicationMessages(metadata?.applicationId!),
+              (oldData: any) => {
+                if (!oldData) return { messages: [data] };
+
+                return {
+                  ...oldData,
+                  messages: [...oldData.messages, data],
+                };
+              },
+            );
+          }
+        },
+      });
     },
     onSuccess: (result) => {
-      setMessageResult(result);
       void queryClient.invalidateQueries({
         queryKey: applicationQueryKeys.app(result.applicationId),
       });
@@ -124,13 +94,14 @@ const useSendMessage = () => {
   });
 
   // we need this to keep the previous application id
-  return { ...result, data: messageResult };
+  return { ...result, data: metadata };
 };
 
 export const useBuildApp = (existingApplicationId?: string) => {
   const queryClient = useQueryClient();
   const {
     mutate: sendMessage,
+    data: sendMessagesData,
     data: sendMessageData,
     error: sendMessageError,
     isPending: sendMessagePending,
@@ -139,7 +110,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
   } = useSendMessage();
 
   const messagesData = useMemo(() => {
-    const appId = existingApplicationId ?? sendMessageData?.applicationId;
+    const appId = existingApplicationId ?? sendMessagesData?.applicationId;
     if (!appId) return undefined;
 
     const messages = queryClient.getQueryData<{ messages: Message[] }>(
@@ -147,7 +118,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
     );
 
     return messages;
-  }, [existingApplicationId, queryClient, sendMessageData?.applicationId]);
+  }, [existingApplicationId, queryClient, sendMessagesData?.applicationId]);
 
   const messageQuery = useQuery({
     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain, @tanstack/query/exhaustive-deps
