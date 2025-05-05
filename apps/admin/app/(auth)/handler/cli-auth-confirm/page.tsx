@@ -4,6 +4,13 @@ import { Card, CardContent } from '@appdotbuild/design/shadcn/card';
 import { Button } from '@appdotbuild/design/shadcn/button';
 import { useState } from 'react';
 import { useUser } from '@appdotbuild/auth/stack';
+import { GitHubLogoIcon } from '@radix-ui/react-icons';
+
+const AFTER_INSTALL_URL =
+  process.env.NEXT_PUBLIC_AFTER_INSTALL_URL ||
+  'http://localhost:3001/handler/app-installed';
+
+const GITHUB_APP_INSTALL_URL = `https://github.com/apps/appdotbuild/installations/select_target?redirect_uri=${AFTER_INSTALL_URL}`;
 
 export default function CliAuthConfirmPage() {
   const [authorizing, setAuthorizing] = useState(false);
@@ -11,12 +18,14 @@ export default function CliAuthConfirmPage() {
   const [error, setError] = useState<Error | null>(null);
   const user = useUser({ or: 'redirect' });
 
+  const account = user.useConnectedAccount('github', { or: 'redirect' });
+  const { accessToken } = account.useAccessToken();
+
   const handleAuthorize = async () => {
     if (authorizing) return;
     setAuthorizing(true);
 
     try {
-      // Get login code from URL query parameters
       const urlParams = new URLSearchParams(window.location.search);
       const loginCode = urlParams.get('login_code');
 
@@ -25,6 +34,7 @@ export default function CliAuthConfirmPage() {
       }
 
       const refreshToken = (await user.currentSession.getTokens()).refreshToken;
+
       if (!refreshToken) {
         throw new Error('You must be logged in to authorize CLI access');
       }
@@ -38,6 +48,7 @@ export default function CliAuthConfirmPage() {
         body: JSON.stringify({
           login_code: loginCode,
           refresh_token: refreshToken,
+          access_token: accessToken,
         }),
       });
 
@@ -54,6 +65,10 @@ export default function CliAuthConfirmPage() {
     }
   };
 
+  const openGithubAppInstall = () => {
+    window.open(GITHUB_APP_INSTALL_URL);
+  };
+
   if (success) {
     return (
       <Card className="max-w-md mx-auto mt-8">
@@ -63,10 +78,14 @@ export default function CliAuthConfirmPage() {
             CLI Authorization Successful
           </h1>
           <p className="text-gray-600 mb-4">
-            The CLI application has been authorized successfully. You can now
-            close this window and return to the command line.
+            The CLI application has been authorized successfully. Let's now
+            install the AppDotBuild Github App in your organization /
+            repositories of choice.
           </p>
-          <Button onClick={() => window.close()}>Close</Button>
+          <Button onClick={openGithubAppInstall}>
+            <GitHubLogoIcon className="w-4 h-4 mr-2" />
+            Install App
+          </Button>
         </CardContent>
       </Card>
     );

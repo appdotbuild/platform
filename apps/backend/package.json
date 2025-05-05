@@ -20,6 +20,9 @@
     "@fastify/schedule": "6.0.0",
     "@neondatabase/api-client": "1.11.5",
     "@neondatabase/serverless": "0.10.4",
+    "@octokit/app": "^14.0.0",
+    "@octokit/auth-app": "^5.0.0",
+    "@octokit/rest": "^20.0.0",
     "aws-sdk": "2.1692.0",
     "dotenv": "16.4.7",
     "drizzle-orm": "0.39.0",
@@ -30,7 +33,8 @@
     "jose": "^6.0.10",
     "toad-scheduler": "3.0.1",
     "uuid": "11.0.5",
-    "winston": "3.17.0"
+    "winston": "3.17.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/bun": "latest",

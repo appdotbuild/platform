@@ -1,9 +1,8 @@
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
+import { type FastifyReply, type FastifyRequest } from 'fastify';
 import { fastifySchedule } from '@fastify/schedule';
 import { CronJob, AsyncTask } from 'toad-scheduler';
 import { appPrompts, apps } from './db/schema';
-import { v4 as uuidv4 } from 'uuid';
 import {
   S3Client,
   PutObjectCommand,
@@ -21,9 +20,10 @@ import type { Paginated, ReadUrl } from '@appdotbuild/core/types/api';
 import winston from 'winston';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
 import { EventSource } from 'eventsource';
-import { validateAuth } from './auth-strategy';
+import { app } from './app';
+import { commitChanges, createRepository, createInitialCommit } from './github';
+import { v4 as uuidv4 } from 'uuid';
 
-// Define the App type locally since it's not exported from @appdotbuild/core/types/api
 type App = {
   id: string;
   name: string;
@@ -39,6 +39,18 @@ type App = {
   recompileInProgress: boolean;
   clientSource: string;
 };
+
+app.post('/github/commit', { onRequest: [app.authenticate] }, commitChanges);
+app.post(
+  '/github/initial-commit',
+  { onRequest: [app.authenticate] },
+  createInitialCommit,
+);
+app.post(
+  '/github/create-repository',
+  { onRequest: [app.authenticate] },
+  createRepository,
+);
 
 // Configure Winston logger
 export const logger = winston.createLogger({
@@ -369,12 +381,6 @@ node_modules
   }
 }
 
-export const app = fastify({
-  logger: true,
-  disableRequestLogging: true,
-  genReqId: () => uuidv4(),
-});
-
 const connectionString =
   process.env.DATABASE_URL_DEV ?? process.env.DATABASE_URL!;
 const db = drizzle(connectionString);
@@ -455,107 +461,101 @@ app.ready().then(() => {
   app.scheduler.addCronJob(deployJob);
 });
 
-app.get('/apps', async (request, reply): Promise<Paginated<App>> => {
-  const authResponse = await validateAuth(request, reply);
-  if ('error' in authResponse) {
-    return reply.status(authResponse.statusCode).send({
-      error: authResponse.error,
-    });
-  }
+app.get(
+  '/apps',
+  { onRequest: [app.authenticate] },
+  async (request, reply): Promise<Paginated<App>> => {
+    const user = request.user;
+    const { limit = 10, page = 1 } = request.query as {
+      limit?: number;
+      page?: number;
+    };
 
-  const { limit = 10, page = 1 } = request.query as {
-    limit?: number;
-    page?: number;
-  };
+    // Convert to numbers and validate
+    if (limit > 100) {
+      return reply.status(400).send({
+        error: 'Limit cannot exceed 100',
+      });
+    }
+    const pagesize = Math.min(Math.max(1, Number(limit)), 100); // Limit between 1 and 100
+    const pageNum = Math.max(1, Number(page));
+    const offset = (pageNum - 1) * pagesize;
 
-  // Convert to numbers and validate
-  if (limit > 100) {
-    return reply.status(400).send({
-      error: 'Limit cannot exceed 100',
-    });
-  }
-  const pagesize = Math.min(Math.max(1, Number(limit)), 100); // Limit between 1 and 100
-  const pageNum = Math.max(1, Number(page));
-  const offset = (pageNum - 1) * pagesize;
+    const { ...columns } = getTableColumns(apps);
 
-  const { ...columns } = getTableColumns(apps);
+    const countResultP = db
+      .select({ count: sql`count(*)` })
+      .from(apps)
+      .where(eq(apps.ownerId, user.id));
 
-  const countResultP = db
-    .select({ count: sql`count(*)` })
-    .from(apps)
-    .where(eq(apps.ownerId, authResponse.id));
+    console.log(user.id);
 
-  console.log(authResponse.id);
+    const appsP = db
+      .select(columns)
+      .from(apps)
+      .where(eq(apps.ownerId, user.id))
+      .orderBy(desc(apps.createdAt))
+      .limit(pagesize)
+      .offset(offset);
 
-  const appsP = db
-    .select(columns)
-    .from(apps)
-    .where(eq(apps.ownerId, authResponse.id))
-    .orderBy(desc(apps.createdAt))
-    .limit(pagesize)
-    .offset(offset);
+    const [countResult, appsList] = await Promise.all([countResultP, appsP]);
 
-  const [countResult, appsList] = await Promise.all([countResultP, appsP]);
+    const totalCount = Number(countResult[0]?.count || 0);
+    return {
+      data: appsList,
+      pagination: {
+        total: totalCount,
+        page: pageNum,
+        limit: pagesize,
+        totalPages: Math.ceil(totalCount / pagesize),
+      },
+    };
+  },
+);
 
-  const totalCount = Number(countResult[0]?.count || 0);
-  return {
-    data: appsList,
-    pagination: {
-      total: totalCount,
-      page: pageNum,
-      limit: pagesize,
-      totalPages: Math.ceil(totalCount / pagesize),
-    },
-  };
-});
+app.get(
+  '/apps/:id',
+  { onRequest: [app.authenticate] },
+  async (request, reply): Promise<App> => {
+    const user = request.user;
+    const { id } = request.params as { id: string };
+    const { ...columns } = getTableColumns(apps);
+    const app = await db
+      .select({
+        ...columns,
+        s3Checksum: apps.s3Checksum,
+      })
+      .from(apps)
+      .where(and(eq(apps.id, id), eq(apps.ownerId, user.id)));
+    if (!app || !app.length) {
+      return reply.status(404).send({
+        error: 'App not found',
+      });
+    }
+    return reply.send(app[0]);
+  },
+);
 
-app.get('/apps/:id', async (request, reply): Promise<App> => {
-  const authResponse = await validateAuth(request, reply);
-  if ('error' in authResponse) {
-    return reply.status(authResponse.statusCode).send({
-      error: authResponse.error,
-    });
-  }
+app.get(
+  '/apps/:id/read-url',
+  { onRequest: [app.authenticate] },
+  async (request, reply): Promise<ReadUrl> => {
+    const user = request.user;
+    const { id } = request.params as { id: string };
+    const app = await db
+      .select({ id: apps.id })
+      .from(apps)
+      .where(and(eq(apps.id, id), eq(apps.ownerId, user.id)));
 
-  const { id } = request.params as { id: string };
-  const { ...columns } = getTableColumns(apps);
-  const app = await db
-    .select({
-      ...columns,
-      s3Checksum: apps.s3Checksum,
-    })
-    .from(apps)
-    .where(and(eq(apps.id, id), eq(apps.ownerId, authResponse.id)));
-  if (!app || !app.length) {
-    return reply.status(404).send({
-      error: 'App not found',
-    });
-  }
-  return reply.send(app[0]);
-});
+    if (!app || !app?.[0]) {
+      return reply.status(404).send({
+        error: 'App not found',
+      });
+    }
 
-app.get('/apps/:id/read-url', async (request, reply): Promise<ReadUrl> => {
-  const authResponse = await validateAuth(request, reply);
-  if ('error' in authResponse) {
-    return reply.status(authResponse.statusCode).send({
-      error: authResponse.error,
-    });
-  }
-
-  const { id } = request.params as { id: string };
-  const app = await db
-    .select({ id: apps.id })
-    .from(apps)
-    .where(and(eq(apps.id, id), eq(apps.ownerId, authResponse.id)));
-
-  if (!app || !app?.[0]) {
-    return reply.status(404).send({
-      error: 'App not found',
-    });
-  }
-
-  return getReadPresignedUrls(app[0].id);
-});
+    return getReadPresignedUrls(app[0].id);
+  },
+);
 
 app.post(
   '/generate',
@@ -582,15 +582,10 @@ app.post(
         clientSource,
       } = request.body;
 
-      const authResponse = await validateAuth(request, reply);
-      if ('error' in authResponse) {
-        return reply.status(authResponse.statusCode).send({
-          error: authResponse.error,
-        });
-      }
+      const user = request.user;
 
       logger.info('Generate request received', {
-        userId: authResponse.id,
+        userId: user.id,
         useStaging,
         useMockedAgent,
         clientSource,
@@ -617,7 +612,7 @@ app.post(
       const existingApp = await db
         .select()
         .from(apps)
-        .where(and(eq(apps.id, appId), eq(apps.ownerId, authResponse.id)));
+        .where(and(eq(apps.id, appId), eq(apps.ownerId, user.id)));
 
       if (existingApp && existingApp[0]) {
         logger.info('Found existing app', {
@@ -632,7 +627,7 @@ app.post(
         .values({
           id: appId,
           name: prompt,
-          ownerId: authResponse.id,
+          ownerId: user.id,
           clientSource,
         })
         .onConflictDoUpdate({
@@ -645,7 +640,7 @@ app.post(
 
       logger.info('Upserted app in database', {
         appId,
-        userId: authResponse.id,
+        userId: user.id,
       });
 
       await db.insert(appPrompts).values({
@@ -927,306 +922,304 @@ app.post(
 );
 
 // Platform endpoint that forwards to the agent and streams back responses
-app.post('/message', async (request, reply) => {
-  try {
-    const authResponse = await validateAuth(request, reply);
-    if ('error' in authResponse) {
-      return reply.status(authResponse.statusCode).send({
-        error: authResponse.error,
+app.post(
+  '/message',
+  { onRequest: [app.authenticate] },
+  async (request, reply) => {
+    try {
+      const user = request.user;
+
+      const applicationTraceId = (appId: string | undefined) =>
+        appId ? `app-${appId}.req-${request.id}` : `temp.req-${request.id}`;
+      app.log.info('Received message request', {
+        body: request.body,
       });
+
+      const requestBody = request.body as {
+        message: string;
+        applicationId?: string;
+        clientSource: string;
+      };
+
+      const allMessages: string[] = [];
+      if (requestBody.applicationId) {
+        const application = await db
+          .select()
+          .from(apps)
+          .where(
+            and(
+              eq(apps.id, requestBody.applicationId),
+              eq(apps.ownerId, user.id),
+            ),
+          );
+        if (!application.length) {
+          return reply.status(404).send({
+            error: 'Application not found',
+          });
+        }
+
+        // get the history of prompts
+        const historyPrompts = await db
+          .select({
+            prompt: appPrompts.prompt,
+            kind: appPrompts.kind,
+          })
+          .from(appPrompts)
+          .where(eq(appPrompts.appId, requestBody.applicationId));
+        allMessages.push(...historyPrompts.map((p) => p.prompt));
+      } else {
+        allMessages.push(requestBody.message);
+      }
+
+      const body: {
+        applicationId: string | undefined;
+        allMessages: Array<string>;
+        traceId: string;
+      } = {
+        applicationId: requestBody.applicationId,
+        allMessages,
+        traceId: applicationTraceId(requestBody.applicationId),
+      };
+
+      // Forward the request to the agent
+      const agentResponse = await fetch(`${MOCKED_AGENT_API_URL}/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!agentResponse.ok) {
+        const errorData = (await agentResponse.json()) as any;
+        app.log.error(`Agent returned error: ${agentResponse.status}`);
+        return reply.status(agentResponse.status).send(errorData);
+      }
+
+      let applicationId = requestBody.applicationId;
+      if (!applicationId) {
+        const newAppId = uuidv4();
+        await db.insert(apps).values({
+          id: newAppId,
+          name: requestBody.message,
+          clientSource: requestBody.clientSource,
+          ownerId: user.id,
+          traceId: applicationTraceId(newAppId),
+        });
+        applicationId = newAppId;
+      }
+
+      // insert the new user prompt
+      await db.insert(appPrompts).values({
+        id: uuidv4(),
+        prompt: requestBody.message,
+        appId: applicationId,
+        kind: 'user',
+      });
+
+      console.log({
+        applicationId,
+        requestApplicationId: requestBody.applicationId,
+      });
+
+      app.log.info({
+        msg: 'Upgrading traceId from bootstrap to application',
+        oldTraceId: applicationTraceId(undefined),
+        newTraceId: applicationTraceId(applicationId),
+      });
+
+      // return a success message with instructions to connect to the GET endpoint
+      return {
+        status: 'success',
+        traceId: applicationTraceId(applicationId),
+        applicationId: applicationId,
+        message:
+          'Request accepted, connect to GET /message?applicationId=YOUR_APPLICATION_ID to subscribe to updates',
+      };
+    } catch (error) {
+      app.log.error(`Unhandled error: ${error}`);
+      reply.status(500).send({ error: 'Internal server error' });
     }
+  },
+);
 
-    const applicationTraceId = (appId: string | undefined) =>
-      appId ? `app-${appId}.req-${request.id}` : `temp.req-${request.id}`;
-    app.log.info('Received message request', {
-      body: request.body,
-    });
+// GET endpoint for SSE streaming
+app.get(
+  '/message',
+  { onRequest: [app.authenticate] },
+  async (request, reply) => {
+    try {
+      const { applicationId, traceId } = request.query as any;
 
-    const requestBody = request.body as {
-      message: string;
-      applicationId?: string;
-      clientSource: string;
-    };
-
-    const allMessages: string[] = [];
-    if (requestBody.applicationId) {
-      const application = await db
-        .select()
-        .from(apps)
-        .where(
-          and(
-            eq(apps.id, requestBody.applicationId),
-            eq(apps.ownerId, authResponse.id),
-          ),
-        );
-      if (!application.length) {
-        return reply.status(404).send({
-          error: 'Application not found',
+      // Validate applicationId
+      if (!applicationId) {
+        app.log.error('Missing required query parameter: applicationId', {
+          query: request.query,
+          endpoint: request.url,
+          method: request.method,
+        });
+        return reply.status(400).send({
+          error: 'Missing required query parameter: applicationId',
         });
       }
 
-      // get the history of prompts
-      const historyPrompts = await db
-        .select({
-          prompt: appPrompts.prompt,
-          kind: appPrompts.kind,
-        })
-        .from(appPrompts)
-        .where(eq(appPrompts.appId, requestBody.applicationId));
-      allMessages.push(...historyPrompts.map((p) => p.prompt));
-    } else {
-      allMessages.push(requestBody.message);
-    }
+      // Validate traceId
+      if (!traceId) {
+        app.log.error('Missing required query parameter: traceId', {
+          query: request.query,
+          endpoint: request.url,
+          method: request.method,
+        });
+        return reply.status(400).send({
+          error: 'Missing required query parameter: traceId',
+        });
+      }
 
-    const body: {
-      applicationId: string | undefined;
-      allMessages: Array<string>;
-      traceId: string;
-    } = {
-      applicationId: requestBody.applicationId,
-      allMessages,
-      traceId: applicationTraceId(requestBody.applicationId),
-    };
+      // Create abort controller for this connection
+      const abortController = new AbortController();
 
-    // Forward the request to the agent
-    const agentResponse = await fetch(`${MOCKED_AGENT_API_URL}/message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!agentResponse.ok) {
-      const errorData = (await agentResponse.json()) as any;
-      app.log.error(`Agent returned error: ${agentResponse.status}`);
-      return reply.status(agentResponse.status).send(errorData);
-    }
-
-    let applicationId = requestBody.applicationId;
-    if (!applicationId) {
-      const newAppId = uuidv4();
-      await db.insert(apps).values({
-        id: newAppId,
-        name: requestBody.message,
-        clientSource: requestBody.clientSource,
-        ownerId: authResponse.id,
-        traceId: applicationTraceId(newAppId),
+      // Set up cleanup when client disconnects
+      request.socket.on('close', () => {
+        app.log.info(`Client disconnected for applicationId: ${applicationId}`);
+        abortController.abort();
       });
-      applicationId = newAppId;
-    }
 
-    // insert the new user prompt
-    await db.insert(appPrompts).values({
-      id: uuidv4(),
-      prompt: requestBody.message,
-      appId: applicationId,
-      kind: 'user',
-    });
+      // Set up SSE response
+      reply.sse(
+        (async function* () {
+          try {
+            // Create EventSource to read from agent's GET endpoint
+            const es = new EventSource(
+              `${MOCKED_AGENT_API_URL}/message?applicationId=${applicationId}&traceId=${traceId}`,
+            );
 
-    console.log({
-      applicationId,
-      requestApplicationId: requestBody.applicationId,
-    });
+            // Return a promise that resolves on each message or rejects on error
+            const messagePromise = () =>
+              new Promise<any>((resolve, reject) => {
+                const onMessage = (event: MessageEvent) => {
+                  es.removeEventListener('message', onMessage);
+                  es.removeEventListener('error', onError);
+                  resolve(JSON.parse(event.data));
+                };
 
-    app.log.info({
-      msg: 'Upgrading traceId from bootstrap to application',
-      oldTraceId: applicationTraceId(undefined),
-      newTraceId: applicationTraceId(applicationId),
-    });
+                const onError = (error: Event) => {
+                  es.removeEventListener('message', onMessage);
+                  es.removeEventListener('error', onError);
 
-    // return a success message with instructions to connect to the GET endpoint
-    return {
-      status: 'success',
-      traceId: applicationTraceId(applicationId),
-      applicationId: applicationId,
-      message:
-        'Request accepted, connect to GET /message?applicationId=YOUR_APPLICATION_ID to subscribe to updates',
-    };
-  } catch (error) {
-    app.log.error(`Unhandled error: ${error}`);
-    reply.status(500).send({ error: 'Internal server error' });
-  }
-});
+                  if (error && typeof error === 'object' && 'status' in error) {
+                    console.error('SSE error with status:', error.status);
+                  } else {
+                    console.error('Generic SSE error', {
+                      type: error?.type,
+                      raw: error,
+                    });
+                  }
 
-// GET endpoint for SSE streaming
-app.get('/message', async (request, reply) => {
-  try {
-    const authResponse = await validateAuth(request, reply);
-    if ('error' in authResponse) {
-      return reply.status(authResponse.statusCode).send({
-        error: authResponse.error,
-      });
-    }
+                  reject(error);
+                };
 
-    const { applicationId, traceId } = request.query as any;
+                es.addEventListener('message', onMessage, { once: true });
+                es.addEventListener('error', onError, { once: true });
+              });
 
-    // Validate applicationId
-    if (!applicationId) {
-      app.log.error('Missing required query parameter: applicationId', {
-        query: request.query,
-        endpoint: request.url,
-        method: request.method,
-      });
-      return reply.status(400).send({
-        error: 'Missing required query parameter: applicationId',
-      });
-    }
+            // Listen for abort signal to close EventSource
+            abortController.signal.addEventListener('abort', () => {
+              es.close();
+            });
 
-    // Validate traceId
-    if (!traceId) {
-      app.log.error('Missing required query parameter: traceId', {
-        query: request.query,
-        endpoint: request.url,
-        method: request.method,
-      });
-      return reply.status(400).send({
-        error: 'Missing required query parameter: traceId',
-      });
-    }
+            // Process messages from the agent and forward them
+            while (!abortController.signal.aborted) {
+              try {
+                // Wait for next message from agent
+                const message = await messagePromise();
 
-    // Create abort controller for this connection
-    const abortController = new AbortController();
+                // Log and forward the message
+                app.log.info(
+                  `Forwarding message from agent for applicationId: ${applicationId}, message: ${JSON.stringify(
+                    message,
+                  )}`,
+                );
 
-    // Set up cleanup when client disconnects
-    request.socket.on('close', () => {
-      app.log.info(`Client disconnected for applicationId: ${applicationId}`);
-      abortController.abort();
-    });
-
-    // Set up SSE response
-    reply.sse(
-      (async function* () {
-        try {
-          // Create EventSource to read from agent's GET endpoint
-          const es = new EventSource(
-            `${MOCKED_AGENT_API_URL}/message?applicationId=${applicationId}&traceId=${traceId}`,
-          );
-
-          // Return a promise that resolves on each message or rejects on error
-          const messagePromise = () =>
-            new Promise<any>((resolve, reject) => {
-              const onMessage = (event: MessageEvent) => {
-                es.removeEventListener('message', onMessage);
-                es.removeEventListener('error', onError);
-                resolve(JSON.parse(event.data));
-              };
-
-              const onError = (error: Event) => {
-                es.removeEventListener('message', onMessage);
-                es.removeEventListener('error', onError);
-
-                if (error && typeof error === 'object' && 'status' in error) {
-                  console.error('SSE error with status:', error.status);
-                } else {
-                  console.error('Generic SSE error', {
-                    type: error?.type,
-                    raw: error,
+                try {
+                  // insert the new agent message
+                  await db.insert(appPrompts).values({
+                    id: uuidv4(),
+                    prompt: JSON.stringify(message),
+                    appId: applicationId,
+                    kind: 'agent',
+                  });
+                } catch (error) {
+                  app.log.error(`Error inserting agent message: ${error}`);
+                  return reply.status(500).send({
+                    error: `Error inserting agent message: ${error}`,
                   });
                 }
 
-                reject(error);
-              };
-
-              es.addEventListener('message', onMessage, { once: true });
-              es.addEventListener('error', onError, { once: true });
-            });
-
-          // Listen for abort signal to close EventSource
-          abortController.signal.addEventListener('abort', () => {
-            es.close();
-          });
-
-          // Process messages from the agent and forward them
-          while (!abortController.signal.aborted) {
-            try {
-              // Wait for next message from agent
-              const message = await messagePromise();
-
-              // Log and forward the message
-              app.log.info(
-                `Forwarding message from agent for applicationId: ${applicationId}, message: ${JSON.stringify(
-                  message,
-                )}`,
-              );
-
-              try {
-                // insert the new agent message
-                await db.insert(appPrompts).values({
-                  id: uuidv4(),
-                  prompt: JSON.stringify(message),
-                  appId: applicationId,
-                  kind: 'agent',
-                });
-              } catch (error) {
-                app.log.error(`Error inserting agent message: ${error}`);
-                return reply.status(500).send({
-                  error: `Error inserting agent message: ${error}`,
-                });
-              }
-
-              // Yield the message to the client
-              yield {
-                data: JSON.stringify(message),
-              };
-
-              // If agent is done, close the connection
-              if (message.status === 'idle') {
+                // Yield the message to the client
                 yield {
-                  event: 'done',
-                  data: JSON.stringify({
-                    applicationId,
-                    status: 'idle',
-                    message: 'Agent is idle, closing connection',
-                  }),
+                  data: JSON.stringify(message),
                 };
 
-                // Optional: log + cleanup
-                app.log.info(
-                  `Closing SSE connection for applicationId: ${applicationId}`,
+                // If agent is done, close the connection
+                if (message.status === 'idle') {
+                  yield {
+                    event: 'done',
+                    data: JSON.stringify({
+                      applicationId,
+                      status: 'idle',
+                      message: 'Agent is idle, closing connection',
+                    }),
+                  };
+
+                  // Optional: log + cleanup
+                  app.log.info(
+                    `Closing SSE connection for applicationId: ${applicationId}`,
+                  );
+
+                  // End the generator, which closes the stream
+                  es.close();
+                  break;
+                }
+              } catch (error) {
+                // If aborted, just break
+                if (abortController.signal.aborted) break;
+
+                // Otherwise log and propagate the error
+                app.log.error(
+                  `Error processing message from agent: ${JSON.stringify(
+                    error,
+                  )}`,
                 );
-
-                // End the generator, which closes the stream
-                es.close();
-                break;
+                throw error;
               }
-            } catch (error) {
-              // If aborted, just break
-              if (abortController.signal.aborted) break;
-
-              // Otherwise log and propagate the error
-              app.log.error(
-                `Error processing message from agent: ${JSON.stringify(error)}`,
-              );
-              throw error;
             }
-          }
-        } catch (error) {
-          app.log.error(`Error in SSE stream: ${JSON.stringify(error)}`);
+          } catch (error) {
+            app.log.error(`Error in SSE stream: ${JSON.stringify(error)}`);
 
-          // Yield error message to client
-          yield {
-            data: JSON.stringify({
-              type: 'message',
-              parts: [
-                {
-                  type: 'text',
-                  content: `An error occurred while processing your request: ${error}`,
-                },
-              ],
-              applicationId,
-              status: 'idle',
-              traceId: `error-${Date.now()}`,
-            }),
-          };
-        }
-      })(),
-    );
-  } catch (error) {
-    app.log.error(`Unhandled error: ${error}`);
-    reply.status(500).send({ error: 'Internal server error' });
-  }
-});
+            // Yield error message to client
+            yield {
+              data: JSON.stringify({
+                type: 'message',
+                parts: [
+                  {
+                    type: 'text',
+                    content: `An error occurred while processing your request: ${error}`,
+                  },
+                ],
+                applicationId,
+                status: 'idle',
+                traceId: `error-${Date.now()}`,
+              }),
+            };
+          }
+        })(),
+      );
+    } catch (error) {
+      app.log.error(`Unhandled error: ${error}`);
+      reply.status(500).send({ error: 'Internal server error' });
+    }
+  },
+);
 
 export const start = async () => {
   try {
