@@ -8,6 +8,7 @@ import {
 } from '../components/shared/task-status.js';
 import { useDebug } from '../debug/debugger-panel.js';
 import { useBuildApp } from './message/use-message.js';
+import console from 'console';
 
 type AppBuildTextAreaProps = {
   initialPrompt: string;
@@ -48,6 +49,8 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
     if (!streamingMessagesData?.messages.length) return null;
 
     const currentMessage = streamingMessagesData.messages.at(-1);
+
+    console.log({ currentMessage });
     const currentPhase = currentMessage?.message.kind;
     const isStreaming = currentMessage?.status === 'streaming';
     const hasInteractive = currentMessage?.message.kind === 'RefinementRequest';
@@ -118,15 +121,28 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
 
             const phaseMessages = group.messages
               .flatMap((m) => {
-                const messageContent = JSON.parse(m.message.content);
+                const messageContent = JSON.parse(m.message.content) as {
+                  role: 'assistant' | 'user';
+                  content: { text: string }[];
+                }[];
 
-                console.log('messageContent', messageContent);
-                const details = messageContent.map((p: any) => {
+                const details = messageContent.map((p, index) => {
                   if ('content' in p) {
+                    const isLastMessage = index === messageContent.length - 1;
+                    const shouldHighlight =
+                      isCurrentPhase && isLastInteractiveGroup && isLastMessage;
+
+                    const message = p.content[0];
+                    const role = p.role;
+                    const text = message!.text;
+                    const highlight = shouldHighlight;
+                    const icon = '⎿';
+
                     return {
-                      text: p.content[0].text,
-                      highlight: false,
-                      icon: '⎿',
+                      text,
+                      highlight,
+                      icon,
+                      role,
                     };
                   }
                   return p.text;
@@ -191,6 +207,7 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         loadingText="Loading..."
         successMessage="Success"
         status={createApplicationStatus}
+        question="Provide feedback to the assistant..."
         onSubmit={(value: string) => {
           createApplication(
             {

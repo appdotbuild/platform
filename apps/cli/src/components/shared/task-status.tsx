@@ -3,6 +3,7 @@ import { Box, Text } from 'ink';
 export type TaskStatus = 'running' | 'done' | 'error';
 
 export type TaskDetail = {
+  role: 'assistant' | 'user';
   text: string;
   highlight?: boolean;
   icon?: string;
@@ -37,24 +38,30 @@ export const TaskStatus = ({ title, status, details, duration }: TaskProps) => {
         </Text>
       </Box>
       {details && details.length > 0 && (
-        <Box marginLeft={2} flexDirection="column">
-          {details.map((detail, index) => (
-            <Box key={index}>
-              {detail.highlight ? (
-                <Text>
-                  <Text color="yellow">{detail.icon || '⎿'}</Text>
-                  <Text color="white" bold>
-                    {' '}
-                    {detail.text}
+        <Box marginLeft={2} flexDirection="column" gap={1}>
+          {details.map((detail, index) => {
+            const text =
+              detail.role === 'assistant'
+                ? `🤖 ${detail.text}`
+                : `👤 ${detail.text}`;
+            return (
+              <Box key={index}>
+                {detail.highlight ? (
+                  <Text>
+                    <Text color="yellow">{detail.icon || '⎿'}</Text>
+                    <Text color="white" bold>
+                      {' '}
+                      {text}
+                    </Text>
                   </Text>
-                </Text>
-              ) : (
-                <Text color="gray">
-                  {detail.icon || '⎿'} {detail.text}
-                </Text>
-              )}
-            </Box>
-          ))}
+                ) : (
+                  <Text color="gray">
+                    {detail.icon || '⎿'} {text}
+                  </Text>
+                )}
+              </Box>
+            );
+          })}
         </Box>
       )}
     </Box>

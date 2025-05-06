@@ -1,3 +1,4 @@
+import console from 'console';
 import readline from 'readline';
 import { Readable } from 'stream';
 
@@ -17,7 +18,7 @@ type ParseSSEOptions = {
 
 export function parseSSE(
   stream: Readable,
-  { onMessage, onEvent, onError, onClose }: ParseSSEOptions,
+  { onMessage, onError, onClose }: ParseSSEOptions,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const rl = readline.createInterface({ input: stream });
@@ -25,25 +26,27 @@ export function parseSSE(
 
     rl.on('line', (line) => {
       if (line.trim() === '') {
-        if (buffer.startsWith('data:')) {
-          const raw = buffer.replace(/^data:\s*/, '');
-          try {
-            const parsed = JSON.parse(raw);
-            onMessage(parsed);
-          } catch (err) {
-            onError?.(err, raw);
-          }
-        } else if (buffer.startsWith('event:') || buffer.startsWith('id:')) {
+        if (buffer.startsWith('event:') || buffer.startsWith('id:')) {
           const event: SSEEvent = { data: '' };
           for (const part of buffer.trim().split('\n')) {
             const [key, ...rest] = part.split(':');
             const value = rest.join(':').trim();
+
             if (key === 'event') event.event = value;
             if (key === 'data') event.data = value;
             if (key === 'id') event.id = value;
             if (key === 'retry') event.retry = parseInt(value);
+            if (key === 'done') resolve();
           }
-          onEvent?.(event);
+
+          try {
+            const parsedData = JSON.parse(event.data);
+            const parsedMessage = JSON.parse(parsedData);
+            console.log({ parsedMessage });
+            onMessage(parsedMessage);
+          } catch (err) {
+            console.log('error in parsing', event.data);
+          }
         }
         buffer = '';
       } else {
@@ -66,4 +69,9 @@ export function parseSSE(
       reject(err);
     });
   });
+}
+
+// if message ends with /n/n, it's a full message
+function isFullMessage(message: string) {
+  return message.endsWith('\n\n');
 }

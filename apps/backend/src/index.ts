@@ -4,7 +4,10 @@ import { config } from 'dotenv';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
 import { validateAuth } from './auth-strategy';
 import console from 'console';
-import console from 'console';
+import http from 'node:http';
+import url from 'node:url';
+import { createSession } from 'better-sse';
+import console from 'node:console';
 
 config({ path: '.env' });
 
@@ -1085,19 +1088,10 @@ app.post('/message', async (request, reply) => {
     abortController.abort();
   });
 
+  // Use better-sse for SSE
+  const session = await createSession(request.raw, reply.raw);
+
   try {
-    // Set SSE headers
-    reply.raw.setHeader('Content-Type', 'text/event-stream');
-    reply.raw.setHeader('Cache-Control', 'no-cache');
-    reply.raw.setHeader('Connection', 'keep-alive');
-
-    // reply.raw.write(
-    //   `data: ${JSON.stringify({ type: 'start', content: 'Hello' })}\n\n`,
-    // );
-    // reply.raw.write(
-    //   `data: ${JSON.stringify({ type: 'start', content: 'Hello' })}\n\n`,
-    // );
-
     const agentResponse = await fetch(`${PROD_AGENT_API_URL}/message`, {
       method: 'POST',
       headers: {
@@ -1129,83 +1123,84 @@ app.post('/message', async (request, reply) => {
     // Process the stream
     while (!abortController.signal.aborted) {
       const { done, value } = await reader.read();
-
       if (done) break;
-
       const text = new TextDecoder().decode(value);
       buffer += text;
-
       // Process any complete messages (separated by empty lines)
       const messages = buffer.split('\n\n');
-      buffer = messages.pop() || ''; // Keep last potentially incomplete message
-
+      buffer = messages.pop() || '';
       for (const message of messages) {
-        if (message.startsWith('data:')) {
-          try {
-            // Split on first occurrence of "data:" and take the rest
-            const [, dataStr] = message.split('data:', 2);
-            if (!dataStr) continue;
-
-            const jsonStr = dataStr.trim();
-            const data = JSON.parse(jsonStr);
-
-            console.log('data', data);
-
-            previousRequestMap.set(data.traceId, [
-              ...(previousRequestMap.get(data.traceId) || []),
-              data,
-            ]);
-
-            // Store agent messages in the database as they come in
-            if (data.message?.content && data.type === 'message') {
-              await db.insert(appPrompts).values({
-                id: uuidv4(),
-                prompt: data.message.content,
-                appId: applicationId,
-                kind: 'agent',
-              });
-            }
-
-            // Write the data directly to the response stream
-            reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
-          } catch (e) {
-            app.log.error('Error parsing SSE message', {
-              error: e instanceof Error ? e.message : String(e),
-              messagePreview: message.slice(0, 100),
-            });
+        try {
+          if (session.isConnected) {
+            console.log('message', message.replace('data: ', ''));
+            session.push(message.replace('data: ', ''));
           }
+        } catch (e) {
+          app.log.error(`Error pushing SSE message: ${e}`);
         }
       }
     }
 
-    // If we get here, the connection was aborted
-    if (abortController.signal.aborted) {
-      reply.raw.end();
+    session.push({ done: true }, 'done');
+    session.removeAllListeners();
+
+    reply.raw.end();
+  } catch (error) {
+    app.log.error(`Unhandled error: ${error}`);
+    return reply.status(500).send({
+      applicationId,
+      error: `An error occurred while processing your request: ${error}`,
+      status: 'error',
+      traceId: applicationTraceId(applicationId),
+    });
+  }
+});
+
+// Mock SSE endpoint for debugging
+app.post('/mock-sse', async (request, reply) => {
+  // Set SSE headers
+  const headers = {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  };
+  reply.raw.writeHead(200, headers);
+  reply.hijack();
+
+  console.log('mock-sse');
+
+  let count = 0;
+
+  const session = await createSession(request.raw, reply.raw);
+
+  const interval = setInterval(() => {
+    if (!session.isConnected) {
+      clearInterval(interval);
       return;
     }
 
-    return reply;
-  } catch (error) {
-    app.log.error(`Unhandled error: ${error}`);
-    if (!reply.sent) {
-      reply.raw.write(
-        `data: ${JSON.stringify({
-          type: 'message',
-          message: {
-            content: `An error occurred while processing your request: ${error}`,
-          },
-          applicationId,
-          status: 'error',
-          traceId: `error-${Date.now()}`,
-        })}\n\n`,
-      );
+    if (reply.raw.writableEnded) {
+      clearInterval(interval);
+      return;
+    }
+    session.push(`data: {\"count\":${count}}\n\n`);
+    count++;
+    if (count > 10) {
+      session.push('event: done\ndata: {"done":true}\n\n');
+      clearInterval(interval);
       reply.raw.end();
     }
-  } finally {
-    if (!reply.sent) {
+  }, 1000);
+
+  // Clean up if client disconnects
+  request.socket.on('close', () => {
+    clearInterval(interval);
+    if (!reply.raw.writableEnded) {
       reply.raw.end();
     }
-  }
+  });
+
+  return reply;
 });
 
 export const start = async () => {

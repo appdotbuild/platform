@@ -5,6 +5,7 @@ import console from 'console';
 import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
 import type { buffer } from 'stream/consumers';
+import type { data } from 'react-router';
 
 // Load environment variables from .env file
 config();
@@ -144,6 +145,7 @@ export async function sendMessage({
   traceId,
   onMessage,
 }: SendMessageParams): Promise<SendMessageResult> {
+  console.log('message', message);
   const response = await apiClient.post(
     '/message',
     {
@@ -154,7 +156,6 @@ export async function sendMessage({
     },
     {
       headers: {
-        'Content-Type': 'application/json',
         Accept: 'text/event-stream',
       },
       responseType: 'stream',

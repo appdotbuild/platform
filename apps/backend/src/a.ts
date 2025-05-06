@@ -1,5 +1,5 @@
 async function sendMessageWithFetch(message: string) {
-  const response = await fetch(`http://127.0.0.1:4444/message`, {
+  const response = await fetch(`http://127.0.0.1:4444/mock-sse`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -21,11 +21,15 @@ async function sendMessageWithFetch(message: string) {
     const { done, value } = await reader.read();
     if (done) break;
 
+    console.log('value', value);
+
     buffer += decoder.decode(value, { stream: true });
 
     // Parse SSE chunks split by double newlines
     const parts = buffer.split('\n\n');
     buffer = parts.pop() || ''; // save incomplete chunk for next read
+
+    console.log('parts', parts);
 
     for (const part of parts) {
       const lines = part.split('\n');
@@ -57,7 +61,7 @@ async function sendMessageWithFetch(message: string) {
   }
 }
 
-sendMessageWithFetch('build a');
+sendMessageWithFetch('build me a todo app');
 
 // app.post('/mock-stream', (req, res) => {
 //   res.raw.setHeader('Content-Type', 'text/event-stream');
