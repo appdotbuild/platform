@@ -5,8 +5,8 @@ export type TaskStatus = 'running' | 'done' | 'error';
 export type TaskDetail = {
   role: 'assistant' | 'user';
   text: string;
-  highlight?: boolean;
-  icon?: string;
+  highlight: boolean;
+  icon: string;
 };
 
 export type TaskProps = {

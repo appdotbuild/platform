@@ -6,6 +6,7 @@ import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
 import type { buffer } from 'stream/consumers';
 import type { data } from 'react-router';
+import type { Message } from '../app/message/use-message.js';
 
 // Load environment variables from .env file
 config();
@@ -131,7 +132,7 @@ export type SendMessageParams = {
   message: string;
   applicationId?: string;
   traceId?: string;
-  onMessage?: (data: any) => void;
+  onMessage?: (data: Message) => void;
 };
 
 export type SendMessageResult = {
@@ -145,7 +146,6 @@ export async function sendMessage({
   traceId,
   onMessage,
 }: SendMessageParams): Promise<SendMessageResult> {
-  console.log('message', message);
   const response = await apiClient.post(
     '/message',
     {
@@ -171,7 +171,7 @@ export async function sendMessage({
   try {
     await parseSSE(response.data, {
       onMessage: (data) => {
-        console.log('data', data);
+        console.log('onMessageHandler');
         onMessage?.(data);
       },
       onError: (error) => {

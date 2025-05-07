@@ -3,11 +3,7 @@ import { CronJob } from 'toad-scheduler';
 import { config } from 'dotenv';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
 import { validateAuth } from './auth-strategy';
-import console from 'console';
-import http from 'node:http';
-import url from 'node:url';
 import { createSession } from 'better-sse';
-import console from 'node:console';
 
 config({ path: '.env' });
 
@@ -445,8 +441,6 @@ app.get('/message', authHandler, getMessage);
     .select({ count: sql`count(*)` })
     .from(apps)
     .where(eq(apps.ownerId, authResponse.id));
-
-  console.log(authResponse.id);
 
   const appsP = db
     .select(columns)
@@ -903,15 +897,27 @@ interface UserMessage {
 
 type Message = AgentMessage | UserMessage;
 
-interface AgentSseEvent {
-  type: string;
-  message?: {
-    content: string;
-    agent_state?: any;
+type MessageContentBlock = {
+  type: 'text' | 'tool_use' | 'tool_use_result';
+  text: string;
+};
+
+type ConversationMessage = {
+  role: 'user' | 'assistant';
+  content: MessageContentBlock[];
+};
+
+type AgentSseEvent = {
+  status: 'idle';
+  traceId: string;
+  message: {
+    role: 'assistant';
+    kind: 'RefinementRequest';
+    content: ConversationMessage[];
+    agentState: any;
+    unifiedDiff: any;
   };
-  status?: string;
-  applicationId?: string;
-}
+};
 
 function getExistingConversationBody({
   previousEvents,
@@ -932,8 +938,8 @@ function getExistingConversationBody({
   // Extract agent state from the last event
   for (let i = previousEvents.length - 1; i >= 0; i--) {
     const event = previousEvents[i];
-    if (event?.message?.agent_state) {
-      agentState = event.message.agent_state;
+    if (event?.message?.agentState) {
+      agentState = event.message.agentState;
       messagesHistory = event.message.content;
       break;
     }
@@ -942,8 +948,7 @@ function getExistingConversationBody({
   let messagesHistoryCasted: Message[] = [];
   if (messagesHistory) {
     try {
-      const parsedMessages = JSON.parse(messagesHistory);
-      messagesHistoryCasted = parsedMessages.map((m: any) => {
+      messagesHistoryCasted = messagesHistory.map((m: any) => {
         const role = m.role === 'user' ? 'user' : 'assistant';
         // Extract only text content, skipping tool calls
         const content = (m.content || [])
@@ -980,6 +985,8 @@ function getExistingConversationBody({
     settings: settings || { 'max-iterations': 3 },
     agentState,
   };
+
+  console.log('body', body);
 
   return body;
 }
@@ -1022,13 +1029,16 @@ app.post('/message', async (request, reply) => {
   };
 
   if (applicationId) {
+    console.log('existing applicationId', applicationId);
     const application = await db
       .select()
       .from(apps)
       .where(
         and(eq(apps.id, applicationId), eq(apps.ownerId, authResponse.id)),
       );
+
     if (application.length === 0) {
+      console.log('application not found');
       return reply.status(404).send({
         error: 'Application not found',
         status: 'error',
@@ -1069,6 +1079,7 @@ app.post('/message', async (request, reply) => {
       ownerId: authResponse.id,
       traceId: applicationTraceId(applicationId),
     });
+    // TODO: setup repo and initial commit
   }
 
   // Add the current message
@@ -1088,8 +1099,8 @@ app.post('/message', async (request, reply) => {
     abortController.abort();
   });
 
-  // Use better-sse for SSE
   const session = await createSession(request.raw, reply.raw);
+  app.log.info('created SSE session');
 
   try {
     const agentResponse = await fetch(`${PROD_AGENT_API_URL}/message`, {
@@ -1122,9 +1133,11 @@ app.post('/message', async (request, reply) => {
 
     // Process the stream
     while (!abortController.signal.aborted) {
+      console.log('reading');
       const { done, value } = await reader.read();
       if (done) break;
       const text = new TextDecoder().decode(value);
+
       buffer += text;
       // Process any complete messages (separated by empty lines)
       const messages = buffer.split('\n\n');
@@ -1132,8 +1145,25 @@ app.post('/message', async (request, reply) => {
       for (const message of messages) {
         try {
           if (session.isConnected) {
-            console.log('message', message.replace('data: ', ''));
-            session.push(message.replace('data: ', ''));
+            const messageWithoutData = message.replace('data: ', '');
+            console.log('message sent to CLI');
+            // add separator
+            const separator = '--------------------------------';
+            fs.writeFileSync(
+              'sse_messages.log',
+              `${separator}\n${messageWithoutData}\n\n`,
+            );
+
+            const parsedMessage = JSON.parse(
+              messageWithoutData,
+            ) as AgentSseEvent;
+
+            console.log('parsedMessage', parsedMessage);
+            previousRequestMap.set(
+              parsedMessage.traceId,
+              JSON.parse(messageWithoutData),
+            );
+            session.push(messageWithoutData);
           }
         } catch (e) {
           app.log.error(`Error pushing SSE message: ${e}`);
@@ -1141,6 +1171,7 @@ app.post('/message', async (request, reply) => {
       }
     }
 
+    console.log('pushed done');
     session.push({ done: true }, 'done');
     session.removeAllListeners();
 

@@ -42,7 +42,6 @@ export function parseSSE(
           try {
             const parsedData = JSON.parse(event.data);
             const parsedMessage = JSON.parse(parsedData);
-            console.log({ parsedMessage });
             onMessage(parsedMessage);
           } catch (err) {
             console.log('error in parsing', event.data);

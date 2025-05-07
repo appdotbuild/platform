@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { sendMessage, type SendMessageParams } from '../../api/application.js';
 import { applicationQueryKeys } from '../use-application.js';
+import fs from 'fs';
+import type { data } from 'react-router';
+import console from 'console';
 
 export type ChoiceElement = {
   type: 'choice';
@@ -67,22 +70,52 @@ const useSendMessage = () => {
         message,
         applicationId: metadata?.applicationId,
         traceId: metadata?.traceId,
-        onMessage: (data) => {
-          if (data.type === 'metadata') {
-            setMetadata(data.content);
-          } else {
-            queryClient.setQueryData(
-              queryKeys.applicationMessages(metadata?.applicationId!),
-              (oldData: any) => {
-                if (!oldData) return { messages: [data] };
-
-                return {
-                  ...oldData,
-                  messages: [...oldData.messages, data],
-                };
-              },
-            );
+        onMessage: (newMessage) => {
+          const applicationId = extractApplicationId(newMessage.traceId);
+          if (!applicationId) {
+            throw new Error('Application ID not found');
           }
+
+          setMetadata({
+            applicationId,
+            traceId: newMessage.traceId,
+          });
+
+          queryClient.setQueryData(
+            queryKeys.applicationMessages(applicationId),
+            (oldData: any) => {
+              if (!oldData) {
+                console.log('oldData is undefined');
+                const newData = {
+                  messages: [newMessage],
+                };
+                console.log({
+                  newData,
+                  applicationId,
+                });
+                return newData;
+              }
+
+              const existingMessageThread = oldData.messages.find(
+                (m: Message) => m.traceId === newMessage.traceId,
+              );
+              if (existingMessageThread) {
+                return { ...oldData, messages: [newMessage] };
+              }
+
+              console.log('newMessage', newMessage);
+              const newData = {
+                ...oldData,
+                messages: [...oldData.messages, newMessage],
+              };
+              return newData;
+            },
+          );
+
+          const dat = queryClient.getQueryData(
+            queryKeys.applicationMessages(applicationId),
+          );
+          console.log('dat', dat);
         },
       });
     },
@@ -109,23 +142,21 @@ export const useBuildApp = (existingApplicationId?: string) => {
     status: sendMessageStatus,
   } = useSendMessage();
 
-  const messagesData = useMemo(() => {
-    const appId = existingApplicationId ?? sendMessagesData?.applicationId;
-    if (!appId) return undefined;
-
-    const messages = queryClient.getQueryData<{ messages: Message[] }>(
-      queryKeys.applicationMessages(appId),
-    );
-
-    return messages;
-  }, [existingApplicationId, queryClient, sendMessagesData?.applicationId]);
+  const appId = existingApplicationId ?? sendMessagesData?.applicationId;
 
   const messageQuery = useQuery({
-    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain, @tanstack/query/exhaustive-deps
-    queryKey: queryKeys.applicationMessages(sendMessageData?.applicationId!),
-    queryFn: () => messagesData,
-    // this only reads the cached data
-    enabled: false,
+    queryKey: queryKeys.applicationMessages(appId!),
+    queryFn: () => {
+      // this should never happen due to `enabled`
+      if (!appId) return null;
+
+      const messages = queryClient.getQueryData<{ messages: Message[] }>(
+        queryKeys.applicationMessages(appId),
+      );
+
+      return messages ?? { messages: [] };
+    },
+    enabled: !!appId,
   });
 
   return {
@@ -141,3 +172,11 @@ export const useBuildApp = (existingApplicationId?: string) => {
       messageQuery.data?.messages.at(-1)?.status === 'streaming',
   };
 };
+
+function extractApplicationId(traceId: `app-${string}.req-${string}`) {
+  const appPart = traceId.split('.')[0];
+
+  const applicationId = appPart?.replace('app-', '');
+
+  return applicationId;
+}
