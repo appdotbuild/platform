@@ -22,6 +22,12 @@ export const createInitialCommit = async (
 ) => {
   const { repo, owner, paths } = request.body;
 
+  if (!repo || !owner || !paths) {
+    return reply.status(400).send({
+      error: 'Missing required fields',
+    });
+  }
+
   const installationId = await getOrgInstallationId(
     owner,
     request.user.githubAccessToken,
@@ -76,10 +82,18 @@ export const createInitialCommit = async (
 };
 
 export const commitChanges = async (
-  request: FastifyRequest<{ Body: CommitRequest & { message: string } }>,
+  request: FastifyRequest<{
+    Body: CommitRequest & { message: string; branch: string };
+  }>,
   reply: FastifyReply,
 ) => {
-  const { repo, owner, paths, message } = request.body;
+  const { repo, owner, paths, message, branch = 'main' } = request.body;
+
+  if (!repo || !owner || !paths || !message) {
+    return reply.status(400).send({
+      error: 'Missing required fields',
+    });
+  }
 
   const installationId = await getOrgInstallationId(
     owner,
@@ -99,7 +113,7 @@ export const commitChanges = async (
   const { data: refData } = await octokit.git.getRef({
     owner,
     repo,
-    ref: `heads/main`,
+    ref: `heads/${branch}`,
   });
 
   const latestCommitSha = refData.object.sha;

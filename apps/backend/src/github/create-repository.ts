@@ -4,6 +4,7 @@ import { githubApp } from './app';
 import type { FastifyRequest } from 'fastify';
 import type { Endpoints } from '@octokit/types';
 import { getOrgInstallationId } from './utils';
+import { logger } from '../logger';
 
 type CommitRequest = {
   repo: string;
@@ -40,13 +41,13 @@ export const createRepository = async (
       await octokit.rest.repos.createInOrg({
         org: owner,
         name: repo,
-        // homepage: appURL,
+        ...(appURL && { homepage: appURL }),
         description: 'Created by appdotbuild',
         private: true, // remove later
         auto_init: true,
       });
 
-    console.log('✅ Repository created successfully!', res);
+    logger.log('✅ Repository created successfully!', res);
 
     return reply.status(200).send({
       status: 'success',
