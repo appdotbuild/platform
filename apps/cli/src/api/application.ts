@@ -7,6 +7,7 @@ import { parseSSE } from './sse.js';
 import type { buffer } from 'stream/consumers';
 import type { data } from 'react-router';
 import type { Message } from '../app/message/use-message.js';
+import type { Readable } from 'stream';
 
 // Load environment variables from .env file
 config();
@@ -169,10 +170,10 @@ export async function sendMessage({
   console.log(chalk.green('🔗 Connected to message stream.\n'));
 
   try {
-    await parseSSE(response.data, {
-      onMessage: (data) => {
+    await parseSSE(response.data as Readable, {
+      onMessage: (message) => {
         console.log('onMessageHandler');
-        onMessage?.(data);
+        onMessage?.(message as Message);
       },
       onError: (error) => {
         console.error('error', error);

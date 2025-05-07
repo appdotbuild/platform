@@ -1,10 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { sendMessage, type SendMessageParams } from '../../api/application.js';
 import { applicationQueryKeys } from '../use-application.js';
-import fs from 'fs';
-import type { data } from 'react-router';
-import console from 'console';
 
 export type ChoiceElement = {
   type: 'choice';
@@ -84,18 +81,12 @@ const useSendMessage = () => {
           queryClient.setQueryData(
             queryKeys.applicationMessages(applicationId),
             (oldData: any) => {
+              // first message
               if (!oldData) {
-                console.log('oldData is undefined');
-                const newData = {
-                  messages: [newMessage],
-                };
-                console.log({
-                  newData,
-                  applicationId,
-                });
-                return newData;
+                return { messages: [newMessage] };
               }
 
+              // if the message is already in the thread, replace the whole thread
               const existingMessageThread = oldData.messages.find(
                 (m: Message) => m.traceId === newMessage.traceId,
               );
@@ -103,19 +94,13 @@ const useSendMessage = () => {
                 return { ...oldData, messages: [newMessage] };
               }
 
-              console.log('newMessage', newMessage);
-              const newData = {
+              // add the new message to the thread
+              return {
                 ...oldData,
                 messages: [...oldData.messages, newMessage],
               };
-              return newData;
             },
           );
-
-          const dat = queryClient.getQueryData(
-            queryKeys.applicationMessages(applicationId),
-          );
-          console.log('dat', dat);
         },
       });
     },

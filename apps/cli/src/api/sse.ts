@@ -1,4 +1,3 @@
-import console from 'console';
 import readline from 'readline';
 import { Readable } from 'stream';
 
@@ -68,9 +67,4 @@ export function parseSSE(
       reject(err);
     });
   });
-}
-
-// if message ends with /n/n, it's a full message
-function isFullMessage(message: string) {
-  return message.endsWith('\n\n');
 }
