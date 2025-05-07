@@ -2,8 +2,9 @@ import { fastifySchedule } from '@fastify/schedule';
 import { CronJob } from 'toad-scheduler';
 import { config } from 'dotenv';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
+import { EventSource } from 'eventsource';
 import { validateAuth } from './auth-strategy';
-import { createSession } from 'better-sse';
+import console from 'console';
 
 config({ path: '.env' });
 
@@ -441,6 +442,8 @@ app.get('/message', authHandler, getMessage);
     .select({ count: sql`count(*)` })
     .from(apps)
     .where(eq(apps.ownerId, authResponse.id));
+
+  console.log(authResponse.id);
 
   const appsP = db
     .select(columns)
@@ -897,27 +900,15 @@ interface UserMessage {
 
 type Message = AgentMessage | UserMessage;
 
-type MessageContentBlock = {
-  type: 'text' | 'tool_use' | 'tool_use_result';
-  text: string;
-};
-
-type ConversationMessage = {
-  role: 'user' | 'assistant';
-  content: MessageContentBlock[];
-};
-
-type AgentSseEvent = {
-  status: 'idle';
-  traceId: string;
-  message: {
-    role: 'assistant';
-    kind: 'RefinementRequest';
-    content: ConversationMessage[];
-    agentState: any;
-    unifiedDiff: any;
+interface AgentSseEvent {
+  type: string;
+  message?: {
+    content: string;
+    agent_state?: any;
   };
-};
+  status?: string;
+  applicationId?: string;
+}
 
 function getExistingConversationBody({
   previousEvents,
@@ -938,8 +929,8 @@ function getExistingConversationBody({
   // Extract agent state from the last event
   for (let i = previousEvents.length - 1; i >= 0; i--) {
     const event = previousEvents[i];
-    if (event?.message?.agentState) {
-      agentState = event.message.agentState;
+    if (event?.message?.agent_state) {
+      agentState = event.message.agent_state;
       messagesHistory = event.message.content;
       break;
     }
@@ -948,7 +939,8 @@ function getExistingConversationBody({
   let messagesHistoryCasted: Message[] = [];
   if (messagesHistory) {
     try {
-      messagesHistoryCasted = messagesHistory.map((m: any) => {
+      const parsedMessages = JSON.parse(messagesHistory);
+      messagesHistoryCasted = parsedMessages.map((m: any) => {
         const role = m.role === 'user' ? 'user' : 'assistant';
         // Extract only text content, skipping tool calls
         const content = (m.content || [])
@@ -986,8 +978,6 @@ function getExistingConversationBody({
     agentState,
   };
 
-  console.log('body', body);
-
   return body;
 }
 
@@ -1021,6 +1011,7 @@ app.post('/message', async (request, reply) => {
   };
 
   let applicationId = requestBody.applicationId;
+
   let body = {
     applicationId,
     allMessages: [{ role: 'user', content: requestBody.message }],
@@ -1029,16 +1020,13 @@ app.post('/message', async (request, reply) => {
   };
 
   if (applicationId) {
-    console.log('existing applicationId', applicationId);
     const application = await db
       .select()
       .from(apps)
       .where(
         and(eq(apps.id, applicationId), eq(apps.ownerId, authResponse.id)),
       );
-
     if (application.length === 0) {
-      console.log('application not found');
       return reply.status(404).send({
         error: 'Application not found',
         status: 'error',
@@ -1066,12 +1054,6 @@ app.post('/message', async (request, reply) => {
   } else {
     // Create new application if applicationId is not provided
     applicationId = uuidv4();
-    body = {
-      ...body,
-      applicationId,
-      traceId: applicationTraceId(applicationId),
-    };
-
     await db.insert(apps).values({
       id: applicationId,
       name: requestBody.message,
@@ -1079,7 +1061,6 @@ app.post('/message', async (request, reply) => {
       ownerId: authResponse.id,
       traceId: applicationTraceId(applicationId),
     });
-    // TODO: setup repo and initial commit
   }
 
   // Add the current message
@@ -1099,15 +1080,25 @@ app.post('/message', async (request, reply) => {
     abortController.abort();
   });
 
-  const session = await createSession(request.raw, reply.raw);
-  app.log.info('created SSE session');
-
   try {
+    // Set SSE headers
+    reply.raw.setHeader('Content-Type', 'text/event-stream');
+    reply.raw.setHeader('Cache-Control', 'no-cache');
+    reply.raw.setHeader('Connection', 'keep-alive');
+
+    reply.raw.write(
+      `data: ${JSON.stringify({ type: 'start', content: 'Hello' })}\n\n`,
+    );
+    reply.raw.write(
+      `data: ${JSON.stringify({ type: 'start', content: 'Hello' })}\n\n`,
+    );
+
     const agentResponse = await fetch(`${PROD_AGENT_API_URL}/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
+        Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH!}`,
       },
       body: JSON.stringify(body),
     });
@@ -1133,105 +1124,83 @@ app.post('/message', async (request, reply) => {
 
     // Process the stream
     while (!abortController.signal.aborted) {
-      console.log('reading');
       const { done, value } = await reader.read();
-      if (done) break;
-      const text = new TextDecoder().decode(value);
 
+      if (done) break;
+
+      const text = new TextDecoder().decode(value);
       buffer += text;
+
       // Process any complete messages (separated by empty lines)
       const messages = buffer.split('\n\n');
-      buffer = messages.pop() || '';
+      buffer = messages.pop() || ''; // Keep last potentially incomplete message
+
       for (const message of messages) {
-        try {
-          if (session.isConnected) {
-            const messageWithoutData = message.replace('data: ', '');
-            console.log('message sent to CLI');
-            // add separator
-            const separator = '--------------------------------';
-            fs.writeFileSync(
-              'sse_messages.log',
-              `${separator}\n${messageWithoutData}\n\n`,
-            );
+        console.log('messagewtf', message);
+        if (message.startsWith('data:')) {
+          try {
+            // Split on first occurrence of "data:" and take the rest
+            const [, dataStr] = message.split('data:', 2);
+            if (!dataStr) continue;
 
-            const parsedMessage = JSON.parse(
-              messageWithoutData,
-            ) as AgentSseEvent;
+            const jsonStr = dataStr.trim();
+            const data = JSON.parse(jsonStr);
 
-            console.log('parsedMessage', parsedMessage);
-            previousRequestMap.set(
-              parsedMessage.traceId,
-              JSON.parse(messageWithoutData),
-            );
-            session.push(messageWithoutData);
+            previousRequestMap.set(data.traceId, [
+              ...(previousRequestMap.get(data.traceId) || []),
+              data,
+            ]);
+
+            // Store agent messages in the database as they come in
+            if (data.message?.content && data.type === 'message') {
+              await db.insert(appPrompts).values({
+                id: uuidv4(),
+                prompt: data.message.content,
+                appId: applicationId,
+                kind: 'agent',
+              });
+            }
+
+            // Write the data directly to the response stream
+            reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
+          } catch (e) {
+            app.log.error('Error parsing SSE message', {
+              error: e instanceof Error ? e.message : String(e),
+              messagePreview: message.slice(0, 100),
+            });
           }
-        } catch (e) {
-          app.log.error(`Error pushing SSE message: ${e}`);
         }
       }
     }
 
-    console.log('pushed done');
-    session.push({ done: true }, 'done');
-    session.removeAllListeners();
+    // If we get here, the connection was aborted
+    if (abortController.signal.aborted) {
+      reply.raw.end();
+      return;
+    }
 
-    reply.raw.end();
+    return reply;
   } catch (error) {
     app.log.error(`Unhandled error: ${error}`);
-    return reply.status(500).send({
-      applicationId,
-      error: `An error occurred while processing your request: ${error}`,
-      status: 'error',
-      traceId: applicationTraceId(applicationId),
-    });
+    if (!reply.sent) {
+      reply.raw.write(
+        `data: ${JSON.stringify({
+          type: 'message',
+          message: {
+            content: `An error occurred while processing your request: ${error}`,
+          },
+          applicationId,
+          status: 'error',
+          traceId: `error-${Date.now()}`,
+        })}\n\n`,
+      );
+      reply.raw.end();
+    }
+  } finally {
+    if (!reply.sent) {
+      reply.raw.end();
+    }
   }
-});
-
-// Mock SSE endpoint for debugging
-app.post('/mock-sse', async (request, reply) => {
-  // Set SSE headers
-  const headers = {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-  };
-  reply.raw.writeHead(200, headers);
-  reply.hijack();
-
-  console.log('mock-sse');
-
-  let count = 0;
-
-  const session = await createSession(request.raw, reply.raw);
-
-  const interval = setInterval(() => {
-    if (!session.isConnected) {
-      clearInterval(interval);
-      return;
-    }
-
-    if (reply.raw.writableEnded) {
-      clearInterval(interval);
-      return;
-    }
-    session.push(`data: {\"count\":${count}}\n\n`);
-    count++;
-    if (count > 10) {
-      session.push('event: done\ndata: {"done":true}\n\n');
-      clearInterval(interval);
-      reply.raw.end();
-    }
-  }, 1000);
-
-  // Clean up if client disconnects
-  request.socket.on('close', () => {
-    clearInterval(interval);
-    if (!reply.raw.writableEnded) {
-      reply.raw.end();
-    }
-  });
-
-  return reply;
 });
 
 export const start = async () => {
