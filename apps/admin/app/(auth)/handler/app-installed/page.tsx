@@ -2,6 +2,8 @@
 import { Card, CardContent } from '@appdotbuild/design/shadcn/card';
 
 export default function AppInstalledPage() {
+  if (typeof window === 'undefined') return <></>;
+
   const urlParams = new URLSearchParams(window?.location?.search);
   const installationId = urlParams.get('installation_id');
   const code = urlParams.get('code');

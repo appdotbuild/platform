@@ -15,7 +15,7 @@ import {
 import { logger } from './logger';
 import { deployTask } from './deploy';
 
-config({ path: '.env.local' });
+config({ path: '.env' });
 
 const authHandler = { onRequest: [app.authenticate] };
 const deployJob = new CronJob(
