@@ -1,7 +1,7 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyRequest } from 'fastify';
 import { StackServerApp, type ServerUser } from '@stackframe/stack';
 import * as jose from 'jose';
-import { logger } from '.';
+import { logger } from './logger';
 import { isNeonEmployee } from './github';
 
 type AuthError = {
