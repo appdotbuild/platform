@@ -3,295 +3,300 @@ import { app } from '../app';
 import { apps, appPrompts, db } from '../db';
 import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { MOCKED_AGENT_API_URL } from './constants';
+import { getAgentHost } from '../apps/env';
+import fs from 'fs';
+import { createSession } from 'better-sse';
+
+interface AgentMessage {
+  role: 'assistant';
+  content: string;
+  agentState: any | null;
+  unifiedDiff: any | null;
+  kind: 'StageResult';
+}
+
+interface UserMessage {
+  role: 'user';
+  content: string;
+}
+
+type Message = AgentMessage | UserMessage;
+
+type MessageContentBlock = {
+  type: 'text' | 'tool_use' | 'tool_use_result';
+  text: string;
+};
+
+type ConversationMessage = {
+  role: 'user' | 'assistant';
+  content: MessageContentBlock[];
+};
+
+type AgentSseEvent = {
+  status: 'idle';
+  traceId: string;
+  message: {
+    role: 'assistant';
+    kind: 'RefinementRequest';
+    content: Stringified<ConversationMessage[]>;
+    agentState: any;
+    unifiedDiff: any;
+  };
+};
+
+type TraceId = string;
+const previousRequestMap = new Map<TraceId, AgentSseEvent>();
 
 export async function postMessage(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  try {
-    const user = request.user;
+  const applicationTraceId = (appId: string | undefined) =>
+    appId ? `app-${appId}.req-${request.id}` : `temp.req-${request.id}`;
 
-    const applicationTraceId = (appId: string | undefined) =>
-      appId ? `app-${appId}.req-${request.id}` : `temp.req-${request.id}`;
-    app.log.info('Received message request', {
-      body: request.body,
-    });
+  app.log.info('Received message request', {
+    body: request.body,
+  });
 
-    const requestBody = request.body as {
-      message: string;
-      applicationId?: string;
-      clientSource: string;
-    };
+  const requestBody = request.body as {
+    message: string;
+    applicationId?: string;
+    clientSource: string;
+    settings?: Record<string, any>;
+  };
 
-    const allMessages: string[] = [];
-    if (requestBody.applicationId) {
-      const application = await db
-        .select()
-        .from(apps)
-        .where(
-          and(
-            eq(apps.id, requestBody.applicationId),
-            eq(apps.ownerId, user.id),
-          ),
-        );
-      if (!application.length) {
-        return reply.status(404).send({
-          error: 'Application not found',
-        });
-      }
+  let applicationId = requestBody.applicationId;
+  let body = {
+    applicationId,
+    allMessages: [{ role: 'user', content: requestBody.message }],
+    traceId: applicationTraceId(applicationId),
+    settings: requestBody.settings || { 'max-iterations': 3 },
+  };
 
-      // get the history of prompts
-      const historyPrompts = await db
-        .select({
-          prompt: appPrompts.prompt,
-          kind: appPrompts.kind,
-        })
-        .from(appPrompts)
-        .where(eq(appPrompts.appId, requestBody.applicationId));
-      allMessages.push(...historyPrompts.map((p) => p.prompt));
-    } else {
-      allMessages.push(requestBody.message);
+  if (applicationId) {
+    app.log.info('existing applicationId', { applicationId });
+    const application = await db
+      .select()
+      .from(apps)
+      .where(
+        and(eq(apps.id, applicationId), eq(apps.ownerId, request.user.id)),
+      );
+
+    if (application.length === 0) {
+      app.log.error('application not found');
+      return reply.status(404).send({
+        error: 'Application not found',
+        status: 'error',
+      });
     }
 
-    const body: {
-      applicationId: string | undefined;
-      allMessages: Array<string>;
-      traceId: string;
-    } = {
-      applicationId: requestBody.applicationId,
-      allMessages,
-      traceId: applicationTraceId(requestBody.applicationId),
+    const previousRequest = previousRequestMap.get(application[0]!.traceId!);
+    if (!previousRequest) {
+      return reply.status(404).send({
+        error: 'Previous request not found',
+        status: 'error',
+      });
+    }
+
+    body = {
+      ...body,
+      ...getExistingConversationBody({
+        previousEvent: previousRequest,
+        existingTraceId: application[0]!.traceId!,
+        applicationId,
+        message: requestBody.message,
+        settings: requestBody.settings,
+      }),
+    };
+  } else {
+    // Create new application if applicationId is not provided
+    applicationId = uuidv4();
+    body = {
+      ...body,
+      applicationId,
+      traceId: applicationTraceId(applicationId),
     };
 
-    // Forward the request to the agent
-    const agentResponse = await fetch(`${MOCKED_AGENT_API_URL}/message`, {
+    await db.insert(apps).values({
+      id: applicationId,
+      name: requestBody.message,
+      clientSource: requestBody.clientSource,
+      ownerId: request.user.id,
+      traceId: applicationTraceId(applicationId),
+    });
+    // TODO: setup repo and initial commit
+  }
+
+  // Add the current message
+  await db.insert(appPrompts).values({
+    id: uuidv4(),
+    prompt: requestBody.message,
+    appId: applicationId,
+    kind: 'user',
+  });
+
+  // Create abort controller for this connection
+  const abortController = new AbortController();
+
+  // Set up cleanup when client disconnects
+  request.socket.on('close', () => {
+    app.log.info(`Client disconnected for applicationId: ${applicationId}`);
+    abortController.abort();
+  });
+
+  const session = await createSession(request.raw, reply.raw);
+  app.log.info('created SSE session');
+
+  try {
+    const agentResponse = await fetch(`${getAgentHost()}/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
       },
       body: JSON.stringify(body),
     });
 
     if (!agentResponse.ok) {
-      const errorData = (await agentResponse.json()) as any;
-      app.log.error(`Agent returned error: ${agentResponse.status}`);
-      return reply.status(agentResponse.status).send(errorData);
-    }
-
-    let applicationId = requestBody.applicationId;
-    if (!applicationId) {
-      const newAppId = uuidv4();
-      await db.insert(apps).values({
-        id: newAppId,
-        name: requestBody.message,
-        clientSource: requestBody.clientSource,
-        ownerId: user.id,
-        traceId: applicationTraceId(newAppId),
+      const errorData = await agentResponse.json();
+      app.log.error(
+        `Agent returned error: ${
+          agentResponse.status
+        }, errorData: ${JSON.stringify(errorData)}`,
+      );
+      return reply.status(agentResponse.status).send({
+        error: errorData,
+        status: 'error',
       });
-      applicationId = newAppId;
     }
 
-    // insert the new user prompt
-    await db.insert(appPrompts).values({
-      id: uuidv4(),
-      prompt: requestBody.message,
-      appId: applicationId,
-      kind: 'user',
-    });
+    const reader = agentResponse.body?.getReader();
+    if (!reader) {
+      return reply.status(500).send({
+        error: 'No response stream available',
+        status: 'error',
+      });
+    }
 
-    console.log({
-      applicationId,
-      requestApplicationId: requestBody.applicationId,
-    });
+    let buffer = '';
+    // Process the stream
+    while (!abortController.signal.aborted) {
+      app.log.info('reading the stream');
+      const { done, value } = await reader.read();
+      if (done) break;
+      const text = new TextDecoder().decode(value);
 
-    app.log.info({
-      msg: 'Upgrading traceId from bootstrap to application',
-      oldTraceId: applicationTraceId(undefined),
-      newTraceId: applicationTraceId(applicationId),
-    });
+      buffer += text;
+      // Process any complete messages (separated by empty lines)
+      const messages = buffer.split('\n\n');
+      buffer = messages.pop() || '';
+      for (const message of messages) {
+        try {
+          if (session.isConnected) {
+            // all messages are prefixed with 'data: '
+            const messageWithoutData = message.replace(
+              'data: ',
+              '',
+            ) as Stringified<AgentSseEvent>;
+            app.log.info('message sent to CLI', {
+              message: messageWithoutData,
+            });
 
-    // return a success message with instructions to connect to the GET endpoint
-    return {
-      status: 'success',
-      traceId: applicationTraceId(applicationId),
-      applicationId: applicationId,
-      message:
-        'Request accepted, connect to GET /message?applicationId=YOUR_APPLICATION_ID to subscribe to updates',
-    };
+            if (process.env.NODE_ENV === 'development') {
+              // add separator
+              const separator = '--------------------------------';
+              fs.writeFileSync(
+                'sse_messages.log',
+                `${separator}\n${messageWithoutData}\n\n`,
+              );
+            }
+
+            const parsedMessage = JSON.parse(messageWithoutData);
+            previousRequestMap.set(
+              parsedMessage.traceId,
+              JSON.parse(messageWithoutData),
+            );
+            session.push(messageWithoutData);
+          }
+        } catch (e) {
+          app.log.error(`Error pushing SSE message: ${e}`);
+        }
+      }
+    }
+
+    app.log.info('pushed done');
+    session.push({ done: true }, 'done');
+    session.removeAllListeners();
+
+    reply.raw.end();
   } catch (error) {
     app.log.error(`Unhandled error: ${error}`);
-    reply.status(500).send({ error: 'Internal server error' });
+    return reply.status(500).send({
+      applicationId,
+      error: `An error occurred while processing your request: ${error}`,
+      status: 'error',
+      traceId: applicationTraceId(applicationId),
+    });
   }
 }
 
-export function getMessage(request: FastifyRequest, reply: FastifyReply) {
-  try {
-    const { applicationId, traceId } = request.query as any;
+function getExistingConversationBody({
+  previousEvent,
+  message,
+  settings,
+  existingTraceId,
+  applicationId,
+}: {
+  previousEvent: AgentSseEvent;
+  existingTraceId: string;
+  applicationId: string;
+  message: string;
+  settings?: Record<string, any>;
+}) {
+  let agentState = previousEvent.message.agentState;
+  let messagesHistory = JSON.parse(previousEvent.message.content);
 
-    // Validate applicationId
-    if (!applicationId) {
-      app.log.error('Missing required query parameter: applicationId', {
-        query: request.query,
-        endpoint: request.url,
-        method: request.method,
-      });
-      return reply.status(400).send({
-        error: 'Missing required query parameter: applicationId',
-      });
-    }
+  let messagesHistoryCasted: Message[] = [];
+  if (Array.isArray(messagesHistory)) {
+    try {
+      messagesHistoryCasted = messagesHistory.map((m) => {
+        const role = m.role === 'user' ? 'user' : 'assistant';
+        // Extract only text content, skipping tool calls
+        const content = (m.content ?? [])
+          .filter((c) => c.type === 'text')
+          .map((c) => c.text)
+          .join('');
 
-    // Validate traceId
-    if (!traceId) {
-      app.log.error('Missing required query parameter: traceId', {
-        query: request.query,
-        endpoint: request.url,
-        method: request.method,
-      });
-      return reply.status(400).send({
-        error: 'Missing required query parameter: traceId',
-      });
-    }
-
-    // Create abort controller for this connection
-    const abortController = new AbortController();
-
-    // Set up cleanup when client disconnects
-    request.socket.on('close', () => {
-      app.log.info(`Client disconnected for applicationId: ${applicationId}`);
-      abortController.abort();
-    });
-
-    // Set up SSE response
-    reply.sse(
-      (async function* () {
-        try {
-          // Create EventSource to read from agent's GET endpoint
-          const es = new EventSource(
-            `${MOCKED_AGENT_API_URL}/message?applicationId=${applicationId}&traceId=${traceId}`,
-          );
-
-          // Return a promise that resolves on each message or rejects on error
-          const messagePromise = () =>
-            new Promise<any>((resolve, reject) => {
-              const onMessage = (event: MessageEvent) => {
-                es.removeEventListener('message', onMessage);
-                es.removeEventListener('error', onError);
-                resolve(JSON.parse(event.data));
-              };
-
-              const onError = (error: Event) => {
-                es.removeEventListener('message', onMessage);
-                es.removeEventListener('error', onError);
-
-                if (error && typeof error === 'object' && 'status' in error) {
-                  console.error('SSE error with status:', error.status);
-                } else {
-                  console.error('Generic SSE error', {
-                    type: error?.type,
-                    raw: error,
-                  });
-                }
-
-                reject(error);
-              };
-
-              es.addEventListener('message', onMessage, { once: true });
-              es.addEventListener('error', onError, { once: true });
-            });
-
-          // Listen for abort signal to close EventSource
-          abortController.signal.addEventListener('abort', () => {
-            es.close();
-          });
-
-          // Process messages from the agent and forward them
-          while (!abortController.signal.aborted) {
-            try {
-              // Wait for next message from agent
-              const message = await messagePromise();
-
-              // Log and forward the message
-              app.log.info(
-                `Forwarding message from agent for applicationId: ${applicationId}, message: ${JSON.stringify(
-                  message,
-                )}`,
-              );
-
-              try {
-                // insert the new agent message
-                await db.insert(appPrompts).values({
-                  id: uuidv4(),
-                  prompt: JSON.stringify(message),
-                  appId: applicationId,
-                  kind: 'agent',
-                });
-              } catch (error) {
-                app.log.error(`Error inserting agent message: ${error}`);
-                return reply.status(500).send({
-                  error: `Error inserting agent message: ${error}`,
-                });
-              }
-
-              // Yield the message to the client
-              yield {
-                data: JSON.stringify(message),
-              };
-
-              // If agent is done, close the connection
-              if (message.status === 'idle') {
-                yield {
-                  event: 'done',
-                  data: JSON.stringify({
-                    applicationId,
-                    status: 'idle',
-                    message: 'Agent is idle, closing connection',
-                  }),
-                };
-
-                // Optional: log + cleanup
-                app.log.info(
-                  `Closing SSE connection for applicationId: ${applicationId}`,
-                );
-
-                // End the generator, which closes the stream
-                es.close();
-                break;
-              }
-            } catch (error) {
-              // If aborted, just break
-              if (abortController.signal.aborted) break;
-
-              // Otherwise log and propagate the error
-              app.log.error(
-                `Error processing message from agent: ${JSON.stringify(error)}`,
-              );
-              throw error;
-            }
-          }
-        } catch (error) {
-          app.log.error(`Error in SSE stream: ${JSON.stringify(error)}`);
-
-          // Yield error message to client
-          yield {
-            data: JSON.stringify({
-              type: 'message',
-              parts: [
-                {
-                  type: 'text',
-                  content: `An error occurred while processing your request: ${error}`,
-                },
-              ],
-              applicationId,
-              status: 'idle',
-              traceId: `error-${Date.now()}`,
-            }),
-          };
+        if (role === 'user') {
+          return {
+            role,
+            content,
+          } as UserMessage;
+        } else {
+          return {
+            role: 'assistant',
+            content,
+            agentState: null,
+            unifiedDiff: null,
+            kind: 'StageResult',
+          } as AgentMessage;
         }
-      })(),
-    );
-  } catch (error) {
-    app.log.error(`Unhandled error: ${error}`);
-    reply.status(500).send({ error: 'Internal server error' });
+      });
+    } catch (error) {
+      app.log.error(`Error parsing message history: ${error}`);
+      messagesHistoryCasted = [];
+    }
   }
+
+  // Create the request body
+  const body = {
+    applicationId,
+    allMessages: [...messagesHistoryCasted, { role: 'user', content: message }],
+    traceId: existingTraceId,
+    settings: settings || { 'max-iterations': 3 },
+    agentState,
+  };
+
+  app.log.info('body', { body });
+  return body;
 }
