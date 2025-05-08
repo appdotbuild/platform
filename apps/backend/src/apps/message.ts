@@ -38,6 +38,7 @@ type AgentSseEvent = {
   message: {
     role: 'assistant';
     kind: 'RefinementRequest';
+    // TODO: ask why this is not plain JSON
     content: Stringified<ConversationMessage[]>;
     agentState: any;
     unifiedDiff: any;
