@@ -47,6 +47,7 @@ export type Message = {
     unifiedDiff: any;
   };
   traceId: TraceId;
+  githubRepository?: string;
 };
 
 const queryKeys = {
@@ -57,6 +58,7 @@ const useSendMessage = () => {
   const queryClient = useQueryClient();
 
   const [metadata, setMetadata] = useState<{
+    githubRepository?: string;
     applicationId: string;
     traceId: string;
   } | null>(null);
@@ -74,9 +76,17 @@ const useSendMessage = () => {
           }
 
           setMetadata({
+            ...metadata,
             applicationId,
             traceId: newMessage.traceId,
+            ...(newMessage.githubRepository && {
+              githubRepository: newMessage.githubRepository,
+            }),
           });
+
+          if (!newMessage.message) {
+            return;
+          }
 
           queryClient.setQueryData(
             queryKeys.applicationMessages(applicationId),
@@ -119,7 +129,6 @@ export const useBuildApp = (existingApplicationId?: string) => {
   const queryClient = useQueryClient();
   const {
     mutate: sendMessage,
-    data: sendMessagesData,
     data: sendMessageData,
     error: sendMessageError,
     isPending: sendMessagePending,
@@ -127,7 +136,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
     status: sendMessageStatus,
   } = useSendMessage();
 
-  const appId = existingApplicationId ?? sendMessagesData?.applicationId;
+  const appId = existingApplicationId ?? sendMessageData?.applicationId;
 
   const messageQuery = useQuery({
     queryKey: queryKeys.applicationMessages(appId!),

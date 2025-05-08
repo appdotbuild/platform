@@ -1,20 +1,46 @@
 import { fastifySchedule } from '@fastify/schedule';
-import { CronJob } from 'toad-scheduler';
 import { config } from 'dotenv';
 import { app } from './app';
-import { commitChanges, createRepository, createInitialCommit } from './github';
 import { appById, listApps, appByIdUrl, postMessage } from './apps';
 import { logger } from './logger';
+import {
+  createOrgRepositoryEndpoint,
+  createUserRepositoryEndpoint,
+  createUserInitialCommitEndpoint,
+  createOrgInitialCommitEndpoint,
+  userCommitChangesEndpoint,
+  orgCommitChangesEndpoint,
+} from './github';
 
 config({ path: '.env' });
+
+const isDev = process.env.NODE_ENV === 'development';
 
 const authHandler = { onRequest: [app.authenticate] };
 
 app.register(fastifySchedule);
 
-app.post('/github/commit', authHandler, commitChanges);
-app.post('/github/initial-commit', authHandler, createInitialCommit);
-app.post('/github/create-repository', authHandler, createRepository);
+if (isDev) {
+  app.post(
+    '/github/user/create-repo',
+    authHandler,
+    createUserRepositoryEndpoint,
+  );
+  app.post(
+    '/github/user/initial-commit',
+    authHandler,
+    createUserInitialCommitEndpoint,
+  );
+  app.post('/github/user/commit', authHandler, userCommitChangesEndpoint);
+  app.post('/github/org/create-repo', authHandler, createOrgRepositoryEndpoint);
+  app.post(
+    '/github/org/initial-commit',
+    authHandler,
+    createOrgInitialCommitEndpoint,
+  );
+  app.post('/github/org/commit', authHandler, orgCommitChangesEndpoint);
+}
+
 app.get('/apps', authHandler, listApps);
 app.get('/apps/:id', authHandler, appById);
 app.get('/apps/:id/read-url', authHandler, appByIdUrl);

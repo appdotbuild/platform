@@ -15,6 +15,14 @@ type ParseSSEOptions = {
   onClose?: () => void;
 };
 
+function safeJSONParse(data: string) {
+  try {
+    return JSON.parse(data);
+  } catch (err) {
+    return data;
+  }
+}
+
 export function parseSSE(
   stream: Readable,
   { onMessage, onError, onClose }: ParseSSEOptions,
@@ -39,11 +47,11 @@ export function parseSSE(
           }
 
           try {
-            const parsedData = JSON.parse(event.data);
-            const parsedMessage = JSON.parse(parsedData);
+            const parsedData = safeJSONParse(event.data);
+            const parsedMessage = safeJSONParse(parsedData);
             onMessage(parsedMessage);
           } catch (err) {
-            console.log('error in parsing', event.data);
+            console.log('error in parsing', err, event.data);
           }
         }
         buffer = '';

@@ -1,0 +1,21 @@
+{
+  "name": "app-build",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "db:push": "bun run --filter app-build-server db:push",
+    "dev:server": "bun run --filter app-build-server dev",
+    "dev:client": "bun run --filter app-build-client dev",
+    "dev:all": "bun run dev:server & bun run dev:client"
+  },
+  "dependencies": {
+    "app-build": "."
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.14"
+  }
+}

@@ -2,4 +2,5 @@ dist
 node_modules
 .cursor/rules/**
 scripts/**
+apps/backend/agent-template/**
 apps/backend/logs/**
