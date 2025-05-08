@@ -9,6 +9,10 @@ const items = [
     label: '📋 List and iterate existing applications',
     value: '/apps' as const,
   },
+  {
+    label: '🔒 Logout',
+    value: '/app/logout' as const,
+  },
 ] satisfies Array<{
   label: string;
   value: RoutePath;
