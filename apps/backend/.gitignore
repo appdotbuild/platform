@@ -1,9 +1,6 @@
 # Based on https://raw.githubusercontent.com/github/gitignore/main/Node.gitignore
 
 # Logs
-sse_messages.log
-
-
 logs
 _.log
 npm-debug.log_
