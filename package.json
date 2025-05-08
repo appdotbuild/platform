@@ -13,6 +13,7 @@
     "clean": "bun --filter '*' clean",
     "cli": "bun --env-file=./apps/cli/.env ./apps/cli/dist/cli.js",
     "cli:watch": "bun --env-file=./apps/cli/.env --watch ./apps/cli/src/cli.tsx",
+    "deploy:backend": "NO_COLOR=1 bun --filter './apps/backend' deploy",
     "dev": "NODE_ENV=development NO_COLOR=1 bun --filter='./packages/mocked-agent' --filter='./apps/**' dev",
     "docker:build": "sh ./scripts/docker-build.sh",
     "lint": "bun --filter '*' lint",

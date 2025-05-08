@@ -1,7 +1,6 @@
 import { fastifySchedule } from '@fastify/schedule';
 import { CronJob } from 'toad-scheduler';
 import { config } from 'dotenv';
-import { FastifySSEPlugin } from 'fastify-sse-v2';
 import { app } from './app';
 import { commitChanges, createRepository, createInitialCommit } from './github';
 import { appById, listApps, appByIdUrl, postMessage } from './apps';
@@ -24,7 +23,6 @@ app.ready().then(() => {
 });
 
 app.register(fastifySchedule);
-app.register(FastifySSEPlugin);
 
 app.post('/github/commit', authHandler, commitChanges);
 app.post('/github/initial-commit', authHandler, createInitialCommit);
