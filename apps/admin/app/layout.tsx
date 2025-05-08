@@ -6,7 +6,7 @@ import '@appdotbuild/design/globals.css';
 import './global.css';
 
 export const metadata: Metadata = {
-  title: 'Chatbots',
+  title: 'Apps',
   description: '',
 };
 

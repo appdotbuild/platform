@@ -6,9 +6,9 @@ import {
   DataTable,
 } from '@appdotbuild/design/components/table/data-table';
 import { columnText } from '@appdotbuild/design/components/table/utils/default-columns';
-import { getAllChatbots } from '../actions';
-import ChatbotsTableRowMenu from './chatbots-table-row-menu';
-import { Chatbot } from '@appdotbuild/core/types/api';
+import { getAllApps } from '../actions';
+import AppsTableRowMenu from './apps-table-row-menu';
+import { App } from '@appdotbuild/core/types/api';
 import { toast } from '@appdotbuild/design/hooks/use-toast';
 import {
   TooltipContent,
@@ -20,15 +20,15 @@ import { HashAvatar } from '@appdotbuild/design/components/avatar/hash-avatar';
 import { Badge } from '@appdotbuild/design/shadcn/badge';
 import { format } from 'timeago.js';
 
-interface ChatbotsTableProps {
-  initialData: Chatbot[];
+interface AppsTableProps {
+  initialData: App[];
   initialTotalCount;
 }
 
-export default function ChatbotsTable({
+export default function AppsTable({
   initialData,
   initialTotalCount,
-}: ChatbotsTableProps) {
+}: AppsTableProps) {
   const [data, setData] = useState(initialData);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [loading, setLoading] = useState(false);
@@ -36,12 +36,12 @@ export default function ChatbotsTable({
   const fetchData = useCallback(async (page: number, pageSize: number) => {
     setLoading(true);
     try {
-      const result = await getAllChatbots({ page, pageSize });
+      const result = await getAllApps({ page, pageSize });
       setData(result.data);
       setTotalCount(result.pagination.total);
     } catch (error) {
       toast({
-        title: 'Failed to fetch chatbots',
+        title: 'Failed to fetch apps',
         variant: 'destructive',
       });
     } finally {
@@ -49,7 +49,7 @@ export default function ChatbotsTable({
     }
   }, []);
 
-  const columns: CustomColumnDev<Chatbot, any>[] = [
+  const columns: CustomColumnDev<App, any>[] = [
     {
       accessorKey: 'ownerId',
       size: 20,
@@ -118,7 +118,7 @@ export default function ChatbotsTable({
     {
       size: 50,
       id: 'actions',
-      cell: ({ row }) => <ChatbotsTableRowMenu row={row} />,
+      cell: ({ row }) => <AppsTableRowMenu row={row} />,
     },
   ];
 

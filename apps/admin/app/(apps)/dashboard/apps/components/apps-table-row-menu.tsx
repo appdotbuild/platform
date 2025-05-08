@@ -11,21 +11,19 @@ import {
 } from '@appdotbuild/design/shadcn/dropdown-menu';
 import Link from 'next/link';
 import { useState } from 'react';
-import { getChatbotReadUrl } from '../actions';
+import { getAppReadUrl } from '../actions';
 
-interface ChatbotsTableRowMenuProps {
+interface AppsTableRowMenuProps {
   row: Row<any>;
 }
 
-export default function ChatbotsTableRowMenu({
-  row,
-}: ChatbotsTableRowMenuProps) {
+export default function AppsTableRowMenu({ row }: AppsTableRowMenuProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleViewCode = async () => {
     setIsLoading(true);
     try {
-      const { readUrl } = await getChatbotReadUrl(row.original.id);
+      const { readUrl } = await getAppReadUrl(row.original.id);
       window.open(readUrl, '_blank');
     } catch (error) {
       console.error('Failed to get read URL:', error);
@@ -37,7 +35,7 @@ export default function ChatbotsTableRowMenu({
   return (
     <div className="flex items-center gap-1">
       <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-        <Link href={`/dashboard/chatbots/${row.original.id}`}>
+        <Link href={`/dashboard/apps/${row.original.id}`}>
           <FileSearch2 className="h-4 w-4" />
           <span className="sr-only">View</span>
         </Link>

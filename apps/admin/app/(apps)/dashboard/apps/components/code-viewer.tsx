@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getChatbotCode } from '../actions';
+import { getAppCode } from '../actions';
 import CodeEditor from './code-editor';
 import { FileTree } from './file-tree';
 
 interface CodeViewerProps {
-  chatbotId: string;
+  appId: string;
 }
 
-export default function CodeViewer({ chatbotId }: CodeViewerProps) {
+export default function CodeViewer({ appId }: CodeViewerProps) {
   const [files, setFiles] = useState<any[]>([]);
   const [currentFile, setCurrentFile] = useState<{
     path: string;
@@ -21,7 +21,7 @@ export default function CodeViewer({ chatbotId }: CodeViewerProps) {
   useEffect(() => {
     const fetchCode = async () => {
       try {
-        const { files, currentFile } = await getChatbotCode(chatbotId);
+        const { files, currentFile } = await getAppCode(appId);
         setFiles(files);
         setCurrentFile(currentFile);
       } catch (err) {
@@ -33,7 +33,7 @@ export default function CodeViewer({ chatbotId }: CodeViewerProps) {
     };
 
     fetchCode();
-  }, [chatbotId]);
+  }, [appId]);
 
   if (error) {
     return <div className="text-sm text-red-500">{error}</div>;

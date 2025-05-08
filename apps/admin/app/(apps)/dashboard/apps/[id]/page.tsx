@@ -15,20 +15,16 @@ import {
 } from '@appdotbuild/design/shadcn/tabs';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getChatbot } from '../actions';
+import { getApp } from '../actions';
 import ViewCodeButton from '../components/view-code-button';
 import CodeViewer from '../components/code-viewer';
 
-export default async function ChatbotPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function AppPage({ params }: { params: { id: string } }) {
   const { id } = await params;
 
-  const chatbot = await getChatbot(id);
+  const app = await getApp(id);
 
-  if (!chatbot) {
+  if (!app) {
     notFound();
   }
 
@@ -38,24 +34,22 @@ export default async function ChatbotPage({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" asChild className="h-8 w-8">
-              <Link href="/dashboard/chatbots">
+              <Link href="/dashboard/apps">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
             <h2 className="text-2xl font-bold tracking-tight truncate max-w-[300px]">
-              {chatbot.name}
+              {app.name}
             </h2>
           </div>
-          <p className="text-muted-foreground">
-            View and manage chatbot details
-          </p>
+          <p className="text-muted-foreground">View and manage app details</p>
         </div>
         <div className="flex items-center gap-2">
-          {chatbot.flyAppId && (
+          {app.flyAppId && (
             <>
               <Button variant="outline" asChild className="gap-2">
                 <a
-                  href={`https://fly-metrics.net/d/fly-logs/fly-logs?orgId=851271&var-app=${chatbot.flyAppId}`}
+                  href={`https://fly-metrics.net/d/fly-logs/fly-logs?orgId=851271&var-app=${app.flyAppId}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -88,9 +82,9 @@ export default async function ChatbotPage({
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">Chatbot Details</h3>
+                  <h3 className="text-lg font-semibold">App Details</h3>
                   <ShowHide
-                    content={chatbot.name}
+                    content={app.name}
                     className="text-sm text-muted-foreground"
                   />
                 </div>
@@ -102,7 +96,7 @@ export default async function ChatbotPage({
                       Created
                     </div>
                     <div className="font-medium">
-                      {new Date(chatbot.createdAt)?.toLocaleString()}
+                      {new Date(app.createdAt)?.toLocaleString()}
                     </div>
                   </div>
 
@@ -111,7 +105,7 @@ export default async function ChatbotPage({
                       <User className="h-4 w-4" />
                       Owner ID
                     </div>
-                    <div className="font-medium">{chatbot.ownerId}</div>
+                    <div className="font-medium">{app.ownerId}</div>
                   </div>
                 </div>
               </div>
@@ -120,14 +114,14 @@ export default async function ChatbotPage({
         </TabsContent>
 
         <TabsContent value="deployment" className="space-y-4">
-          {chatbot.flyAppId ? (
+          {app.flyAppId ? (
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <h3 className="text-lg font-semibold">Deployment</h3>
                     <p className="text-sm text-muted-foreground">
-                      Fly.io App ID: {chatbot.flyAppId}
+                      Fly.io App ID: {app.flyAppId}
                     </p>
                   </div>
                 </div>
@@ -150,10 +144,10 @@ export default async function ChatbotPage({
               <div className="flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Code Editor</h3>
-                  <ViewCodeButton chatbotId={id} />
+                  <ViewCodeButton appId={id} />
                 </div>
                 <div className="flex-1 min-h-0">
-                  <CodeViewer chatbotId={id} />
+                  <CodeViewer appId={id} />
                 </div>
               </div>
             </CardContent>

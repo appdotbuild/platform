@@ -11,15 +11,15 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Bot',
-  description: 'Your chatbot generating bot',
+  title: 'App.build Admin',
+  description: 'App.build Admin',
 };
 
 const sections = [
   {
-    title: 'Chatbots',
-    description: 'Get the chatbots list',
-    href: '/dashboard/chatbots',
+    title: 'Apps',
+    description: 'Get the apps list',
+    href: '/dashboard/apps',
     icon: MessageSquare,
     secondary: false,
   },
@@ -30,7 +30,7 @@ export default async function Home() {
     <div className="container mx-auto py-12 space-y-8">
       {/* Hero Section */}
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold">Welcome to Bot.New!</h1>
+        <h1 className="text-4xl font-bold">Welcome to App.Build Admin!</h1>
       </div>
 
       {/* Tools Grid */}
