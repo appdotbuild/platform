@@ -55,7 +55,7 @@ export const AppsListScreen = () => {
 
   const onFetchMore = () => {
     if (hasNextPage && !isFetching) {
-      void fetchNextPage();
+      fetchNextPage().catch(console.error);
     }
   };
 

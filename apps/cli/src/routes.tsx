@@ -95,7 +95,6 @@ export function useSafeNavigate() {
         /:(\w+)/g,
 
         // @ts-expect-error - not worth it to fix
-
         (match, param) => params?.[param] ?? match,
       );
 

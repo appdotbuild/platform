@@ -1,24 +1,12 @@
 import { config } from 'dotenv';
-import os from 'os';
 import chalk from 'chalk';
-import console from 'console';
 import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
-import type { buffer } from 'stream/consumers';
-import type { data } from 'react-router';
 import type { Message } from '../app/message/use-message.js';
 import type { Readable } from 'stream';
 
 // Load environment variables from .env file
 config();
-
-function generateMachineId(): string {
-  const hostname = os.hostname();
-  const username = os.userInfo().username;
-
-  const machineInfo = `${hostname}-${username}`;
-  return machineInfo;
-}
 
 export type App = {
   id: string;
@@ -47,51 +35,6 @@ export type AppSpecsGenerationParams = Omit<AppGenerationParams, 'appId'>;
 export type AppGenerationResult = {
   appId: string;
   message: string;
-};
-
-export const generateApp = async (params: AppGenerationParams) => {
-  try {
-    const response = await apiClient.post<{
-      newApp: {
-        id: string;
-      };
-      message: string;
-    }>('/generate', {
-      prompt: params.prompt,
-      userId: generateMachineId(),
-      useStaging: params.useStaging,
-      appId: params.appId,
-      clientSource: 'cli',
-      useMockedAgent: process.env.USE_MOCKED_AGENT === 'true',
-    });
-
-    return {
-      appId: response.data.newApp.id,
-      message: response.data.message,
-      readUrl: '',
-    };
-  } catch (error) {
-    console.error('generate endpoint error', error);
-
-    let errorMessage = 'Unknown error occurred';
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      errorMessage = 'Request timed out after 10 minutes';
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-
-    throw new Error(errorMessage);
-  }
-};
-
-export const generateAppSpec = async (
-  params: AppSpecsGenerationParams,
-): Promise<{
-  appId: string;
-  message: string;
-  readUrl: string;
-}> => {
-  return generateApp({ ...params, appId: undefined });
 };
 
 export const getApp = async (appId: string) => {

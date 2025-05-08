@@ -196,26 +196,10 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         status={createApplicationStatus}
         question="Provide feedback to the assistant..."
         onSubmit={(value: string) => {
-          createApplication(
-            {
-              message: value,
-              applicationId: createApplicationData?.applicationId,
-            },
-            {
-              onSuccess: () => {
-                // const selectedOpt = options.find(
-                //   (opt: any) => opt.value === value,
-                // );
-                // // add the user selected option to the client state messages
-                // JSON.parse(
-                //   streamingMessagesData?.messages.at(-1)?.message.content,
-                // ).push({
-                //   type: 'text',
-                //   content: `Selected: ${selectedOpt?.label || value}`,
-                // });
-              },
-            },
-          );
+          createApplication({
+            message: value,
+            applicationId: createApplicationData?.applicationId,
+          });
         }}
       />
     );
