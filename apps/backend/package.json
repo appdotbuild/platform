@@ -6,7 +6,6 @@
     "clean": "rm -rf node_modules",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "deploy": "fly deploy",
     "dev": "bun run --watch src/index.ts",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
