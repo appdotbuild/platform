@@ -19,7 +19,7 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Global error handling (optional)
+// Global error handling
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {

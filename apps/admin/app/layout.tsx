@@ -1,12 +1,12 @@
 import { geistMono, geistSans } from '@appdotbuild/design/base/fonts';
-import '@appdotbuild/design/globals.css';
 import type { Metadata } from 'next';
-import './global.css';
 import ProvidersServer from './providers.server';
 import ProvidersClient from './providers.client';
+import '@appdotbuild/design/globals.css';
+import './global.css';
 
 export const metadata: Metadata = {
-  title: 'Chatbots',
+  title: 'Apps',
   description: '',
 };
 

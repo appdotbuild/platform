@@ -9,6 +9,8 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
+messages.json
+sse_messages.log
 
 # Caches
 
@@ -176,4 +178,3 @@ dist
 
 .turbo
 
-fly.toml

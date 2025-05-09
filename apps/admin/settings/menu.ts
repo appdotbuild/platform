@@ -14,8 +14,8 @@ export const sidebarMenu: MenuGroup[] = [
     groupLabel: '',
     menus: [
       {
-        href: '/dashboard/chatbots',
-        label: 'Chatbots',
+        href: '/dashboard/apps',
+        label: 'Apps',
         icon: MessageSquare,
         submenus: [],
       },
