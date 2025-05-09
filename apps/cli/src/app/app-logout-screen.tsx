@@ -14,12 +14,12 @@ export function AppLogoutScreen() {
   const handleLogout = async () => {
     setLogoutPhase('processing');
 
+    // brief delay for visual messaging feedback
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     try {
       tokenStorage.clearTokens();
       setLogoutPhase('completed');
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       process.exit(0);
     } catch (error) {
       console.error('Error during logout:', error);
@@ -35,7 +35,7 @@ export function AppLogoutScreen() {
       {logoutPhase === 'confirmation' && (
         <BuildingBlock
           type="select"
-          question="Are you sure you want to log out of App Manager?"
+          question="Are you sure you want to log out of app.build?"
           options={[
             { label: 'Yes, log out', value: 'yes' },
             { label: 'No, go back', value: 'no' },
