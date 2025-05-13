@@ -24,7 +24,7 @@
     "types:check": "bun --filter '*' types:check"
   },
   "lint-staged": {
-    "!(*.mdc|*.sh|*.png)": [
+    "(*.ts|*.tsx|*.js|*.jsx|*.json|*.md|*.yml|*.yaml|*.css)": [
       "bun lint:fix"
     ]
   },
