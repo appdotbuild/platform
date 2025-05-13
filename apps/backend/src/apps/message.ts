@@ -154,6 +154,7 @@ export async function postMessage(
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
+        Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH}`,
       },
       body: JSON.stringify(body),
     });
