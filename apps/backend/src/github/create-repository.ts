@@ -47,7 +47,7 @@ export const createRepository = async (
         auto_init: true,
       });
 
-    logger.log('✅ Repository created successfully!', res);
+    logger.info('✅ Repository created successfully!', res);
 
     return reply.status(200).send({
       status: 'success',
