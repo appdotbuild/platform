@@ -5,7 +5,6 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 import { apps, db } from '../db';
 import { logger } from '../logger';
-import { detectFlyBinary } from '../utils';
 
 const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
@@ -137,7 +136,7 @@ node_modules
 `,
   );
 
-  const flyAppName = `app-${appId}`;
+  const koyebAppName = `app-${appId}`;
   const envVars = {
     APP_DATABASE_URL: connectionString,
     AWS_ACCESS_KEY_ID: process.env.DEPLOYED_BOT_AWS_ACCESS_KEY_ID!,
@@ -153,67 +152,23 @@ node_modules
     }
   }
 
-  try {
-    execSync(
-      `${detectFlyBinary} apps destroy ${flyAppName} --yes --access-token '${process
-        .env.FLY_IO_TOKEN!}' || true`,
-      {
-        stdio: 'inherit',
-        cwd: packageJsonDirectory,
-      },
-    );
-  } catch (error) {
-    logger.error('Error destroying fly app', {
-      error:
-        error instanceof Error
-          ? {
-              message: error.message,
-              stack: error.stack,
-              name: error.name,
-            }
-          : String(error),
-      flyAppName,
-    });
-  }
-
-  logger.info('Starting fly launch', { flyAppName });
+  logger.info('Starting Koyeb deployment', { koyebAppName });
   execSync(
-    `${detectFlyBinary()} launch -y ${envVarsString} --access-token '${process
-      .env
-      .FLY_IO_TOKEN!}' --max-concurrent 1 --ha=false --no-db --no-deploy --name '${flyAppName}'`,
+    `koyeb deploy . ${koyebAppName}/service --archive-builder docker --port 80:http --route /:80`,
     { cwd: packageJsonDirectory, stdio: 'inherit' },
   );
-  logger.info('Fly launch completed', { flyAppName });
+  logger.info('Koyeb deployment completed', { koyebAppName });
   logger.info('Updating apps table', {
-    flyAppName,
+    koyebAppName,
     appId,
   });
 
   await db
     .update(apps)
     .set({
-      flyAppId: flyAppName,
+      flyAppId: koyebAppName,
     })
     .where(eq(apps.id, appId));
-
-  const flyTomlPath = path.join(packageJsonDirectory, 'fly.toml');
-  const flyTomlContent = fs.readFileSync(flyTomlPath, 'utf8');
-  const updatedContent = flyTomlContent.replace(
-    'min_machines_running = 0',
-    'min_machines_running = 1',
-  );
-  fs.writeFileSync(flyTomlPath, updatedContent);
-
-  logger.info('Starting fly deployment', { flyAppName });
-  execSync(
-    `${detectFlyBinary()} deploy --yes --ha=false --max-concurrent 1 --access-token '${process
-      .env.FLY_IO_TOKEN!}'`,
-    {
-      cwd: packageJsonDirectory,
-      stdio: 'inherit',
-    },
-  );
-  logger.info('Fly deployment completed', { flyAppName });
 
   await db
     .update(apps)

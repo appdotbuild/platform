@@ -4,8 +4,6 @@
 ARG BUN_VERSION=1.2.8
 FROM oven/bun:${BUN_VERSION}-slim AS base
 
-LABEL fly_launch_runtime="Bun"
-
 # Bun app lives here
 WORKDIR /appdotbuild
 
@@ -27,7 +25,8 @@ FROM base AS build
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential pkg-config python-is-python3 curl
 
-RUN curl -L https://fly.io/install.sh | sh
+RUN curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
+ENV PATH="/root/.koyeb/bin:${PATH}"
 
 # Install node modules
 COPY bun.lock package.json ./

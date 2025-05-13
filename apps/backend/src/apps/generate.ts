@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { apps, appPrompts, db } from '../db';
 import { logger } from '../logger';
 import { createS3DirectoryWithPresignedUrls } from '../s3';
-import { detectFlyBinary } from '../utils';
 import {
   MOCKED_AGENT_API_URL,
   STAGING_AGENT_API_URL,
@@ -303,45 +302,11 @@ export async function generate(
           });
           logger.info('Inserted agent reasoning prompt', { appId });
 
-          // Deploy an under-construction page to the fly app
-          const underConstructionImage =
-            'registry.fly.io/under-construction:deployment-01JQ4JD8TKSW37KP9MR44B3DNB';
-          const flyAppName = `app-${appId}`;
-
-          logger.info('Deploying under-construction page', {
-            appId,
-            flyAppName,
-            image: underConstructionImage,
-          });
-
-          try {
-            execSync(
-              `${detectFlyBinary()} launch --yes --access-token '${process.env
-                .FLY_IO_TOKEN!}' --max-concurrent 1 --ha=false --no-db  --name '${flyAppName}' --image ${underConstructionImage} --internal-port 80 --dockerignore-from-gitignore`,
-              { stdio: 'inherit' },
-            );
-            logger.info('Successfully deployed under-construction page', {
-              appId,
-              flyAppName,
-            });
-          } catch (error) {
-            logger.error('Error deploying under-construction page', {
-              appId,
-              error: error instanceof Error ? error.message : String(error),
-            });
-            return reply.send({
-              newApp: { id: appId },
-              message: `Failed to deploy under-construction page: ${error}`,
-            });
-          }
-
           return reply.send({
             newApp: {
               id: appId,
             },
-            message:
-              prepareResponseJson.message +
-              ` Under-construction page deployed successfully: https://${flyAppName}.fly.dev`,
+            message: prepareResponseJson.message,
           });
         }
       }
