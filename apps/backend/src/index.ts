@@ -5,22 +5,10 @@ import { app } from './app';
 import { commitChanges, createRepository, createInitialCommit } from './github';
 import { appById, listApps, appByIdUrl, postMessage } from './apps';
 import { logger } from './logger';
-import { deployTask } from './deploy';
 
 config({ path: '.env' });
 
 const authHandler = { onRequest: [app.authenticate] };
-const deployJob = new CronJob(
-  {
-    cronExpression: '*/30 * * * * *', // Runs every 30 seconds
-  },
-  deployTask,
-);
-
-// `fastify.scheduler` becomes available after initialization.
-app.ready().then(() => {
-  app.scheduler.addCronJob(deployJob);
-});
 
 app.register(fastifySchedule);
 
