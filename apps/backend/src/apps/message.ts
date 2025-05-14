@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getAgentHost } from '../apps/env';
 import fs from 'fs';
 import { createSession } from 'better-sse';
+import { checkMessageUsageLimit } from './message-limit';
 
 interface AgentMessage {
   role: 'assistant';
@@ -59,6 +60,28 @@ export async function postMessage(
     body: request.body,
   });
 
+  const userId = request.user.id;
+
+  const {
+    isUserLimitReached,
+    dailyMessageLimit,
+    nextResetTime,
+    remainingMessages,
+    currentUsage,
+  } = await checkMessageUsageLimit(userId);
+
+  const userLimitHeaders = {
+    'X-DailyLimit-Limit': dailyMessageLimit,
+    'X-DailyLimit-Remaining': remainingMessages,
+    'X-DailyLimit-Usage': currentUsage,
+    'X-DailyLimit-Reset': nextResetTime.toISOString(),
+  };
+
+  if (isUserLimitReached) {
+    app.log.error(`Daily message limit reached for user ${userId}`);
+    return reply.status(429).headers(userLimitHeaders).send();
+  }
+
   const requestBody = request.body as {
     message: string;
     applicationId?: string;
@@ -79,13 +102,11 @@ export async function postMessage(
     const application = await db
       .select()
       .from(apps)
-      .where(
-        and(eq(apps.id, applicationId), eq(apps.ownerId, request.user.id)),
-      );
+      .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
 
     if (application.length === 0) {
       app.log.error('application not found');
-      return reply.status(404).send({
+      return reply.status(404).headers(userLimitHeaders).send({
         error: 'Application not found',
         status: 'error',
       });
@@ -122,7 +143,7 @@ export async function postMessage(
       id: applicationId,
       name: requestBody.message,
       clientSource: requestBody.clientSource,
-      ownerId: request.user.id,
+      ownerId: userId,
       traceId: applicationTraceId(applicationId),
     });
     // TODO: setup repo and initial commit
@@ -165,7 +186,7 @@ export async function postMessage(
           agentResponse.status
         }, errorData: ${JSON.stringify(errorData)}`,
       );
-      return reply.status(agentResponse.status).send({
+      return reply.status(agentResponse.status).headers(userLimitHeaders).send({
         error: errorData,
         status: 'error',
       });
@@ -173,7 +194,7 @@ export async function postMessage(
 
     const reader = agentResponse.body?.getReader();
     if (!reader) {
-      return reply.status(500).send({
+      return reply.status(500).headers(userLimitHeaders).send({
         error: 'No response stream available',
         status: 'error',
       });
@@ -232,12 +253,15 @@ export async function postMessage(
     reply.raw.end();
   } catch (error) {
     app.log.error(`Unhandled error: ${error}`);
-    return reply.status(500).send({
-      applicationId,
-      error: `An error occurred while processing your request: ${error}`,
-      status: 'error',
-      traceId: applicationTraceId(applicationId),
-    });
+    return reply
+      .status(500)
+      .headers(userLimitHeaders)
+      .send({
+        applicationId,
+        error: `An error occurred while processing your request: ${error}`,
+        status: 'error',
+        traceId: applicationTraceId(applicationId),
+      });
   }
 }
 

@@ -205,6 +205,9 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
     );
   };
 
+  const isUserReachedMessageLimit =
+    (createApplicationError as any)?.errorType === 'MESSAGE_LIMIT_ERROR';
+
   return (
     <Box flexDirection="column">
       <InfiniteFreeText
@@ -214,8 +217,9 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         onSubmit={(text: string) => createApplication({ message: text })}
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
+        errorType={(createApplicationError as any)?.errorType}
         loadingText="Applying changes..."
-        retryMessage="Please retry."
+        retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={!streamingMessagesData}
       />
 
@@ -231,8 +235,9 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         }
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
+        errorType={(createApplicationError as any)?.errorType}
         loadingText="Applying changes..."
-        retryMessage="Please retry."
+        retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={Boolean(
           streamingMessagesData &&
             !isStreamingMessages &&
