@@ -25,5 +25,5 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "exclude": ["agent-template", "logs"]
+  "exclude": ["logs"]
 }

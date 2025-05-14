@@ -39,6 +39,19 @@ export async function copyDirToMemfs(realDirPath: string) {
   }));
 }
 
+export function createMemoryFileSystem() {
+  const virtualDir = `/app.build-${Date.now()}`;
+  const volume = vol;
+
+  volume.mkdirSync(virtualDir, { recursive: true });
+
+  return {
+    volume: createFsFromVolume(volume),
+    memfsVolume: volume,
+    virtualDir,
+  };
+}
+
 export async function writeMemfsToTempDir(
   volume: Volume,
   memfsBasePath = '/',

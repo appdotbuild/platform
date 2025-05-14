@@ -182,6 +182,3 @@ dist
 
 ## Diff
 unified_diff.patch
-
-## Fly
-apps/backend/agent-template/fly.toml

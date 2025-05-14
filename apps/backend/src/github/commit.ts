@@ -29,6 +29,7 @@ type CommitResponse = {
   statusCode: number;
   status: string;
   message: string;
+  url?: string;
 };
 
 const BOT_USER_EMAIL = process.env.GITHUB_APP_BOT_EMAIL;
@@ -106,7 +107,7 @@ const createInitialCommit = async ({
     };
   }
 
-  await createOrUpdateCommit(octokit, {
+  const response = await createOrUpdateCommit(octokit, {
     repo,
     owner,
     paths,
@@ -118,6 +119,7 @@ const createInitialCommit = async ({
     statusCode: 200,
     status: 'success',
     message: 'Initial commit created',
+    url: response.data.object.url,
   };
 };
 
@@ -191,7 +193,7 @@ const commitChanges = async ({
 
   const baseTreeSha = commitData.tree.sha;
 
-  await createOrUpdateCommit(octokit, {
+  const response = await createOrUpdateCommit(octokit, {
     repo,
     owner,
     paths,
@@ -204,6 +206,7 @@ const commitChanges = async ({
     statusCode: 200,
     status: 'success',
     message: 'Changes committed',
+    url: response.data.object.url,
   };
 };
 
@@ -226,19 +229,20 @@ async function createOrUpdateRef(
   const fullRef = `refs/heads/${branch}`;
 
   try {
-    await octokit.git.createRef({
+    const response = await octokit.git.createRef({
       owner,
       repo,
       ref: fullRef,
       sha,
     });
     console.log(`✅ Created ref ${fullRef}`);
+    return response;
   } catch (err: any) {
     if (
       err.status === 422 &&
       err.message.includes('Reference already exists')
     ) {
-      await octokit.git.updateRef({
+      const response = await octokit.git.updateRef({
         owner,
         repo,
         ref: `heads/${branch}`,
@@ -246,6 +250,7 @@ async function createOrUpdateRef(
         force: forceUpdate,
       });
       console.log(`🔁 Updated existing ref ${fullRef}`);
+      return response;
     } else {
       throw err;
     }
@@ -314,7 +319,7 @@ async function createOrUpdateCommit(
     },
   });
 
-  await createOrUpdateRef(octokit, {
+  return await createOrUpdateRef(octokit, {
     owner,
     repo,
     branch: 'main',

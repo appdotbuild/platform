@@ -19,6 +19,7 @@ import {
   readDirectoryRecursive,
   copyDirToMemfs,
   writeMemfsToTempDir,
+  createMemoryFileSystem,
 } from '../utils';
 import { applyDiff } from './diff';
 import { deployApp } from '../deploy';
@@ -175,7 +176,7 @@ export async function postMessage(
         githubAccessToken,
         tempDirPath,
       }).then(copyDirToMemfs)
-    : copyDirToMemfs(path.resolve(__dirname, '..', '..', 'agent-template'));
+    : createMemoryFileSystem();
 
   try {
     const agentResponse = await fetch(`${getAgentHost()}/message`, {
@@ -479,7 +480,7 @@ async function appIteration({
   session: Session;
   commitMessage: string;
 }) {
-  await createUserCommit({
+  const { url } = await createUserCommit({
     repo: appName,
     owner: githubUsername,
     paths: files,
@@ -497,7 +498,7 @@ async function appIteration({
           content: [
             {
               type: 'text',
-              text: `committed in existing app - ${commitMessage}`,
+              text: `committed in existing app - commit url: ${url}`,
             },
           ],
         },
@@ -535,14 +536,14 @@ async function createUserUpstreamApp({
 
   app.log.info(`repository created: ${repositoryUrl}`);
 
-  await createUserInitialCommit({
+  const { url: initialCommitUrl } = await createUserInitialCommit({
     repo: appName,
     owner: githubUsername,
     paths: files,
     githubAccessToken,
   });
 
-  return { repositoryUrl, appName };
+  return { repositoryUrl, appName, initialCommitUrl };
 }
 
 function getExistingConversationBody({
