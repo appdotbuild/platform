@@ -3,7 +3,7 @@ import { Minimatch } from 'minimatch';
 import { type Volume } from 'memfs';
 import { type Dirent } from 'fs';
 
-interface FileData {
+export interface FileData {
   path: string;
   content: string;
 }

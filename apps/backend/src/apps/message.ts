@@ -20,6 +20,7 @@ import {
   copyDirToMemfs,
   writeMemfsToTempDir,
   createMemoryFileSystem,
+  type FileData,
 } from '../utils';
 import { applyDiff } from './diff';
 import { deployApp } from '../deploy';
@@ -61,6 +62,15 @@ type AgentSseEvent = {
     unifiedDiff: any;
     commit_message: string | null;
   };
+};
+
+type Body = {
+  applicationId?: string;
+  allMessages: Message[];
+  traceId: string;
+  settings: Record<string, any>;
+  agentState?: any;
+  allFiles?: FileData[];
 };
 
 type RequestBody = {
@@ -110,7 +120,7 @@ export async function postMessage(
   const traceId = getApplicationTraceId(request, requestBody.applicationId);
 
   let applicationId = requestBody.applicationId;
-  let body = {
+  let body: Body = {
     applicationId,
     allMessages: [{ role: 'user', content: requestBody.message }],
     traceId,
@@ -179,6 +189,14 @@ export async function postMessage(
     : createMemoryFileSystem();
 
   try {
+    // We are iterating over an existing app, so we wait for the promise here to read the files that where cloned.
+    // and we add them to the body for the agent to use.
+    if (isIteration) {
+      const { volume, virtualDir } = await volumePromise;
+
+      body.allFiles = readDirectoryRecursive(virtualDir, virtualDir, volume);
+    }
+
     const agentResponse = await fetch(`${getAgentHost()}/message`, {
       method: 'POST',
       headers: {
@@ -595,7 +613,7 @@ function getExistingConversationBody({
   }
 
   // Create the request body
-  const body = {
+  const body: Body = {
     applicationId,
     allMessages: [...messagesHistoryCasted, { role: 'user', content: message }],
     traceId: existingTraceId,
