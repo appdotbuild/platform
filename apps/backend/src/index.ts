@@ -11,8 +11,11 @@ import {
   userCommitChangesEndpoint,
   orgCommitChangesEndpoint,
 } from './github';
+import { validateEnv } from './env';
 
 config({ path: '.env' });
+
+validateEnv();
 
 const isDev = process.env.NODE_ENV === 'development';
 

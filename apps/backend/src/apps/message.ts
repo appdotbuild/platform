@@ -15,8 +15,13 @@ import {
   createUserCommit,
   cloneRepository,
 } from '../github';
-import { readDirectoryRecursive, copyDirToMemfs } from '../utils';
+import {
+  readDirectoryRecursive,
+  copyDirToMemfs,
+  writeMemfsToTempDir,
+} from '../utils';
 import { applyDiff } from './diff';
+import { deployApp } from '../deploy';
 
 interface AgentMessage {
   role: 'assistant';
@@ -123,8 +128,6 @@ export async function postMessage(
       );
 
     appName = application[0]!.appName;
-
-    console.log('application', application);
 
     if (application.length === 0) {
       app.log.error('application not found');
@@ -253,7 +256,7 @@ export async function postMessage(
             canDeploy = !!parsedMessage.message.unifiedDiff;
 
             if (canDeploy) {
-              const { volume, virtualDir } = await volumePromise;
+              const { volume, virtualDir, memfsVolume } = await volumePromise;
               const unifiedDiffPath = path.join(
                 virtualDir,
                 `unified_diff-${Date.now()}.patch`,
@@ -314,11 +317,37 @@ export async function postMessage(
                 isIteration = true;
               }
 
-              await db.insert(appPrompts).values({
-                id: uuidv4(),
-                prompt: requestBody.message,
-                appId: applicationId,
-                kind: 'user',
+              const [, { appURL }] = await Promise.all([
+                db.insert(appPrompts).values({
+                  id: uuidv4(),
+                  prompt: requestBody.message,
+                  appId: applicationId,
+                  kind: 'user',
+                }),
+                writeMemfsToTempDir(memfsVolume, virtualDir).then(
+                  (tempDirPath) =>
+                    deployApp({
+                      appId: applicationId,
+                      appDirectory: tempDirPath,
+                    }),
+                ),
+              ]);
+
+              session.push({
+                traceId,
+                message: {
+                  kind: 'StageResult',
+                  content: JSON.stringify([
+                    {
+                      content: [
+                        {
+                          type: 'text',
+                          text: `Your application has been deployed to ${appURL}`,
+                        },
+                      ],
+                    },
+                  ]),
+                },
               });
             }
           }
@@ -422,7 +451,7 @@ async function appCreation({
           content: [
             {
               type: 'text',
-              text: `Your application has been deployed to ${repositoryUrl}`,
+              text: `Your application has been uploaded to this github repository: ${repositoryUrl}`,
             },
           ],
         },

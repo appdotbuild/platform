@@ -2,9 +2,12 @@ import { eq } from 'drizzle-orm';
 import { createApiClient } from '@neondatabase/api-client';
 import path from 'path';
 import fs from 'fs';
-import { execSync } from 'child_process';
+import { exec as execNative } from 'child_process';
 import { apps, db } from '../db';
 import { logger } from '../logger';
+import { promisify } from 'node:util';
+
+const exec = promisify(execNative);
 
 const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
@@ -43,9 +46,8 @@ export async function deployApp({
     })
     .where(eq(apps.id, appId));
 
-  const dockerfileDirectory = path.dirname(appDirectory);
   // check if dockerfile exists
-  if (!fs.existsSync(path.join(dockerfileDirectory, 'Dockerfile'))) {
+  if (!fs.existsSync(path.join(appDirectory, 'dockerfile'))) {
     throw new Error('Dockerfile not found');
   }
 
@@ -62,6 +64,7 @@ export async function deployApp({
   };
 
   let envVarsString = '';
+
   for (const [key, value] of Object.entries(envVars)) {
     if (value !== null) {
       envVarsString += `--env ${key}='${value}' `;
@@ -69,33 +72,39 @@ export async function deployApp({
   }
 
   logger.info('Starting Koyeb deployment', { koyebAppName });
-  execSync(
-    `koyeb app init ${koyebAppName} --region was --docker ${DEFAULT_TEMPLATE_DOCKER_IMAGE} --ports 80:http --routes /:80 ${envVarsString}`,
-    { cwd: appDirectory, stdio: 'inherit' },
-  );
+
+  await Promise.all([
+    exec(
+      `koyeb app init ${koyebAppName} --token ${process.env.KOYEB_CLI_TOKEN} --region was --docker ${DEFAULT_TEMPLATE_DOCKER_IMAGE} --ports 80:http --routes /:80 ${envVarsString}`,
+      { cwd: appDirectory },
+    ),
+    db
+      .update(apps)
+      .set({
+        flyAppId: koyebAppName,
+        deployStatus: 'deployed',
+      })
+      .where(eq(apps.id, appId)),
+  ]);
+
   logger.info('Koyeb deployment completed', { koyebAppName });
   logger.info('Updating apps table', {
     koyebAppName,
     appId,
   });
 
-  await db
-    .update(apps)
-    .set({
-      flyAppId: koyebAppName,
-    })
-    .where(eq(apps.id, appId));
+  const { stdout } = await exec(
+    `koyeb apps get ${koyebAppName} -o json --token=${process.env.KOYEB_CLI_TOKEN}`,
+  );
 
-  await db
-    .update(apps)
-    .set({
-      deployStatus: 'deployed',
-    })
-    .where(eq(apps.id, appId));
+  const { domains } = JSON.parse(stdout);
+  const { name } = domains[0];
 
   if (process.env.NODE_ENV === 'production') {
     if (fs.existsSync(appDirectory)) {
       fs.rmdirSync(appDirectory, { recursive: true });
     }
   }
+
+  return { appURL: `https://${name}` };
 }

@@ -1,5 +1,6 @@
 import * as path from 'path';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import { vol } from 'memfs';
 import { Volume } from 'memfs/lib/volume';
 import { createFsFromVolume } from 'memfs';
@@ -33,8 +34,39 @@ export async function copyDirToMemfs(realDirPath: string) {
 
   return internalCopyDirToMemfs(realDirPath, virtualDir, volume).then(() => ({
     volume: createFsFromVolume(volume),
+    memfsVolume: volume,
     virtualDir,
   }));
+}
+
+export async function writeMemfsToTempDir(
+  volume: Volume,
+  memfsBasePath = '/',
+): Promise<string> {
+  const realTempDir = path.join(
+    os.tmpdir(),
+    `appdotbuild-template-${Date.now()}`,
+  );
+  await fs.mkdir(realTempDir, { recursive: true });
+
+  const files = volume.toJSON();
+
+  for (const [virtualPath, content] of Object.entries(files)) {
+    if (!virtualPath.startsWith(memfsBasePath)) continue;
+
+    const relative = path.relative(memfsBasePath, virtualPath);
+    const realPath = path.join(realTempDir, relative);
+
+    if (content === null) {
+      await fs.mkdir(realPath, { recursive: true });
+    } else {
+      const dir = path.dirname(realPath);
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(realPath, content as string | Buffer);
+    }
+  }
+
+  return realTempDir;
 }
 
 export async function copyDirToTemp(realDirPath: string, tempDirPath: string) {
