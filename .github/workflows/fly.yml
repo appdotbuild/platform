@@ -13,12 +13,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
+      # Setup Bun
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
       # Step 1: check if all migrations are generated, otherwise fail job
       - name: Check for ungenerated migrations
         run: |
           cd apps/backend
-          npm install
-          npx drizzle-kit generate
+          bun install
+          bunx drizzle-kit generate
           if [[ -n "$(git status --porcelain)" ]]; then
             echo "Error: There are ungenerated migrations. Please run 'drizzle-kit generate' locally and commit the changes."
             git status
@@ -29,4 +35,4 @@ jobs:
       # Step 3: apply any pending migrations
       # - run: flyctl deploy --config=./apps/backend/fly.toml
       # env:
-      # FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      #   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
