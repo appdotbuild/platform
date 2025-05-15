@@ -1,14 +1,8 @@
+import type { UserMessageLimit } from '@appdotbuild/core/types/api';
 import { and, count, eq, gt } from 'drizzle-orm';
 import { app } from '../app';
 import { appPrompts, apps, db } from '../db';
-
-interface MessageUsageLimit {
-  isUserLimitReached: boolean;
-  dailyMessageLimit: number;
-  currentUsage: number;
-  remainingMessages: number;
-  nextResetTime: Date;
-}
+import { customMessageLimits } from '../db/schema';
 
 const getNextResetTime = (): Date => {
   const nextResetDate = new Date();
@@ -24,16 +18,34 @@ const getCurrentDayStart = (): Date => {
   return today;
 };
 
+export async function getUserCustomLimit(
+  userId: string,
+): Promise<number | null> {
+  try {
+    const result = await db
+      .select({ dailyLimit: customMessageLimits.dailyLimit })
+      .from(customMessageLimits)
+      .where(eq(customMessageLimits.userId, userId))
+      .limit(1);
+
+    return result[0]?.dailyLimit ?? null;
+  } catch (error) {
+    app.log.error(`Error fetching custom limit for user ${userId}:`, error);
+    return null;
+  }
+}
+
 export async function checkMessageUsageLimit(
   userId: string,
-): Promise<MessageUsageLimit> {
-  const parsedLimit = Number(process.env.DAILY_MESSAGE_LIMIT);
-  const userMessageLimit = parsedLimit || 50;
-
+): Promise<UserMessageLimit> {
+  const DEFAULT_MESSAGE_LIMIT = Number(process.env.DAILY_MESSAGE_LIMIT) || 50;
   const startOfDay = getCurrentDayStart();
   const nextResetTime = getNextResetTime();
 
   try {
+    const customLimit = await getUserCustomLimit(userId);
+    const userMessageLimit = customLimit ?? DEFAULT_MESSAGE_LIMIT;
+
     const messageCountResult = await db
       .select({ count: count() })
       .from(appPrompts)
@@ -41,6 +53,7 @@ export async function checkMessageUsageLimit(
       .where(
         and(eq(apps.ownerId, userId), gt(appPrompts.createdAt, startOfDay)),
       );
+
     const currentUsage = messageCountResult[0]?.count || 0;
     const remainingMessages = Math.max(0, userMessageLimit - currentUsage);
     const isUserLimitReached = currentUsage >= userMessageLimit;
@@ -56,11 +69,12 @@ export async function checkMessageUsageLimit(
     app.log.error(
       `Error checking daily message limit for user ${userId}: ${error}`,
     );
+
     return {
       isUserLimitReached: false,
-      dailyMessageLimit: userMessageLimit,
+      dailyMessageLimit: DEFAULT_MESSAGE_LIMIT,
       currentUsage: 0,
-      remainingMessages: userMessageLimit,
+      remainingMessages: DEFAULT_MESSAGE_LIMIT,
       nextResetTime,
     };
   }

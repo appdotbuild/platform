@@ -1,12 +1,12 @@
-import { Box, Newline, Text } from 'ink';
+import type { UserMessageLimit } from '@appdotbuild/core';
 import {
   TextInput as InkTextInput,
   Spinner,
   type TextInputProps,
 } from '@inkjs/ui';
-import { Panel } from './panel.js';
+import { Box, Newline, Text } from 'ink';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { UserMessageLimit } from '../../app/message/use-message-limit.js';
+import { Panel } from './panel.js';
 
 type StatusProps = {
   status: 'pending' | 'success' | 'error' | 'idle';

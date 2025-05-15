@@ -1,3 +1,11 @@
+export type UserMessageLimit = {
+  isUserLimitReached?: boolean;
+  dailyMessageLimit: number;
+  remainingMessages: number;
+  currentUsage: number;
+  nextResetTime: Date;
+};
+
 export type Pagination = {
   total: number;
   page: number;

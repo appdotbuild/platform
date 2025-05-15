@@ -1,18 +1,7 @@
 import { create } from 'zustand';
+import type { UserMessageLimit } from '@appdotbuild/core';
 
-export interface UserMessageLimit {
-  dailyMessageLimit: number;
-  nextResetTime: Date;
-  currentUsage: number;
-  remainingMessages: number;
-}
-
-interface UserMessageLimitState {
-  dailyMessageLimit: number;
-  nextResetTime: Date;
-  currentUsage: number;
-  remainingMessages: number;
-
+interface UserMessageLimitState extends UserMessageLimit {
   setMessageLimit: (limit: {
     dailyMessageLimit: number;
     nextResetTime: Date;
