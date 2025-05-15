@@ -10,6 +10,9 @@ const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
 });
 
+const DEFAULT_TEMPLATE_DOCKER_IMAGE =
+  '361769577597.dkr.ecr.us-east-1.amazonaws.com/appdotbuild:tpcr-template';
+
 export async function deployApp({
   appId,
   appDirectory,
@@ -67,7 +70,7 @@ export async function deployApp({
 
   logger.info('Starting Koyeb deployment', { koyebAppName });
   execSync(
-    `koyeb deploy . ${koyebAppName}/service --archive-builder docker --port 80:http --route /:80 ${envVarsString}`,
+    `koyeb deploy ${DEFAULT_TEMPLATE_DOCKER_IMAGE} ${koyebAppName}/service --archive-builder docker --port 80:http --route /:80 ${envVarsString}`,
     { cwd: appDirectory, stdio: 'inherit' },
   );
   logger.info('Koyeb deployment completed', { koyebAppName });
