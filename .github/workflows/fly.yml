@@ -11,6 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+      # Step 1: check if all migrations are generated, otherwise fail job
+      # (The above step should be ran on every PR against main as well)
+      # Step 2: check if migrations can be applied without asking user for permission, otherwise fail job
+      # Step 3: apply any pending migrations
       - run: flyctl deploy --config=./apps/backend/fly.toml
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
