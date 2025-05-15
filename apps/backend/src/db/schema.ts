@@ -19,8 +19,8 @@ export const apps = pgTable('apps', {
   recompileInProgress: boolean('recompileInProgress').notNull().default(false),
   clientSource: text('clientSource').notNull().default('slack'), // "slack" or "cli"
   repositoryUrl: text(),
-  appName: text(),
   githubUsername: text(),
+  appName: text(),
 });
 
 export const appPrompts = pgTable('app_prompts', {

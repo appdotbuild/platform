@@ -6,6 +6,7 @@ import { exec as execNative } from 'child_process';
 import { apps, db } from '../db';
 import { logger } from '../logger';
 import { promisify } from 'node:util';
+import { isProduction } from '../env';
 
 const exec = promisify(execNative);
 
@@ -73,19 +74,18 @@ export async function deployApp({
 
   logger.info('Starting Koyeb deployment', { koyebAppName });
 
-  await Promise.all([
-    exec(
-      `koyeb app init ${koyebAppName} --token ${process.env.KOYEB_CLI_TOKEN} --region was --docker ${DEFAULT_TEMPLATE_DOCKER_IMAGE} --ports 80:http --routes /:80 ${envVarsString}`,
-      { cwd: appDirectory },
-    ),
-    db
-      .update(apps)
-      .set({
-        flyAppId: koyebAppName,
-        deployStatus: 'deployed',
-      })
-      .where(eq(apps.id, appId)),
-  ]);
+  await exec(
+    `koyeb app init ${koyebAppName} --token ${process.env.KOYEB_CLI_TOKEN} --region was --docker ${DEFAULT_TEMPLATE_DOCKER_IMAGE} --ports 80:http --routes /:80 ${envVarsString}`,
+    { cwd: appDirectory },
+  );
+
+  await db
+    .update(apps)
+    .set({
+      flyAppId: koyebAppName,
+      deployStatus: 'deployed',
+    })
+    .where(eq(apps.id, appId));
 
   logger.info('Koyeb deployment completed', { koyebAppName });
   logger.info('Updating apps table', {
@@ -97,10 +97,11 @@ export async function deployApp({
     `koyeb apps get ${koyebAppName} -o json --token=${process.env.KOYEB_CLI_TOKEN}`,
   );
 
+  logger.info('Getting app URL', { stdout });
   const { domains } = JSON.parse(stdout);
   const { name } = domains[0];
 
-  if (process.env.NODE_ENV === 'production') {
+  if (isProduction) {
     if (fs.existsSync(appDirectory)) {
       fs.rmdirSync(appDirectory, { recursive: true });
     }

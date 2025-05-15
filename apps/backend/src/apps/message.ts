@@ -24,6 +24,7 @@ import {
 } from '../utils';
 import { applyDiff } from './diff';
 import { deployApp } from '../deploy';
+import { isDev } from '../env';
 
 interface AgentMessage {
   role: 'assistant';
@@ -81,8 +82,6 @@ type RequestBody = {
 };
 
 type TraceId = string;
-
-const isDev = process.env.NODE_ENV === 'development';
 
 const previousRequestMap = new Map<TraceId, AgentSseEvent>();
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
@@ -449,6 +448,10 @@ async function appCreation({
     githubAccessToken,
     files,
   });
+
+  if (!repositoryUrl) {
+    throw new Error('Repository URL not found');
+  }
 
   await db.insert(apps).values({
     id: applicationId,

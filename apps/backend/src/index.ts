@@ -11,18 +11,16 @@ import {
   userCommitChangesEndpoint,
   orgCommitChangesEndpoint,
 } from './github';
-import { validateEnv } from './env';
+import { isDev, validateEnv } from './env';
 
 config({ path: '.env' });
-
 validateEnv();
-
-const isDev = process.env.NODE_ENV === 'development';
 
 const authHandler = { onRequest: [app.authenticate] };
 
 app.register(fastifySchedule);
 
+// these endpoints are only available locally, so we can test them easily
 if (isDev) {
   app.post(
     '/github/user/create-repo',
