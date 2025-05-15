@@ -207,8 +207,6 @@ export async function postMessage(
       body: JSON.stringify(body),
     });
 
-    console.log('agentResponse', agentResponse);
-
     if (!agentResponse.ok) {
       const errorData = await agentResponse.json();
       app.log.error(
@@ -264,6 +262,7 @@ export async function postMessage(
             buffer = buffer.slice(
               `data: `.length + message.length + '\n\n'.length,
             );
+            session.push(platformMessage);
 
             app.log.info('message sent to CLI', {
               message,

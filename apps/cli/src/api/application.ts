@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 import chalk from 'chalk';
 import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
-import type { Message, SseEvent } from '../app/message/use-message.js';
+import { AgentSseEvent } from '@appdotbuild/core';
 import type { Readable } from 'stream';
 
 // Load environment variables from .env file
@@ -76,7 +76,7 @@ export type SendMessageParams = {
   message: string;
   applicationId?: string;
   traceId?: string;
-  onMessage?: (data: SseEvent) => void;
+  onMessage?: (data: AgentSseEvent) => void;
 };
 
 export type SendMessageResult = {
@@ -112,7 +112,7 @@ export async function sendMessage({
 
   try {
     await parseSSE(response.data as Readable, {
-      onMessage: (message: SseEvent) => {
+      onMessage: (message: AgentSseEvent) => {
         onMessage?.(message);
       },
       onError: (error) => {

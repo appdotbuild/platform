@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { sendMessage, type SendMessageParams } from '../../api/application.js';
 import { applicationQueryKeys } from '../use-application.js';
+import {
+  AgentStatus,
+  MessageKind,
+  type AgentSseEvent,
+  type MessageContentBlock,
+} from '@appdotbuild/core';
 
 export type ChoiceElement = {
   type: 'choice';
@@ -33,29 +39,14 @@ export type MessagePart =
       elements: (ChoiceElement | ActionElement)[];
     };
 
-type RequestId = string;
-type ApplicationId = string;
-type TraceId = `app-${ApplicationId}.req-${RequestId}`;
-type StringifiedMessagesArrayJson = string;
-export type SseEvent = {
-  status: 'streaming' | 'idle';
+type ParsedSseEvent = Omit<AgentSseEvent, 'message'> & {
   message: {
-    role: 'assistant' | 'user';
-    kind:
-      | 'RefinementRequest'
-      | 'StageResult'
-      | 'TestResult'
-      | 'UserMessage'
-      | 'PlatformMessage';
-    content: StringifiedMessagesArrayJson;
-    agentState: any;
-    unifiedDiff: any;
-  };
-  traceId: TraceId;
-  githubRepository?: string;
+    content: {
+      role: 'assistant' | 'user';
+      content: MessageContentBlock[];
+    }[];
+  } & Omit<AgentSseEvent['message'], 'content'>;
 };
-
-type Message = SseEvent['message'];
 
 const queryKeys = {
   applicationMessages: (id: string) => ['apps', id],
@@ -77,7 +68,12 @@ const useSendMessage = () => {
         applicationId: metadata?.applicationId,
         traceId: metadata?.traceId,
         onMessage: (newEvent) => {
+          if (!newEvent.traceId) {
+            throw new Error('Trace ID not found');
+          }
+
           const applicationId = extractApplicationId(newEvent.traceId);
+
           if (!applicationId) {
             throw new Error('Application ID not found');
           }
@@ -94,52 +90,40 @@ const useSendMessage = () => {
 
           queryClient.setQueryData(
             queryKeys.applicationMessages(applicationId),
-            (oldData: { events: SseEvent[] }) => {
+            (oldData: {
+              events: ParsedSseEvent[];
+            }): { events: ParsedSseEvent[] } => {
+              const parsedEvent = {
+                ...newEvent,
+                message: {
+                  ...newEvent.message,
+                  content: JSON.parse(newEvent.message.content),
+                },
+              };
+
               // first message
               if (!oldData) {
-                return { events: [newEvent] };
+                return { events: [parsedEvent] };
               }
 
-              const isPlatformMessage =
-                newEvent.message.kind === 'PlatformMessage';
-              // if the message is already in the thread, replace the whole thread
-              const existingEventThread = oldData.events.find(
-                (e) => e.traceId === newEvent.traceId,
+              // if there is already an event with the same traceId, for the same stage, replace the whole thread
+              const existingEventStageSthread = oldData.events.find(
+                (e) =>
+                  e.traceId === newEvent.traceId &&
+                  e.message.kind !== MessageKind.PLATFORM_MESSAGE,
               );
-              const lastEventContent = oldData.events.at(-1)?.message.content;
 
-              if (existingEventThread && lastEventContent) {
-                if (isPlatformMessage) {
-                  const lastMessageContent = JSON.parse(lastEventContent) ?? [];
-                  const newMessageContent =
-                    JSON.parse(newEvent.message.content) ?? [];
-                  const newMessage = {
-                    ...newEvent,
-                    message: {
-                      ...existingEventThread.message,
-                      content: JSON.stringify([
-                        ...lastMessageContent,
-                        ...newMessageContent,
-                      ]),
-                    },
-                  };
-
-                  return {
-                    ...oldData,
-                    events: [newMessage],
-                  };
-                }
-
+              if (existingEventStageSthread) {
                 return {
                   ...oldData,
-                  events: [newEvent],
+                  events: [parsedEvent],
                 };
               }
 
               // add the new message to the thread
               return {
                 ...oldData,
-                events: [...oldData.events, newEvent],
+                events: [...oldData.events, parsedEvent],
               };
             },
           );
@@ -176,11 +160,11 @@ export const useBuildApp = (existingApplicationId?: string) => {
       // this should never happen due to `enabled`
       if (!appId) return null;
 
-      const messages = queryClient.getQueryData<{ messages: Message[] }>(
+      const events = queryClient.getQueryData<{ events: ParsedSseEvent[] }>(
         queryKeys.applicationMessages(appId),
       );
 
-      return messages ?? { messages: [] };
+      return events ?? { events: [] };
     },
     enabled: !!appId,
   });
@@ -195,7 +179,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
 
     streamingMessagesData: messageQuery.data,
     isStreamingMessages:
-      messageQuery.data?.messages.at(-1)?.status === 'streaming',
+      messageQuery.data?.events.at(-1)?.status === AgentStatus.RUNNING,
   };
 };
 

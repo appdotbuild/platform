@@ -138,6 +138,7 @@
         "app.build": "dist/cli.js",
       },
       "dependencies": {
+        "@appdotbuild/core": "workspace:*",
         "@inkjs/ui": "2.0.0",
         "@stackframe/js": "^2.8.6",
         "@tanstack/react-query": "5.69.0",

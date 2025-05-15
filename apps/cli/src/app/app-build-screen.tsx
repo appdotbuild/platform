@@ -8,6 +8,7 @@ import {
 } from '../components/shared/task-status.js';
 import { useDebug } from '../debug/debugger-panel.js';
 import { useBuildApp } from './message/use-message.js';
+import { MessageKind, AgentStatus } from '@appdotbuild/core';
 
 type AppBuildTextAreaProps = {
   initialPrompt: string;
@@ -45,34 +46,35 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
   };
 
   const renderBuildStages = () => {
-    if (!streamingMessagesData?.messages.length) return null;
+    if (!streamingMessagesData?.events.length) return null;
 
-    const currentMessage = streamingMessagesData.messages.at(-1);
+    const currentMessage = streamingMessagesData.events.at(-1);
     const currentPhase = currentMessage?.message.kind;
-    const isStreaming = currentMessage?.status === 'streaming';
-    const hasInteractive = currentMessage?.message.kind === 'RefinementRequest';
+    const isStreaming = currentMessage?.status === AgentStatus.RUNNING;
+    const hasInteractive =
+      currentMessage?.message.kind === MessageKind.REFINEMENT_REQUEST;
 
     type PhaseGroup = {
-      phase: string;
-      messages: typeof streamingMessagesData.messages;
+      phase: MessageKind;
+      events: typeof streamingMessagesData.events;
     };
 
     // Group messages by consecutive phases
-    const phaseGroups = streamingMessagesData.messages.reduce(
-      (groups: PhaseGroup[], message, index) => {
+    const phaseGroups = streamingMessagesData.events.reduce(
+      (groups: PhaseGroup[], event, index) => {
         // Start a new group if:
         // 1. It's the first message
         // 2. Previous message had a different phase
         if (
           index === 0 ||
-          streamingMessagesData.messages[index - 1]?.message.kind !==
-            message.message.kind
+          streamingMessagesData.events[index - 1]?.message.kind !==
+            event.message.kind
         ) {
           return [
             ...groups,
             {
-              phase: message.message.kind,
-              messages: [message],
+              phase: event.message.kind,
+              events: [event],
             },
           ];
         }
@@ -80,7 +82,7 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         // Add to the last group if consecutive
         const lastGroup = groups[groups.length - 1];
         if (lastGroup) {
-          lastGroup.messages.push(message);
+          lastGroup.events.push(event);
         }
 
         return groups;
@@ -91,8 +93,8 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
     // Find the last group that has an interactive element
     const lastInteractiveGroupIndex = phaseGroups.reduce(
       (lastIndex, group, currentIndex) => {
-        const hasInteractiveInGroup = group.messages.some(
-          (m) => m.message.kind === 'RefinementRequest',
+        const hasInteractiveInGroup = group.events.some(
+          (e) => e.message.kind === MessageKind.REFINEMENT_REQUEST,
         );
         return hasInteractiveInGroup ? currentIndex : lastIndex;
       },
@@ -116,18 +118,9 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
                 ? 'running'
                 : 'done';
 
-            const phaseMessages = group.messages
-              .flatMap((m) => {
-                const messageContent = JSON.parse(m.message.content) as {
-                  role: 'assistant' | 'user';
-                  content: {
-                    name?: string;
-                    id?: string;
-                    type: 'text' | 'tool_use' | 'tool_use_result';
-                    text: string;
-                  }[];
-                }[];
-
+            const phaseMessages = group.events
+              .flatMap((e) => {
+                const messageContent = e.message.content;
                 const details = messageContent.map((p, index) => {
                   const textMessages = p.content.filter(
                     (c) => c.type === 'text',
@@ -181,10 +174,11 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
   };
 
   const renderInteractiveContent = () => {
-    const currentMessage = streamingMessagesData?.messages.at(-1);
+    const currentMessage = streamingMessagesData?.events.at(-1);
     if (!currentMessage) return null;
 
-    const isInteractive = currentMessage.message.kind === 'RefinementRequest';
+    const isInteractive =
+      currentMessage.message.kind === MessageKind.REFINEMENT_REQUEST;
     if (!isInteractive) return null;
 
     return (
@@ -236,8 +230,8 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         showPrompt={Boolean(
           streamingMessagesData &&
             !isStreamingMessages &&
-            streamingMessagesData?.messages.at(-1)?.message.kind !==
-              'RefinementRequest',
+            streamingMessagesData?.events.at(-1)?.message.kind !==
+              MessageKind.REFINEMENT_REQUEST,
         )}
       />
     </Box>

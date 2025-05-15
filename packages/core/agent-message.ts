@@ -11,7 +11,11 @@ export enum MessageKind {
   PLATFORM_MESSAGE = 'PlatformMessage',
 }
 
-type MessageContentBlock = {
+type RequestId = string;
+type ApplicationId = string;
+export type TraceId = `app-${ApplicationId}.req-${RequestId}`;
+
+export type MessageContentBlock = {
   type: 'text' | 'tool_use' | 'tool_use_result';
   text: string;
 };
@@ -62,7 +66,7 @@ export class AgentContentMessage {
 
 export class AgentSseEvent {
   status: AgentStatus;
-  traceId?: string;
+  traceId?: TraceId;
   message: {
     role: 'assistant';
     kind: MessageKind;
@@ -75,7 +79,7 @@ export class AgentSseEvent {
 
   constructor(params: {
     status: AgentStatus;
-    traceId?: string;
+    traceId?: TraceId;
     message: {
       role: 'assistant';
       kind: MessageKind;
@@ -95,14 +99,14 @@ export class AgentSseEvent {
 export class AgentRequest {
   allMessages: ConversationMessage[];
   applicationId: string;
-  traceId: string;
+  traceId: TraceId;
   agentState?: Record<string, unknown>;
   settings?: Record<string, unknown>;
 
   constructor(params: {
     allMessages: ConversationMessage[];
     applicationId: string;
-    traceId: string;
+    traceId: TraceId;
     agentState?: Record<string, unknown>;
     settings?: Record<string, unknown>;
   }) {
@@ -125,7 +129,7 @@ export class ErrorResponse {
 }
 
 export class PlatformMessage extends AgentSseEvent {
-  constructor(status: AgentStatus, traceId: string, message: string) {
+  constructor(status: AgentStatus, traceId: TraceId, message: string) {
     super({
       status,
       traceId,
