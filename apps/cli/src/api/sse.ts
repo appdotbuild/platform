@@ -51,7 +51,7 @@ export function parseSSE(
             const parsedMessage = safeJSONParse(parsedData);
             onMessage(parsedMessage);
           } catch (err) {
-            console.log('error in parsing', err, event.data);
+            console.log('error in parsing', event.data, err);
           }
         }
         buffer = '';

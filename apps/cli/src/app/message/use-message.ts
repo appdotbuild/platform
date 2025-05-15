@@ -37,11 +37,16 @@ type RequestId = string;
 type ApplicationId = string;
 type TraceId = `app-${ApplicationId}.req-${RequestId}`;
 type StringifiedMessagesArrayJson = string;
-export type Message = {
+export type SseEvent = {
   status: 'streaming' | 'idle';
   message: {
     role: 'assistant' | 'user';
-    kind: 'RefinementRequest' | 'StageResult' | 'TestResult' | 'UserMessage';
+    kind:
+      | 'RefinementRequest'
+      | 'StageResult'
+      | 'TestResult'
+      | 'UserMessage'
+      | 'PlatformMessage';
     content: StringifiedMessagesArrayJson;
     agentState: any;
     unifiedDiff: any;
@@ -49,6 +54,8 @@ export type Message = {
   traceId: TraceId;
   githubRepository?: string;
 };
+
+type Message = SseEvent['message'];
 
 const queryKeys = {
   applicationMessages: (id: string) => ['apps', id],
@@ -69,8 +76,8 @@ const useSendMessage = () => {
         message,
         applicationId: metadata?.applicationId,
         traceId: metadata?.traceId,
-        onMessage: (newMessage) => {
-          const applicationId = extractApplicationId(newMessage.traceId);
+        onMessage: (newEvent) => {
+          const applicationId = extractApplicationId(newEvent.traceId);
           if (!applicationId) {
             throw new Error('Application ID not found');
           }
@@ -78,10 +85,7 @@ const useSendMessage = () => {
           setMetadata({
             ...metadata,
             applicationId,
-            traceId: newMessage.traceId,
-            ...(newMessage.githubRepository && {
-              githubRepository: newMessage.githubRepository,
-            }),
+            traceId: newEvent.traceId,
           });
 
           if (!newMessage.message) {
@@ -90,24 +94,52 @@ const useSendMessage = () => {
 
           queryClient.setQueryData(
             queryKeys.applicationMessages(applicationId),
-            (oldData: any) => {
+            (oldData: { events: SseEvent[] }) => {
               // first message
               if (!oldData) {
-                return { messages: [newMessage] };
+                return { events: [newEvent] };
               }
 
+              const isPlatformMessage =
+                newEvent.message.kind === 'PlatformMessage';
               // if the message is already in the thread, replace the whole thread
-              const existingMessageThread = oldData.messages.find(
-                (m: Message) => m.traceId === newMessage.traceId,
+              const existingEventThread = oldData.events.find(
+                (e) => e.traceId === newEvent.traceId,
               );
-              if (existingMessageThread) {
-                return { ...oldData, messages: [newMessage] };
+              const lastEventContent = oldData.events.at(-1)?.message.content;
+
+              if (existingEventThread && lastEventContent) {
+                if (isPlatformMessage) {
+                  const lastMessageContent = JSON.parse(lastEventContent) ?? [];
+                  const newMessageContent =
+                    JSON.parse(newEvent.message.content) ?? [];
+                  const newMessage = {
+                    ...newEvent,
+                    message: {
+                      ...existingEventThread.message,
+                      content: JSON.stringify([
+                        ...lastMessageContent,
+                        ...newMessageContent,
+                      ]),
+                    },
+                  };
+
+                  return {
+                    ...oldData,
+                    events: [newMessage],
+                  };
+                }
+
+                return {
+                  ...oldData,
+                  events: [newEvent],
+                };
               }
 
               // add the new message to the thread
               return {
                 ...oldData,
-                messages: [...oldData.messages, newMessage],
+                events: [...oldData.events, newEvent],
               };
             },
           );

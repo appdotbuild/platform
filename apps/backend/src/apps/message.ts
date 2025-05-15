@@ -207,6 +207,8 @@ export async function postMessage(
       body: JSON.stringify(body),
     });
 
+    console.log('agentResponse', agentResponse);
+
     if (!agentResponse.ok) {
       const errorData = await agentResponse.json();
       app.log.error(
@@ -591,30 +593,31 @@ function getExistingConversationBody({
   let agentState = previousEvent.message.agentState;
   let messagesHistory = JSON.parse(previousEvent.message.content);
 
-  let messagesHistoryCasted: Message[] = [];
+  let messagesHistoryCasted: ContentMessage[] = [];
   if (Array.isArray(messagesHistory)) {
     try {
       messagesHistoryCasted = messagesHistory.map((m) => {
-        const role = m.role === 'user' ? 'user' : 'assistant';
+        const role = m.role ?? 'assistant';
+
         // Extract only text content, skipping tool calls
         const content = (m.content ?? [])
           .filter((c) => c.type === 'text')
           .map((c) => c.text)
-          .join('');
+          .join('') as Stringified<MessageContentBlock[]>;
 
         if (role === 'user') {
           return {
             role,
             content,
-          } as UserMessage;
+          };
         } else {
           return {
             role: 'assistant',
             content,
-            agentState: null,
-            unifiedDiff: null,
-            kind: 'StageResult',
-          } as AgentMessage;
+            agentState: undefined,
+            unifiedDiff: undefined,
+            kind: MessageKind.STAGE_RESULT,
+          };
         }
       });
     } catch (error) {
