@@ -106,14 +106,16 @@ const useSendMessage = () => {
                 return { events: [parsedEvent] };
               }
 
-              // if there is already an event with the same traceId, for the same stage, replace the whole thread
-              const existingEventStageSthread = oldData.events.find(
-                (e) =>
-                  e.traceId === newEvent.traceId &&
-                  e.message.kind !== MessageKind.PLATFORM_MESSAGE,
+              // if there is already an event with the same traceId, replace the whole thread
+              const existingEventThread = oldData.events.some(
+                (e) => e.traceId === newEvent.traceId,
               );
 
-              if (existingEventStageSthread) {
+              // platform events should always be the last message in the thread
+              if (
+                existingEventThread &&
+                parsedEvent.message.kind !== MessageKind.PLATFORM_MESSAGE
+              ) {
                 return {
                   ...oldData,
                   events: [parsedEvent],

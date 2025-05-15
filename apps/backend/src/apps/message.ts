@@ -384,6 +384,15 @@ export async function postMessage(
       }
     }
 
+    const platformMessage = JSON.stringify(
+      new PlatformMessage(
+        AgentStatus.IDLE,
+        body.traceId as TraceId,
+        'Hello, world!',
+      ),
+    );
+    session.push(platformMessage);
+
     app.log.info('pushed done');
     session.push(
       { done: true, traceId: getApplicationTraceId(request, applicationId) },
