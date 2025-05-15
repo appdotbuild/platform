@@ -70,16 +70,18 @@ export async function postMessage(
     currentUsage,
   } = await checkMessageUsageLimit(userId);
 
-  const userLimitHeaders = {
-    'X-DailyLimit-Limit': dailyMessageLimit,
-    'X-DailyLimit-Remaining': remainingMessages,
-    'X-DailyLimit-Usage': currentUsage,
-    'X-DailyLimit-Reset': nextResetTime.toISOString(),
+  const userLimitHeader = {
+    'x-dailylimit-limit': dailyMessageLimit,
+    'x-dailylimit-remaining': remainingMessages - 1, // count new message
+    'x-dailylimit-usage': currentUsage + 1, // count new message
+    'x-dailylimit-reset': nextResetTime.toISOString(),
   };
+
+  reply.headers(userLimitHeader);
 
   if (isUserLimitReached) {
     app.log.error(`Daily message limit reached for user ${userId}`);
-    return reply.status(429).headers(userLimitHeaders).send();
+    return reply.status(429).send();
   }
 
   const requestBody = request.body as {
@@ -106,7 +108,7 @@ export async function postMessage(
 
     if (application.length === 0) {
       app.log.error('application not found');
-      return reply.status(404).headers(userLimitHeaders).send({
+      return reply.status(404).send({
         error: 'Application not found',
         status: 'error',
       });
@@ -166,7 +168,12 @@ export async function postMessage(
     abortController.abort();
   });
 
-  const session = await createSession(request.raw, reply.raw);
+  // Create SSE session with better-sse
+  const session = await createSession(request.raw, reply.raw, {
+    headers: {
+      ...userLimitHeader,
+    },
+  });
   app.log.info('created SSE session');
 
   try {
@@ -175,6 +182,7 @@ export async function postMessage(
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
+        Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH}`,
       },
       body: JSON.stringify(body),
     });
@@ -186,7 +194,7 @@ export async function postMessage(
           agentResponse.status
         }, errorData: ${JSON.stringify(errorData)}`,
       );
-      return reply.status(agentResponse.status).headers(userLimitHeaders).send({
+      return reply.status(agentResponse.status).send({
         error: errorData,
         status: 'error',
       });
@@ -194,7 +202,7 @@ export async function postMessage(
 
     const reader = agentResponse.body?.getReader();
     if (!reader) {
-      return reply.status(500).headers(userLimitHeaders).send({
+      return reply.status(500).send({
         error: 'No response stream available',
         status: 'error',
       });
@@ -234,10 +242,7 @@ export async function postMessage(
             }
 
             const parsedMessage = JSON.parse(messageWithoutData);
-            previousRequestMap.set(
-              parsedMessage.traceId,
-              JSON.parse(messageWithoutData),
-            );
+            previousRequestMap.set(parsedMessage.traceId, parsedMessage);
             session.push(messageWithoutData);
           }
         } catch (e) {
@@ -253,15 +258,12 @@ export async function postMessage(
     reply.raw.end();
   } catch (error) {
     app.log.error(`Unhandled error: ${error}`);
-    return reply
-      .status(500)
-      .headers(userLimitHeaders)
-      .send({
-        applicationId,
-        error: `An error occurred while processing your request: ${error}`,
-        status: 'error',
-        traceId: applicationTraceId(applicationId),
-      });
+    return reply.status(500).send({
+      applicationId,
+      error: `An error occurred while processing your request: ${error}`,
+      status: 'error',
+      traceId: applicationTraceId(applicationId),
+    });
   }
 }
 

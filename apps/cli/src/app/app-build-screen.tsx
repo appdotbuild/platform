@@ -3,10 +3,11 @@ import { BuildingBlock } from '../components/shared/building-block.js';
 import { InfiniteFreeText } from '../components/shared/free-text.js';
 import { Panel } from '../components/shared/panel.js';
 import {
-  TaskStatus,
   type TaskDetail,
+  TaskStatus,
 } from '../components/shared/task-status.js';
 import { useDebug } from '../debug/debugger-panel.js';
+import { useMessageLimitStore } from './message/use-message-limit.js';
 import { useBuildApp } from './message/use-message.js';
 
 type AppBuildTextAreaProps = {
@@ -28,6 +29,10 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
   } = useBuildApp();
 
   const { addLog } = useDebug();
+
+  const userMessageLimit = useMessageLimitStore();
+  const isUserReachedMessageLimit =
+    (createApplicationError as any)?.errorType === 'MESSAGE_LIMIT_ERROR';
 
   const getPhaseTitle = (phase: string) => {
     switch (phase) {
@@ -195,6 +200,7 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         successMessage="Success"
         status={createApplicationStatus}
         question="Provide feedback to the assistant..."
+        userMessageLimit={userMessageLimit || undefined}
         onSubmit={(value: string) => {
           createApplication({
             message: value,
@@ -205,9 +211,6 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
     );
   };
 
-  const isUserReachedMessageLimit =
-    (createApplicationError as any)?.errorType === 'MESSAGE_LIMIT_ERROR';
-
   return (
     <Box flexDirection="column">
       <InfiniteFreeText
@@ -217,10 +220,10 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         onSubmit={(text: string) => createApplication({ message: text })}
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
-        errorType={(createApplicationError as any)?.errorType}
         loadingText="Applying changes..."
         retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={!streamingMessagesData}
+        userMessageLimit={userMessageLimit || undefined}
       />
 
       {streamingMessagesData && renderBuildStages()}
@@ -235,7 +238,6 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         }
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
-        errorType={(createApplicationError as any)?.errorType}
         loadingText="Applying changes..."
         retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={Boolean(
@@ -244,6 +246,7 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
             streamingMessagesData?.messages.at(-1)?.message.kind !==
               'RefinementRequest',
         )}
+        userMessageLimit={userMessageLimit || undefined}
       />
     </Box>
   );

@@ -1,13 +1,25 @@
 import type { App, Paginated } from '@appdotbuild/core/types/api';
-import { type FastifyRequest, type FastifyReply } from 'fastify';
 import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
-import { db, apps } from '../db';
+import type { FastifyReply, FastifyRequest } from 'fastify';
+import { apps, db } from '../db';
+import { checkMessageUsageLimit } from './message-limit';
 
 export async function listApps(
   request: FastifyRequest,
   reply: FastifyReply,
 ): Promise<Paginated<App>> {
   const user = request.user;
+
+  const { dailyMessageLimit, nextResetTime, remainingMessages, currentUsage } =
+    await checkMessageUsageLimit(user.id);
+
+  reply.headers({
+    'x-dailylimit-limit': dailyMessageLimit.toString(),
+    'x-dailylimit-remaining': remainingMessages.toString(),
+    'x-dailylimit-usage': currentUsage.toString(),
+    'x-dailylimit-reset': nextResetTime.toISOString(),
+  });
+
   const { limit = 10, page = 1 } = request.query as {
     limit?: number;
     page?: number;

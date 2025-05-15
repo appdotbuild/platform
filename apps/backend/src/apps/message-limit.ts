@@ -1,6 +1,7 @@
 import { and, count, eq, gt } from 'drizzle-orm';
 import { app } from '../app';
 import { appPrompts, apps, db } from '../db';
+import type { FastifyReply } from 'fastify';
 
 interface MessageUsageLimit {
   isUserLimitReached: boolean;
@@ -10,7 +11,7 @@ interface MessageUsageLimit {
   nextResetTime: Date;
 }
 
-const calculateNextResetTime = (): Date => {
+const getNextResetTime = (): Date => {
   const nextResetDate = new Date();
   nextResetDate.setUTCDate(nextResetDate.getUTCDate() + 1);
   nextResetDate.setUTCHours(0, 0, 0, 0);
@@ -18,14 +19,20 @@ const calculateNextResetTime = (): Date => {
   return nextResetDate;
 };
 
+const getCurrentDayStart = (): Date => {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  return today;
+};
+
 export async function checkMessageUsageLimit(
   userId: string,
 ): Promise<MessageUsageLimit> {
   const parsedLimit = Number(process.env.DAILY_MESSAGE_LIMIT);
-  const userMessageLimit = parsedLimit || 50;
+  const userMessageLimit = parsedLimit || 70;
 
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const nextResetTime = calculateNextResetTime();
+  const startOfDay = getCurrentDayStart();
+  const nextResetTime = getNextResetTime();
 
   try {
     const messageCountResult = await db
@@ -33,7 +40,7 @@ export async function checkMessageUsageLimit(
       .from(appPrompts)
       .innerJoin(apps, eq(appPrompts.appId, apps.id))
       .where(
-        and(eq(apps.ownerId, userId), gt(appPrompts.createdAt, oneDayAgo)),
+        and(eq(apps.ownerId, userId), gt(appPrompts.createdAt, startOfDay)),
       );
     const currentUsage = messageCountResult[0]?.count || 0;
     const remainingMessages = Math.max(0, userMessageLimit - currentUsage);

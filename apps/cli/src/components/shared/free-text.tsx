@@ -6,6 +6,7 @@ import {
 } from '@inkjs/ui';
 import { Panel } from './panel.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { UserMessageLimit } from '../../app/message/use-message-limit.js';
 
 type StatusProps = {
   status: 'pending' | 'success' | 'error' | 'idle';
@@ -16,6 +17,7 @@ type StatusProps = {
 };
 
 type FreeTextErrorProps = {
+  userMessageLimit?: UserMessageLimit;
   errorMessage: string;
   retryMessage: string;
   prompt: string;
@@ -26,6 +28,7 @@ type FreeTextSuccessProps = {
   successMessage: string;
   prompt: string;
   question: string;
+  userMessageLimit?: UserMessageLimit;
 };
 
 export type FreeTextProps = {
@@ -36,6 +39,7 @@ export type FreeTextProps = {
   onSubmitSuccess?: (args: FreeTextSuccessProps) => void;
   onSubmitError?: (args: FreeTextErrorProps) => void;
   showPrompt?: boolean;
+  userMessageLimit?: UserMessageLimit;
 } & (
   | StatusProps
   | {
@@ -58,11 +62,18 @@ export const InfiniteFreeText = (props: FreeTextProps) => {
       question: string;
       status: 'error' | 'success';
       successMessage: string;
+      userMessageLimit?: UserMessageLimit;
     }[]
   >([]);
 
   const onSubmitError = useCallback(
-    ({ errorMessage, retryMessage, prompt, question }: FreeTextErrorProps) => {
+    ({
+      errorMessage,
+      retryMessage,
+      prompt,
+      question,
+      userMessageLimit,
+    }: FreeTextErrorProps) => {
       setInputsHistory([
         ...inputsHistory,
         {
@@ -72,6 +83,7 @@ export const InfiniteFreeText = (props: FreeTextProps) => {
           question,
           status: 'error',
           successMessage: '',
+          userMessageLimit,
         },
       ]);
     },
@@ -132,10 +144,10 @@ export const FreeText = (props: FreeTextProps) => {
     onSubmitError,
     onSubmitSuccess,
     showPrompt = true,
+    userMessageLimit,
   } = props;
 
   const [submittedValue, setSubmittedValue] = useState('');
-
   useEffect(() => {
     if (status === 'error' && submittedValue) {
       onSubmitError?.({
@@ -143,6 +155,7 @@ export const FreeText = (props: FreeTextProps) => {
         retryMessage: props.retryMessage || '',
         prompt: submittedValue,
         question: question || '',
+        userMessageLimit,
       });
       setSubmittedValue('');
     }
@@ -153,6 +166,7 @@ export const FreeText = (props: FreeTextProps) => {
         successMessage: props.successMessage,
         prompt: submittedValue,
         question: question || '',
+        userMessageLimit,
       });
     }
   }, [
@@ -164,6 +178,7 @@ export const FreeText = (props: FreeTextProps) => {
     props.retryMessage,
     props.successMessage,
     question,
+    userMessageLimit,
   ]);
 
   if (!showPrompt) return null;
@@ -192,6 +207,15 @@ export const FreeText = (props: FreeTextProps) => {
               <Text color="yellow">{loadingText || 'Loading...'}</Text>
             </Box>
           )}
+
+          {userMessageLimit && (
+            <Box justifyContent="flex-end" marginTop={1}>
+              <Text color="gray">
+                {userMessageLimit.currentUsage} /{' '}
+                {userMessageLimit.dailyMessageLimit} messages remaining
+              </Text>
+            </Box>
+          )}
         </Box>
       </Panel>
     </>
@@ -203,6 +227,7 @@ function FreeTextError({
   question,
   errorMessage,
   retryMessage,
+  userMessageLimit,
 }: FreeTextErrorProps) {
   return (
     <Panel
@@ -227,6 +252,15 @@ function FreeTextError({
             </>
           )}
         </Text>
+
+        {userMessageLimit && (
+          <Box justifyContent="flex-end" marginTop={1}>
+            <Text color="gray">
+              {userMessageLimit.currentUsage} /{' '}
+              {userMessageLimit.dailyMessageLimit} messages remaining
+            </Text>
+          </Box>
+        )}
       </Box>
     </Panel>
   );
@@ -236,6 +270,7 @@ function FreeTextSuccess({
   prompt,
   question,
   successMessage,
+  userMessageLimit,
 }: FreeTextSuccessProps) {
   return (
     <Panel
@@ -251,6 +286,15 @@ function FreeTextSuccess({
         <Text color={'greenBright'}>
           <Text>✓</Text> <Text>{successMessage}</Text>
         </Text>
+
+        {userMessageLimit && (
+          <Box justifyContent="flex-end" marginTop={1}>
+            <Text color="gray">
+              {userMessageLimit.currentUsage} /{' '}
+              {userMessageLimit.dailyMessageLimit} messages remaining
+            </Text>
+          </Box>
+        )}
       </Box>
     </Panel>
   );
