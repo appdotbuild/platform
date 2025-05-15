@@ -1,7 +1,6 @@
 import { and, count, eq, gt } from 'drizzle-orm';
 import { app } from '../app';
 import { appPrompts, apps, db } from '../db';
-import type { FastifyReply } from 'fastify';
 
 interface MessageUsageLimit {
   isUserLimitReached: boolean;
@@ -29,7 +28,7 @@ export async function checkMessageUsageLimit(
   userId: string,
 ): Promise<MessageUsageLimit> {
   const parsedLimit = Number(process.env.DAILY_MESSAGE_LIMIT);
-  const userMessageLimit = parsedLimit || 70;
+  const userMessageLimit = parsedLimit || 50;
 
   const startOfDay = getCurrentDayStart();
   const nextResetTime = getNextResetTime();
