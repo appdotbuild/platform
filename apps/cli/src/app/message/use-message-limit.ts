@@ -15,6 +15,19 @@ export const useMessageLimitStore = create<UserMessageLimitState>((set) => ({
   nextResetTime: new Date(),
   currentUsage: 0,
   remainingMessages: 0,
+  isUserLimitReached: false,
 
-  setMessageLimit: (limit) => set({ ...limit }),
+  setMessageLimit: ({
+    dailyMessageLimit,
+    nextResetTime,
+    currentUsage,
+    remainingMessages,
+  }) =>
+    set({
+      dailyMessageLimit: +dailyMessageLimit,
+      nextResetTime,
+      currentUsage: +currentUsage,
+      remainingMessages: +remainingMessages,
+      isUserLimitReached: +currentUsage >= +dailyMessageLimit,
+    }),
 }));

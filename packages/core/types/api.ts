@@ -1,5 +1,5 @@
 export type UserMessageLimit = {
-  isUserLimitReached?: boolean;
+  isUserLimitReached: boolean;
   dailyMessageLimit: number;
   remainingMessages: number;
   currentUsage: number;

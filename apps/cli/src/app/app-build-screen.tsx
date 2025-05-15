@@ -32,7 +32,8 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
 
   const userMessageLimit = useMessageLimitStore();
   const isUserReachedMessageLimit =
-    (createApplicationError as any)?.errorType === 'MESSAGE_LIMIT_ERROR';
+    (createApplicationError as any)?.errorType === 'MESSAGE_LIMIT_ERROR' ||
+    userMessageLimit.isUserLimitReached;
 
   const getPhaseTitle = (phase: string) => {
     switch (phase) {

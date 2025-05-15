@@ -107,6 +107,19 @@ export const InfiniteFreeText = (props: FreeTextProps) => {
     [inputsHistory],
   );
 
+  const limitReachedError =
+    props.userMessageLimit?.isUserLimitReached && props.showPrompt
+      ? {
+          errorMessage: `Daily limit of ${props.userMessageLimit?.dailyMessageLimit} messages reached. The limit will reset the next day. \nPlease try again after the reset. If you require more access, please file an issue at github.com/appdotbuild/platform.`,
+          retryMessage: '',
+          prompt: '',
+          question: props.question || 'Message limit reached',
+          status: 'error' as const,
+          successMessage: '',
+          userMessageLimit: props.userMessageLimit,
+        }
+      : null;
+
   if (!props.status) return null;
 
   // this is to prevent the free input from showing an error when the user
@@ -117,19 +130,23 @@ export const InfiniteFreeText = (props: FreeTextProps) => {
 
   return (
     <Box flexDirection="column" gap={1} width="100%">
-      {inputsHistory.map((input, index) =>
-        input.status === 'error' ? (
-          <FreeTextError key={index} {...input} />
-        ) : (
-          <FreeTextSuccess key={index} {...input} />
-        ),
+      {inputsHistory.map((input, index) => {
+        if (input.status === 'error') {
+          return <FreeTextError key={index} {...input} />;
+        }
+        return <FreeTextSuccess key={index} {...input} />;
+      })}
+
+      {limitReachedError && <FreeTextError {...limitReachedError} />}
+
+      {!props.userMessageLimit?.isUserLimitReached && (
+        <FreeText
+          {...props}
+          onSubmitError={onSubmitError}
+          onSubmitSuccess={onSubmitSuccess}
+          status={freeInputStatus}
+        />
       )}
-      <FreeText
-        {...props}
-        onSubmitError={onSubmitError}
-        onSubmitSuccess={onSubmitSuccess}
-        status={freeInputStatus}
-      />
     </Box>
   );
 };
@@ -193,6 +210,7 @@ export const FreeText = (props: FreeTextProps) => {
               <Text color="gray">{submittedValue}</Text>
             ) : (
               <InkTextInput
+                isDisabled={userMessageLimit?.isUserLimitReached}
                 placeholder={placeholder}
                 onSubmit={(value) => {
                   setSubmittedValue(value);
@@ -208,21 +226,23 @@ export const FreeText = (props: FreeTextProps) => {
             </Box>
           )}
 
-          {userMessageLimit && (
+          {userMessageLimit?.currentUsage ? (
             <Box justifyContent="flex-end" marginTop={1}>
-              <Text color="gray">
-                {userMessageLimit.currentUsage} /{' '}
+              <Text
+                color={!userMessageLimit.isUserLimitReached ? 'gray' : 'red'}
+              >
+                {userMessageLimit.remainingMessages} /{' '}
                 {userMessageLimit.dailyMessageLimit} messages remaining
               </Text>
             </Box>
-          )}
+          ) : null}
         </Box>
       </Panel>
     </>
   );
 };
 
-function FreeTextError({
+export function FreeTextError({
   prompt,
   question,
   errorMessage,
@@ -255,8 +275,8 @@ function FreeTextError({
 
         {userMessageLimit && (
           <Box justifyContent="flex-end" marginTop={1}>
-            <Text color="gray">
-              {userMessageLimit.currentUsage} /{' '}
+            <Text color={!userMessageLimit.isUserLimitReached ? 'gray' : 'red'}>
+              {userMessageLimit.remainingMessages} /{' '}
               {userMessageLimit.dailyMessageLimit} messages remaining
             </Text>
           </Box>
@@ -289,8 +309,8 @@ function FreeTextSuccess({
 
         {userMessageLimit && (
           <Box justifyContent="flex-end" marginTop={1}>
-            <Text color="gray">
-              {userMessageLimit.currentUsage} /{' '}
+            <Text color={!userMessageLimit.isUserLimitReached ? 'gray' : 'red'}>
+              {userMessageLimit.remainingMessages} /{' '}
               {userMessageLimit.dailyMessageLimit} messages remaining
             </Text>
           </Box>
