@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - apply-migrations-ci-cd
 jobs:
   deploy:
     name: Deploy backend
@@ -11,10 +12,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+
       # Step 1: check if all migrations are generated, otherwise fail job
-      # (The above step should be ran on every PR against main as well)
+      - name: Check for ungenerated migrations
+        run: |
+          cd apps/backend
+          npm install
+          npx drizzle-kit generate
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Error: There are ungenerated migrations. Please run 'drizzle-kit generate' locally and commit the changes."
+            git status
+            exit 1
+          fi
+
       # Step 2: check if migrations can be applied without asking user for permission, otherwise fail job
       # Step 3: apply any pending migrations
-      - run: flyctl deploy --config=./apps/backend/fly.toml
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      # - run: flyctl deploy --config=./apps/backend/fly.toml
+      # env:
+      # FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
