@@ -1,6 +1,6 @@
 {
-  "id": "f92742f9-5023-401e-8c88-84e8bb8caf3f",
-  "prevId": "26cb7df3-9164-4916-8b8b-4af6f49f5689",
+  "id": "2b7e3764-52ed-4e25-aadc-791b69e33b15",
+  "prevId": "f92742f9-5023-401e-8c88-84e8bb8caf3f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -152,14 +152,20 @@
           "primaryKey": false,
           "notNull": false
         },
+        "githubUsername": {
+          "name": "githubUsername",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "appName": {
           "name": "appName",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "githubUsername": {
-          "name": "githubUsername",
+        "appUrl": {
+          "name": "appUrl",
           "type": "text",
           "primaryKey": false,
           "notNull": false

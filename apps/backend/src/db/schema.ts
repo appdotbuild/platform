@@ -30,6 +30,10 @@ export const apps = pgTable(
       .notNull()
       .default(false),
     clientSource: text('clientSource').notNull().default('slack'), // "slack" or "cli"
+    repositoryUrl: text(),
+    githubUsername: text(),
+    appName: text(),
+    appUrl: text(),
   },
   (table) => [index('idx_apps_ownerid_id').on(table.ownerId, table.id)],
 );

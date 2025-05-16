@@ -1,9 +1,11 @@
 {
-  "name": "app-build-cli",
+  "name": "@app.build/cli",
   "version": "0.0.0",
   "license": "MIT",
   "type": "module",
-  "bin": "dist/cli.js",
+  "bin": {
+    "app.build": "dist/cli.js"
+  },
   "files": [
     "dist"
   ],

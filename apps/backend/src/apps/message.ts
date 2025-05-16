@@ -1,21 +1,48 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {
+  type AgentSseEvent,
+  AgentStatus,
+  type ContentMessage,
+  type MessageContentBlock,
+  MessageKind,
+  PlatformMessage,
+  type TraceId,
+} from '@appdotbuild/core';
+import { type Session, createSession } from 'better-sse';
+import { and, eq } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { app } from '../app';
-import { apps, appPrompts, db } from '../db';
-import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { app } from '../app';
 import { getAgentHost } from '../apps/env';
-import fs from 'fs';
-import { createSession } from 'better-sse';
+import { appPrompts, apps, db } from '../db';
+import { deployApp } from '../deploy';
+import { isDev } from '../env';
+import {
+  checkIfRepoExists,
+  cloneRepository,
+  createUserCommit,
+  createUserInitialCommit,
+  createUserRepository,
+} from '../github';
+import {
+  type FileData,
+  copyDirToMemfs,
+  createMemoryFileSystem,
+  readDirectoryRecursive,
+  writeMemfsToTempDir,
+} from '../utils';
+import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
 
 interface AgentMessage {
   role: 'assistant';
   content: string;
-  agentState: any | null;
-  unifiedDiff: any | null;
-  kind: 'StageResult';
+  agentState?: any | null;
+  unifiedDiff?: any | null;
+  kind: MessageKind;
 }
-
 interface UserMessage {
   role: 'user';
   content: string;
@@ -23,43 +50,34 @@ interface UserMessage {
 
 type Message = AgentMessage | UserMessage;
 
-type MessageContentBlock = {
-  type: 'text' | 'tool_use' | 'tool_use_result';
-  text: string;
-};
-
-type ConversationMessage = {
-  role: 'user' | 'assistant';
-  content: MessageContentBlock[];
-};
-
-type AgentSseEvent = {
-  status: 'idle';
+type Body = {
+  applicationId?: string;
+  allMessages: Message[];
   traceId: string;
-  message: {
-    role: 'assistant';
-    kind: 'RefinementRequest';
-    // TODO: ask why this is not plain JSON
-    content: Stringified<ConversationMessage[]>;
-    agentState: any;
-    unifiedDiff: any;
-  };
+  settings: Record<string, any>;
+  agentState?: any;
+  allFiles?: FileData[];
 };
 
-type TraceId = string;
+type RequestBody = {
+  message: string;
+  applicationId?: string;
+  clientSource: string;
+  settings?: Record<string, any>;
+};
+
 const previousRequestMap = new Map<TraceId, AgentSseEvent>();
+const logsFolder = path.join(__dirname, '..', '..', 'logs');
+
+const getApplicationTraceId = (
+  request: FastifyRequest,
+  appId: string | undefined,
+) => (appId ? `app-${appId}.req-${request.id}` : `temp.req-${request.id}`);
 
 export async function postMessage(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const applicationTraceId = (appId: string | undefined) =>
-    appId ? `app-${appId}.req-${request.id}` : `temp.req-${request.id}`;
-
-  app.log.info('Received message request', {
-    body: request.body,
-  });
-
   const userId = request.user.id;
 
   const {
@@ -84,27 +102,52 @@ export async function postMessage(
     return reply.status(429).send();
   }
 
-  const requestBody = request.body as {
-    message: string;
-    applicationId?: string;
-    clientSource: string;
-    settings?: Record<string, any>;
-  };
+  const session = await createSession(request.raw, reply.raw, {
+    headers: {
+      ...userLimitHeader,
+    },
+  });
 
+  const abortController = new AbortController();
+  const githubUsername = request.user.githubUsername;
+  const githubAccessToken = request.user.githubAccessToken;
+  const requestBody = request.body as RequestBody;
   let applicationId = requestBody.applicationId;
-  let body = {
+
+  request.socket.on('close', () => {
+    app.log.info(`Client disconnected for applicationId: ${applicationId}`);
+    abortController.abort();
+  });
+
+  app.log.info('created SSE session');
+
+  if (isDev) {
+    fs.mkdirSync(logsFolder, { recursive: true });
+  }
+
+  app.log.info('Received message request', {
+    body: request.body,
+  });
+
+  const traceId = getApplicationTraceId(request, applicationId);
+
+  let body: Body = {
     applicationId,
     allMessages: [{ role: 'user', content: requestBody.message }],
-    traceId: applicationTraceId(applicationId),
+    traceId,
     settings: requestBody.settings || { 'max-iterations': 3 },
   };
+  let isIteration = !!applicationId;
+  let appName = null;
 
   if (applicationId) {
-    app.log.info('existing applicationId', { applicationId });
+    app.log.info(`existing applicationId ${applicationId}`);
     const application = await db
       .select()
       .from(apps)
       .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
+
+    appName = application[0]!.appName;
 
     if (application.length === 0) {
       app.log.error('application not found');
@@ -114,7 +157,10 @@ export async function postMessage(
       });
     }
 
-    const previousRequest = previousRequestMap.get(application[0]!.traceId!);
+    const previousRequest = previousRequestMap.get(
+      application[0]!.traceId as TraceId,
+    );
+
     if (!previousRequest) {
       return reply.status(404).send({
         error: 'Previous request not found',
@@ -126,57 +172,43 @@ export async function postMessage(
       ...body,
       ...getExistingConversationBody({
         previousEvent: previousRequest,
-        existingTraceId: application[0]!.traceId!,
+        existingTraceId: application[0]!.traceId as TraceId,
         applicationId,
         message: requestBody.message,
         settings: requestBody.settings,
       }),
     };
   } else {
-    // Create new application if applicationId is not provided
     applicationId = uuidv4();
     body = {
       ...body,
       applicationId,
-      traceId: applicationTraceId(applicationId),
+      traceId,
     };
-
-    await db.insert(apps).values({
-      id: applicationId,
-      name: requestBody.message,
-      clientSource: requestBody.clientSource,
-      ownerId: userId,
-      traceId: applicationTraceId(applicationId),
-    });
-    // TODO: setup repo and initial commit
   }
 
-  // Add the current message
-  await db.insert(appPrompts).values({
-    id: uuidv4(),
-    prompt: requestBody.message,
-    appId: applicationId,
-    kind: 'user',
-  });
+  const tempDirPath = path.join(
+    os.tmpdir(),
+    `appdotbuild-template-${Date.now()}`,
+  );
 
-  // Create abort controller for this connection
-  const abortController = new AbortController();
-
-  // Set up cleanup when client disconnects
-  request.socket.on('close', () => {
-    app.log.info(`Client disconnected for applicationId: ${applicationId}`);
-    abortController.abort();
-  });
-
-  // Create SSE session with better-sse
-  const session = await createSession(request.raw, reply.raw, {
-    headers: {
-      ...userLimitHeader,
-    },
-  });
-  app.log.info('created SSE session');
+  const volumePromise = isIteration
+    ? cloneRepository({
+        repo: `${githubUsername}/${appName}`,
+        githubAccessToken,
+        tempDirPath,
+      }).then(copyDirToMemfs)
+    : createMemoryFileSystem();
 
   try {
+    // We are iterating over an existing app, so we wait for the promise here to read the files that where cloned.
+    // and we add them to the body for the agent to use.
+    if (isIteration) {
+      const { volume, virtualDir } = await volumePromise;
+
+      body.allFiles = readDirectoryRecursive(virtualDir, virtualDir, volume);
+    }
+
     const agentResponse = await fetch(`${getAgentHost()}/message`, {
       method: 'POST',
       headers: {
@@ -201,6 +233,7 @@ export async function postMessage(
     }
 
     const reader = agentResponse.body?.getReader();
+
     if (!reader) {
       return reply.status(500).send({
         error: 'No response stream available',
@@ -209,41 +242,143 @@ export async function postMessage(
     }
 
     let buffer = '';
-    // Process the stream
+    let canDeploy = false;
+    const textDecoder = new TextDecoder();
+
     while (!abortController.signal.aborted) {
       app.log.info('reading the stream');
+
       const { done, value } = await reader.read();
+
+      // there can be an idle message from the agent, there we know it finished the task
       if (done) break;
-      const text = new TextDecoder().decode(value);
+
+      const text = textDecoder.decode(value, { stream: true });
+
+      if (isDev) {
+        fs.writeFileSync(`${logsFolder}/sse_messages-${Date.now()}.log`, text);
+      }
 
       buffer += text;
-      // Process any complete messages (separated by empty lines)
-      const messages = buffer.split('\n\n');
-      buffer = messages.pop() || '';
+
+      const messages = buffer
+        .split('\n\n')
+        .filter(Boolean)
+        .map((m) => (m.startsWith('data: ') ? m.replace('data: ', '') : m));
+
       for (const message of messages) {
         try {
           if (session.isConnected) {
-            // all messages are prefixed with 'data: '
-            const messageWithoutData = message.replace(
-              'data: ',
-              '',
-            ) as Stringified<AgentSseEvent>;
+            const parsedMessage = JSON.parse(message);
+
+            buffer = buffer.slice(
+              'data: '.length + message.length + '\n\n'.length,
+            );
+
             app.log.info('message sent to CLI', {
-              message: messageWithoutData,
+              message,
             });
 
-            if (process.env.NODE_ENV === 'development') {
-              // add separator
-              const separator = '--------------------------------';
-              fs.writeFileSync(
-                'sse_messages.log',
-                `${separator}\n${messageWithoutData}\n\n`,
-              );
+            storeDevLogs(parsedMessage, message);
+
+            previousRequestMap.set(parsedMessage.traceId, parsedMessage);
+            session.push(message);
+
+            if (
+              parsedMessage.message.unifiedDiff ===
+              '# Note: This is a valid empty diff (means no changes from template)'
+            ) {
+              parsedMessage.message.unifiedDiff = null;
             }
 
-            const parsedMessage = JSON.parse(messageWithoutData);
-            previousRequestMap.set(parsedMessage.traceId, parsedMessage);
-            session.push(messageWithoutData);
+            canDeploy = !!parsedMessage.message.unifiedDiff;
+
+            if (canDeploy) {
+              const { volume, virtualDir, memfsVolume } = await volumePromise;
+              const unifiedDiffPath = path.join(
+                virtualDir,
+                `unified_diff-${Date.now()}.patch`,
+              );
+
+              volume.writeFileSync(
+                unifiedDiffPath,
+                `${parsedMessage.message.unifiedDiff}\n\n`,
+              );
+
+              const respositoryPath = await applyDiff(
+                unifiedDiffPath,
+                virtualDir,
+                volume,
+              );
+              const files = readDirectoryRecursive(
+                respositoryPath,
+                virtualDir,
+                volume,
+              );
+
+              if (isDev) {
+                fs.writeFileSync(
+                  `${logsFolder}/${applicationId}-files.json`,
+                  JSON.stringify(files, null, 2),
+                );
+              }
+
+              if (isIteration) {
+                await appIteration({
+                  appName,
+                  githubUsername,
+                  githubAccessToken,
+                  files,
+                  traceId,
+                  session,
+                  commitMessage:
+                    parsedMessage.message.commit_message || 'feat: update',
+                });
+              } else {
+                appName =
+                  parsedMessage.message.app_name ||
+                  `appdotbuild-${uuidv4().slice(0, 4)}`;
+
+                const { newAppName } = await appCreation({
+                  applicationId,
+                  appName,
+                  githubAccessToken,
+                  githubUsername,
+                  ownerId: request.user.id,
+                  traceId,
+                  session,
+                  requestBody,
+                  files,
+                });
+
+                appName = newAppName;
+                isIteration = true;
+              }
+
+              const [, { appURL }] = await Promise.all([
+                db.insert(appPrompts).values({
+                  id: uuidv4(),
+                  prompt: requestBody.message,
+                  appId: applicationId,
+                  kind: 'user',
+                }),
+                writeMemfsToTempDir(memfsVolume, virtualDir).then(
+                  (tempDirPath) =>
+                    deployApp({
+                      appId: applicationId,
+                      appDirectory: tempDirPath,
+                    }),
+                ),
+              ]);
+
+              session.push(
+                new PlatformMessage(
+                  AgentStatus.IDLE,
+                  traceId as TraceId,
+                  `Your application has been deployed to ${appURL}`,
+                ),
+              );
+            }
           }
         } catch (e) {
           app.log.error(`Error pushing SSE message: ${e}`);
@@ -252,7 +387,10 @@ export async function postMessage(
     }
 
     app.log.info('pushed done');
-    session.push({ done: true }, 'done');
+    session.push(
+      { done: true, traceId: getApplicationTraceId(request, applicationId) },
+      'done',
+    );
     session.removeAllListeners();
 
     reply.raw.end();
@@ -262,9 +400,166 @@ export async function postMessage(
       applicationId,
       error: `An error occurred while processing your request: ${error}`,
       status: 'error',
-      traceId: applicationTraceId(applicationId),
+      traceId: getApplicationTraceId(request, applicationId),
     });
   }
+}
+
+function storeDevLogs(
+  parsedMessage: AgentSseEvent,
+  messageWithoutData: string,
+) {
+  if (isDev) {
+    const separator = '--------------------------------';
+
+    fs.writeFileSync(
+      `${logsFolder}/unified_diff-${Date.now()}.patch`,
+      `${parsedMessage.message.unifiedDiff}\n\n`,
+    );
+    fs.writeFileSync(
+      `${logsFolder}/sse_messages.log`,
+      `${separator}\n\n${messageWithoutData}\n\n`,
+    );
+  }
+}
+
+async function appCreation({
+  applicationId,
+  appName,
+  traceId,
+  githubUsername,
+  githubAccessToken,
+  ownerId,
+  session,
+  requestBody,
+  files,
+}: {
+  applicationId: string;
+  appName: string;
+  traceId: string;
+  githubUsername: string;
+  githubAccessToken: string;
+  ownerId: string;
+  session: Session;
+  requestBody: RequestBody;
+  files: ReturnType<typeof readDirectoryRecursive>;
+}) {
+  if (isDev) {
+    fs.writeFileSync(
+      `${logsFolder}/${applicationId}-files.json`,
+      JSON.stringify(files, null, 2),
+    );
+  }
+
+  app.log.info(`appName - ${appName}`);
+
+  const { repositoryUrl, appName: newAppName } = await createUserUpstreamApp({
+    appName,
+    githubUsername,
+    githubAccessToken,
+    files,
+  });
+
+  if (!repositoryUrl) {
+    throw new Error('Repository URL not found');
+  }
+
+  await db.insert(apps).values({
+    id: applicationId,
+    name: requestBody.message,
+    clientSource: requestBody.clientSource,
+    ownerId,
+    traceId,
+    repositoryUrl,
+    appName: newAppName,
+    githubUsername,
+  });
+
+  session.push(
+    new PlatformMessage(
+      AgentStatus.IDLE,
+      traceId as TraceId,
+      `Your application has been uploaded to this github repository: ${repositoryUrl}`,
+    ),
+  );
+
+  return { newAppName };
+}
+
+async function appIteration({
+  appName,
+  githubUsername,
+  githubAccessToken,
+  files,
+  traceId,
+  session,
+  commitMessage,
+}: {
+  appName: string;
+  githubUsername: string;
+  githubAccessToken: string;
+  files: ReturnType<typeof readDirectoryRecursive>;
+  traceId: string;
+  session: Session;
+  commitMessage: string;
+}) {
+  const { commitSha } = await createUserCommit({
+    repo: appName,
+    owner: githubUsername,
+    paths: files,
+    message: commitMessage,
+    branch: 'main',
+    githubAccessToken,
+  });
+
+  const commitUrl = `https://github.com/${githubUsername}/${appName}/commit/${commitSha}`;
+  session.push(
+    new PlatformMessage(
+      AgentStatus.IDLE,
+      traceId as TraceId,
+      `committed in existing app - commit url: ${commitUrl}`,
+    ),
+  );
+}
+
+async function createUserUpstreamApp({
+  appName,
+  githubUsername,
+  githubAccessToken,
+  files,
+}: {
+  appName: string;
+  githubUsername: string;
+  githubAccessToken: string;
+  files: ReturnType<typeof readDirectoryRecursive>;
+}) {
+  const repoExists = await checkIfRepoExists({
+    username: githubUsername, // or the org name
+    repoName: appName,
+    githubAccessToken,
+  });
+
+  if (repoExists) {
+    appName = `${appName}-${uuidv4().slice(0, 4)}`;
+    app.log.info(`repo exists, new appName - ${appName}`);
+  }
+
+  const { repositoryUrl } = await createUserRepository({
+    repo: appName,
+    githubAccessToken,
+  });
+
+  app.log.info(`repository created: ${repositoryUrl}`);
+
+  const { commitSha: initialCommitSha } = await createUserInitialCommit({
+    repo: appName,
+    owner: githubUsername,
+    paths: files,
+    githubAccessToken,
+  });
+
+  const initialCommitUrl = `https://github.com/${githubUsername}/${appName}/commit/${initialCommitSha}`;
+  return { repositoryUrl, appName, initialCommitUrl };
 }
 
 function getExistingConversationBody({
@@ -283,31 +578,31 @@ function getExistingConversationBody({
   let agentState = previousEvent.message.agentState;
   let messagesHistory = JSON.parse(previousEvent.message.content);
 
-  let messagesHistoryCasted: Message[] = [];
+  let messagesHistoryCasted: ContentMessage[] = [];
   if (Array.isArray(messagesHistory)) {
     try {
       messagesHistoryCasted = messagesHistory.map((m) => {
-        const role = m.role === 'user' ? 'user' : 'assistant';
+        const role = m.role ?? 'assistant';
+
         // Extract only text content, skipping tool calls
         const content = (m.content ?? [])
           .filter((c) => c.type === 'text')
           .map((c) => c.text)
-          .join('');
+          .join('') as Stringified<MessageContentBlock[]>;
 
         if (role === 'user') {
           return {
             role,
             content,
-          } as UserMessage;
-        } else {
-          return {
-            role: 'assistant',
-            content,
-            agentState: null,
-            unifiedDiff: null,
-            kind: 'StageResult',
-          } as AgentMessage;
+          };
         }
+        return {
+          role: 'assistant',
+          content,
+          agentState: undefined,
+          unifiedDiff: undefined,
+          kind: MessageKind.FINAL_RESULT,
+        };
       });
     } catch (error) {
       app.log.error(`Error parsing message history: ${error}`);
@@ -316,7 +611,7 @@ function getExistingConversationBody({
   }
 
   // Create the request body
-  const body = {
+  const body: Body = {
     applicationId,
     allMessages: [...messagesHistoryCasted, { role: 'user', content: message }],
     traceId: existingTraceId,

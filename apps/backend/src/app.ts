@@ -5,7 +5,7 @@ import { validateAuth } from './auth-strategy';
 
 declare module 'fastify' {
   interface FastifyRequest {
-    user: ServerUser & { githubAccessToken: string };
+    user: ServerUser & { githubAccessToken: string; githubUsername: string };
   }
   export interface FastifyInstance {
     authenticate: any;

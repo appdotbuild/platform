@@ -6,6 +6,7 @@
   "keywords": [],
   "license": "ISC",
   "author": "",
+  "type": "module",
   "scripts": {
     "clean": "rm -rf node_modules",
     "lint": "prettier --check .",

@@ -1,1 +1,1 @@
-export { deployTask } from './deploy-task';
+export { deployApp } from './deploy-app';
