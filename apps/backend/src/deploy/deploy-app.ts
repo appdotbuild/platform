@@ -14,9 +14,6 @@ const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
 });
 
-const DEFAULT_TEMPLATE_DOCKER_IMAGE =
-  '361769577597.dkr.ecr.us-east-1.amazonaws.com/appdotbuild:tpcr-template';
-
 export async function deployApp({
   appId,
   appDirectory,
@@ -24,9 +21,6 @@ export async function deployApp({
   appId: string;
   appDirectory: string;
 }) {
-  const newDockerFilePath = path.join(__dirname, 'docker-template.dockerfile');
-  const newDockerFile = fs.readFileSync(newDockerFilePath, 'utf8');
-
   const app = await db
     .select({
       deployStatus: apps.deployStatus,
@@ -54,8 +48,6 @@ export async function deployApp({
   if (!fs.existsSync(path.join(appDirectory, 'Dockerfile'))) {
     throw new Error('Dockerfile not found');
   }
-
-  fs.writeFileSync(path.join(appDirectory, 'Dockerfile'), newDockerFile);
 
   // Create a Neon database
   // TODO: check if the database already exists
