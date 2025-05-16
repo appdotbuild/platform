@@ -1,7 +1,7 @@
 const BACKEND_PRODUCTION_API_HOST = 'https://platform-muddy-meadow-938.fly.dev';
 const BACKEND_MOCKED_API_HOST = 'http://127.0.0.1:4444';
 
-const AUTH_HOST_PRODUCTION = 'https://admin.app.build';
+const AUTH_HOST_PRODUCTION = 'https://app.build';
 const AUTH_HOST_DEV = 'http://localhost:3001';
 
 export function getBackendHost() {

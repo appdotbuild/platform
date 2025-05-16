@@ -7,14 +7,16 @@
     "app.build": "dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "package.json"
   ],
   "scripts": {
-    "build": "tsc",
+    "build:cli": "bun run build.ts",
     "clean": "rm -rf node_modules dist",
     "dev": "tsc --watch",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
+    "release": "semantic-release --config release.config.mjs",
     "start": "node dist/cli.js",
     "start:inspect": "node --inspect dist/cli.js",
     "test": "prettier --check . && xo && ava",
@@ -58,12 +60,16 @@
     "ink-testing-library": "^3.0.0",
     "prettier": "^2.8.7",
     "react-devtools-core": "^6.1.1",
+    "semantic-release": "23.0.0",
     "typescript": "5.8.2",
     "typescript-eslint": "8.28.0",
     "xo": "^0.53.1"
   },
   "engines": {
     "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "patchedDependencies": {
     "@tanstack/query-core@5.69.0": "apps/cli/patches/@tanstack%2Fquery-core@5.69.0.patch",
