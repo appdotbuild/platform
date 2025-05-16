@@ -22,6 +22,9 @@ export type App = {
   receivedSuccess: boolean;
   recompileInProgress: boolean;
   clientSource: 'slack' | 'cli';
+  repositoryUrl?: string;
+  appName?: string;
+  appUrl?: string;
 };
 
 export type AppGenerationParams = {

@@ -18,7 +18,7 @@ type ParseSSEOptions = {
 function safeJSONParse(data: string) {
   try {
     return JSON.parse(data);
-  } catch (err) {
+  } catch {
     return data;
   }
 }
@@ -46,13 +46,13 @@ export function parseSSE(
           }
 
           try {
-            const parsedData = JSON.parse(event.data);
+            const parsedData = safeJSONParse(event.data);
             if (event.event === 'done') {
               resolve();
               return;
             }
 
-            const parsedMessage = JSON.parse(parsedData);
+            const parsedMessage = safeJSONParse(parsedData);
             onMessage(parsedMessage);
           } catch (err) {
             console.log('error in parsing', event.data, err);

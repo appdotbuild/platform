@@ -100,11 +100,20 @@ export async function deployApp({
   const { domains } = JSON.parse(stdout);
   const { name } = domains[0];
 
+  const appUrl = `https://${name}`;
+
+  await db
+    .update(apps)
+    .set({
+      appUrl,
+    })
+    .where(eq(apps.id, appId));
+
   if (isProduction) {
     if (fs.existsSync(appDirectory)) {
       fs.rmdirSync(appDirectory, { recursive: true });
     }
   }
 
-  return { appURL: `https://${name}` };
+  return { appURL: appUrl };
 }

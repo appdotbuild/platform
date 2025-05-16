@@ -25,13 +25,22 @@ import {
 import { applyDiff } from './diff';
 import { deployApp } from '../deploy';
 import { isDev } from '../env';
+import {
+  AgentStatus,
+  MessageKind,
+  PlatformMessage,
+  type AgentSseEvent,
+  type ContentMessage,
+  type MessageContentBlock,
+  type TraceId,
+} from '@appdotbuild/core';
 
 interface AgentMessage {
   role: 'assistant';
   content: string;
-  agentState: any | null;
-  unifiedDiff: any | null;
-  kind: 'StageResult';
+  agentState?: any | null;
+  unifiedDiff?: any | null;
+  kind: MessageKind;
 }
 interface UserMessage {
   role: 'user';
@@ -39,31 +48,6 @@ interface UserMessage {
 }
 
 type Message = AgentMessage | UserMessage;
-
-type MessageContentBlock = {
-  type: 'text' | 'tool_use' | 'tool_use_result';
-  text: string;
-};
-
-type ConversationMessage = {
-  role: 'user' | 'assistant';
-  content: MessageContentBlock[];
-};
-
-type AgentSseEvent = {
-  status: 'idle';
-  traceId: string;
-  message: {
-    role: 'assistant';
-    kind: 'RefinementRequest';
-    app_name: string | null;
-    // TODO: ask why this is not plain JSON
-    content: Stringified<ConversationMessage[]>;
-    agentState: any;
-    unifiedDiff: any;
-    commit_message: string | null;
-  };
-};
 
 type Body = {
   applicationId?: string;
@@ -80,8 +64,6 @@ type RequestBody = {
   clientSource: string;
   settings?: Record<string, any>;
 };
-
-type TraceId = string;
 
 const previousRequestMap = new Map<TraceId, AgentSseEvent>();
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
@@ -147,7 +129,9 @@ export async function postMessage(
       });
     }
 
-    const previousRequest = previousRequestMap.get(application[0]!.traceId!);
+    const previousRequest = previousRequestMap.get(
+      application[0]!.traceId as TraceId,
+    );
 
     if (!previousRequest) {
       return reply.status(404).send({
@@ -160,7 +144,7 @@ export async function postMessage(
       ...body,
       ...getExistingConversationBody({
         previousEvent: previousRequest,
-        existingTraceId: application[0]!.traceId!,
+        existingTraceId: application[0]!.traceId as TraceId,
         applicationId,
         message: requestBody.message,
         settings: requestBody.settings,
@@ -262,7 +246,6 @@ export async function postMessage(
             buffer = buffer.slice(
               `data: `.length + message.length + '\n\n'.length,
             );
-            session.push(platformMessage);
 
             app.log.info('message sent to CLI', {
               message,
@@ -360,22 +343,13 @@ export async function postMessage(
                 ),
               ]);
 
-              session.push({
-                traceId,
-                message: {
-                  kind: 'StageResult',
-                  content: JSON.stringify([
-                    {
-                      content: [
-                        {
-                          type: 'text',
-                          text: `Your application has been deployed to ${appURL}`,
-                        },
-                      ],
-                    },
-                  ]),
-                },
-              });
+              session.push(
+                new PlatformMessage(
+                  AgentStatus.IDLE,
+                  traceId as TraceId,
+                  `Your application has been deployed to ${appURL}`,
+                ),
+              );
             }
           }
         } catch (e) {
@@ -383,15 +357,6 @@ export async function postMessage(
         }
       }
     }
-
-    const platformMessage = JSON.stringify(
-      new PlatformMessage(
-        AgentStatus.IDLE,
-        body.traceId as TraceId,
-        'Hello, world!',
-      ),
-    );
-    session.push(platformMessage);
 
     app.log.info('pushed done');
     session.push(
@@ -482,22 +447,13 @@ async function appCreation({
     githubUsername,
   });
 
-  session.push({
-    traceId,
-    message: {
-      kind: 'StageResult',
-      content: JSON.stringify([
-        {
-          content: [
-            {
-              type: 'text',
-              text: `Your application has been uploaded to this github repository: ${repositoryUrl}`,
-            },
-          ],
-        },
-      ]),
-    },
-  });
+  session.push(
+    new PlatformMessage(
+      AgentStatus.IDLE,
+      traceId as TraceId,
+      `Your application has been uploaded to this github repository: ${repositoryUrl}`,
+    ),
+  );
 
   return { newAppName };
 }
@@ -519,7 +475,7 @@ async function appIteration({
   session: Session;
   commitMessage: string;
 }) {
-  const { url } = await createUserCommit({
+  const { commitSha } = await createUserCommit({
     repo: appName,
     owner: githubUsername,
     paths: files,
@@ -528,22 +484,14 @@ async function appIteration({
     githubAccessToken,
   });
 
-  session.push({
-    traceId,
-    message: {
-      kind: 'StageResult',
-      content: JSON.stringify([
-        {
-          content: [
-            {
-              type: 'text',
-              text: `committed in existing app - commit url: ${url}`,
-            },
-          ],
-        },
-      ]),
-    },
-  });
+  const commitUrl = `https://github.com/${githubUsername}/${appName}/commit/${commitSha}`;
+  session.push(
+    new PlatformMessage(
+      AgentStatus.IDLE,
+      traceId as TraceId,
+      `committed in existing app - commit url: ${commitUrl}`,
+    ),
+  );
 }
 
 async function createUserUpstreamApp({
@@ -575,13 +523,14 @@ async function createUserUpstreamApp({
 
   app.log.info(`repository created: ${repositoryUrl}`);
 
-  const { url: initialCommitUrl } = await createUserInitialCommit({
+  const { commitSha: initialCommitSha } = await createUserInitialCommit({
     repo: appName,
     owner: githubUsername,
     paths: files,
     githubAccessToken,
   });
 
+  const initialCommitUrl = `https://github.com/${githubUsername}/${appName}/commit/${initialCommitSha}`;
   return { repositoryUrl, appName, initialCommitUrl };
 }
 
@@ -624,7 +573,7 @@ function getExistingConversationBody({
             content,
             agentState: undefined,
             unifiedDiff: undefined,
-            kind: MessageKind.STAGE_RESULT,
+            kind: MessageKind.FINAL_RESULT,
           };
         }
       });

@@ -29,7 +29,7 @@ type CommitResponse = {
   statusCode: number;
   status: string;
   message: string;
-  url?: string;
+  commitSha?: string;
 };
 
 const BOT_USER_EMAIL = process.env.GITHUB_APP_BOT_EMAIL;
@@ -119,7 +119,7 @@ const createInitialCommit = async ({
     statusCode: 200,
     status: 'success',
     message: 'Initial commit created',
-    url: response.data.object.url,
+    commitSha: response.data.object.sha,
   };
 };
 
@@ -206,7 +206,7 @@ const commitChanges = async ({
     statusCode: 200,
     status: 'success',
     message: 'Changes committed',
-    url: response.data.object.url,
+    commitSha: response.data.object.sha,
   };
 };
 

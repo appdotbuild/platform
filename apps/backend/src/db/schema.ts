@@ -21,6 +21,7 @@ export const apps = pgTable('apps', {
   repositoryUrl: text(),
   githubUsername: text(),
   appName: text(),
+  appUrl: text(),
 });
 
 export const appPrompts = pgTable('app_prompts', {

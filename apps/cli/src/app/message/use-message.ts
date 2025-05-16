@@ -73,7 +73,6 @@ const useSendMessage = () => {
           }
 
           const applicationId = extractApplicationId(newEvent.traceId);
-
           if (!applicationId) {
             throw new Error('Application ID not found');
           }
@@ -83,10 +82,6 @@ const useSendMessage = () => {
             applicationId,
             traceId: newEvent.traceId,
           });
-
-          if (!newMessage.message) {
-            return;
-          }
 
           queryClient.setQueryData(
             queryKeys.applicationMessages(applicationId),
@@ -107,18 +102,21 @@ const useSendMessage = () => {
               }
 
               // if there is already an event with the same traceId, replace the whole thread
-              const existingEventThread = oldData.events.some(
+              const existingSameTraceIdEventThread = oldData.events.some(
                 (e) => e.traceId === newEvent.traceId,
               );
 
               // platform events should always be the last message in the thread
               if (
-                existingEventThread &&
+                existingSameTraceIdEventThread &&
                 parsedEvent.message.kind !== MessageKind.PLATFORM_MESSAGE
               ) {
+                const existingPlatformEvents = oldData.events.filter(
+                  (e) => e.message.kind === MessageKind.PLATFORM_MESSAGE,
+                );
                 return {
                   ...oldData,
-                  events: [parsedEvent],
+                  events: [parsedEvent, ...existingPlatformEvents],
                 };
               }
 
