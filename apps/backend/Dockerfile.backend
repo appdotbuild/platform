@@ -26,7 +26,6 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential pkg-config python-is-python3 curl
 
 RUN curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
-ENV PATH="/root/.koyeb/bin:${PATH}"
 
 # Install node modules
 COPY bun.lock package.json ./
@@ -43,6 +42,7 @@ FROM base
 COPY --from=build /appdotbuild /appdotbuild
 COPY --from=build /root /root
 
+ENV PATH="/root/.koyeb/bin:${PATH}"
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
 WORKDIR /appdotbuild
