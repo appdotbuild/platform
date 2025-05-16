@@ -1,11 +1,11 @@
-import type { FastifyReply, FastifyRequest } from 'fastify';
-import { app } from '../app';
-import { apps, appPrompts, db } from '../db';
-import { eq, and } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
-import { getAgentHost } from '../apps/env';
-import fs from 'fs';
+import fs from 'node:fs';
 import { createSession } from 'better-sse';
+import { and, eq } from 'drizzle-orm';
+import type { FastifyReply, FastifyRequest } from 'fastify';
+import { v4 as uuidv4 } from 'uuid';
+import { app } from '../app';
+import { getAgentHost } from '../apps/env';
+import { appPrompts, apps, db } from '../db';
 
 interface AgentMessage {
   role: 'assistant';
@@ -255,8 +255,8 @@ function getExistingConversationBody({
   message: string;
   settings?: Record<string, any>;
 }) {
-  let agentState = previousEvent.message.agentState;
-  let messagesHistory = JSON.parse(previousEvent.message.content);
+  const agentState = previousEvent.message.agentState;
+  const messagesHistory = JSON.parse(previousEvent.message.content);
 
   let messagesHistoryCasted: Message[] = [];
   if (Array.isArray(messagesHistory)) {
@@ -274,15 +274,15 @@ function getExistingConversationBody({
             role,
             content,
           } as UserMessage;
-        } else {
-          return {
-            role: 'assistant',
-            content,
-            agentState: null,
-            unifiedDiff: null,
-            kind: 'StageResult',
-          } as AgentMessage;
         }
+
+        return {
+          role: 'assistant',
+          content,
+          agentState: null,
+          unifiedDiff: null,
+          kind: 'StageResult',
+        } as AgentMessage;
       });
     } catch (error) {
       app.log.error(`Error parsing message history: ${error}`);

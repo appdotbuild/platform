@@ -1,9 +1,9 @@
 import { Box, Text } from 'ink';
-import { useApplication } from './use-application.js';
-import { useRouteParams } from '../routes.js';
-import { getStatusEmoji, getStatusColor } from './apps-list-screen.js';
+import { AppBuilder } from '../components/app-builder/app-builder.js';
 import { Panel } from '../components/shared/panel.js';
-import { AppBuildTextArea } from './app-build-screen.js';
+import { useRouteParams } from '../routes.js';
+import { getStatusColor, getStatusEmoji } from './apps-list-screen.js';
+import { useApplication } from './use-application.js';
 
 export function AppDetails() {
   const { appId } = useRouteParams('/apps/:appId');
@@ -61,7 +61,7 @@ export function AppDetails() {
       </Panel>
 
       <Box marginTop={2}>
-        <AppBuildTextArea initialPrompt="How would you like to modify your application?" />
+        <AppBuilder initialPrompt="How would you like to modify your application?" />
       </Box>
     </Box>
   );

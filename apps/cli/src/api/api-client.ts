@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { type AxiosError } from 'axios';
 import { authenticate } from '../auth/auth.js';
 import { getBackendHost } from '../environment.js';
 

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { sendMessage, type SendMessageParams } from '../../api/application.js';
-import { applicationQueryKeys } from '../use-application.js';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { sendMessage, type SendMessageParams } from '../api/application.js';
+import { applicationQueryKeys } from '../app/use-application.js';
+import { queryKeys } from './use-build-app.js';
 
 export type ChoiceElement = {
   type: 'choice';
@@ -37,6 +38,7 @@ type RequestId = string;
 type ApplicationId = string;
 type TraceId = `app-${ApplicationId}.req-${RequestId}`;
 type StringifiedMessagesArrayJson = string;
+
 export type Message = {
   status: 'streaming' | 'idle';
   message: {
@@ -49,11 +51,7 @@ export type Message = {
   traceId: TraceId;
 };
 
-const queryKeys = {
-  applicationMessages: (id: string) => ['apps', id],
-};
-
-const useSendMessage = () => {
+export const useSendMessage = () => {
   const queryClient = useQueryClient();
 
   const [metadata, setMetadata] = useState<{
@@ -113,49 +111,6 @@ const useSendMessage = () => {
 
   // we need this to keep the previous application id
   return { ...result, data: metadata };
-};
-
-export const useBuildApp = (existingApplicationId?: string) => {
-  const queryClient = useQueryClient();
-  const {
-    mutate: sendMessage,
-    data: sendMessagesData,
-    data: sendMessageData,
-    error: sendMessageError,
-    isPending: sendMessagePending,
-    isSuccess: sendMessageSuccess,
-    status: sendMessageStatus,
-  } = useSendMessage();
-
-  const appId = existingApplicationId ?? sendMessagesData?.applicationId;
-
-  const messageQuery = useQuery({
-    queryKey: queryKeys.applicationMessages(appId!),
-    queryFn: () => {
-      // this should never happen due to `enabled`
-      if (!appId) return null;
-
-      const messages = queryClient.getQueryData<{ messages: Message[] }>(
-        queryKeys.applicationMessages(appId),
-      );
-
-      return messages ?? { messages: [] };
-    },
-    enabled: !!appId,
-  });
-
-  return {
-    createApplication: sendMessage,
-    createApplicationData: sendMessageData,
-    createApplicationError: sendMessageError,
-    createApplicationPending: sendMessagePending,
-    createApplicationSuccess: sendMessageSuccess,
-    createApplicationStatus: sendMessageStatus,
-
-    streamingMessagesData: messageQuery.data,
-    isStreamingMessages:
-      messageQuery.data?.messages.at(-1)?.status === 'streaming',
-  };
 };
 
 function extractApplicationId(traceId: `app-${string}.req-${string}`) {

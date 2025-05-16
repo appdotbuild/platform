@@ -1,9 +1,9 @@
-import { config } from 'dotenv';
+import type { Readable } from 'node:stream';
 import chalk from 'chalk';
+import { config } from 'dotenv';
+import type { Message } from '../hooks/use-send-message.js';
 import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
-import type { Message } from '../app/message/use-message.js';
-import type { Readable } from 'stream';
 
 // Load environment variables from .env file
 config();
