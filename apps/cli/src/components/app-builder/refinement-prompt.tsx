@@ -2,9 +2,9 @@ import type { MutationStatus } from '@tanstack/react-query';
 import type { Message } from '../../hooks/use-send-message.js';
 import { BuildingBlock } from '../shared/building-block.js';
 
-type MessagesData = {
+interface MessagesData {
   messages: Message[];
-};
+}
 
 interface RefinementPromptProps {
   messagesData: MessagesData;

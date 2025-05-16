@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { sendMessage, type SendMessageParams } from '../api/application.js';
-import { applicationQueryKeys } from '../app/use-application.js';
+import { useState } from 'react';
+import { type SendMessageParams, sendMessage } from '../api/application.js';
+import { applicationQueryKeys } from './use-application.js';
 import { queryKeys } from './use-build-app.js';
 
 export type ChoiceElement = {

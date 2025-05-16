@@ -3,15 +3,15 @@ import type { Message } from '../../hooks/use-send-message.js';
 import { TaskStatus, type TaskDetail } from '../shared/task-status.js';
 import { useDebug } from '../../debug/debugger-panel.js';
 
-type ParsedMessageContent = {
+interface ParsedMessageContent {
   role: 'assistant' | 'user';
   content: {
     type: 'text' | 'code' | 'interactive';
     text: string;
   }[];
-};
+}
 
-type PhaseGroupItemProps = {
+interface PhaseGroupItemProps {
   group: { phase: string; messages: Message[] };
   groupIndex: number;
   currentPhase: string | undefined;
@@ -19,7 +19,7 @@ type PhaseGroupItemProps = {
   hasInteractive: boolean;
   lastInteractiveGroupIndex?: number;
   phaseGroupsLength: number;
-};
+}
 
 const getPhaseTitle = (phase: string) => {
   switch (phase) {

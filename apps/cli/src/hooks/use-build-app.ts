@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { type Message, useSendMessage } from './use-send-message.js';
+import { useSendMessage, type Message } from './use-send-message.js';
 
 export const queryKeys = {
   applicationMessages: (id: string) => ['apps', id],

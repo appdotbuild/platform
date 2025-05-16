@@ -5,14 +5,14 @@ import type { Message } from '../../hooks/use-send-message.js';
 import { Panel } from '../shared/panel.js';
 import { PhaseGroupItem } from './phase-group-item.js';
 
-type MessagesData = {
+interface MessagesData {
   messages: Message[];
-};
+}
 
-type BuildStageProps = {
+interface BuildStageProps {
   messagesData: MessagesData;
   isStreaming: boolean;
-};
+}
 
 export function BuildStages({ messagesData, isStreaming }: BuildStageProps) {
   const { phaseGroups, currentPhase, currentMessage } =

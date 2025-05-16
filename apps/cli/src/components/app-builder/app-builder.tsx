@@ -1,8 +1,8 @@
 import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
-import { InfiniteFreeText } from '../shared/free-text.js';
 import { BuildStages } from './build-stages.js';
 import { RefinementPrompt } from './refinement-prompt.js';
+import { InteractivePrompt } from '../interactive-prompt/interactive-prompt.js';
 
 interface AppBuilderProps {
   initialPrompt: string;
@@ -27,7 +27,7 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
 
   return (
     <Box flexDirection="column">
-      <InfiniteFreeText
+      <InteractivePrompt
         question={initialPrompt}
         successMessage="Application build started..."
         placeholder="e.g., Add a new feature, modify behavior, or type 'exit' to finish"
@@ -52,7 +52,7 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
         />
       )}
 
-      <InfiniteFreeText
+      <InteractivePrompt
         question="How would you like to modify your application?"
         successMessage="The requested changes are being applied..."
         placeholder="e.g., Add a new feature, modify behavior, or type 'exit' to finish"
