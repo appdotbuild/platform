@@ -24,6 +24,9 @@ export async function deployApp({
   appId: string;
   appDirectory: string;
 }) {
+  const newDockerFilePath = path.join(__dirname, 'docker-template.dockerfile');
+  const newDockerFile = fs.readFileSync(newDockerFilePath, 'utf8');
+
   const app = await db
     .select({
       deployStatus: apps.deployStatus,
@@ -48,11 +51,14 @@ export async function deployApp({
     .where(eq(apps.id, appId));
 
   // check if dockerfile exists
-  if (!fs.existsSync(path.join(appDirectory, 'dockerfile'))) {
+  if (!fs.existsSync(path.join(appDirectory, 'Dockerfile'))) {
     throw new Error('Dockerfile not found');
   }
 
+  fs.writeFileSync(path.join(appDirectory, 'Dockerfile'), newDockerFile);
+
   // Create a Neon database
+  // TODO: check if the database already exists
   const { data } = await neonClient.createProject({
     project: {},
   });
@@ -62,6 +68,7 @@ export async function deployApp({
   const koyebAppName = `app-${appId}`;
   const envVars = {
     APP_DATABASE_URL: connectionString,
+    SERVER_PORT: '2022',
   };
 
   let envVarsString = '';
@@ -75,7 +82,7 @@ export async function deployApp({
   logger.info('Starting Koyeb deployment', { koyebAppName });
 
   await exec(
-    `koyeb app init ${koyebAppName} --token ${process.env.KOYEB_CLI_TOKEN} --region was --docker ${DEFAULT_TEMPLATE_DOCKER_IMAGE} --ports 80:http --routes /:80 ${envVarsString}`,
+    `koyeb deploy . ${koyebAppName}/service --token ${process.env.KOYEB_CLI_TOKEN} --archive-builder docker --port 80:http --route /:80 ${envVarsString}`,
     { cwd: appDirectory },
   );
 

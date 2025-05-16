@@ -148,6 +148,7 @@ export async function postMessage(
     }
 
     const previousRequest = previousRequestMap.get(application[0]!.traceId!);
+
     if (!previousRequest) {
       return reply.status(404).send({
         error: 'Previous request not found',
@@ -270,6 +271,13 @@ export async function postMessage(
 
             previousRequestMap.set(parsedMessage.traceId, parsedMessage);
             session.push(message);
+
+            if (
+              parsedMessage.message.unifiedDiff ===
+              '# Note: This is a valid empty diff (means no changes from template)'
+            ) {
+              parsedMessage.message.unifiedDiff = null;
+            }
 
             canDeploy = !!parsedMessage.message.unifiedDiff;
 
