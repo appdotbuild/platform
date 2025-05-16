@@ -1,5 +1,3 @@
-import './types/globals.d.ts';
-
 /**
  * Custom errors that are shown to the user
  */
