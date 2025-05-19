@@ -23,6 +23,12 @@ export default {
       },
     ],
     [
+      '@semantic-release/exec',
+      {
+        prepareCmd: 'bun tools/update-version.ts ${nextRelease.version}',
+      },
+    ],
+    [
       '@semantic-release/npm',
       {
         pkgRoot: './tmp',
