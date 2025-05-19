@@ -22,12 +22,6 @@ export default {
       },
     ],
     [
-      '@semantic-release/exec',
-      {
-        prepareCmd: 'bun run build:cli',
-      },
-    ],
-    [
       '@semantic-release/npm',
       {
         pkgRoot: './tmp',
