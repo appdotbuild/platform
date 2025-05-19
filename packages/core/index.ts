@@ -12,4 +12,4 @@ export class UnauthorizedError extends UserError {}
  * Exporting shared types
  */
 export * from './agent-message';
-export * from './types/api.js';
+export * from './types/api';

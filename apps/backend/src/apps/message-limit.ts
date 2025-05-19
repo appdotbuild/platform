@@ -1,4 +1,4 @@
-import type { UserMessageLimit } from '@appdotbuild/core/types/api';
+import type { UserMessageLimit } from '@appdotbuild/core';
 import { and, count, eq, gt } from 'drizzle-orm';
 import { app } from '../app';
 import { appPrompts, apps, db } from '../db';
