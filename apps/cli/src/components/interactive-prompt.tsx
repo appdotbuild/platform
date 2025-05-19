@@ -2,10 +2,10 @@ import type { TextInputProps } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box } from 'ink';
 import { useRef } from 'react';
-import { usePromptHistory } from '../../hooks/use-prompt-history.js';
-import { ErrorMessage } from './error-message.js';
-import { SuccessMessage } from './success-message.js';
-import { TextInput } from './text-input.js';
+import { usePromptHistory } from '../hooks/use-prompt-history.js';
+import { ErrorMessage } from './shared/display/error-message.js';
+import { SuccessMessage } from './shared/display/success-message.js';
+import { TextInput } from './shared/input/text-input.js';
 
 export interface InputHistoryItem {
   prompt: string;
@@ -47,7 +47,7 @@ export function InteractivePrompt({
   question = '',
   placeholder,
   status = 'idle',
-  showPrompt,
+  showPrompt = true, // Defina um valor padrão para showPrompt
   loadingText = 'Loading...',
   onSubmit,
   successMessage = '',
@@ -110,7 +110,7 @@ export function InteractivePrompt({
         placeholder={placeholder}
         status={displayStatus}
         loadingText={loadingText}
-        handleSubmit={onSubmit}
+        onSubmit={onSubmit}
         onSubmitSuccess={handleSubmitSuccess}
         onSubmitError={handleSubmitError}
         {...infiniteInputProps}

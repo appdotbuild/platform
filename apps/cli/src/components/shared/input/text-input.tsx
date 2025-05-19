@@ -1,10 +1,10 @@
 import { TextInput as InkTextInput, Spinner } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box, Text } from 'ink';
-import { Panel } from '../shared/panel.js';
 import { useEffect, useState } from 'react';
+import { Panel } from '../display/panel.js';
 
-interface TextInputProps {
+export interface TextInputProps {
   question?: string;
   submittedValue?: string;
   placeholder?: string;
@@ -12,9 +12,9 @@ interface TextInputProps {
   status: MutationStatus;
   loadingText: string;
 
-  onSubmitSuccess: (value: string) => void;
-  onSubmitError: (value: string) => void;
-  handleSubmit: (value: string) => void;
+  onSubmitSuccess?: (value: string) => void;
+  onSubmitError?: (value: string) => void;
+  onSubmit: (value: string) => void;
 }
 
 export function TextInput({
@@ -24,7 +24,7 @@ export function TextInput({
   status,
   loadingText,
   onSubmitError,
-  handleSubmit,
+  onSubmit,
   ...textInputProps
 }: TextInputProps) {
   const [submittedValue, setSubmittedValue] = useState<string>('');
@@ -52,7 +52,7 @@ export function TextInput({
           ) : (
             <InkTextInput
               placeholder={placeholder}
-              onSubmit={handleSubmit}
+              onSubmit={onSubmit}
               {...textInputProps}
             />
           )}

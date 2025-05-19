@@ -2,7 +2,7 @@ import { Box } from 'ink';
 import { useMemo } from 'react';
 import { usePhaseGroup } from '../../hooks/use-phase-group.js';
 import type { Message } from '../../hooks/use-send-message.js';
-import { Panel } from '../shared/panel.js';
+import { Panel } from '../shared/display/panel.js';
 import { PhaseGroupItem } from './phase-group-item.js';
 
 interface MessagesData {

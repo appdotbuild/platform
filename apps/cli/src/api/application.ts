@@ -115,7 +115,6 @@ export async function sendMessage({
   try {
     await parseSSE(response.data as Readable, {
       onMessage: (message) => {
-        console.log('onMessageHandler');
         onMessage?.(message as Message);
       },
       onError: (error) => {

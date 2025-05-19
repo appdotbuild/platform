@@ -1,7 +1,7 @@
 import { Box, Text } from 'ink';
-import { Select } from '../components/shared/select.js';
-import { useSafeNavigate } from '../routes.js';
+import { Select } from '../components/shared/input/select.js';
 import { useListApps } from '../hooks/use-application.js';
+import { useSafeNavigate } from '../routes.js';
 
 type SelectItem = {
   label: string;

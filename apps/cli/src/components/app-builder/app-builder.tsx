@@ -1,8 +1,8 @@
 import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
+import { InteractivePrompt } from '../interactive-prompt.js';
 import { BuildStages } from './build-stages.js';
 import { RefinementPrompt } from './refinement-prompt.js';
-import { InteractivePrompt } from '../interactive-prompt/interactive-prompt.js';
 
 interface AppBuilderProps {
   initialPrompt: string;

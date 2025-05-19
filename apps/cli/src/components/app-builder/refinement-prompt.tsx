@@ -1,6 +1,6 @@
 import type { MutationStatus } from '@tanstack/react-query';
 import type { Message } from '../../hooks/use-send-message.js';
-import { BuildingBlock } from '../shared/building-block.js';
+import { InputSelector } from '../input-selector.js';
 
 interface MessagesData {
   messages: Message[];
@@ -25,8 +25,8 @@ export function RefinementPrompt({
   if (!isInteractive) return null;
 
   return (
-    <BuildingBlock
-      type="free-text"
+    <InputSelector
+      type="text-input"
       errorMessage="Error"
       loadingText="Loading..."
       successMessage="Success"

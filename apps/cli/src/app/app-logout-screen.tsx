@@ -1,8 +1,8 @@
 import { Box, Text } from 'ink';
 import { useState } from 'react';
-import { BuildingBlock } from '../components/shared/building-block.js';
-import { useSafeNavigate } from '../routes.js';
 import { tokenStorage } from '../auth/auth-storage.js';
+import { InputSelector } from '../components/input-selector.js';
+import { useSafeNavigate } from '../routes.js';
 
 export function AppLogoutScreen() {
   const { goBack } = useSafeNavigate();
@@ -33,7 +33,7 @@ export function AppLogoutScreen() {
         <Text bold>🔒 Logout</Text>
       </Box>
       {logoutPhase === 'confirmation' && (
-        <BuildingBlock
+        <InputSelector
           type="select"
           question="Are you sure you want to log out of app.build?"
           options={[
@@ -51,10 +51,10 @@ export function AppLogoutScreen() {
         />
       )}
       {logoutPhase === 'processing' && (
-        <BuildingBlock type="markdown" content="Logging out..." />
+        <InputSelector type="markdown" content="Logging out..." />
       )}
       {logoutPhase === 'completed' && (
-        <BuildingBlock
+        <InputSelector
           type="markdown"
           content="You have been logged out. Goodbye!"
         />

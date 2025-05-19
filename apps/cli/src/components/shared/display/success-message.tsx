@@ -1,6 +1,6 @@
 import { Box, Text } from 'ink';
-import { Panel } from '../shared/panel.js';
 import { PanelTitle } from './panel-title.js';
+import { Panel } from './panel.js';
 
 export interface SuccessMessageProps {
   prompt: string;

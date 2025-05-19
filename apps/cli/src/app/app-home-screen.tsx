@@ -1,6 +1,6 @@
 import { Box, Text } from 'ink';
-import { useSafeNavigate, type RoutePath } from '../routes.js';
-import { Select } from '../components/shared/select.js';
+import { Select } from '../components/shared/input/select.js';
+import { type RoutePath, useSafeNavigate } from '../routes.js';
 
 const items = [
   { label: '🆕 Create new app', value: '/app/build' as const },

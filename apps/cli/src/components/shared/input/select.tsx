@@ -1,17 +1,10 @@
-import { Box, Text, Newline } from 'ink';
-import { type SelectItem } from './types.js';
 import { Spinner } from '@inkjs/ui';
-import { Panel } from './panel.js';
+import type { MutationStatus } from '@tanstack/react-query';
+import { Box, Newline, Text } from 'ink';
 import { useState } from 'react';
-import { Select as InkSelect } from '../ui/select/index.js';
-
-type StatusProps = {
-  status: 'pending' | 'success' | 'error' | 'idle';
-  errorMessage?: string;
-  retryMessage?: string;
-  loadingText?: string;
-  successMessage?: string;
-};
+import { Select as InkSelect } from '../../ui/select/index.js';
+import { Panel } from '../display/panel.js';
+import type { SelectItem } from './types.js';
 
 export type SelectProps<T extends string> = {
   question: string;
@@ -19,16 +12,12 @@ export type SelectProps<T extends string> = {
   onFetchMore?: () => void;
   options: SelectItem<T>[];
   showPrompt?: boolean;
-} & (
-  | StatusProps
-  | {
-      status?: never;
-      errorMessage?: never;
-      loadingText?: never;
-      retryMessage?: never;
-      successMessage?: never;
-    }
-);
+  status?: MutationStatus;
+  errorMessage?: string;
+  retryMessage?: string;
+  loadingText?: string;
+  successMessage?: string;
+};
 
 export const Select = <T extends string>({
   question,

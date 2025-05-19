@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import type { Message } from '../../hooks/use-send-message.js';
-import { TaskStatus, type TaskDetail } from '../shared/task-status.js';
 import { useDebug } from '../../debug/debugger-panel.js';
+import type { Message } from '../../hooks/use-send-message.js';
+import { type TaskDetail, TaskStatus } from '../shared/display/task-status.js';
 
 interface ParsedMessageContent {
   role: 'assistant' | 'user';

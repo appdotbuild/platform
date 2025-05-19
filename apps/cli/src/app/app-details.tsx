@@ -1,9 +1,9 @@
 import { Box, Text } from 'ink';
 import { AppBuilder } from '../components/app-builder/app-builder.js';
-import { Panel } from '../components/shared/panel.js';
+import { Panel } from '../components/shared/display/panel.js';
+import { useApplication } from '../hooks/use-application.js';
 import { useRouteParams } from '../routes.js';
 import { getStatusColor, getStatusEmoji } from './apps-list-screen.js';
-import { useApplication } from '../hooks/use-application.js';
 
 export function AppDetails() {
   const { appId } = useRouteParams('/apps/:appId');
