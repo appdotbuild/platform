@@ -5,6 +5,7 @@ import {
   type AgentSseEvent,
   AgentStatus,
   type ContentMessage,
+  type MessageLimitHeaders,
   type MessageContentBlock,
   MessageKind,
   PlatformMessage,
@@ -93,7 +94,7 @@ export async function postMessage(
     return reply.status(429).send();
   }
 
-  const userLimitHeader = {
+  const userLimitHeader: MessageLimitHeaders = {
     'x-dailylimit-limit': dailyMessageLimit,
     'x-dailylimit-remaining': remainingMessages - 1, // count new message
     'x-dailylimit-usage': currentUsage + 1, // count new message
