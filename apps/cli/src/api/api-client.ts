@@ -56,15 +56,13 @@ const retrieveUserMessageLimit = (
   if (headers['x-dailylimit-limit'] === undefined) return null;
 
   const userMessageLimit = {
-    dailyMessageLimit: headers['x-dailylimit-limit'],
-    currentUsage: headers['x-dailylimit-usage'],
-    nextResetTime: headers['x-dailylimit-reset'],
-    remainingMessages: headers['x-dailylimit-remaining'],
+    dailyMessageLimit: Number(headers['x-dailylimit-limit']),
+    currentUsage: Number(headers['x-dailylimit-usage']),
+    nextResetTime: new Date(headers['x-dailylimit-reset']),
+    remainingMessages: Number(headers['x-dailylimit-remaining']),
   };
 
-  useMessageLimitStore.getState().setMessageLimit({
-    ...userMessageLimit,
-  });
+  useMessageLimitStore.getState().setMessageLimit(userMessageLimit);
 
   return userMessageLimit;
 };

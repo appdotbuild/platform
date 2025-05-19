@@ -88,6 +88,11 @@ export async function postMessage(
     currentUsage,
   } = await checkMessageUsageLimit(userId);
 
+  if (isUserLimitReached) {
+    app.log.error(`Daily message limit reached for user ${userId}`);
+    return reply.status(429).send();
+  }
+
   const userLimitHeader = {
     'x-dailylimit-limit': dailyMessageLimit,
     'x-dailylimit-remaining': remainingMessages - 1, // count new message
@@ -96,11 +101,6 @@ export async function postMessage(
   };
 
   reply.headers(userLimitHeader);
-
-  if (isUserLimitReached) {
-    app.log.error(`Daily message limit reached for user ${userId}`);
-    return reply.status(429).send();
-  }
 
   const session = await createSession(request.raw, reply.raw, {
     headers: {

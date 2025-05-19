@@ -1,4 +1,5 @@
 import type { UserMessageLimit } from '@appdotbuild/core';
+import { createMessageLimitError } from '../../app/message/use-message-limit.js';
 import ConfirmPrompt, { type ConfirmPromptProps } from './confirm-prompt.js';
 import { FreeText, FreeTextError, type FreeTextProps } from './free-text.js';
 import { MarkdownBlock, type MarkdownBlockProps } from './markdown-block.js';
@@ -19,15 +20,10 @@ type BuildingBlockProps =
 
 export function BuildingBlock(props: BuildingBlockProps) {
   if (props.userMessageLimit?.isUserLimitReached) {
-    const limitReachedError = {
-      errorMessage: `Daily limit of ${props.userMessageLimit?.dailyMessageLimit} messages reached. The limit will reset the next day. \nPlease try again after the reset. If you require more access, please file an issue at github.com/appdotbuild/platform.`,
-      retryMessage: '',
-      prompt: '',
-      question: props.question || 'Message limit reached',
-      status: 'error' as const,
-      successMessage: '',
+    const limitReachedError = createMessageLimitError({
       userMessageLimit: props.userMessageLimit,
-    };
+      question: props.question || 'Message limit reached',
+    });
     return <FreeTextError {...limitReachedError} />;
   }
 

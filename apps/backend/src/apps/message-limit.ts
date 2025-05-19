@@ -51,7 +51,11 @@ export async function checkMessageUsageLimit(
       .from(appPrompts)
       .innerJoin(apps, eq(appPrompts.appId, apps.id))
       .where(
-        and(eq(apps.ownerId, userId), gt(appPrompts.createdAt, startOfDay)),
+        and(
+          eq(apps.ownerId, userId),
+          gt(appPrompts.createdAt, startOfDay),
+          eq(appPrompts.kind, 'user'),
+        ),
       );
 
     const currentUsage = messageCountResult[0]?.count || 0;

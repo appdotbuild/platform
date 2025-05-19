@@ -7,7 +7,7 @@ import {
   TaskStatus,
 } from '../components/shared/task-status.js';
 import { useDebug } from '../debug/debugger-panel.js';
-import { useMessageLimitStore } from './message/use-message-limit.js';
+import { useUserMessageLimitCheck } from './message/use-message-limit.js';
 import { useBuildApp } from './message/use-message.js';
 import { MessageKind, AgentStatus } from '@appdotbuild/core';
 
@@ -31,10 +31,8 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
 
   const { addLog } = useDebug();
 
-  const userMessageLimit = useMessageLimitStore();
-  const isUserReachedMessageLimit =
-    (createApplicationError as any)?.errorType === 'MESSAGE_LIMIT_ERROR' ||
-    userMessageLimit.isUserLimitReached;
+  const { userMessageLimit, isUserReachedMessageLimit } =
+    useUserMessageLimitCheck(createApplicationError);
 
   const getPhaseTitle = (phase: string) => {
     switch (phase) {
