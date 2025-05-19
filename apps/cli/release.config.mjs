@@ -25,7 +25,7 @@ export default {
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'bun tools/update-version.ts ${nextRelease.version}',
+        prepareCmd: 'bun ./tools/update-version.ts ${nextRelease.version}',
       },
     ],
     [

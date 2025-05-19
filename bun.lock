@@ -138,7 +138,7 @@
     },
     "apps/cli": {
       "name": "@app.build/cli",
-      "version": "1.0.1",
+      "version": "0.0.0",
       "bin": {
         "app.build": "dist/cli.js",
       },

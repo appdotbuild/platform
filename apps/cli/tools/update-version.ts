@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 
 const version = process.argv[2];
 
@@ -8,7 +8,11 @@ if (!version) {
   process.exit(1);
 }
 
-const pkgPath = resolve('./tmp/package.json');
+const pkgPath = resolve(join(__dirname, '../tmp/package.json'));
+
+console.log({ cwd: process.cwd() });
+console.log({ pkgPath });
+
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
 
 pkg.version = version;
