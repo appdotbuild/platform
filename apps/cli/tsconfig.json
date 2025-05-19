@@ -22,10 +22,12 @@
     /* If transpiling with TypeScript: */
     "moduleResolution": "bundler",
     "module": "ESNext",
-    "sourceMap": true,
+    "sourceMap": false,
     /* If your code doesn't run in the DOM: */
     "lib": ["es2022"],
 
+    "declaration": false,
+    "declarationMap": false,
     // for easing development
     "noUnusedLocals": false,
     "noUnusedParameters": false
