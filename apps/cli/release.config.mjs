@@ -1,4 +1,5 @@
 export default {
+  extends: 'semantic-release-monorepo',
   branches: ['main'],
   tagFormat: '@app.build/cli-v${version}',
 

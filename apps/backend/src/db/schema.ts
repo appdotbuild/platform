@@ -32,6 +32,7 @@ export const apps = pgTable(
     clientSource: text('clientSource').notNull().default('slack'), // "slack" or "cli"
     repositoryUrl: text(),
     githubUsername: text(),
+    neonProjectId: text(),
     appName: text(),
     appUrl: text(),
   },

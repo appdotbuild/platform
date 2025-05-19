@@ -8,6 +8,7 @@ import { logger } from '../logger';
 import { promisify } from 'node:util';
 import { isProduction } from '../env';
 
+const NEON_DEFAULT_DATABASE_NAME = 'neondb';
 const exec = promisify(execNative);
 
 const neonClient = createApiClient({
@@ -24,6 +25,7 @@ export async function deployApp({
   const app = await db
     .select({
       deployStatus: apps.deployStatus,
+      neonProjectId: apps.neonProjectId,
     })
     .from(apps)
     .where(eq(apps.id, appId));
@@ -37,10 +39,34 @@ export async function deployApp({
     throw new Error(`App ${appId} is already being deployed`);
   }
 
+  let connectionString: string | undefined;
+  let neonProjectId = app[0].neonProjectId;
+  if (neonProjectId) {
+    connectionString = await getNeonProjectConnectionString({
+      projectId: neonProjectId,
+    });
+    logger.info('Using existing Neon database', {
+      projectId: neonProjectId,
+    });
+  } else {
+    // Create a Neon database
+    const { data } = await neonClient.createProject({
+      project: {},
+    });
+    neonProjectId = data.project.id;
+    connectionString = data.connection_uris[0]?.connection_uri;
+    logger.info('Created Neon database', { projectId: data.project.id });
+  }
+
+  if (!connectionString) {
+    throw new Error('Failed to create Neon database');
+  }
+
   await db
     .update(apps)
     .set({
       deployStatus: 'deploying',
+      neonProjectId,
     })
     .where(eq(apps.id, appId));
 
@@ -48,15 +74,6 @@ export async function deployApp({
   if (!fs.existsSync(path.join(appDirectory, 'Dockerfile'))) {
     throw new Error('Dockerfile not found');
   }
-
-  // Create a Neon database
-  // TODO: check if the database already exists
-  const { data } = await neonClient.createProject({
-    project: {},
-  });
-  const connectionString = data.connection_uris[0]?.connection_uri;
-  logger.info('Created Neon database', { projectId: data.project.id });
-
   const koyebAppName = `app-${appId}`;
   const envVars = {
     APP_DATABASE_URL: connectionString,
@@ -72,7 +89,6 @@ export async function deployApp({
   }
 
   logger.info('Starting Koyeb deployment', { koyebAppName });
-
   await exec(
     `koyeb deploy . ${koyebAppName}/service --token ${process.env.KOYEB_CLI_TOKEN} --archive-builder docker --port 80:http --route /:80 ${envVarsString}`,
     { cwd: appDirectory },
@@ -116,4 +132,42 @@ export async function deployApp({
   }
 
   return { appURL: appUrl };
+}
+
+async function getNeonProjectConnectionString({
+  projectId,
+}: {
+  projectId: string;
+}) {
+  const branches = await neonClient.listProjectBranches({
+    projectId,
+  });
+  const defaultBranch = branches.data.branches.find((branch) => branch.default);
+  const branchId = defaultBranch?.id;
+  if (!branchId) {
+    throw new Error(`Default branch not found`);
+  }
+
+  const databases = await neonClient.listProjectBranchDatabases(
+    projectId,
+    branchId,
+  );
+  const defaultDatabase =
+    databases.data.databases.find(
+      (db) => db.name === NEON_DEFAULT_DATABASE_NAME,
+    ) ?? databases.data.databases[0];
+
+  if (!defaultDatabase) {
+    throw new Error(`Default database not found`);
+  }
+  const databaseName = defaultDatabase?.name;
+  const roleName = defaultDatabase?.owner_name;
+
+  const connectionString = await neonClient.getConnectionUri({
+    projectId,
+    database_name: databaseName,
+    role_name: roleName,
+  });
+
+  return connectionString.data.uri;
 }
