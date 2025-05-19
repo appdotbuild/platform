@@ -21,25 +21,27 @@ type PackageJson = {
   devDependencies: Record<string, string>;
 };
 
-const pkgPath = path.resolve(__dirname, '../package.json');
-const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as PackageJson;
+export function prepareRelease() {
+  const pkgPath = path.resolve(__dirname, '../package.json');
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as PackageJson;
 
-const deps = ['dependencies', 'peerDependencies', 'devDependencies'];
+  const deps = ['dependencies', 'peerDependencies', 'devDependencies'];
 
-for (const depType of deps) {
-  if (!pkg[depType]) continue;
+  for (const depType of deps) {
+    if (!pkg[depType]) continue;
 
-  const entries: [string, string][] = Object.entries(pkg[depType]);
+    const entries: [string, string][] = Object.entries(pkg[depType]);
 
-  for (const [name, version] of entries) {
-    if (version.startsWith('workspace:')) {
-      delete pkg[depType][name];
+    for (const [name, version] of entries) {
+      if (version.startsWith('workspace:')) {
+        delete pkg[depType][name];
+      }
     }
   }
-}
 
-fs.writeFileSync(
-  path.join(__dirname, '../tmp', 'package.json'),
-  JSON.stringify(pkg, null, 2),
-  'utf-8',
-);
+  fs.writeFileSync(
+    path.join(__dirname, '../tmp', 'package.json'),
+    JSON.stringify(pkg, null, 2),
+    'utf-8',
+  );
+}

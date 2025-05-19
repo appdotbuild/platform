@@ -16,7 +16,6 @@
     "dev": "tsc --watch",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
-    "prepublishOnly": "bun run tools/prepare-release.ts",
     "release": "semantic-release --config release.config.mjs",
     "start": "node tmp/dist/cli.js",
     "start:inspect": "node --inspect tmp/dist/cli.js",

@@ -1,3 +1,5 @@
+import { prepareRelease } from './prepare-release';
+
 async function build() {
   await Bun.build({
     entrypoints: ['./src/cli.tsx'],
@@ -15,4 +17,9 @@ async function build() {
   });
 }
 
-build().then(console.log).catch(console.error);
+build()
+  .then(prepareRelease)
+  .then(() => {
+    console.log('Build successful');
+  })
+  .catch(console.error);
