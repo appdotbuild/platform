@@ -1,7 +1,7 @@
 async function build() {
   await Bun.build({
     entrypoints: ['./src/cli.tsx'],
-    outdir: './dist',
+    outdir: './tmp/dist',
     target: 'node',
     define: {
       'process.env.PUBLIC_STACK_PROJECT_ID': JSON.stringify(

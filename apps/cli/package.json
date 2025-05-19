@@ -1,6 +1,6 @@
 {
   "name": "@app.build/cli",
-  "version": "0.0.0",
+  "version": "1.0.1-beta",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -11,14 +11,15 @@
     "package.json"
   ],
   "scripts": {
-    "build:cli": "bun run build.ts",
-    "clean": "rm -rf node_modules dist",
+    "build:cli": "bun run tools/build.ts",
+    "clean": "rm -rf node_modules dist tmp",
     "dev": "tsc --watch",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
+    "prepublishOnly": "bun run tools/prepare-release.ts",
     "release": "semantic-release --config release.config.mjs",
-    "start": "node dist/cli.js",
-    "start:inspect": "node --inspect dist/cli.js",
+    "start": "node tmp/dist/cli.js",
+    "start:inspect": "node --inspect tmp/dist/cli.js",
     "test": "prettier --check . && xo && ava",
     "types:check": "tsc --noEmit"
   },
