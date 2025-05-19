@@ -1,3 +1,4 @@
+import type { UserMessageLimit } from '@appdotbuild/core';
 import { TextInput as InkTextInput, Spinner } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box, Text } from 'ink';
@@ -11,6 +12,7 @@ export interface TextInputProps {
   showPrompt?: boolean;
   status: MutationStatus;
   loadingText: string;
+  userMessageLimit?: UserMessageLimit;
 
   onSubmitSuccess?: (value: string) => void;
   onSubmitError?: (value: string) => void;
@@ -25,6 +27,7 @@ export function TextInput({
   loadingText,
   onSubmitError,
   onSubmit,
+  userMessageLimit,
   ...textInputProps
 }: TextInputProps) {
   const [submittedValue, setSubmittedValue] = useState<string>('');
@@ -53,6 +56,7 @@ export function TextInput({
             <InkTextInput
               placeholder={placeholder}
               onSubmit={onSubmit}
+              isDisabled={userMessageLimit?.isUserLimitReached}
               {...textInputProps}
             />
           )}
@@ -61,6 +65,15 @@ export function TextInput({
           <Box gap={1}>
             <Spinner />
             <Text color="yellow">{loadingText}</Text>
+          </Box>
+        )}
+
+        {userMessageLimit && (
+          <Box justifyContent="flex-end" marginTop={1}>
+            <Text color={!userMessageLimit.isUserLimitReached ? 'gray' : 'red'}>
+              {userMessageLimit.remainingMessages} /{' '}
+              {userMessageLimit.dailyMessageLimit} messages remaining
+            </Text>
           </Box>
         )}
       </Box>

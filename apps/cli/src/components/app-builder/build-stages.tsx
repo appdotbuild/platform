@@ -1,12 +1,13 @@
 import { Box } from 'ink';
 import { useMemo } from 'react';
 import { usePhaseGroup } from '../../hooks/use-phase-group.js';
-import type { Message } from '../../hooks/use-send-message.js';
+import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 import { Panel } from '../shared/display/panel.js';
 import { PhaseGroupItem } from './phase-group-item.js';
+import { MessageKind } from '@appdotbuild/core';
 
 interface MessagesData {
-  messages: Message[];
+  events: ParsedSseEvent[];
 }
 
 interface BuildStageProps {
@@ -18,20 +19,21 @@ export function BuildStages({ messagesData, isStreaming }: BuildStageProps) {
   const { phaseGroups, currentPhase, currentMessage } =
     usePhaseGroup(messagesData);
 
-  if (!messagesData?.messages.length) return null;
+  if (!messagesData?.events.length) return null;
 
   const lastInteractiveGroupIndex = useMemo(
     () =>
       phaseGroups?.reduce((lastIndex, group, currentIndex) => {
-        const hasInteractiveInGroup = group.messages.some(
-          (m) => m.message.kind === 'RefinementRequest',
+        const hasInteractiveInGroup = group.events.some(
+          (e) => e.message.kind === MessageKind.REFINEMENT_REQUEST,
         );
         return hasInteractiveInGroup ? currentIndex : lastIndex;
       }, -1),
     [phaseGroups],
   );
 
-  const hasInteractive = currentMessage?.message.kind === 'RefinementRequest';
+  const hasInteractive =
+    currentMessage?.message.kind === MessageKind.REFINEMENT_REQUEST;
 
   return (
     <Panel title="Build in Progress" variant="info">

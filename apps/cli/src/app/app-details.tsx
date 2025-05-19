@@ -40,16 +40,21 @@ export function AppDetails() {
           </Text>
 
           <Text>
+            <Text color="gray">GitHub: </Text>
+            <Text bold>{app.repositoryUrl}</Text>
+          </Text>
+
+          <Text>
+            <Text color="gray">App URL: </Text>
+            <Text bold>{app.appUrl}</Text>
+          </Text>
+
+          <Text>
             <Text color="gray">Status: </Text>
             {getStatusEmoji(app.deployStatus)}{' '}
             <Text color={getStatusColor(app.deployStatus)} bold>
               {app.deployStatus}
             </Text>
-          </Text>
-
-          <Text>
-            <Text color="gray">Mode: </Text>
-            <Text bold>🌐 HTTP Server</Text>
           </Text>
 
           {app.recompileInProgress && (

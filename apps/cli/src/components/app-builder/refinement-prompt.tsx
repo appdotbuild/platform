@@ -1,9 +1,11 @@
 import type { MutationStatus } from '@tanstack/react-query';
-import type { Message } from '../../hooks/use-send-message.js';
+import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 import { InputSelector } from '../input-selector.js';
+import { MessageKind } from '@appdotbuild/core';
+import type { UserMessageLimit } from '@appdotbuild/core';
 
 interface MessagesData {
-  messages: Message[];
+  events: ParsedSseEvent[];
 }
 
 interface RefinementPromptProps {
@@ -11,16 +13,20 @@ interface RefinementPromptProps {
   applicationId?: string;
   onSubmit: (value: string) => void;
   status: MutationStatus;
+  userMessageLimit?: UserMessageLimit;
 }
+
 export function RefinementPrompt({
   messagesData,
   status,
   onSubmit,
+  userMessageLimit,
 }: RefinementPromptProps) {
-  const currentMessage = messagesData.messages.at(-1);
+  const currentMessage = messagesData.events.at(-1);
   if (!currentMessage) return null;
 
-  const isInteractive = currentMessage.message.kind === 'RefinementRequest';
+  const isInteractive =
+    currentMessage.message.kind === MessageKind.REFINEMENT_REQUEST;
 
   if (!isInteractive) return null;
 
@@ -33,6 +39,7 @@ export function RefinementPrompt({
       status={status}
       question="Provide feedback to the assistant..."
       onSubmit={onSubmit}
+      userMessageLimit={userMessageLimit}
     />
   );
 }

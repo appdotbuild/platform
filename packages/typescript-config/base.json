@@ -15,6 +15,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": false,
-    "target": "ES2022"
+    "target": "ES2022",
+    "types": ["node", "@appdotbuild/typescript-config/globals.d.ts"]
   }
 }

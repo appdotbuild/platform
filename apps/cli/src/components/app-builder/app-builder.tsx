@@ -1,5 +1,7 @@
+import { MessageKind } from '@appdotbuild/core';
 import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
+import { useUserMessageLimitCheck } from '../../hooks/use-message-limit.js';
 import { InteractivePrompt } from '../interactive-prompt.js';
 import { BuildStages } from './build-stages.js';
 import { RefinementPrompt } from './refinement-prompt.js';
@@ -18,6 +20,9 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
     isStreamingMessages,
   } = useBuildApp();
 
+  const { userMessageLimit, isUserReachedMessageLimit } =
+    useUserMessageLimitCheck(createApplicationError);
+
   const handlerSubmitRefinement = (value: string) => {
     createApplication({
       message: value,
@@ -35,8 +40,9 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
         loadingText="Applying changes..."
-        retryMessage="Please retry."
+        retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={!streamingMessagesData}
+        userMessageLimit={userMessageLimit || undefined}
       />
       {streamingMessagesData && (
         <BuildStages
@@ -49,6 +55,7 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
           messagesData={streamingMessagesData}
           onSubmit={handlerSubmitRefinement}
           status={createApplicationStatus}
+          userMessageLimit={userMessageLimit || undefined}
         />
       )}
 
@@ -62,13 +69,14 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
         loadingText="Applying changes..."
-        retryMessage="Please retry."
+        retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={Boolean(
           streamingMessagesData &&
             !isStreamingMessages &&
-            streamingMessagesData?.messages.at(-1)?.message.kind !==
-              'RefinementRequest',
+            streamingMessagesData?.events.at(-1)?.message.kind !==
+              MessageKind.REFINEMENT_REQUEST,
         )}
+        userMessageLimit={userMessageLimit || undefined}
       />
     </Box>
   );

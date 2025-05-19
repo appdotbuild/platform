@@ -1,5 +1,4 @@
 import { ConfirmInput as InkConfirm } from '@inkjs/ui';
-import { Box } from 'ink';
 import { Panel } from '../display/panel.js';
 
 export type ConfirmPromptProps = {

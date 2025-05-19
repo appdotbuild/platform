@@ -2,16 +2,18 @@ import { eq } from 'drizzle-orm';
 import { createApiClient } from '@neondatabase/api-client';
 import path from 'path';
 import fs from 'fs';
-import { execSync } from 'child_process';
+import { exec as execNative } from 'child_process';
 import { apps, db } from '../db';
 import { logger } from '../logger';
+import { promisify } from 'node:util';
+import { isProduction } from '../env';
+
+const NEON_DEFAULT_DATABASE_NAME = 'neondb';
+const exec = promisify(execNative);
 
 const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
 });
-
-const DEFAULT_TEMPLATE_DOCKER_IMAGE =
-  '361769577597.dkr.ecr.us-east-1.amazonaws.com/appdotbuild:tpcr-template';
 
 export async function deployApp({
   appId,
@@ -23,6 +25,7 @@ export async function deployApp({
   const app = await db
     .select({
       deployStatus: apps.deployStatus,
+      neonProjectId: apps.neonProjectId,
     })
     .from(apps)
     .where(eq(apps.id, appId));
@@ -36,32 +39,49 @@ export async function deployApp({
     throw new Error(`App ${appId} is already being deployed`);
   }
 
+  let connectionString: string | undefined;
+  let neonProjectId = app[0].neonProjectId;
+  if (neonProjectId) {
+    connectionString = await getNeonProjectConnectionString({
+      projectId: neonProjectId,
+    });
+    logger.info('Using existing Neon database', {
+      projectId: neonProjectId,
+    });
+  } else {
+    // Create a Neon database
+    const { data } = await neonClient.createProject({
+      project: {},
+    });
+    neonProjectId = data.project.id;
+    connectionString = data.connection_uris[0]?.connection_uri;
+    logger.info('Created Neon database', { projectId: data.project.id });
+  }
+
+  if (!connectionString) {
+    throw new Error('Failed to create Neon database');
+  }
+
   await db
     .update(apps)
     .set({
       deployStatus: 'deploying',
+      neonProjectId,
     })
     .where(eq(apps.id, appId));
 
-  const dockerfileDirectory = path.dirname(appDirectory);
   // check if dockerfile exists
-  if (!fs.existsSync(path.join(dockerfileDirectory, 'Dockerfile'))) {
+  if (!fs.existsSync(path.join(appDirectory, 'Dockerfile'))) {
     throw new Error('Dockerfile not found');
   }
-
-  // Create a Neon database
-  const { data } = await neonClient.createProject({
-    project: {},
-  });
-  const connectionString = data.connection_uris[0]?.connection_uri;
-  logger.info('Created Neon database', { projectId: data.project.id });
-
   const koyebAppName = `app-${appId}`;
   const envVars = {
     APP_DATABASE_URL: connectionString,
+    SERVER_PORT: '2022',
   };
 
   let envVarsString = '';
+
   for (const [key, value] of Object.entries(envVars)) {
     if (value !== null) {
       envVarsString += `--env ${key}='${value}' `;
@@ -69,33 +89,85 @@ export async function deployApp({
   }
 
   logger.info('Starting Koyeb deployment', { koyebAppName });
-  execSync(
-    `koyeb app init ${koyebAppName} --region was --docker ${DEFAULT_TEMPLATE_DOCKER_IMAGE} --ports 80:http --routes /:80 ${envVarsString}`,
-    { cwd: appDirectory, stdio: 'inherit' },
+  await exec(
+    `koyeb deploy . ${koyebAppName}/service --token ${process.env.KOYEB_CLI_TOKEN} --archive-builder docker --port 80:http --route /:80 ${envVarsString}`,
+    { cwd: appDirectory },
   );
+
+  await db
+    .update(apps)
+    .set({
+      flyAppId: koyebAppName,
+      deployStatus: 'deployed',
+    })
+    .where(eq(apps.id, appId));
+
   logger.info('Koyeb deployment completed', { koyebAppName });
   logger.info('Updating apps table', {
     koyebAppName,
     appId,
   });
 
-  await db
-    .update(apps)
-    .set({
-      flyAppId: koyebAppName,
-    })
-    .where(eq(apps.id, appId));
+  const { stdout } = await exec(
+    `koyeb apps get ${koyebAppName} -o json --token=${process.env.KOYEB_CLI_TOKEN}`,
+  );
+
+  logger.info('Getting app URL', { stdout });
+  const { domains } = JSON.parse(stdout);
+  const { name } = domains[0];
+
+  const appUrl = `https://${name}`;
 
   await db
     .update(apps)
     .set({
-      deployStatus: 'deployed',
+      appUrl,
     })
     .where(eq(apps.id, appId));
 
-  if (process.env.NODE_ENV === 'production') {
+  if (isProduction) {
     if (fs.existsSync(appDirectory)) {
       fs.rmdirSync(appDirectory, { recursive: true });
     }
   }
+
+  return { appURL: appUrl };
+}
+
+async function getNeonProjectConnectionString({
+  projectId,
+}: {
+  projectId: string;
+}) {
+  const branches = await neonClient.listProjectBranches({
+    projectId,
+  });
+  const defaultBranch = branches.data.branches.find((branch) => branch.default);
+  const branchId = defaultBranch?.id;
+  if (!branchId) {
+    throw new Error(`Default branch not found`);
+  }
+
+  const databases = await neonClient.listProjectBranchDatabases(
+    projectId,
+    branchId,
+  );
+  const defaultDatabase =
+    databases.data.databases.find(
+      (db) => db.name === NEON_DEFAULT_DATABASE_NAME,
+    ) ?? databases.data.databases[0];
+
+  if (!defaultDatabase) {
+    throw new Error(`Default database not found`);
+  }
+  const databaseName = defaultDatabase?.name;
+  const roleName = defaultDatabase?.owner_name;
+
+  const connectionString = await neonClient.getConnectionUri({
+    projectId,
+    database_name: databaseName,
+    role_name: roleName,
+  });
+
+  return connectionString.data.uri;
 }

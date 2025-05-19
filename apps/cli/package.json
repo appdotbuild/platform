@@ -1,24 +1,29 @@
 {
-  "name": "app-build-cli",
+  "name": "@app.build/cli",
   "version": "0.0.0",
   "license": "MIT",
   "type": "module",
-  "bin": "dist/cli.js",
+  "bin": {
+    "app.build": "dist/cli.js"
+  },
   "files": [
-    "dist"
+    "dist",
+    "package.json"
   ],
   "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf node_modules dist",
+    "build:cli": "bun run tools/build.ts",
+    "clean": "rm -rf node_modules dist tmp",
     "dev": "tsc --watch",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
-    "start": "node dist/cli.js",
-    "start:inspect": "node --inspect dist/cli.js",
+    "release": "bun run build:cli && semantic-release --config release.config.mjs",
+    "start": "node tmp/dist/cli.js",
+    "start:inspect": "node --inspect tmp/dist/cli.js",
     "test": "prettier --check . && xo && ava",
     "types:check": "tsc --noEmit"
   },
   "dependencies": {
+    "@appdotbuild/core": "workspace:*",
     "@inkjs/ui": "2.0.0",
     "@stackframe/js": "^2.8.6",
     "@tanstack/react-query": "5.69.0",
@@ -55,12 +60,16 @@
     "ink-testing-library": "^3.0.0",
     "prettier": "^2.8.7",
     "react-devtools-core": "^6.1.1",
+    "semantic-release": "23.0.0",
     "typescript": "5.8.2",
     "typescript-eslint": "8.28.0",
     "xo": "^0.53.1"
   },
   "engines": {
     "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "patchedDependencies": {
     "@tanstack/query-core@5.69.0": "apps/cli/patches/@tanstack%2Fquery-core@5.69.0.patch",

@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSendMessage, type Message } from './use-send-message.js';
+import { useSendMessage, type ParsedSseEvent } from './use-send-message.js';
+import { AgentStatus } from '@appdotbuild/core';
 
 export const queryKeys = {
   applicationMessages: (id: string) => ['apps', id],
@@ -7,10 +8,8 @@ export const queryKeys = {
 
 export const useBuildApp = (existingApplicationId?: string) => {
   const queryClient = useQueryClient();
-
   const {
     mutate: sendMessage,
-    data: sendMessagesData,
     data: sendMessageData,
     error: sendMessageError,
     isPending: sendMessagePending,
@@ -18,7 +17,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
     status: sendMessageStatus,
   } = useSendMessage();
 
-  const appId = existingApplicationId ?? sendMessagesData?.applicationId;
+  const appId = existingApplicationId ?? sendMessageData?.applicationId;
 
   const messageQuery = useQuery({
     queryKey: queryKeys.applicationMessages(appId!),
@@ -26,11 +25,11 @@ export const useBuildApp = (existingApplicationId?: string) => {
       // this should never happen due to `enabled`
       if (!appId) return null;
 
-      const messages = queryClient.getQueryData<{ messages: Message[] }>(
+      const events = queryClient.getQueryData<{ events: ParsedSseEvent[] }>(
         queryKeys.applicationMessages(appId),
       );
 
-      return messages ?? { messages: [] };
+      return events ?? { events: [] };
     },
     enabled: !!appId,
   });
@@ -45,6 +44,6 @@ export const useBuildApp = (existingApplicationId?: string) => {
 
     streamingMessagesData: messageQuery.data,
     isStreamingMessages:
-      messageQuery.data?.messages.at(-1)?.status === 'streaming',
+      messageQuery.data?.events.at(-1)?.status === AgentStatus.RUNNING,
   };
 };

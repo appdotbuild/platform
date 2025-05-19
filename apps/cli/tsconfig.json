@@ -10,7 +10,7 @@
     "allowJs": true,
     "resolveJsonModule": true,
     "moduleDetection": "force",
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
 
     // react
     "jsx": "react-jsx",
@@ -20,11 +20,14 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     /* If transpiling with TypeScript: */
-    "module": "NodeNext",
-    "sourceMap": true,
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "sourceMap": false,
     /* If your code doesn't run in the DOM: */
     "lib": ["es2022"],
 
+    "declaration": false,
+    "declarationMap": false,
     // for easing development
     "noUnusedLocals": false,
     "noUnusedParameters": false

@@ -1,3 +1,18 @@
+export type UserMessageLimit = {
+  isUserLimitReached: boolean;
+  dailyMessageLimit: number;
+  remainingMessages: number;
+  currentUsage: number;
+  nextResetTime: Date;
+};
+
+export type MessageLimitHeaders = {
+  'x-dailylimit-limit': number;
+  'x-dailylimit-remaining': number;
+  'x-dailylimit-usage': number;
+  'x-dailylimit-reset': string; // ISO string of Date
+};
+
 export type Pagination = {
   total: number;
   page: number;

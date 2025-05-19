@@ -2,7 +2,7 @@ import { Box, Text } from 'ink';
 import { PanelTitle } from './panel-title.js';
 import { Panel } from './panel.js';
 
-export interface SuccessMessageProps {
+interface SuccessMessageProps {
   prompt: string;
   question: string;
   successMessage: string;

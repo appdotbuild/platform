@@ -1,39 +1,39 @@
 import { useMemo } from 'react';
-import type { Message } from './use-send-message.js';
+import type { ParsedSseEvent } from './use-send-message.js';
+import { MessageKind } from '@appdotbuild/core';
 
 type PhaseGroup = {
-  phase: string;
-  messages: Message[];
+  phase: MessageKind;
+  events: ParsedSseEvent[];
 };
 
 type MessagesData = {
-  messages: Message[];
+  events: ParsedSseEvent[];
 };
 
 export function usePhaseGroup(messagesData: MessagesData) {
   return useMemo(() => {
-    if (!messagesData.messages.length)
+    if (!messagesData.events.length)
       return {
-        phasesGroup: [],
-        currentPhase: null,
+        phaseGroups: [],
+        currentPhase: undefined,
         currentMessage: null,
       };
-    const currentMessage = messagesData.messages.at(-1);
+    const currentMessage = messagesData.events.at(-1);
     const currentPhase = currentMessage?.message.kind;
-    const phaseGroups = messagesData.messages.reduce(
-      (groups: PhaseGroup[], message, index) => {
+    const phaseGroups = messagesData.events.reduce(
+      (groups: PhaseGroup[], event, index) => {
         if (
           index === 0 ||
-          messagesData.messages[index - 1]?.message.kind !==
-            message.message.kind
+          messagesData.events[index - 1]?.message.kind !== event.message.kind
         ) {
           groups.push({
-            phase: message.message.kind,
-            messages: [message],
+            phase: event.message.kind,
+            events: [event],
           });
         } else {
           const lastGroup = groups[groups.length - 1];
-          if (lastGroup) lastGroup.messages.push(message);
+          if (lastGroup) lastGroup.events.push(event);
         }
         return groups;
       },

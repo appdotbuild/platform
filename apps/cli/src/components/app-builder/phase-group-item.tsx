@@ -1,80 +1,74 @@
 import { useMemo } from 'react';
 import { useDebug } from '../../debug/debugger-panel.js';
-import type { Message } from '../../hooks/use-send-message.js';
+import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 import { type TaskDetail, TaskStatus } from '../shared/display/task-status.js';
-
-interface ParsedMessageContent {
-  role: 'assistant' | 'user';
-  content: {
-    type: 'text' | 'code' | 'interactive';
-    text: string;
-  }[];
-}
+import { MessageKind, type MessageContentBlock } from '@appdotbuild/core';
 
 interface PhaseGroupItemProps {
-  group: { phase: string; messages: Message[] };
+  group: { phase: MessageKind; events: ParsedSseEvent[] };
   groupIndex: number;
-  currentPhase: string | undefined;
+  currentPhase: MessageKind | undefined;
   isStreaming: boolean;
   hasInteractive: boolean;
   lastInteractiveGroupIndex?: number;
   phaseGroupsLength: number;
 }
 
-const getPhaseTitle = (phase: string) => {
+const getPhaseTitle = (phase: MessageKind) => {
   switch (phase) {
-    case 'typespec':
+    case MessageKind.STAGE_RESULT:
       return 'Generating TypeSpec model';
-    case 'handlers':
+    case MessageKind.RUNTIME_ERROR:
       return 'Creating event handlers';
-    case 'running-tests':
+    case MessageKind.REFINEMENT_REQUEST:
       return 'Running tests';
-    case 'frontend':
+    case MessageKind.FINAL_RESULT:
       return 'Building frontend components';
+    case MessageKind.PLATFORM_MESSAGE:
+      return 'Platform message';
     default:
       return phase;
   }
 };
 
 const createTaskDetail = (
-  messageEvent: ParsedMessageContent,
+  messageContent: {
+    role: 'assistant' | 'user';
+    content: MessageContentBlock[];
+  },
   index: number,
   messageContentLength: number,
   isCurrentPhase: boolean,
   isLastInteractiveGroup: boolean,
 ): TaskDetail | null => {
-  const textMessages = messageEvent.content.filter((c) => c.type === 'text');
-  if (!('content' in messageEvent)) return null;
-
+  const textMessages = messageContent.content.filter((c) => c.type === 'text');
   const message = textMessages[0];
   if (!message) return null;
+
   const isLastMessage = index === messageContentLength - 1;
   const shouldHighlight =
     isCurrentPhase && isLastInteractiveGroup && isLastMessage;
+
   return {
     text: message.text,
     highlight: shouldHighlight,
     icon: '⎿',
-    role: messageEvent.role,
+    role: messageContent.role,
   };
 };
 
 const extractPhaseMessages = (
-  messages: Message[],
+  events: ParsedSseEvent[],
   isCurrentPhase: boolean,
   isLastInteractiveGroup: boolean,
 ): TaskDetail[] => {
-  return messages.flatMap((m) => {
-    const parsedContent = JSON.parse(
-      m.message.content,
-    ) as ParsedMessageContent[];
-
-    return parsedContent
+  return events.flatMap((event) => {
+    return event.message.content
       .map((item, index) =>
         createTaskDetail(
           item,
           index,
-          parsedContent.length,
+          event.message.content.length,
           isCurrentPhase,
           isLastInteractiveGroup,
         ),
@@ -113,12 +107,13 @@ export function PhaseGroupItem({
   const phaseMessages = useMemo(
     () =>
       extractPhaseMessages(
-        group.messages,
+        group.events,
         isCurrentPhase,
         isLastInteractiveGroup,
       ),
-    [group.messages, isCurrentPhase, isLastInteractiveGroup],
+    [group.events, isCurrentPhase, isLastInteractiveGroup],
   );
+
   return (
     <TaskStatus
       key={`${group.phase}-${groupIndex}`}

@@ -2,7 +2,7 @@ import type { FastifyRequest } from 'fastify';
 import { StackServerApp, type ServerUser } from '@stackframe/stack';
 import * as jose from 'jose';
 import { logger } from './logger';
-import { isNeonEmployee } from './github';
+import { getUserData, isNeonEmployee } from './github';
 
 type AuthError = {
   error: string;
@@ -11,7 +11,10 @@ type AuthError = {
 
 export async function validateAuth(
   request: FastifyRequest,
-): Promise<(ServerUser & { githubAccessToken: string }) | AuthError> {
+): Promise<
+  | (ServerUser & { githubAccessToken: string; githubUsername: string })
+  | AuthError
+> {
   const jwks = jose.createRemoteJWKSet(
     new URL(
       `https://api.stack-auth.com/api/v1/projects/${process.env.STACK_PROJECT_ID}/.well-known/jwks.json`,
@@ -81,8 +84,14 @@ export async function validateAuth(
     const githubAccessToken =
       (await connectedAccount?.getAccessToken()) || null;
 
+    const userData = await getUserData(
+      githubAccessToken?.accessToken as string,
+    );
+    const githubUsername = userData.data.login;
+
     const neonEmployee = await isNeonEmployee(
       githubAccessToken?.accessToken as string,
+      githubUsername,
     );
 
     if (!neonEmployee) {
@@ -94,6 +103,7 @@ export async function validateAuth(
 
     return {
       ...user,
+      githubUsername,
       githubAccessToken: githubAccessToken?.accessToken as string,
     };
   } catch (error) {

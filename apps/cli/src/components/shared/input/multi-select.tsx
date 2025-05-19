@@ -19,11 +19,7 @@ export const MultiSelect = ({
   if (!showPrompt) return null;
 
   return (
-    <Panel
-      title={question}
-      variant="info" // 'info' para manter a cor azul que era usada antes
-      boxProps={{ width: '100%' }}
-    >
+    <Panel title={question} variant="info" boxProps={{ width: '100%' }}>
       <Box flexDirection="column" gap={1}>
         <Text>
           Use ↑↓ to navigate, <Text bold>SPACE to select</Text>, ENTER to
