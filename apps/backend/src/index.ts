@@ -1,7 +1,13 @@
 import { fastifySchedule } from '@fastify/schedule';
 import { config } from 'dotenv';
 import { app } from './app';
-import { appById, listApps, appByIdUrl, postMessage } from './apps';
+import {
+  appById,
+  listApps,
+  appByIdUrl,
+  postMessage,
+  getUserMessageLimit,
+} from './apps';
 import { logger } from './logger';
 import {
   createOrgRepositoryEndpoint,
@@ -45,6 +51,7 @@ if (isDev) {
 app.get('/apps', authHandler, listApps);
 app.get('/apps/:id', authHandler, appById);
 app.get('/apps/:id/read-url', authHandler, appByIdUrl);
+app.get('/apps/message-limit', authHandler, getUserMessageLimit);
 
 app.post('/message', authHandler, postMessage);
 

@@ -3,6 +3,7 @@ import { Select } from '../components/shared/input/select.js';
 import type { SelectItem } from '../components/shared/input/types.js';
 import { useListApps } from '../hooks/use-application.js';
 import { useSafeNavigate } from '../routes.js';
+import { LoadingSpinner } from '../components/shared/display/loading-spinner.js';
 
 export const getStatusEmoji = (status: string): string => {
   switch (status) {
@@ -55,13 +56,8 @@ export const AppsListScreen = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <Box justifyContent="center" paddingY={1}>
-        <Text>⏳ Loading applications...</Text>
-      </Box>
-    );
-  }
+  if (isLoading)
+    return <LoadingSpinner message={'⏳ Loading applications...'} />;
 
   if (error) {
     return (
