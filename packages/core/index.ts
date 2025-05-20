@@ -8,5 +8,8 @@ export class UserError extends Error {}
  */
 export class UnauthorizedError extends UserError {}
 
+/**
+ * Exporting shared types
+ */
 export * from './agent-message';
 export * from './types/api';

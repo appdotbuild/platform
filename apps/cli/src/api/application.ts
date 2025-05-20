@@ -1,9 +1,9 @@
-import { config } from 'dotenv';
+import type { Readable } from 'stream';
 import chalk from 'chalk';
+import { config } from 'dotenv';
 import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
-import { AgentSseEvent } from '@appdotbuild/core';
-import type { Readable } from 'stream';
+import type { AgentSseEvent } from '@appdotbuild/core';
 
 // Load environment variables from .env file
 config();

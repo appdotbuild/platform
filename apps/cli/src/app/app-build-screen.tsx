@@ -3,10 +3,11 @@ import { BuildingBlock } from '../components/shared/building-block.js';
 import { InfiniteFreeText } from '../components/shared/free-text.js';
 import { Panel } from '../components/shared/panel.js';
 import {
-  TaskStatus,
   type TaskDetail,
+  TaskStatus,
 } from '../components/shared/task-status.js';
 import { useDebug } from '../debug/debugger-panel.js';
+import { useUserMessageLimitCheck } from './message/use-message-limit.js';
 import { useBuildApp } from './message/use-message.js';
 import { MessageKind, AgentStatus } from '@appdotbuild/core';
 
@@ -29,6 +30,9 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
   } = useBuildApp();
 
   const { addLog } = useDebug();
+
+  const { userMessageLimit, isUserReachedMessageLimit } =
+    useUserMessageLimitCheck(createApplicationError);
 
   const getPhaseTitle = (phase: string) => {
     switch (phase) {
@@ -189,6 +193,7 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         successMessage="Success"
         status={createApplicationStatus}
         question="Provide feedback to the assistant..."
+        userMessageLimit={userMessageLimit || undefined}
         onSubmit={(value: string) => {
           createApplication({
             message: value,
@@ -209,8 +214,9 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
         loadingText="Applying changes..."
-        retryMessage="Please retry."
+        retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={!streamingMessagesData}
+        userMessageLimit={userMessageLimit || undefined}
       />
 
       {streamingMessagesData && renderBuildStages()}
@@ -226,13 +232,14 @@ export function AppBuildTextArea({ initialPrompt }: AppBuildTextAreaProps) {
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
         loadingText="Applying changes..."
-        retryMessage="Please retry."
+        retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={Boolean(
           streamingMessagesData &&
             !isStreamingMessages &&
             streamingMessagesData?.events.at(-1)?.message.kind !==
               MessageKind.REFINEMENT_REQUEST,
         )}
+        userMessageLimit={userMessageLimit || undefined}
       />
     </Box>
   );

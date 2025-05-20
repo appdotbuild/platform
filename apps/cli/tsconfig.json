@@ -10,7 +10,7 @@
     "allowJs": true,
     "resolveJsonModule": true,
     "moduleDetection": "force",
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
 
     // react
     "jsx": "react-jsx",

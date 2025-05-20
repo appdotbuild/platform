@@ -1,39 +1,41 @@
-import path from 'node:path';
-import os from 'node:os';
 import fs from 'node:fs';
-import { createSession, Session } from 'better-sse';
-import { eq, and } from 'drizzle-orm';
+import os from 'node:os';
+import path from 'node:path';
+import {
+  type AgentSseEvent,
+  AgentStatus,
+  type ContentMessage,
+  type MessageLimitHeaders,
+  type MessageContentBlock,
+  MessageKind,
+  PlatformMessage,
+  type TraceId,
+} from '@appdotbuild/core';
+import { type Session, createSession } from 'better-sse';
+import { and, eq } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { app } from '../app';
 import { getAgentHost } from '../apps/env';
-import { apps, appPrompts, db } from '../db';
-import {
-  createUserInitialCommit,
-  createUserRepository,
-  checkIfRepoExists,
-  createUserCommit,
-  cloneRepository,
-} from '../github';
-import {
-  readDirectoryRecursive,
-  copyDirToMemfs,
-  writeMemfsToTempDir,
-  createMemoryFileSystem,
-  type FileData,
-} from '../utils';
-import { applyDiff } from './diff';
+import { appPrompts, apps, db } from '../db';
 import { deployApp } from '../deploy';
 import { isDev } from '../env';
 import {
-  AgentStatus,
-  MessageKind,
-  PlatformMessage,
-  type AgentSseEvent,
-  type ContentMessage,
-  type MessageContentBlock,
-  type TraceId,
-} from '@appdotbuild/core';
+  checkIfRepoExists,
+  cloneRepository,
+  createUserCommit,
+  createUserInitialCommit,
+  createUserRepository,
+} from '../github';
+import {
+  type FileData,
+  copyDirToMemfs,
+  createMemoryFileSystem,
+  readDirectoryRecursive,
+  writeMemfsToTempDir,
+} from '../utils';
+import { applyDiff } from './diff';
+import { checkMessageUsageLimit } from './message-limit';
 
 interface AgentMessage {
   role: 'assistant';
@@ -77,10 +79,41 @@ export async function postMessage(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const session = await createSession(request.raw, reply.raw);
+  const userId = request.user.id;
+
+  const {
+    isUserLimitReached,
+    dailyMessageLimit,
+    nextResetTime,
+    remainingMessages,
+    currentUsage,
+  } = await checkMessageUsageLimit(userId);
+
+  if (isUserLimitReached) {
+    app.log.error(`Daily message limit reached for user ${userId}`);
+    return reply.status(429).send();
+  }
+
+  const userLimitHeader: MessageLimitHeaders = {
+    'x-dailylimit-limit': dailyMessageLimit,
+    'x-dailylimit-remaining': remainingMessages - 1, // count new message
+    'x-dailylimit-usage': currentUsage + 1, // count new message
+    'x-dailylimit-reset': nextResetTime.toISOString(),
+  };
+
+  reply.headers(userLimitHeader);
+
+  const session = await createSession(request.raw, reply.raw, {
+    headers: {
+      ...userLimitHeader,
+    },
+  });
+
   const abortController = new AbortController();
   const githubUsername = request.user.githubUsername;
   const githubAccessToken = request.user.githubAccessToken;
+  const requestBody = request.body as RequestBody;
+  let applicationId = requestBody.applicationId;
 
   request.socket.on('close', () => {
     app.log.info(`Client disconnected for applicationId: ${applicationId}`);
@@ -97,10 +130,8 @@ export async function postMessage(
     body: request.body,
   });
 
-  const requestBody = request.body as RequestBody;
-  const traceId = getApplicationTraceId(request, requestBody.applicationId);
+  const traceId = getApplicationTraceId(request, applicationId);
 
-  let applicationId = requestBody.applicationId;
   let body: Body = {
     applicationId,
     allMessages: [{ role: 'user', content: requestBody.message }],
@@ -115,9 +146,7 @@ export async function postMessage(
     const application = await db
       .select()
       .from(apps)
-      .where(
-        and(eq(apps.id, applicationId), eq(apps.ownerId, request.user.id)),
-      );
+      .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
 
     appName = application[0]!.appName;
 
@@ -244,7 +273,7 @@ export async function postMessage(
             const parsedMessage = JSON.parse(message);
 
             buffer = buffer.slice(
-              `data: `.length + message.length + '\n\n'.length,
+              'data: '.length + message.length + '\n\n'.length,
             );
 
             app.log.info('message sent to CLI', {
@@ -567,15 +596,14 @@ function getExistingConversationBody({
             role,
             content,
           };
-        } else {
-          return {
-            role: 'assistant',
-            content,
-            agentState: undefined,
-            unifiedDiff: undefined,
-            kind: MessageKind.FINAL_RESULT,
-          };
         }
+        return {
+          role: 'assistant',
+          content,
+          agentState: undefined,
+          unifiedDiff: undefined,
+          kind: MessageKind.FINAL_RESULT,
+        };
       });
     } catch (error) {
       app.log.error(`Error parsing message history: ${error}`);
