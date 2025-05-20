@@ -82,7 +82,7 @@ export function useFetchMessageLimit() {
   const { isLoading } = useQuery({
     queryKey: ['message-limit'],
     queryFn: async () => {
-      const response = await apiClient.get('/apps/message-limit');
+      const response = await apiClient.get('/message-limit');
       const headers = response.headers;
 
       const userMessageLimit = {
