@@ -26,7 +26,6 @@ type InputSelectorProps =
 export function InputSelector(props: InputSelectorProps) {
   switch (props.type) {
     case 'text-input':
-      console.log('InteractivePrompt', props);
       return <InteractivePrompt {...props} />;
     case 'select':
       return <Select {...props} />;

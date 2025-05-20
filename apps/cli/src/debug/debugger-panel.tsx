@@ -1,35 +1,5 @@
 import { Box, Text, useInput } from 'ink';
-import { create } from 'zustand';
-
-type Log = {
-  timestamp: string;
-  data: any;
-};
-
-type DebugStore = {
-  logs: Log[];
-  isVisible: boolean;
-  addLog: (data: any) => void;
-  clearLogs: () => void;
-  toggleVisibility: () => void;
-};
-
-const useDebugStore = create<DebugStore>((set) => ({
-  logs: [],
-  isVisible: true,
-  addLog: (data: any) =>
-    set((state) => ({
-      logs: [
-        ...state.logs,
-        {
-          timestamp: new Date().toISOString(),
-          data,
-        },
-      ],
-    })),
-  clearLogs: () => set({ logs: [] }),
-  toggleVisibility: () => set((state) => ({ isVisible: !state.isVisible })),
-}));
+import { useDebugStore } from '../hooks/use-debug';
 
 // Debug panel component
 export const DebugPanel = () => {
@@ -63,11 +33,4 @@ export const DebugPanel = () => {
       ))}
     </Box>
   );
-};
-
-export const useDebug = () => {
-  const addLog = useDebugStore((state) => state.addLog);
-  const clearLogs = useDebugStore((state) => state.clearLogs);
-
-  return { addLog, clearLogs };
 };
