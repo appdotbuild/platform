@@ -44,4 +44,8 @@ export function prepareRelease() {
     JSON.stringify(pkg, null, 2),
     'utf-8',
   );
+  fs.copyFileSync(
+    path.join(__dirname, '../README.md'),
+    path.join(__dirname, '../tmp', 'README.md'),
+  );
 }
