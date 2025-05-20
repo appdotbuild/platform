@@ -25,13 +25,14 @@ export default {
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'bun ./tools/update-version.ts ${nextRelease.version}',
+        prepareCmd: 'bun tools/update-version.ts ${nextRelease.version}',
+        publishCmd: 'cd ./tmp && bun publish --access public',
       },
     ],
     [
-      '@semantic-release/npm',
+      '@semantic-release/github',
       {
-        pkgRoot: './tmp',
+        assets: ['CHANGELOG.md'],
       },
     ],
   ],

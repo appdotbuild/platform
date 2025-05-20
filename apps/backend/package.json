@@ -6,9 +6,11 @@
     "clean": "rm -rf node_modules",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "predev": "bun run db:migrate",
     "dev": "bun run --watch --inspect src/index.ts",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
+    "prestart": "bun run db:migrate",
     "start": "bun run src/index.ts",
     "test": "bun test",
     "types:check": "tsc --noEmit"
