@@ -32,10 +32,10 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Release apps/cli
+      - name: Release CLI
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
           PUBLIC_STACK_PROJECT_ID: ${{ secrets.PUBLIC_STACK_PROJECT_ID }}
           PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
         run: bun run cli:release
