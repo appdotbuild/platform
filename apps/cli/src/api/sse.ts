@@ -1,5 +1,6 @@
 import readline from 'readline';
 import { Readable } from 'stream';
+import { useDebugStore } from '../hooks/use-debug';
 
 type SSEEvent = {
   event?: string;
@@ -49,6 +50,18 @@ export function parseSSE(
             const parsedData = safeJSONParse(event.data);
             if (event.event === 'done') {
               resolve();
+              return;
+            }
+
+            if (event.event === 'error') {
+              onError?.(new Error(parsedData.error));
+              reject(new Error(parsedData.error));
+              return;
+            }
+
+            if (event.event === 'debug') {
+              useDebugStore.getState().addLog(parsedData.log, parsedData.level);
+              buffer = '';
               return;
             }
 

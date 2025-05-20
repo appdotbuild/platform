@@ -36,6 +36,7 @@ import {
 } from '../utils';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
+import console from 'node:console';
 
 interface AgentMessage {
   role: 'assistant';
@@ -121,19 +122,25 @@ export async function postMessage(
   let applicationId = requestBody.applicationId;
 
   request.socket.on('close', () => {
-    app.log.info(`Client disconnected for applicationId: ${applicationId}`);
+    streamLog(
+      session,
+      `Client disconnected for applicationId: ${applicationId}`,
+      'info',
+    );
     abortController.abort();
   });
 
-  app.log.info('created SSE session');
+  streamLog(session, 'created SSE session', 'info');
 
   if (isDev) {
     fs.mkdirSync(logsFolder, { recursive: true });
   }
 
-  app.log.info('Received message request', {
-    body: request.body,
-  });
+  streamLog(
+    session,
+    `Received message request: ${JSON.stringify({ body: request.body })}`,
+    'info',
+  );
 
   try {
     const traceId = getApplicationTraceId(request, applicationId);
@@ -161,7 +168,7 @@ export async function postMessage(
       appName = application[0]!.appName;
 
       if (application.length === 0) {
-        app.log.error('application not found');
+        streamLog(session, 'application not found', 'error');
         return reply.status(404).send({
           error: 'Application not found',
           status: 'error',
@@ -215,7 +222,6 @@ export async function postMessage(
     // and we add them to the body for the agent to use.
     if (isIteration) {
       const { volume, virtualDir } = await volumePromise;
-
       body.allFiles = readDirectoryRecursive(virtualDir, virtualDir, volume);
     }
 
@@ -233,10 +239,12 @@ export async function postMessage(
 
     if (!agentResponse.ok) {
       const errorData = await agentResponse.json();
-      app.log.error(
+      streamLog(
+        session,
         `Agent returned error: ${
           agentResponse.status
         }, errorData: ${JSON.stringify(errorData)}`,
+        'error',
       );
       return reply.status(agentResponse.status).send({
         error: errorData,
@@ -258,7 +266,7 @@ export async function postMessage(
     const textDecoder = new TextDecoder();
 
     while (!abortController.signal.aborted) {
-      app.log.info('reading the stream');
+      streamLog(session, 'reading the stream', 'info');
 
       const { done, value } = await reader.read();
 
@@ -287,13 +295,10 @@ export async function postMessage(
             );
 
             if (parsedMessage.message.kind === 'KeepAlive') {
-              app.log.info('keep alive message received');
+              streamLog(session, 'keep alive message received', 'info');
               continue;
             }
-
-            app.log.info('message sent to CLI', {
-              message,
-            });
+            streamLog(session, `message sent to CLI: ${message}`, 'info');
 
             storeDevLogs(parsedMessage, message);
 
@@ -396,13 +401,22 @@ export async function postMessage(
               );
             }
           }
-        } catch (e) {
-          app.log.error(`Error pushing SSE message: ${e}`);
+        } catch (error) {
+          // this is a special case for incomplete messages
+          if (
+            error instanceof Error &&
+            error.message.includes('Unterminated string')
+          ) {
+            streamLog(session, 'Incomplete message', 'info');
+            continue;
+          }
+
+          streamLog(session, `Error handling SSE message: ${error}`, 'error');
         }
       }
     }
 
-    app.log.info('pushed done');
+    streamLog(session, 'stream finished', 'info');
     session.push(
       { done: true, traceId: getApplicationTraceId(request, applicationId) },
       'done',
@@ -411,11 +425,12 @@ export async function postMessage(
 
     reply.raw.end();
   } catch (error) {
-    app.log.error(`Unhandled error: ${error}`);
+    streamLog(session, `Unhandled error: ${error}`, 'error');
     session.push(
       new StreamingError((error as Error).message ?? 'Unknown error'),
       'error',
     );
+    session.removeAllListeners();
     return reply.status(500).send({
       applicationId,
       error: `An error occurred while processing your request: ${error}`,
@@ -633,4 +648,13 @@ function getExistingConversationBody({
     applicationId,
     settings: settings || { 'max-iterations': 3 },
   };
+}
+
+function streamLog(
+  session: Session,
+  log: string,
+  level: 'info' | 'error' = 'info',
+) {
+  app.log[level](log);
+  session.push({ log, level }, 'debug');
 }
