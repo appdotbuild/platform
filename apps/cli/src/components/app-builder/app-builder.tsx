@@ -2,13 +2,13 @@ import { MessageKind } from '@appdotbuild/core';
 import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
 import {
-  useUserMessageLimitCheck,
   useFetchMessageLimit,
+  useUserMessageLimitCheck,
 } from '../../hooks/use-message-limit.js';
 import { InteractivePrompt } from '../interactive-prompt.js';
+import { LoadingMessage } from '../shared/display/loading-message.js';
 import { BuildStages } from './build-stages.js';
 import { RefinementPrompt } from './refinement-prompt.js';
-import { LoadingSpinner } from '../shared/display/loading-spinner.js';
 
 interface AppBuilderProps {
   initialPrompt: string;
@@ -37,7 +37,7 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
   };
 
   if (isLoading)
-    return <LoadingSpinner message={'⏳ Preparing application...'} />;
+    return <LoadingMessage message={'⏳ Preparing application...'} />;
 
   return (
     <Box flexDirection="column">
