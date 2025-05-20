@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AppRouter } from './routes.js';
-import { authenticate } from './auth/auth.js';
-import { useAuth } from './auth/use-auth.js';
+import { AppRouter } from './routes';
+import { authenticate } from './auth/auth';
+import { useAuth } from './auth/use-auth';
 import { Box, Text } from 'ink';
-import { Banner } from './components/ui/Banner.js';
+import { Banner } from './components/ui/Banner';
 
 const queryClient = new QueryClient();
 
@@ -28,10 +28,10 @@ export const App = () => {
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { data, error, isLoading } = useAuth();
+  const isAuthenticated = !isLoading && !!data?.isLoggedIn;
 
   useEffect(() => {
-    if (!isLoading && !data?.isLoggedIn) {
-      console.log('Authenticating...');
+    if (!isAuthenticated) {
       void authenticate();
     }
   }, [data, isLoading]);
@@ -46,9 +46,15 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     content = children;
   }
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <Box flexDirection="column" gap={1}>
-      <Banner />
+      <Banner title="Welcome to AppDotBuild CLI">
+        Create, deploy, and manage your applications with ease
+      </Banner>
       {content}
     </Box>
   );
