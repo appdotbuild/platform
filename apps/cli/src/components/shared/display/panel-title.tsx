@@ -9,8 +9,7 @@ export function PanelTitle({
 }) {
   return (
     <Text>
-      <Text>{question}</Text>
-      <Text dimColor>{prompt}</Text>
+      <Text>{question}</Text> <Text dimColor>{prompt}</Text>
     </Text>
   );
 }

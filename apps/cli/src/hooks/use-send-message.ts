@@ -4,7 +4,6 @@ import { sendMessage, type SendMessageParams } from '../api/application.js';
 import { applicationQueryKeys } from './use-application.js';
 import { queryKeys } from './use-build-app.js';
 import {
-  AgentStatus,
   MessageKind,
   type AgentSseEvent,
   type MessageContentBlock,

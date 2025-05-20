@@ -43,12 +43,13 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
     <Box flexDirection="column">
       <InteractivePrompt
         question={initialPrompt}
-        successMessage="Application build started..."
+        successMessage="Message sent to Agent..."
         placeholder="e.g., Add a new feature, modify behavior, or type 'exit' to finish"
         onSubmit={(text: string) => createApplication({ message: text })}
         status={createApplicationStatus}
+        isDisabled={isStreamingMessages}
         errorMessage={createApplicationError?.message}
-        loadingText="Applying changes..."
+        loadingText="Waiting for Agent response..."
         retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={!streamingMessagesData}
         userMessageLimit={userMessageLimit || undefined}
@@ -65,6 +66,7 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
           onSubmit={handlerSubmitRefinement}
           status={createApplicationStatus}
           userMessageLimit={userMessageLimit || undefined}
+          isDisabled={isStreamingMessages}
         />
       )}
 

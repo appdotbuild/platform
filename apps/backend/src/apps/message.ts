@@ -71,10 +71,14 @@ type RequestBody = {
 const previousRequestMap = new Map<TraceId, AgentSseEvent>();
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
 
+const TEMPORARY_APPLICATION_ID = 'temp';
 const getApplicationTraceId = (
   request: FastifyRequest,
   appId: string | undefined,
-) => (appId ? `app-${appId}.req-${request.id}` : `temp.req-${request.id}`);
+) =>
+  appId
+    ? `app-${appId}.req-${request.id}`
+    : `${TEMPORARY_APPLICATION_ID}.req-${request.id}`;
 
 export async function postMessage(
   request: FastifyRequest,
@@ -139,10 +143,11 @@ export async function postMessage(
     traceId,
     settings: requestBody.settings || { 'max-iterations': 3 },
   };
-  let isIteration = !!applicationId;
+  let isIteration =
+    Boolean(applicationId) && applicationId !== TEMPORARY_APPLICATION_ID;
   let appName = null;
 
-  if (applicationId) {
+  if (isIteration && applicationId) {
     app.log.info(`existing applicationId ${applicationId}`);
     const application = await db
       .select()
@@ -466,12 +471,16 @@ async function appCreation({
     throw new Error('Repository URL not found');
   }
 
+  const updatedTraceId = traceId.replace(
+    TEMPORARY_APPLICATION_ID,
+    `app-${applicationId}`,
+  );
   await db.insert(apps).values({
     id: applicationId,
     name: requestBody.message,
     clientSource: requestBody.clientSource,
     ownerId,
-    traceId,
+    traceId: updatedTraceId,
     repositoryUrl,
     appName: newAppName,
     githubUsername,
