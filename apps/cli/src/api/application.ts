@@ -116,7 +116,7 @@ export async function sendMessage({
     onMessage: (message: AgentSseEvent) => {
       onMessage?.(message);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       // console.error('error', error);
     },
     onEvent: (event) => {

@@ -10,7 +10,7 @@ type SSEEvent = {
 
 type ParseSSEOptions = {
   onMessage: (data: any) => void;
-  onError?: (error: unknown, raw?: string) => void;
+  onError?: (error: Error, raw?: string) => void;
   onEvent?: (event: SSEEvent) => void;
   onClose?: () => void;
 };
@@ -70,7 +70,7 @@ export function parseSSE(
       }
     });
 
-    rl.on('error', (err) => {
+    rl.on('error', (err: Error) => {
       onError?.(err);
       reject(err);
     });

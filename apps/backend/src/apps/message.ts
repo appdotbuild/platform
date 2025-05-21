@@ -4,7 +4,6 @@ import path from 'node:path';
 import {
   type AgentSseEvent,
   AgentStatus,
-  type ContentMessage,
   type MessageLimitHeaders,
   type MessageContentBlock,
   MessageKind,
@@ -232,9 +231,11 @@ export async function postMessage(
     const agentResponse = await fetch(`${getAgentHost()}/message`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         Accept: 'text/event-stream',
         Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH}`,
+        Connection: 'keep-alive',
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
       },
       body: JSON.stringify(body),
     });
