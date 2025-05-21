@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSendMessage, type ParsedSseEvent } from './use-send-message.js';
 import { AgentStatus } from '@appdotbuild/core';
+import { useEffect } from 'react';
 
 export const queryKeys = {
   applicationMessages: (id: string) => ['apps', id],
@@ -15,7 +16,15 @@ export const useBuildApp = (existingApplicationId?: string) => {
     isPending: sendMessagePending,
     isSuccess: sendMessageSuccess,
     status: sendMessageStatus,
+    reset: sendMessageReset,
   } = useSendMessage();
+
+  // reset the mutation when it succeeds or fails
+  useEffect(() => {
+    if (sendMessageSuccess || sendMessageError) {
+      sendMessageReset();
+    }
+  }, [sendMessageSuccess, sendMessageError, sendMessageReset]);
 
   const appId = existingApplicationId ?? sendMessageData?.applicationId;
 

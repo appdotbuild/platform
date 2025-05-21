@@ -13,7 +13,6 @@ export interface TextInputProps {
   status: MutationStatus;
   loadingText: string;
   userMessageLimit?: UserMessageLimit;
-  isDisabled?: boolean;
 
   onSubmitSuccess?: (value: string) => void;
   onSubmitError?: (value: string) => void;
@@ -30,7 +29,6 @@ export function TextInput({
   onSubmit,
   userMessageLimit,
   showPrompt,
-  isDisabled,
   ...textInputProps
 }: TextInputProps) {
   const [submittedValue, setSubmittedValue] = useState<string>('');
@@ -64,7 +62,9 @@ export function TextInput({
                 setSubmittedValue(value);
                 onSubmit(value);
               }}
-              isDisabled={userMessageLimit?.isUserLimitReached || isDisabled}
+              isDisabled={
+                userMessageLimit?.isUserLimitReached || status === 'pending'
+              }
               {...textInputProps}
             />
           )}

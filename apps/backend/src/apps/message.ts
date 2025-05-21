@@ -10,6 +10,7 @@ import {
   MessageKind,
   PlatformMessage,
   type TraceId,
+  StreamingError,
 } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
 import { and, eq } from 'drizzle-orm';
@@ -135,79 +136,91 @@ export async function postMessage(
     body: request.body,
   });
 
-  const traceId = getApplicationTraceId(request, applicationId);
+  try {
+    const traceId = getApplicationTraceId(request, applicationId);
 
-  let body: Body = {
-    applicationId,
-    allMessages: [{ role: 'user', content: requestBody.message }],
-    traceId,
-    settings: requestBody.settings || { 'max-iterations': 3 },
-  };
-  let isIteration =
-    Boolean(applicationId) && applicationId !== TEMPORARY_APPLICATION_ID;
-  let appName = null;
+    let body: Body = {
+      applicationId,
+      allMessages: [{ role: 'user', content: requestBody.message }],
+      traceId,
+      settings: requestBody.settings || { 'max-iterations': 3 },
+    };
+    let isIteration = Boolean(applicationId);
 
-  if (isIteration && applicationId) {
-    app.log.info(`existing applicationId ${applicationId}`);
-    const application = await db
-      .select()
-      .from(apps)
-      .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
+    let appName = null;
 
-    appName = application[0]!.appName;
+    if (isIteration) {
+      // satisfy TS
+      if (!applicationId) {
+        app.log.error('applicationId is undefined');
+        return reply.status(400).send({
+          error: 'Application ID is required',
+          status: 'error',
+        });
+      }
 
-    if (application.length === 0) {
-      app.log.error('application not found');
-      return reply.status(404).send({
-        error: 'Application not found',
-        status: 'error',
-      });
+      app.log.info(`existing applicationId ${applicationId}`);
+
+      const application = await db
+        .select()
+        .from(apps)
+        .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
+
+      console.log('application', application);
+
+      appName = application[0]!.appName;
+
+      if (application.length === 0) {
+        app.log.error('application not found');
+        return reply.status(404).send({
+          error: 'Application not found',
+          status: 'error',
+        });
+      }
+
+      const previousRequest = previousRequestMap.get(
+        application[0]!.traceId as TraceId,
+      );
+
+      if (!previousRequest) {
+        return reply.status(404).send({
+          error: 'Previous request not found',
+          status: 'error',
+        });
+      }
+
+      body = {
+        ...body,
+        ...getExistingConversationBody({
+          previousEvent: previousRequest,
+          existingTraceId: application[0]!.traceId as TraceId,
+          applicationId,
+          message: requestBody.message,
+          settings: requestBody.settings,
+        }),
+      };
+    } else {
+      applicationId = uuidv4();
+      body = {
+        ...body,
+        applicationId,
+        traceId,
+      };
     }
 
-    const previousRequest = previousRequestMap.get(
-      application[0]!.traceId as TraceId,
+    const tempDirPath = path.join(
+      os.tmpdir(),
+      `appdotbuild-template-${Date.now()}`,
     );
 
-    if (!previousRequest) {
-      return reply.status(404).send({
-        error: 'Previous request not found',
-        status: 'error',
-      });
-    }
+    const volumePromise = isIteration
+      ? cloneRepository({
+          repo: `${githubUsername}/${appName}`,
+          githubAccessToken,
+          tempDirPath,
+        }).then(copyDirToMemfs)
+      : createMemoryFileSystem();
 
-    body = {
-      ...body,
-      ...getExistingConversationBody({
-        previousEvent: previousRequest,
-        existingTraceId: application[0]!.traceId as TraceId,
-        applicationId,
-        message: requestBody.message,
-        settings: requestBody.settings,
-      }),
-    };
-  } else {
-    applicationId = uuidv4();
-    body = {
-      ...body,
-      applicationId,
-      traceId,
-    };
-  }
-
-  const tempDirPath = path.join(
-    os.tmpdir(),
-    `appdotbuild-template-${Date.now()}`,
-  );
-
-  const volumePromise = isIteration
-    ? cloneRepository({
-        repo: `${githubUsername}/${appName}`,
-        githubAccessToken,
-        tempDirPath,
-      }).then(copyDirToMemfs)
-    : createMemoryFileSystem();
-
-  try {
     // We are iterating over an existing app, so we wait for the promise here to read the files that where cloned.
     // and we add them to the body for the agent to use.
     if (isIteration) {
@@ -347,7 +360,7 @@ export async function postMessage(
                   `appdotbuild-${uuidv4().slice(0, 4)}`;
 
                 const { newAppName } = await appCreation({
-                  applicationId,
+                  applicationId: applicationId,
                   appName,
                   githubAccessToken,
                   githubUsername,
@@ -403,6 +416,10 @@ export async function postMessage(
     reply.raw.end();
   } catch (error) {
     app.log.error(`Unhandled error: ${error}`);
+    session.push(
+      new StreamingError((error as Error).message ?? 'Unknown error'),
+      'error',
+    );
     return reply.status(500).send({
       applicationId,
       error: `An error occurred while processing your request: ${error}`,

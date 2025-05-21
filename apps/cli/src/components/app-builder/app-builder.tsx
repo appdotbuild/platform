@@ -47,7 +47,6 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
         placeholder="e.g., Add a new feature, modify behavior, or type 'exit' to finish"
         onSubmit={(text: string) => createApplication({ message: text })}
         status={createApplicationStatus}
-        isDisabled={isStreamingMessages}
         errorMessage={createApplicationError?.message}
         loadingText="Waiting for Agent response..."
         retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
@@ -66,7 +65,7 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
           onSubmit={handlerSubmitRefinement}
           status={createApplicationStatus}
           userMessageLimit={userMessageLimit || undefined}
-          isDisabled={isStreamingMessages}
+          errorMessage={createApplicationError?.message}
         />
       )}
 
