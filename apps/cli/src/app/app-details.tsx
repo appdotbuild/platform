@@ -66,7 +66,10 @@ export function AppDetails() {
       </Panel>
 
       <Box marginTop={2}>
-        <AppBuilder initialPrompt="How would you like to modify your application?" />
+        <AppBuilder
+          initialPrompt="How would you like to modify your application?"
+          appId={app?.id}
+        />
       </Box>
     </Box>
   );

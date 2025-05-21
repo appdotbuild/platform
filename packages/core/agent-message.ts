@@ -1,6 +1,7 @@
 export enum AgentStatus {
   RUNNING = 'running',
   IDLE = 'idle',
+  COMPLETED = 'completed',
 }
 
 export enum MessageKind {
@@ -9,6 +10,7 @@ export enum MessageKind {
   REFINEMENT_REQUEST = 'RefinementRequest',
   FINAL_RESULT = 'FinalResult',
   PLATFORM_MESSAGE = 'PlatformMessage',
+  USER_MESSAGE = 'UserMessage',
 }
 
 type RequestId = string;

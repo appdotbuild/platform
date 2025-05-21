@@ -1,31 +1,13 @@
 import type { Readable } from 'stream';
+import type { AgentSseEvent, App, AppWithHistory } from '@appdotbuild/core';
 import chalk from 'chalk';
 import { config } from 'dotenv';
+import { convertAppPromptsToEvents } from '../hooks/use-app-history.js';
 import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
-import type { AgentSseEvent } from '@appdotbuild/core';
 
 // Load environment variables from .env file
 config();
-
-export type App = {
-  id: string;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-  ownerId: string;
-  flyAppId?: string | null;
-  s3Checksum?: string | null;
-  deployStatus: 'pending' | 'deploying' | 'deployed' | 'failed';
-  traceId?: string | null;
-  typespecSchema?: string | null;
-  receivedSuccess: boolean;
-  recompileInProgress: boolean;
-  clientSource: 'slack' | 'cli';
-  repositoryUrl?: string;
-  appName?: string;
-  appUrl?: string;
-};
 
 export type AppGenerationParams = {
   useStaging: boolean;
@@ -42,14 +24,12 @@ export type AppGenerationResult = {
 
 export const getApp = async (appId: string) => {
   try {
-    const appStatus = await apiClient.get<App & { readUrl: string }>(
-      `/apps/${appId}`,
-    );
-
-    return {
-      isDeployed: appStatus.data.deployStatus === 'deployed',
+    const appStatus = await apiClient.get<AppWithHistory>(`/apps/${appId}`);
+    const app = {
       ...appStatus.data,
+      events: convertAppPromptsToEvents(appStatus.data.history),
     };
+    return app;
   } catch (error) {
     console.error('Error checking app deployment status:', error);
     throw error;

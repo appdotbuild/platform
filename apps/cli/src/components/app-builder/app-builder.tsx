@@ -8,9 +8,10 @@ import { RefinementPrompt } from './refinement-prompt.js';
 
 interface AppBuilderProps {
   initialPrompt: string;
+  appId?: string;
 }
 
-export function AppBuilder({ initialPrompt }: AppBuilderProps) {
+export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
   const {
     createApplication,
     createApplicationData,
@@ -18,7 +19,7 @@ export function AppBuilder({ initialPrompt }: AppBuilderProps) {
     createApplicationStatus,
     streamingMessagesData,
     isStreamingMessages,
-  } = useBuildApp();
+  } = useBuildApp(appId);
 
   const { userMessageLimit, isUserReachedMessageLimit } =
     useUserMessageLimitCheck(createApplicationError);

@@ -26,6 +26,8 @@ const getPhaseTitle = (phase: MessageKind) => {
       return 'Building frontend components';
     case MessageKind.PLATFORM_MESSAGE:
       return 'Platform message';
+    case MessageKind.USER_MESSAGE:
+      return 'User message';
     default:
       return phase;
   }
