@@ -15,7 +15,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
     isPending: sendMessagePending,
     isSuccess: sendMessageSuccess,
     status: sendMessageStatus,
-  } = useSendMessage();
+  } = useSendMessage(existingApplicationId);
 
   const appId = existingApplicationId ?? sendMessageData?.applicationId;
 

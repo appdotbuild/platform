@@ -27,7 +27,7 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
   const handlerSubmitRefinement = (value: string) => {
     createApplication({
       message: value,
-      applicationId: createApplicationData?.applicationId,
+      applicationId: appId ?? createApplicationData?.applicationId,
     });
   };
 

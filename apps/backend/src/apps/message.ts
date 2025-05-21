@@ -144,6 +144,7 @@ export async function postMessage(
 
   if (applicationId) {
     app.log.info(`existing applicationId ${applicationId}`);
+    app.log.info(`for user ${userId}`);
     const application = await db
       .select()
       .from(apps)
@@ -164,22 +165,23 @@ export async function postMessage(
     );
 
     if (!previousRequest) {
-      return reply.status(404).send({
-        error: 'Previous request not found',
-        status: 'error',
-      });
-    }
-
-    body = {
-      ...body,
-      ...getExistingConversationBody({
-        previousEvent: previousRequest,
-        existingTraceId: application[0]!.traceId as TraceId,
+      body = {
+        ...body,
         applicationId,
-        message: requestBody.message,
-        settings: requestBody.settings,
-      }),
-    };
+        traceId,
+      };
+    } else {
+      body = {
+        ...body,
+        ...getExistingConversationBody({
+          previousEvent: previousRequest,
+          existingTraceId: application[0]!.traceId as TraceId,
+          applicationId,
+          message: requestBody.message,
+          settings: requestBody.settings,
+        }),
+      };
+    }
   } else {
     applicationId = uuidv4();
     body = {
@@ -285,6 +287,45 @@ export async function postMessage(
 
             previousRequestMap.set(parsedMessage.traceId, parsedMessage);
             session.push(message);
+
+            if (
+              parsedMessage.status === 'idle' &&
+              typeof parsedMessage.message.content === 'string'
+            ) {
+              try {
+                const contentArray = JSON.parse(parsedMessage.message.content);
+
+                for (const msg of contentArray) {
+                  if (msg.role === 'assistant') {
+                    const messageText = msg.content
+                      .filter((item) => item.type === 'text')
+                      .map((item) => item.text)
+                      .join('');
+
+                    await db.insert(appPrompts).values({
+                      id: uuidv4(),
+                      prompt: messageText,
+                      appId: applicationId,
+                      kind: 'assistant',
+                    });
+                  }
+                }
+              } catch (e) {
+                await db.insert(appPrompts).values({
+                  id: uuidv4(),
+                  prompt: parsedMessage.message.content,
+                  appId: applicationId,
+                  kind: 'assistant',
+                });
+              }
+            }
+
+            await db.insert(appPrompts).values({
+              id: uuidv4(),
+              prompt: requestBody.message,
+              appId: applicationId,
+              kind: 'user',
+            });
 
             if (
               parsedMessage.message.unifiedDiff ===

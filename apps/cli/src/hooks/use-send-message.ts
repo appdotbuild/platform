@@ -1,14 +1,13 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { sendMessage, type SendMessageParams } from '../api/application.js';
-import { applicationQueryKeys } from './use-application.js';
-import { queryKeys } from './use-build-app.js';
 import {
-  AgentStatus,
-  MessageKind,
   type AgentSseEvent,
   type MessageContentBlock,
+  MessageKind,
 } from '@appdotbuild/core';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { type SendMessageParams, sendMessage } from '../api/application.js';
+import { applicationQueryKeys } from './use-application.js';
+import { queryKeys } from './use-build-app.js';
 
 export type ChoiceElement = {
   type: 'choice';
@@ -49,7 +48,7 @@ export type ParsedSseEvent = Omit<AgentSseEvent, 'message'> & {
   } & Omit<AgentSseEvent['message'], 'content'>;
 };
 
-export const useSendMessage = () => {
+export const useSendMessage = (existingApplicationId?: string) => {
   const queryClient = useQueryClient();
 
   const [metadata, setMetadata] = useState<{
@@ -62,7 +61,7 @@ export const useSendMessage = () => {
     mutationFn: async ({ message }: SendMessageParams) => {
       return sendMessage({
         message,
-        applicationId: metadata?.applicationId,
+        applicationId: existingApplicationId ?? metadata?.applicationId,
         traceId: metadata?.traceId,
         onMessage: (newEvent) => {
           if (!newEvent.traceId) {
