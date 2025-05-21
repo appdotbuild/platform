@@ -116,6 +116,15 @@ export default function AppsTable({
       },
     },
     {
+      accessorKey: 'traceId',
+      size: 50,
+      ...columnText({ id: 'traceId', title: 'Trace ID' }),
+      cell: ({ row }) => {
+        const traceId: string | undefined = row.getValue('traceId');
+        return <span>{traceId}</span>;
+      },
+    },
+    {
       size: 50,
       id: 'actions',
       cell: ({ row }) => <AppsTableRowMenu row={row} />,
