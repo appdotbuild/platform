@@ -8,7 +8,8 @@
   },
   "files": [
     "dist",
-    "package.json"
+    "package.json",
+    "README.md"
   ],
   "scripts": {
     "build:cli": "bun run tools/build.ts",

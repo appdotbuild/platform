@@ -1,8 +1,9 @@
 import { StackClientApp } from '@stackframe/js';
+import { decodeJwt } from 'jose';
+import open from 'open';
 import { tokenStorage } from './auth-storage.js';
 import { getAuthHost } from '../environment.js';
 import { logger } from '../utils/logger.js';
-import { decodeJwt } from 'jose';
 
 type TokenResponse = {
   access_token: string;
@@ -90,9 +91,15 @@ export async function authenticate(): Promise<string> {
 
   // No valid tokens - start the browser auth flow
   logger.info('Starting authentication flow...');
+
   const newRefreshTokenResponse = await stackClientApp.promptCliLogin({
     appUrl: getAuthHost(),
     expiresInMillis: 300_000, // 5 minutes
+    // @ts-expect-error - method exists, but types don't reflect it.
+    promptLink: (url: string) => {
+      logger.link('💻 🔗 Opening auth link in your default browser:', url);
+      open(url);
+    },
   });
 
   if (newRefreshTokenResponse.status === 'error') {
