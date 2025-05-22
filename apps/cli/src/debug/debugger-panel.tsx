@@ -1,20 +1,14 @@
 import { Box, Text, useInput } from 'ink';
-import { useDebugStore } from '../hooks/use-debug';
-import { useFocus } from 'ink';
+import { DEBUG_LOG_FILE, useDebugStore } from '../hooks/use-debug';
 
 export const DebugPanel = () => {
   const logs = useDebugStore((state) => state.logs);
   const isVisible = useDebugStore((state) => state.isVisible);
   const toggleVisibility = useDebugStore((state) => state.toggleVisibility);
-  const showFullLogs = useDebugStore((state) => state.showFullLogs);
-  const toggleShowFullLogs = useDebugStore((state) => state.toggleShowFullLogs);
 
   useInput((input, key) => {
     if (key.ctrl && input === 'd') {
       toggleVisibility();
-    }
-    if (key.ctrl && input === 'u') {
-      toggleShowFullLogs();
     }
   });
 
@@ -32,8 +26,8 @@ export const DebugPanel = () => {
         <Text bold color="yellow">
           DEBUG PANEL (Ctrl+D to toggle)
         </Text>
-        <Text color="gray">
-          Press Ctrl+U to toggle full/truncated log display
+        <Text bold color="yellow">
+          You can also check out the full logs at {DEBUG_LOG_FILE}
         </Text>
       </Box>
       <Box flexDirection="column">
@@ -52,7 +46,7 @@ export const DebugPanel = () => {
           }
           let displayStr = str;
           let truncated = false;
-          if (!showFullLogs && str.length > 500) {
+          if (str.length > 500) {
             displayStr = `${str.slice(0, 100)} ... ${str.slice(-100)}`;
             truncated = true;
           }

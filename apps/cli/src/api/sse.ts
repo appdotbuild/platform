@@ -65,12 +65,6 @@ export function parseSSE(
               return;
             }
 
-            if (event.event === 'error') {
-              onError?.(new Error(parsedData.error));
-              reject(new Error(parsedData.error));
-              return;
-            }
-
             const parsedMessage = safeJSONParse(parsedData);
             onMessage(parsedMessage);
           } catch (err) {
