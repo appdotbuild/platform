@@ -144,20 +144,11 @@ export async function postMessage(
       traceId,
       settings: requestBody.settings || { 'max-iterations': 3 },
     };
-    let isIteration = Boolean(applicationId);
+    let isIteration = !!applicationId;
 
     let appName = null;
 
-    if (isIteration) {
-      // satisfy TS
-      if (!applicationId) {
-        app.log.error('applicationId is undefined');
-        return reply.status(400).send({
-          error: 'Application ID is required',
-          status: 'error',
-        });
-      }
-
+    if (applicationId) {
       app.log.info(`existing applicationId ${applicationId}`);
 
       const application = await db
@@ -291,10 +282,14 @@ export async function postMessage(
         try {
           if (session.isConnected) {
             const parsedMessage = JSON.parse(message);
-
             buffer = buffer.slice(
               'data: '.length + message.length + '\n\n'.length,
             );
+
+            if (parsedMessage.message.kind === 'KeepAlive') {
+              app.log.info('keep alive message received');
+              continue;
+            }
 
             app.log.info('message sent to CLI', {
               message,
@@ -361,7 +356,7 @@ export async function postMessage(
                   `appdotbuild-${uuidv4().slice(0, 4)}`;
 
                 const { newAppName } = await appCreation({
-                  applicationId: applicationId,
+                  applicationId,
                   appName,
                   githubAccessToken,
                   githubUsername,
@@ -386,7 +381,7 @@ export async function postMessage(
                 writeMemfsToTempDir(memfsVolume, virtualDir).then(
                   (tempDirPath) =>
                     deployApp({
-                      appId: applicationId,
+                      appId: applicationId!,
                       appDirectory: tempDirPath,
                     }),
                 ),

@@ -19,8 +19,6 @@ export function BuildStages({ messagesData, isStreaming }: BuildStageProps) {
   const { phaseGroups, currentPhase, currentMessage } =
     usePhaseGroup(messagesData);
 
-  if (!messagesData?.events.length) return null;
-
   const lastInteractiveGroupIndex = useMemo(
     () =>
       phaseGroups?.reduce((lastIndex, group, currentIndex) => {
@@ -31,6 +29,8 @@ export function BuildStages({ messagesData, isStreaming }: BuildStageProps) {
       }, -1),
     [phaseGroups],
   );
+
+  if (!messagesData?.events.length) return null;
 
   const hasInteractive =
     currentMessage?.message.kind === MessageKind.REFINEMENT_REQUEST;
