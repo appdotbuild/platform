@@ -28,6 +28,7 @@ export function TextInput({
   onSubmitError,
   onSubmit,
   userMessageLimit,
+  showPrompt,
   ...textInputProps
 }: TextInputProps) {
   const [submittedValue, setSubmittedValue] = useState<string>('');
@@ -45,6 +46,8 @@ export function TextInput({
     }
   }, [status, submittedValue, onSubmitSuccess, onSubmitError]);
 
+  if (!showPrompt) return null;
+
   return (
     <Panel title={question} variant="default" boxProps={{ width: '100%' }}>
       <Box flexDirection="column" gap={1}>
@@ -55,8 +58,13 @@ export function TextInput({
           ) : (
             <InkTextInput
               placeholder={placeholder}
-              onSubmit={onSubmit}
-              isDisabled={userMessageLimit?.isUserLimitReached}
+              onSubmit={(value) => {
+                setSubmittedValue(value);
+                onSubmit(value);
+              }}
+              isDisabled={
+                userMessageLimit?.isUserLimitReached || status === 'pending'
+              }
               {...textInputProps}
             />
           )}

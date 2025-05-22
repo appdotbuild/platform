@@ -139,7 +139,6 @@ export const useSendMessage = (existingApplicationId?: string) => {
 
 function extractApplicationId(traceId: `app-${string}.req-${string}`) {
   const appPart = traceId.split('.')[0];
-
   const applicationId = appPart?.replace('app-', '');
 
   return applicationId;

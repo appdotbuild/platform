@@ -62,7 +62,7 @@ export function InteractivePrompt({
   userMessageLimit,
   ...infiniteInputProps
 }: InteractivePromptProps) {
-  const { userMessageLimit: userMessageLimitCheck, isUserReachedMessageLimit } =
+  const { userMessageLimit: userMessageLimitCheck } =
     useUserMessageLimitCheck(errorMessage);
 
   const { history, addSuccessItem, addErrorItem } = usePromptHistory();
@@ -80,8 +80,6 @@ export function InteractivePrompt({
     addErrorItem({ prompt, question, errorMessage, retryMessage });
     onSubmitError?.({ prompt, question, errorMessage, retryMessage });
   };
-
-  if (!showPrompt) return null;
 
   if (userMessageLimit?.isUserLimitReached) {
     const limitReachedError = createMessageLimitError({
@@ -121,6 +119,7 @@ export function InteractivePrompt({
       {history.map((input, index) => renderHistoryItem(input, index))}
 
       <TextInput
+        showPrompt={showPrompt}
         question={question}
         placeholder={placeholder}
         status={displayStatus}
@@ -131,21 +130,6 @@ export function InteractivePrompt({
         userMessageLimit={userMessageLimitCheck}
         {...infiniteInputProps}
       />
-      {displayStatus === 'error' && errorMessage && (
-        <ErrorMessage
-          prompt=""
-          question={question}
-          errorMessage={errorMessage}
-          retryMessage={isUserReachedMessageLimit ? '' : retryMessage}
-        />
-      )}
-      {displayStatus === 'success' && successMessage && (
-        <SuccessMessage
-          prompt=""
-          question={question}
-          successMessage={successMessage}
-        />
-      )}
     </Box>
   );
 }

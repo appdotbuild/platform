@@ -148,3 +148,13 @@ export class PlatformMessage extends AgentSseEvent {
     });
   }
 }
+
+export class StreamingError {
+  error: string;
+  traceId?: TraceId;
+
+  constructor(error: string, traceId?: TraceId) {
+    this.error = error;
+    this.traceId = traceId;
+  }
+}

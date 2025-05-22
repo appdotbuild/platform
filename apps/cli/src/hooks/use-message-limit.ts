@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { UserMessageLimit } from '@appdotbuild/core';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '../api/api-client';
 
 export const MESSAGE_LIMIT_ERROR_TYPE = 'MESSAGE_LIMIT_ERROR';
 
@@ -10,6 +12,7 @@ interface UserMessageLimitState extends UserMessageLimit {
     currentUsage: number;
     remainingMessages: number;
   }) => void;
+  hasInitialData: boolean;
 }
 
 export const useMessageLimitStore = create<UserMessageLimitState>((set) => ({
@@ -18,6 +21,7 @@ export const useMessageLimitStore = create<UserMessageLimitState>((set) => ({
   currentUsage: 0,
   remainingMessages: 0,
   isUserLimitReached: false,
+  hasInitialData: false,
 
   setMessageLimit: ({
     dailyMessageLimit,
@@ -32,6 +36,7 @@ export const useMessageLimitStore = create<UserMessageLimitState>((set) => ({
       remainingMessages,
       isUserLimitReached:
         remainingMessages <= 0 || currentUsage >= dailyMessageLimit,
+      hasInitialData: true,
     }),
 }));
 
@@ -66,4 +71,32 @@ export function useUserMessageLimitCheck(error?: any) {
     userMessageLimit,
     isUserReachedMessageLimit,
   };
+}
+
+export function useFetchMessageLimit() {
+  const setMessageLimit = useMessageLimitStore(
+    (state) => state.setMessageLimit,
+  );
+  const hasInitialData = useMessageLimitStore((state) => state.hasInitialData);
+
+  const { isLoading } = useQuery({
+    queryKey: ['message-limit'],
+    queryFn: async () => {
+      const response = await apiClient.get('/message-limit');
+      const headers = response.headers;
+
+      const userMessageLimit = {
+        dailyMessageLimit: Number(headers['x-dailylimit-limit']),
+        currentUsage: Number(headers['x-dailylimit-usage']),
+        nextResetTime: new Date(headers['x-dailylimit-reset']),
+        remainingMessages: Number(headers['x-dailylimit-remaining']),
+      };
+
+      setMessageLimit(userMessageLimit);
+      return headers;
+    },
+    enabled: !hasInitialData,
+  });
+
+  return { isLoading };
 }

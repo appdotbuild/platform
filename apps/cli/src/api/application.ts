@@ -1,6 +1,5 @@
 import type { Readable } from 'stream';
 import type { AgentSseEvent, App, AppWithHistory } from '@appdotbuild/core';
-import chalk from 'chalk';
 import { config } from 'dotenv';
 import { convertAppPromptsToEvents } from '../hooks/use-app-history.js';
 import { apiClient } from './api-client.js';
@@ -93,31 +92,14 @@ export async function sendMessage({
     throw new Error('No response data available');
   }
 
-  try {
-    await parseSSE(response.data as Readable, {
-      onMessage: (message: AgentSseEvent) => {
-        onMessage?.(message);
-      },
-      onError: (error) => {
-        console.error('error', error);
-      },
-      onEvent: (event) => {
-        console.log('event', event);
-      },
-      onClose: () => {
-        console.log('close');
-      },
-    });
-  } catch (error) {
-    console.error(
-      chalk.red(
-        `🔥 Stream Error: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      ),
-    );
-    throw error;
-  }
+  await parseSSE(response.data as Readable, {
+    onMessage: (message: AgentSseEvent) => {
+      onMessage?.(message);
+    },
+    onEvent: (event) => {
+      console.log('event', event);
+    },
+  });
 
   return {
     applicationId: applicationId || '',

@@ -3,6 +3,7 @@ import { and, count, eq, gt } from 'drizzle-orm';
 import { app } from '../app';
 import { appPrompts, apps, db } from '../db';
 import { customMessageLimits } from '../db/schema';
+import type { FastifyRequest, FastifyReply } from 'fastify';
 
 const getNextResetTime = (): Date => {
   const nextResetDate = new Date();
@@ -82,4 +83,21 @@ export async function checkMessageUsageLimit(
       nextResetTime,
     };
   }
+}
+
+export async function getUserMessageLimit(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<UserMessageLimit> {
+  const user = request.user;
+  const limit = await checkMessageUsageLimit(user.id);
+
+  reply.headers({
+    'x-dailylimit-limit': limit.dailyMessageLimit.toString(),
+    'x-dailylimit-remaining': limit.remainingMessages.toString(),
+    'x-dailylimit-usage': limit.currentUsage.toString(),
+    'x-dailylimit-reset': limit.nextResetTime.toISOString(),
+  });
+
+  return limit;
 }

@@ -1,8 +1,12 @@
 import { MessageKind } from '@appdotbuild/core';
 import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
-import { useUserMessageLimitCheck } from '../../hooks/use-message-limit.js';
+import {
+  useFetchMessageLimit,
+  useUserMessageLimitCheck,
+} from '../../hooks/use-message-limit.js';
 import { InteractivePrompt } from '../interactive-prompt.js';
+import { LoadingMessage } from '../shared/display/loading-message.js';
 import { BuildStages } from './build-stages.js';
 import { RefinementPrompt } from './refinement-prompt.js';
 
@@ -24,6 +28,8 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
   const { userMessageLimit, isUserReachedMessageLimit } =
     useUserMessageLimitCheck(createApplicationError);
 
+  const { isLoading } = useFetchMessageLimit();
+
   const handlerSubmitRefinement = (value: string) => {
     createApplication({
       message: value,
@@ -31,16 +37,19 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
     });
   };
 
+  if (isLoading)
+    return <LoadingMessage message={'⏳ Preparing application...'} />;
+
   return (
     <Box flexDirection="column">
       <InteractivePrompt
         question={initialPrompt}
-        successMessage="Application build started..."
+        successMessage="Message sent to Agent..."
         placeholder="e.g., Add a new feature, modify behavior, or type 'exit' to finish"
         onSubmit={(text: string) => createApplication({ message: text })}
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
-        loadingText="Applying changes..."
+        loadingText="Waiting for Agent response..."
         retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={!streamingMessagesData}
         userMessageLimit={userMessageLimit || undefined}
@@ -57,6 +66,7 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
           onSubmit={handlerSubmitRefinement}
           status={createApplicationStatus}
           userMessageLimit={userMessageLimit || undefined}
+          errorMessage={createApplicationError?.message}
         />
       )}
 

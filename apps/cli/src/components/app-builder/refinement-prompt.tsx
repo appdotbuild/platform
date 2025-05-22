@@ -14,6 +14,7 @@ interface RefinementPromptProps {
   onSubmit: (value: string) => void;
   status: MutationStatus;
   userMessageLimit?: UserMessageLimit;
+  errorMessage?: string;
 }
 
 export function RefinementPrompt({
@@ -21,6 +22,7 @@ export function RefinementPrompt({
   status,
   onSubmit,
   userMessageLimit,
+  errorMessage,
 }: RefinementPromptProps) {
   const currentMessage = messagesData.events.at(-1);
   if (!currentMessage) return null;
@@ -33,9 +35,9 @@ export function RefinementPrompt({
   return (
     <InputSelector
       type="text-input"
-      errorMessage="Error"
-      loadingText="Loading..."
-      successMessage="Success"
+      errorMessage={errorMessage}
+      loadingText="Waiting for Agent response..."
+      successMessage="Refinement request sent to Agent..."
       status={status}
       question="Provide feedback to the assistant..."
       onSubmit={onSubmit}
