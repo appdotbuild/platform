@@ -1,6 +1,11 @@
 import process from 'node:process';
 
 type RequiredEnvVars =
+  | 'AWS_ACCESS_KEY_ID'
+  | 'AWS_SECRET_ACCESS_KEY'
+  | 'AWS_REGION'
+  | 'AWS_ECR_URL'
+  | 'AWS_ECR_NAMESPACE'
   | 'NEON_API_KEY'
   | 'AGENT_API_SECRET_AUTH'
   | 'STACK_PROJECT_ID'
@@ -28,6 +33,11 @@ export const isProduction = process.env.NODE_ENV === 'production';
 
 // We might want to use zod to validate the env vars instead of this mechanism.
 export const requiredVars: RequiredEnvVars[] = [
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'AWS_REGION',
+  'AWS_ECR_URL',
+  'AWS_ECR_NAMESPACE',
   'NEON_API_KEY',
   'AGENT_API_SECRET_AUTH',
   'STACK_PROJECT_ID',

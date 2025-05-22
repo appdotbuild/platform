@@ -1,15 +1,61 @@
+import path from 'node:path';
+import fs from 'node:fs';
+import { exec as execNative, execSync } from 'node:child_process';
 import { eq } from 'drizzle-orm';
 import { createApiClient } from '@neondatabase/api-client';
-import path from 'path';
-import fs from 'fs';
-import { exec as execNative } from 'child_process';
 import { apps, db } from '../db';
 import { logger } from '../logger';
 import { promisify } from 'node:util';
 import { isProduction } from '../env';
+import {
+  getECRCredentials,
+  createRepositoryIfNotExists,
+  getImageName,
+} from '../ecr';
 
-const NEON_DEFAULT_DATABASE_NAME = 'neondb';
+async function dockerLoginIfNeeded() {
+  if (fs.existsSync('/root/.docker/config.json')) {
+    logger.info('Docker config already exists, no login needed');
+    return Promise.resolve();
+  }
+
+  return getECRCredentials().then(({ username, password, registryUrl }) => {
+    return new Promise((resolve) => {
+      const result = execSync(
+        `docker login --username ${username} --password-stdin ${registryUrl}`,
+        {
+          input: password,
+          stdio: 'inherit',
+        },
+      );
+
+      resolve(result);
+    });
+  });
+}
+
+async function createKoyebApp({
+  koyebAppName,
+  appDirectory,
+}: {
+  koyebAppName: string;
+  appDirectory: string;
+}) {
+  try {
+    await exec(
+      `koyeb app create ${koyebAppName} --token ${process.env.KOYEB_CLI_TOKEN}`,
+      { cwd: appDirectory },
+    );
+
+    return { created: true };
+  } catch {
+    logger.info('App already exists, skipping creation');
+    return { created: false };
+  }
+}
+
 const exec = promisify(execNative);
+const NEON_DEFAULT_DATABASE_NAME = 'neondb';
 
 const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
@@ -41,6 +87,7 @@ export async function deployApp({
 
   let connectionString: string | undefined;
   let neonProjectId = app[0].neonProjectId;
+
   if (neonProjectId) {
     connectionString = await getNeonProjectConnectionString({
       projectId: neonProjectId,
@@ -74,6 +121,7 @@ export async function deployApp({
   if (!fs.existsSync(path.join(appDirectory, 'Dockerfile'))) {
     throw new Error('Dockerfile not found');
   }
+
   const koyebAppName = `app-${appId}`;
   const envVars = {
     APP_DATABASE_URL: connectionString,
@@ -88,9 +136,36 @@ export async function deployApp({
     }
   }
 
+  const imageName = getImageName(appId);
+
+  logger.info('Building Docker image');
+
+  await Promise.all([
+    dockerLoginIfNeeded(),
+    exec(`docker build -t ${imageName} .`, {
+      cwd: appDirectory,
+      // @ts-ignore
+      stdio: 'inherit',
+    }),
+    createRepositoryIfNotExists(appId),
+  ]);
+
+  logger.info('Pushing Docker image to ECR');
+
+  await exec(`docker push ${imageName}`, {
+    cwd: appDirectory,
+  });
+
   logger.info('Starting Koyeb deployment', { koyebAppName });
+
+  const { created } = await createKoyebApp({
+    koyebAppName,
+    appDirectory,
+  });
+  const command = created ? 'create' : 'update';
+
   await exec(
-    `koyeb deploy . ${koyebAppName}/service --token ${process.env.KOYEB_CLI_TOKEN} --archive-builder docker --port 80:http --route /:80 ${envVarsString}`,
+    `koyeb service ${command} service --app ${koyebAppName} --docker ${imageName}:latest --docker-private-registry-secret ecr-creds --port 80:http --route /:80 --token ${process.env.KOYEB_CLI_TOKEN} ${envVarsString}`,
     { cwd: appDirectory },
   );
 
