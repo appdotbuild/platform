@@ -1,6 +1,5 @@
 import { type MessageContentBlock, MessageKind } from '@appdotbuild/core';
 import { useMemo } from 'react';
-import { useDebug } from '../../hooks/use-debug.js';
 import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 import { type TaskDetail, TaskStatus } from '../shared/display/task-status.js';
 
@@ -88,16 +87,9 @@ export function PhaseGroupItem({
   lastInteractiveGroupIndex,
   isStreaming,
 }: PhaseGroupItemProps) {
-  const { addLog } = useDebug();
-
   const isCurrentPhase =
     group.phase === currentPhase && groupIndex === phaseGroupsLength - 1;
   const isLastInteractiveGroup = groupIndex === lastInteractiveGroupIndex;
-
-  addLog({
-    phase: group.phase,
-    phaseIndex: groupIndex,
-  });
 
   const status =
     isCurrentPhase && hasInteractive

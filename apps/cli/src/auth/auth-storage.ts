@@ -4,6 +4,7 @@ import os from 'os';
 import { z } from 'zod';
 import { useAuthStore } from './auth-store.js';
 import { decodeJwt } from 'jose';
+import { APP_CONFIG_DIR } from '../constants.js';
 
 const tokenConfigSchema = z.object({
   refreshToken: z
@@ -23,17 +24,15 @@ type TokenConfig = z.infer<typeof tokenConfigSchema>;
 export type Token = TokenConfig['accessToken'];
 
 export class TokenStorage {
-  private configDir: string;
   private configFile: string;
   private _accessToken: Token | null = null;
 
   constructor() {
-    this.configDir = path.join(os.homedir(), '.config', 'app-dot-build-cli');
-    this.configFile = path.join(this.configDir, 'config.json');
+    this.configFile = path.join(APP_CONFIG_DIR, 'config.json');
 
     // Create config directory if it doesn't exist
-    if (!fs.existsSync(this.configDir)) {
-      fs.mkdirSync(this.configDir, { recursive: true, mode: 0o700 });
+    if (!fs.existsSync(APP_CONFIG_DIR)) {
+      fs.mkdirSync(APP_CONFIG_DIR, { recursive: true, mode: 0o700 });
     }
 
     // Initialize empty config if file doesn't exist
