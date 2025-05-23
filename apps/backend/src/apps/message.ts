@@ -10,8 +10,9 @@ import {
   PlatformMessage,
   type TraceId,
   StreamingError,
-  AgentContentMessage,
   type ContentMessage,
+  type AgentContentMessage,
+  type UserContentMessage,
 } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
 import { and, eq } from 'drizzle-orm';
@@ -198,15 +199,6 @@ export async function postMessage(
           status: 'error',
         });
       }
-
-      const existingConversationBody = getExistingConversationBody({
-        previousEvent: previousRequest,
-        existingTraceId: traceId as TraceId,
-        applicationId,
-        message: requestBody.message,
-        settings: requestBody.settings,
-      });
-      console.log('existingConversationBody', existingConversationBody);
 
       body = {
         ...body,
@@ -645,7 +637,7 @@ function getExistingConversationBody({
         return {
           role: 'user' as const,
           content: textContent,
-        } as UserMessage;
+        } as UserContentMessage;
       }
       return {
         role: 'assistant' as const,
@@ -656,7 +648,13 @@ function getExistingConversationBody({
   );
 
   return {
-    allMessages: [...messages, { role: 'user' as const, content: message }],
+    allMessages: [
+      ...messages,
+      {
+        role: 'user' as const,
+        content: message as Stringified<MessageContentBlock[]>,
+      },
+    ],
     traceId: existingTraceId,
     applicationId,
     settings: settings || { 'max-iterations': 3 },
