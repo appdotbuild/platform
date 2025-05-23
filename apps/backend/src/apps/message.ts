@@ -10,6 +10,8 @@ import {
   PlatformMessage,
   type TraceId,
   StreamingError,
+  AgentContentMessage,
+  type ContentMessage,
 } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
 import { and, eq } from 'drizzle-orm';
@@ -36,25 +38,11 @@ import {
 } from '../utils';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
-
-interface AgentMessage {
-  role: 'assistant';
-  content: { source: MessageContentBlock[] };
-  agentState?: any | null;
-  unifiedDiff?: any | null;
-  kind: MessageKind;
-}
-
-interface UserMessage {
-  role: 'user';
-  content: string;
-}
-
-type Message = AgentMessage | UserMessage;
+import { type Optional } from '@appdotbuild/core';
 
 type Body = {
   applicationId?: string;
-  allMessages: Message[];
+  allMessages: ContentMessage[];
   traceId: string;
   settings: Record<string, any>;
   agentState?: any;
@@ -63,22 +51,48 @@ type Body = {
 
 type RequestBody = {
   message: string;
-  applicationId?: string;
   clientSource: string;
   settings?: Record<string, any>;
+  applicationId?: string;
+  traceId?: TraceId;
 };
 
 const previousRequestMap = new Map<TraceId, AgentSseEvent>();
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
 
 const TEMPORARY_APPLICATION_ID = 'temp';
-const getApplicationTraceId = (
+const PERMANENT_APPLICATION_ID = 'app';
+
+const generateTemporaryTraceId = (
   request: FastifyRequest,
-  appId: string | undefined,
-) =>
-  appId
-    ? `app-${appId}.req-${request.id}`
-    : `${TEMPORARY_APPLICATION_ID}.req-${request.id}`;
+  applicationId: string,
+): TraceId => `${TEMPORARY_APPLICATION_ID}-${applicationId}.req-${request.id}`;
+const updateToPermanentTraceId = (traceId: TraceId) =>
+  traceId.replace(
+    TEMPORARY_APPLICATION_ID,
+    PERMANENT_APPLICATION_ID,
+  ) as TraceId;
+const downgradeToTemporaryTraceId = (traceId: TraceId) =>
+  traceId.replace(
+    PERMANENT_APPLICATION_ID,
+    TEMPORARY_APPLICATION_ID,
+  ) as TraceId;
+
+function storePreviousRequest(traceId: TraceId, agentMessage: AgentSseEvent) {
+  const isPermanentTraceId = traceId.startsWith(PERMANENT_APPLICATION_ID);
+  if (isPermanentTraceId) {
+    const correspondingTemporaryTraceId = downgradeToTemporaryTraceId(traceId);
+    const correspondingTemporaryRequest = previousRequestMap.get(
+      correspondingTemporaryTraceId,
+    );
+    // replace the temporary traceId with the permanent traceId in the map
+    if (correspondingTemporaryRequest) {
+      previousRequestMap.delete(correspondingTemporaryTraceId);
+    }
+  }
+
+  previousRequestMap.set(traceId, agentMessage);
+}
 
 export async function postMessage(
   request: FastifyRequest,
@@ -119,6 +133,7 @@ export async function postMessage(
   const githubAccessToken = request.user.githubAccessToken;
   const requestBody = request.body as RequestBody;
   let applicationId = requestBody.applicationId;
+  let traceId = requestBody.traceId;
 
   request.socket.on('close', () => {
     streamLog(
@@ -142,42 +157,41 @@ export async function postMessage(
   );
 
   try {
-    const traceId = getApplicationTraceId(request, applicationId);
-
-    let body: Body = {
+    let body: Optional<Body, 'traceId'> = {
       applicationId,
-      allMessages: [{ role: 'user', content: requestBody.message }],
-      traceId,
+      allMessages: [
+        {
+          role: 'user',
+          content: requestBody.message as Stringified<MessageContentBlock[]>,
+        },
+      ],
       settings: requestBody.settings || { 'max-iterations': 3 },
     };
-    let isIteration = !!applicationId;
+    let isIteration =
+      !!applicationId && traceId?.startsWith(PERMANENT_APPLICATION_ID);
 
     let appName = null;
-
     if (applicationId) {
       app.log.info(`existing applicationId ${applicationId}`);
 
-      const application = await db
-        .select()
-        .from(apps)
-        .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
+      let application = null;
+      if (isIteration) {
+        application = await db
+          .select()
+          .from(apps)
+          .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
 
-      console.log('application', application);
-
-      appName = application[0]!.appName;
-
-      if (application.length === 0) {
-        streamLog(session, 'application not found', 'error');
-        return reply.status(404).send({
-          error: 'Application not found',
-          status: 'error',
-        });
+        appName = application[0]!.appName;
+        if (application.length === 0) {
+          streamLog(session, 'application not found', 'error');
+          return reply.status(404).send({
+            error: 'Application not found',
+            status: 'error',
+          });
+        }
       }
 
-      const previousRequest = previousRequestMap.get(
-        application[0]!.traceId as TraceId,
-      );
-
+      const previousRequest = previousRequestMap.get(traceId as TraceId);
       if (!previousRequest) {
         return reply.status(404).send({
           error: 'Previous request not found',
@@ -185,11 +199,20 @@ export async function postMessage(
         });
       }
 
+      const existingConversationBody = getExistingConversationBody({
+        previousEvent: previousRequest,
+        existingTraceId: traceId as TraceId,
+        applicationId,
+        message: requestBody.message,
+        settings: requestBody.settings,
+      });
+      console.log('existingConversationBody', existingConversationBody);
+
       body = {
         ...body,
         ...getExistingConversationBody({
           previousEvent: previousRequest,
-          existingTraceId: application[0]!.traceId as TraceId,
+          existingTraceId: traceId as TraceId,
           applicationId,
           message: requestBody.message,
           settings: requestBody.settings,
@@ -197,6 +220,7 @@ export async function postMessage(
       };
     } else {
       applicationId = uuidv4();
+      traceId = generateTemporaryTraceId(request, applicationId);
       body = {
         ...body,
         applicationId,
@@ -297,11 +321,10 @@ export async function postMessage(
               streamLog(session, 'keep alive message received', 'info');
               continue;
             }
+
             streamLog(session, `message sent to CLI: ${message}`, 'info');
-
             storeDevLogs(parsedMessage, message);
-
-            previousRequestMap.set(parsedMessage.traceId, parsedMessage);
+            storePreviousRequest(parsedMessage.traceId, parsedMessage);
             session.push(message);
 
             if (
@@ -349,7 +372,7 @@ export async function postMessage(
                   githubUsername,
                   githubAccessToken,
                   files,
-                  traceId,
+                  traceId: traceId as TraceId,
                   session,
                   commitMessage:
                     parsedMessage.message.commit_message || 'feat: update',
@@ -359,6 +382,7 @@ export async function postMessage(
                   parsedMessage.message.app_name ||
                   `appdotbuild-${uuidv4().slice(0, 4)}`;
 
+                traceId = updateToPermanentTraceId(traceId as TraceId);
                 const { newAppName } = await appCreation({
                   applicationId,
                   appName,
@@ -416,10 +440,7 @@ export async function postMessage(
     }
 
     streamLog(session, 'stream finished', 'info');
-    session.push(
-      { done: true, traceId: getApplicationTraceId(request, applicationId) },
-      'done',
-    );
+    session.push({ done: true, traceId: traceId }, 'done');
     session.removeAllListeners();
 
     reply.raw.end();
@@ -434,7 +455,7 @@ export async function postMessage(
       applicationId,
       error: `An error occurred while processing your request: ${error}`,
       status: 'error',
-      traceId: getApplicationTraceId(request, applicationId),
+      traceId,
     });
   }
 }
@@ -470,7 +491,7 @@ async function appCreation({
 }: {
   applicationId: string;
   appName: string;
-  traceId: string;
+  traceId: TraceId;
   githubUsername: string;
   githubAccessToken: string;
   ownerId: string;
@@ -486,7 +507,6 @@ async function appCreation({
   }
 
   app.log.info(`appName - ${appName}`);
-
   const { repositoryUrl, appName: newAppName } = await createUserUpstreamApp({
     appName,
     githubUsername,
@@ -498,16 +518,12 @@ async function appCreation({
     throw new Error('Repository URL not found');
   }
 
-  const updatedTraceId = traceId.replace(
-    TEMPORARY_APPLICATION_ID,
-    `app-${applicationId}`,
-  );
   await db.insert(apps).values({
     id: applicationId,
     name: requestBody.message,
     clientSource: requestBody.clientSource,
     ownerId,
-    traceId: updatedTraceId,
+    traceId,
     repositoryUrl,
     appName: newAppName,
     githubUsername,
@@ -633,11 +649,9 @@ function getExistingConversationBody({
       }
       return {
         role: 'assistant' as const,
-        content: { source: messageContent },
-        agentState: undefined,
-        unifiedDiff: undefined,
-        kind: MessageKind.FINAL_RESULT,
-      } as AgentMessage;
+        content: JSON.stringify(messageContent),
+        kind: MessageKind.STAGE_RESULT,
+      } as AgentContentMessage;
     },
   );
 

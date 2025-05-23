@@ -16,7 +16,7 @@ interface PhaseGroupItemProps {
 const getPhaseTitle = (phase: MessageKind) => {
   switch (phase) {
     case MessageKind.STAGE_RESULT:
-      return 'Generating TypeSpec model';
+      return 'Your application 1st draft is ready';
     case MessageKind.RUNTIME_ERROR:
       return 'Creating event handlers';
     case MessageKind.REFINEMENT_REQUEST:

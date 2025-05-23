@@ -5,6 +5,7 @@ import { applicationQueryKeys } from './use-application.js';
 import { queryKeys } from './use-build-app.js';
 import {
   MessageKind,
+  TraceId,
   type AgentSseEvent,
   type MessageContentBlock,
 } from '@appdotbuild/core';
@@ -137,9 +138,9 @@ export const useSendMessage = () => {
   return { ...result, data: metadata };
 };
 
-function extractApplicationId(traceId: `app-${string}.req-${string}`) {
+function extractApplicationId(traceId: TraceId) {
   const appPart = traceId.split('.')[0];
-  const applicationId = appPart?.replace('app-', '');
+  const applicationId = appPart?.replace('app-', '').replace('temp-', '');
 
   return applicationId;
 }

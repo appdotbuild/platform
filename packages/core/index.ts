@@ -13,3 +13,4 @@ export class UnauthorizedError extends UserError {}
  */
 export * from './agent-message';
 export * from './types/api';
+export * from './types/utils';
