@@ -1,4 +1,4 @@
-import type { App, Paginated } from '@appdotbuild/core/types/api';
+import type { App, Paginated } from '@appdotbuild/core';
 import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { apps, db } from '../db';

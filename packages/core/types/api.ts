@@ -64,8 +64,8 @@ export type App = {
   receivedSuccess: boolean;
   recompileInProgress: boolean;
   clientSource: string;
-  repositoryUrl?: string;
-  appName?: string;
-  appUrl?: string;
+  repositoryUrl?: string | null;
+  appName?: string | null;
+  appUrl?: string | null;
   history?: AppPrompts[];
 };
