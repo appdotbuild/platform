@@ -36,7 +36,6 @@ import {
 } from '../utils';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
-import console from 'node:console';
 
 interface AgentMessage {
   role: 'assistant';
