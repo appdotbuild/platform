@@ -1,9 +1,9 @@
 import type { UserMessageLimit } from '@appdotbuild/core';
 import { and, count, eq, gt } from 'drizzle-orm';
-import { app } from '../app';
-import { appPrompts, apps, db } from '../db';
-import { customMessageLimits } from '../db/schema';
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
+import { app } from '../../app';
+import { appPrompts, apps, db } from '../../db';
+import { customMessageLimits } from '../../db/schema';
 
 const getNextResetTime = (): Date => {
   const nextResetDate = new Date();

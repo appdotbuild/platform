@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { appPrompts, db } from '../db';
-import type { AppPrompt } from '../db/schema';
+import type { AppPrompt } from '@appdotbuild/core';
 
 export async function getAppHistory(appId?: string): Promise<AppPrompt[]> {
   if (!appId) {

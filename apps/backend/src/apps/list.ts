@@ -2,7 +2,7 @@ import type { App, Paginated } from '@appdotbuild/core/types/api';
 import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { apps, db } from '../db';
-import { checkMessageUsageLimit } from './message-limit';
+import { checkMessageUsageLimit } from './message/message-limit';
 
 export async function listApps(
   request: FastifyRequest,
