@@ -1,3 +1,4 @@
+import type { App } from '@appdotbuild/core';
 import { Box, Text } from 'ink';
 import { LoadingMessage } from '../components/shared/display/loading-message.js';
 import { Select } from '../components/shared/input/select.js';
@@ -5,7 +6,7 @@ import type { SelectItem } from '../components/shared/input/types.js';
 import { useListApps } from '../hooks/use-application.js';
 import { useSafeNavigate } from '../routes.js';
 
-export const getStatusEmoji = (status: string): string => {
+export const getStatusEmoji = (status?: string | null): string => {
   switch (status) {
     case 'deployed':
       return '🟢';
@@ -18,7 +19,7 @@ export const getStatusEmoji = (status: string): string => {
   }
 };
 
-export const getStatusColor = (status: string): string => {
+export const getStatusColor = (status?: string | null): string => {
   switch (status) {
     case 'deployed':
       return 'green';
@@ -31,12 +32,7 @@ export const getStatusColor = (status: string): string => {
   }
 };
 
-const formatAppLabel = (app: {
-  name: string;
-  id: string;
-  deployStatus: string;
-  recompileInProgress: boolean;
-}) => {
+const formatAppLabel = (app: App) => {
   const status = app.recompileInProgress ? 'recompiling' : app.deployStatus;
   const statusEmoji = getStatusEmoji(status);
 

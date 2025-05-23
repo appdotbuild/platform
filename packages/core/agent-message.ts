@@ -1,6 +1,7 @@
 export enum AgentStatus {
   RUNNING = 'running',
   IDLE = 'idle',
+  HISTORY = 'history',
 }
 
 export enum MessageKind {
@@ -9,6 +10,7 @@ export enum MessageKind {
   REFINEMENT_REQUEST = 'RefinementRequest',
   FINAL_RESULT = 'FinalResult',
   PLATFORM_MESSAGE = 'PlatformMessage',
+  USER_MESSAGE = 'UserMessage',
 }
 
 type RequestId = string;
@@ -67,6 +69,7 @@ export class AgentContentMessage {
 export class AgentSseEvent {
   status: AgentStatus;
   traceId?: TraceId;
+  createdAt?: Date;
   message: {
     role: 'assistant';
     kind: MessageKind;

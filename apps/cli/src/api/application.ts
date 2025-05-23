@@ -2,30 +2,12 @@ import type { Readable } from 'stream';
 import { config } from 'dotenv';
 import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
-import type { AgentSseEvent } from '@appdotbuild/core';
+import type { AgentSseEvent, App } from '@appdotbuild/core';
 import { useEnvironmentStore } from '../store/environment-store.js';
+import { convertPromptsToEvents } from '../utils/convert-prompts-to-events.js';
 
 // Load environment variables from .env file
 config();
-
-export type App = {
-  id: string;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-  ownerId: string;
-  flyAppId?: string | null;
-  s3Checksum?: string | null;
-  deployStatus: 'pending' | 'deploying' | 'deployed' | 'failed';
-  traceId?: string | null;
-  typespecSchema?: string | null;
-  receivedSuccess: boolean;
-  recompileInProgress: boolean;
-  clientSource: 'slack' | 'cli';
-  repositoryUrl?: string;
-  appName?: string;
-  appUrl?: string;
-};
 
 export type AppGenerationParams = {
   useStaging: boolean;
@@ -47,8 +29,8 @@ export const getApp = async (appId: string) => {
     );
 
     return {
-      isDeployed: appStatus.data.deployStatus === 'deployed',
       ...appStatus.data,
+      events: convertPromptsToEvents(appStatus.data.history),
     };
   } catch (error) {
     console.error('Error checking app deployment status:', error);

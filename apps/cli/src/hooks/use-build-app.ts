@@ -53,6 +53,6 @@ export const useBuildApp = (existingApplicationId?: string) => {
 
     streamingMessagesData: messageQuery.data,
     isStreamingMessages:
-      messageQuery.data?.events.at(-1)?.status === AgentStatus.RUNNING,
+      messageQuery.data?.events?.at(-1)?.status === AgentStatus.RUNNING,
   };
 };
