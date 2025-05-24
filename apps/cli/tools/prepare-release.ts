@@ -14,6 +14,11 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { exec as execNative } from 'child_process';
+import { promisify } from 'node:util';
+import { cliName, targetEnvs } from './cross-env-entrypoint';
+
+const exec = promisify(execNative);
 
 type PackageJson = {
   dependencies: Record<string, string>;
@@ -21,7 +26,7 @@ type PackageJson = {
   devDependencies: Record<string, string>;
 };
 
-export function prepareRelease() {
+export async function prepareRelease() {
   const pkgPath = path.resolve(__dirname, '../package.json');
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as PackageJson;
 
@@ -39,6 +44,9 @@ export function prepareRelease() {
     }
   }
 
+  const tmpPkgPath = path.join(__dirname, '../tmp');
+  const tmpPkgEntrypoint = path.join(tmpPkgPath, 'dist/src/cli.js');
+
   fs.writeFileSync(
     path.join(__dirname, '../tmp', 'package.json'),
     JSON.stringify(pkg, null, 2),
@@ -48,4 +56,21 @@ export function prepareRelease() {
     path.join(__dirname, '../README.md'),
     path.join(__dirname, '../tmp', 'README.md'),
   );
+
+  await createCrossEnvExecutables(tmpPkgEntrypoint);
+}
+
+function createCrossEnvExecutables(cliEntrypointPath: string) {
+  try {
+    return Promise.all(
+      targetEnvs.map(async (targetEnv) => {
+        exec(
+          `bun build ${cliEntrypointPath} --target=${targetEnv.target} --compile --outfile tmp/dist/${cliName}-${targetEnv.target}`,
+        );
+      }),
+    );
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }

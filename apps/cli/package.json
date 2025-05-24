@@ -4,7 +4,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "app.build": "dist/cli.js"
+    "app.build": "dist/tools/cross-env-entrypoint.js"
   },
   "files": [
     "dist",
