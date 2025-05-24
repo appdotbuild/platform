@@ -32,16 +32,6 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
 
   const { isLoading } = useFetchMessageLimit();
 
-  const handlerSubmitRefinement = (value: string) => {
-    createApplication({
-      message: value,
-      applicationId: createApplicationData?.applicationId,
-    });
-  };
-
-  if (isLoading)
-    return <LoadingMessage message={'⏳ Preparing application...'} />;
-
   const { historyEvents, nonHistoryEvents } = useMemo(() => {
     if (!streamingMessagesData?.events) {
       return { historyEvents: [], nonHistoryEvents: [] };
@@ -60,6 +50,16 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
 
     return { historyEvents: history, nonHistoryEvents: nonHistory };
   }, [streamingMessagesData?.events]);
+
+  const handlerSubmitRefinement = (value: string) => {
+    createApplication({
+      message: value,
+      applicationId: createApplicationData?.applicationId,
+    });
+  };
+
+  if (isLoading)
+    return <LoadingMessage message={'⏳ Preparing application...'} />;
 
   return (
     <Box flexDirection="column">
