@@ -38,6 +38,7 @@ import {
   readDirectoryRecursive,
   writeMemfsToTempDir,
 } from '../utils';
+import { getAppPromptHistory } from './app-history';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
 
@@ -219,11 +220,29 @@ export async function postMessage(
       } else {
         traceId =
           `${PERMANENT_APPLICATION_ID}-${applicationId}.req-${request.id}` as TraceId;
+
+        const messagesFromHistory = await buildMessagesFromHistory(
+          applicationId,
+        );
+
         body = {
           ...body,
           applicationId,
           traceId,
+          allMessages: [
+            ...messagesFromHistory,
+            {
+              role: 'user' as const,
+              content: requestBody.message as Stringified<
+                MessageContentBlock[]
+              >,
+            },
+          ],
         };
+
+        app.log.info(
+          `Loaded ${messagesFromHistory.length} messages from history for application ${applicationId}`,
+        );
       }
     } else {
       applicationId = uuidv4();
@@ -699,6 +718,26 @@ function streamLog(
   session.push({ log, level }, 'debug');
 }
 
+async function buildMessagesFromHistory(
+  applicationId: string,
+): Promise<ContentMessage[]> {
+  const history = await getAppPromptHistory(applicationId);
+
+  return history.map((prompt) => {
+    if (prompt.kind === 'user') {
+      return {
+        role: 'user' as const,
+        content: prompt.prompt,
+      } as UserContentMessage;
+    }
+    return {
+      role: 'assistant' as const,
+      content: prompt.prompt,
+      kind: MessageKind.STAGE_RESULT,
+    } as AgentContentMessage;
+  });
+}
+
 async function saveAgentMessage(
   parsedMessage: AgentSseEvent,
   applicationId: string,
@@ -727,29 +766,12 @@ async function saveAgentMessage(
 
         const CHARACTER_LIMIT = 5000;
         if (text.length > CHARACTER_LIMIT) {
-          text = text.substring(0, CHARACTER_LIMIT - 3) + '...';
+          text = `${text.substring(0, CHARACTER_LIMIT - 3)}...`;
         }
 
         await db.insert(appPrompts).values({
           id: uuidv4(),
           prompt: text,
-          appId: applicationId,
-          kind: 'agent',
-        });
-      } else if (
-        contentBlock.type === 'tool_use' ||
-        contentBlock.type === 'tool_use_result'
-      ) {
-        let content = contentBlock.text || JSON.stringify(contentBlock);
-
-        const CHARACTER_LIMIT = 5000;
-        if (content.length > CHARACTER_LIMIT) {
-          content = content.substring(0, CHARACTER_LIMIT - 3) + '...';
-        }
-
-        await db.insert(appPrompts).values({
-          id: uuidv4(),
-          prompt: content,
           appId: applicationId,
           kind: 'agent',
         });

@@ -64,12 +64,34 @@ const extractPhaseMessages = (
   isLastInteractiveGroup: boolean,
 ): TaskDetail[] => {
   return events.flatMap((event) => {
-    return event.message.content
+    let messagesToProcess = event.message.content;
+
+    if (
+      event.message.role === 'assistant' &&
+      event.message.content.length > 0
+    ) {
+      let lastUserMessageIndex = -1;
+      for (let i = event.message.content.length - 1; i >= 0; i--) {
+        const message = event.message.content[i];
+        if (message && message.role === 'user') {
+          lastUserMessageIndex = i;
+          break;
+        }
+      }
+
+      if (lastUserMessageIndex !== -1) {
+        messagesToProcess = event.message.content.slice(
+          lastUserMessageIndex + 1,
+        );
+      }
+    }
+
+    return messagesToProcess
       .map((item, index) =>
         createTaskDetail(
           item,
           index,
-          event.message.content.length,
+          messagesToProcess.length,
           isCurrentPhase,
           isLastInteractiveGroup,
         ),
