@@ -44,7 +44,6 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
 
   const { historyEvents, nonHistoryEvents } = useMemo(() => {
     if (!streamingMessagesData?.events) {
-      console.log('No streamingMessagesData.events');
       return { historyEvents: [], nonHistoryEvents: [] };
     }
 
