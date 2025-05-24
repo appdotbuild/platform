@@ -1,14 +1,14 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { sendMessage, type SendMessageParams } from '../api/application.js';
-import { applicationQueryKeys } from './use-application.js';
-import { queryKeys } from './use-build-app.js';
 import {
-  MessageKind,
-  TraceId,
   type AgentSseEvent,
   type MessageContentBlock,
+  MessageKind,
+  type TraceId,
 } from '@appdotbuild/core';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { type SendMessageParams, sendMessage } from '../api/application.js';
+import { applicationQueryKeys } from './use-application.js';
+import { queryKeys } from './use-build-app.js';
 
 export type ChoiceElement = {
   type: 'choice';
@@ -59,10 +59,13 @@ export const useSendMessage = () => {
   } | null>(null);
 
   const result = useMutation({
-    mutationFn: async ({ message }: SendMessageParams) => {
+    mutationFn: async ({
+      message,
+      applicationId: passedAppId,
+    }: SendMessageParams) => {
       return sendMessage({
         message,
-        applicationId: metadata?.applicationId,
+        applicationId: passedAppId || metadata?.applicationId,
         traceId: metadata?.traceId,
         onMessage: (newEvent) => {
           if (!newEvent.traceId) {
@@ -82,9 +85,13 @@ export const useSendMessage = () => {
 
           queryClient.setQueryData(
             queryKeys.applicationMessages(applicationId),
-            (oldData: {
-              events: ParsedSseEvent[];
-            }): { events: ParsedSseEvent[] } => {
+            (
+              oldData:
+                | {
+                    events: ParsedSseEvent[];
+                  }
+                | undefined,
+            ): { events: ParsedSseEvent[] } => {
               const parsedEvent = {
                 ...newEvent,
                 message: {
@@ -93,17 +100,13 @@ export const useSendMessage = () => {
                 },
               };
 
-              // first message
-              if (!oldData) {
+              if (!oldData || !oldData.events) {
                 return { events: [parsedEvent] };
               }
 
-              // if there is already an event with the same traceId, replace the whole thread
               const existingSameTraceIdEventThread = oldData.events.some(
                 (e) => e.traceId === newEvent.traceId,
               );
-
-              // platform events should always be the last message in the thread
               if (
                 existingSameTraceIdEventThread &&
                 parsedEvent.message.kind !== MessageKind.PLATFORM_MESSAGE
@@ -111,13 +114,13 @@ export const useSendMessage = () => {
                 const existingPlatformEvents = oldData.events.filter(
                   (e) => e.message.kind === MessageKind.PLATFORM_MESSAGE,
                 );
+
                 return {
                   ...oldData,
                   events: [parsedEvent, ...existingPlatformEvents],
                 };
               }
 
-              // add the new message to the thread
               return {
                 ...oldData,
                 events: [...oldData.events, parsedEvent],

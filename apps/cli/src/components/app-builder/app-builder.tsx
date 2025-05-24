@@ -42,21 +42,25 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
   if (isLoading)
     return <LoadingMessage message={'⏳ Preparing application...'} />;
 
-  const historyEvents = useMemo(
-    () =>
-      streamingMessagesData?.events.filter(
-        (m) => m.status === AgentStatus.HISTORY,
-      ),
-    [streamingMessagesData?.events],
-  );
+  const { historyEvents, nonHistoryEvents } = useMemo(() => {
+    if (!streamingMessagesData?.events) {
+      console.log('No streamingMessagesData.events');
+      return { historyEvents: [], nonHistoryEvents: [] };
+    }
 
-  const refinementEvents = useMemo(
-    () =>
-      streamingMessagesData?.events.filter(
-        (m) => m.message.kind === MessageKind.REFINEMENT_REQUEST,
-      ),
-    [streamingMessagesData?.events],
-  );
+    const history: typeof streamingMessagesData.events = [];
+    const nonHistory: typeof streamingMessagesData.events = [];
+
+    for (const event of streamingMessagesData.events) {
+      if (event.status === AgentStatus.HISTORY) {
+        history.push(event);
+      } else {
+        nonHistory.push(event);
+      }
+    }
+
+    return { historyEvents: history, nonHistoryEvents: nonHistory };
+  }, [streamingMessagesData?.events]);
 
   return (
     <Box flexDirection="column">
@@ -64,7 +68,12 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
         question={initialPrompt}
         successMessage="Message sent to Agent..."
         placeholder="e.g., Add a new feature, modify behavior, or type 'exit' to finish"
-        onSubmit={(text: string) => createApplication({ message: text })}
+        onSubmit={(text: string) =>
+          createApplication({
+            message: text,
+            applicationId: appId,
+          })
+        }
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
         loadingText="Waiting for Agent response..."
@@ -77,16 +86,16 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
         <PromptsHistory messagesData={{ events: historyEvents }} />
       )}
 
-      {refinementEvents && (
+      {nonHistoryEvents && (
         <BuildStages
-          messagesData={{ events: refinementEvents }}
+          messagesData={{ events: nonHistoryEvents }}
           isStreaming={isStreamingMessages}
         />
       )}
 
-      {refinementEvents && (
+      {nonHistoryEvents && (
         <RefinementPrompt
-          messagesData={{ events: refinementEvents }}
+          messagesData={{ events: nonHistoryEvents }}
           onSubmit={handlerSubmitRefinement}
           status={createApplicationStatus}
           userMessageLimit={userMessageLimit || undefined}
@@ -99,7 +108,12 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
         successMessage="The requested changes are being applied..."
         placeholder="e.g., Add a new feature, modify behavior, or type 'exit' to finish"
         onSubmit={(text: string) =>
-          isStreamingMessages ? undefined : createApplication({ message: text })
+          isStreamingMessages
+            ? undefined
+            : createApplication({
+                message: text,
+                applicationId: appId || createApplicationData?.applicationId,
+              })
         }
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}

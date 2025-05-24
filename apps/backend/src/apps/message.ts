@@ -2,18 +2,19 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
+  type AgentContentMessage,
   type AgentSseEvent,
   AgentStatus,
-  type MessageLimitHeaders,
+  type ContentMessage,
   type MessageContentBlock,
   MessageKind,
+  type MessageLimitHeaders,
   PlatformMessage,
-  type TraceId,
   StreamingError,
-  type ContentMessage,
-  type AgentContentMessage,
+  type TraceId,
   type UserContentMessage,
 } from '@appdotbuild/core';
+import type { ConversationMessage, Optional } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
 import { and, eq } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -39,7 +40,6 @@ import {
 } from '../utils';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
-import { type Optional } from '@appdotbuild/core';
 
 type Body = {
   applicationId?: string;
@@ -176,14 +176,15 @@ export async function postMessage(
     if (applicationId) {
       app.log.info(`existing applicationId ${applicationId}`);
 
-      let application = null;
-      if (isIteration) {
-        application = await db
+      const hasPreviousRequest =
+        traceId && previousRequestMap.has(traceId as TraceId);
+
+      if (isIteration || !hasPreviousRequest) {
+        const application = await db
           .select()
           .from(apps)
           .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
 
-        appName = application[0]!.appName;
         if (application.length === 0) {
           streamLog(session, 'application not found', 'error');
           return reply.status(404).send({
@@ -191,26 +192,39 @@ export async function postMessage(
             status: 'error',
           });
         }
+
+        appName = application[0]!.appName;
+        isIteration = true;
       }
 
-      const previousRequest = previousRequestMap.get(traceId as TraceId);
-      if (!previousRequest) {
-        return reply.status(404).send({
-          error: 'Previous request not found',
-          status: 'error',
-        });
-      }
+      if (hasPreviousRequest) {
+        const previousRequest = previousRequestMap.get(traceId as TraceId);
+        if (!previousRequest) {
+          return reply.status(404).send({
+            error: 'Previous request not found',
+            status: 'error',
+          });
+        }
 
-      body = {
-        ...body,
-        ...getExistingConversationBody({
-          previousEvent: previousRequest,
-          existingTraceId: traceId as TraceId,
+        body = {
+          ...body,
+          ...getExistingConversationBody({
+            previousEvent: previousRequest,
+            existingTraceId: traceId as TraceId,
+            applicationId,
+            message: requestBody.message,
+            settings: requestBody.settings,
+          }),
+        };
+      } else {
+        traceId =
+          `${PERMANENT_APPLICATION_ID}-${applicationId}.req-${request.id}` as TraceId;
+        body = {
+          ...body,
           applicationId,
-          message: requestBody.message,
-          settings: requestBody.settings,
-        }),
-      };
+          traceId,
+        };
+      }
     } else {
       applicationId = uuidv4();
       traceId = generateTemporaryTraceId(request, applicationId);
@@ -219,6 +233,19 @@ export async function postMessage(
         applicationId,
         traceId,
       };
+    }
+
+    if (isIteration && applicationId) {
+      try {
+        await db.insert(appPrompts).values({
+          id: uuidv4(),
+          prompt: requestBody.message,
+          appId: applicationId,
+          kind: 'user',
+        });
+      } catch (error) {
+        app.log.error(`Error saving user message: ${error}`);
+      }
     }
 
     const tempDirPath = path.join(
@@ -282,6 +309,7 @@ export async function postMessage(
 
     let buffer = '';
     let canDeploy = false;
+    let isAppCreated = isIteration;
     const textDecoder = new TextDecoder();
 
     while (!abortController.signal.aborted) {
@@ -322,6 +350,8 @@ export async function postMessage(
             storeDevLogs(parsedMessage, message);
             storePreviousRequest(parsedMessage.traceId, parsedMessage);
             session.push(message);
+
+            await saveAgentMessage(parsedMessage, applicationId, isAppCreated);
 
             if (
               parsedMessage.message.unifiedDiff ===
@@ -393,15 +423,11 @@ export async function postMessage(
 
                 appName = newAppName;
                 isIteration = true;
+                isAppCreated = true; // Mark app as created
               }
 
               const [, { appURL }] = await Promise.all([
-                db.insert(appPrompts).values({
-                  id: uuidv4(),
-                  prompt: requestBody.message,
-                  appId: applicationId,
-                  kind: 'user',
-                }),
+                Promise.resolve(),
                 writeMemfsToTempDir(memfsVolume, virtualDir).then(
                   (tempDirPath) =>
                     deployApp({
@@ -633,7 +659,6 @@ function getExistingConversationBody({
     }) => {
       const { role, content: messageContent } = content;
       if (role === 'user') {
-        // For user messages, we need to extract the text content
         const textContent = messageContent
           .filter((c) => c.type === 'text')
           .map((c) => c.text)
@@ -672,4 +697,65 @@ function streamLog(
 ) {
   app.log[level](log);
   session.push({ log, level }, 'debug');
+}
+
+async function saveAgentMessage(
+  parsedMessage: AgentSseEvent,
+  applicationId: string,
+  isAppCreated?: boolean,
+) {
+  if (!isAppCreated) {
+    return;
+  }
+
+  try {
+    const messagesHistory: ConversationMessage[] = JSON.parse(
+      parsedMessage.message.content,
+    );
+
+    const lastAssistantMessage = messagesHistory
+      .filter((msg) => msg.role === 'assistant')
+      .pop();
+
+    if (!lastAssistantMessage) {
+      return;
+    }
+
+    for (const contentBlock of lastAssistantMessage.content) {
+      if (contentBlock.type === 'text') {
+        let text = contentBlock.text;
+
+        const CHARACTER_LIMIT = 5000;
+        if (text.length > CHARACTER_LIMIT) {
+          text = text.substring(0, CHARACTER_LIMIT - 3) + '...';
+        }
+
+        await db.insert(appPrompts).values({
+          id: uuidv4(),
+          prompt: text,
+          appId: applicationId,
+          kind: 'agent',
+        });
+      } else if (
+        contentBlock.type === 'tool_use' ||
+        contentBlock.type === 'tool_use_result'
+      ) {
+        let content = contentBlock.text || JSON.stringify(contentBlock);
+
+        const CHARACTER_LIMIT = 5000;
+        if (content.length > CHARACTER_LIMIT) {
+          content = content.substring(0, CHARACTER_LIMIT - 3) + '...';
+        }
+
+        await db.insert(appPrompts).values({
+          id: uuidv4(),
+          prompt: content,
+          appId: applicationId,
+          kind: 'agent',
+        });
+      }
+    }
+  } catch (error) {
+    app.log.error(`Error saving agent message: ${error}`);
+  }
 }

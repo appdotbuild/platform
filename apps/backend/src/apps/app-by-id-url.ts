@@ -1,4 +1,4 @@
-import { type FastifyRequest, type FastifyReply } from 'fastify';
+import type { FastifyRequest, FastifyReply } from 'fastify';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { ReadUrl } from '@appdotbuild/core/types/api';
