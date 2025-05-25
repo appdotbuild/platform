@@ -3,6 +3,7 @@ import {
   Calendar,
   User,
   ExternalLink,
+  Github,
 } from '@appdotbuild/design/base/icons';
 import { ShowHide } from '@appdotbuild/design/components/show-hide/show-hide';
 import { Button } from '@appdotbuild/design/shadcn/button';
@@ -74,7 +75,6 @@ export default async function AppPage({ params }: { params: { id: string } }) {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="deployment">Deployment</TabsTrigger>
-          <TabsTrigger value="editor">Editor</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -107,6 +107,16 @@ export default async function AppPage({ params }: { params: { id: string } }) {
                     </div>
                     <div className="font-medium">{app.ownerId}</div>
                   </div>
+
+                  <div className="flex flex-col gap-1">
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                      <Github className="h-4 w-4" />
+                      GitHub Repository
+                    </div>
+                    <div className="font-medium">
+                      {app.repositoryUrl || 'Not available'}
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -136,22 +146,6 @@ export default async function AppPage({ params }: { params: { id: string } }) {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
-
-        <TabsContent value="editor" className="space-y-4 flex-1 min-h-0">
-          <Card className="flex-1">
-            <CardContent className="pt-6 h-full">
-              <div className="flex flex-col h-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Code Editor</h3>
-                  <ViewCodeButton appId={id} />
-                </div>
-                <div className="flex-1 min-h-0">
-                  <CodeViewer appId={id} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </>

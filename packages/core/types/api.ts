@@ -49,4 +49,5 @@ export type App = {
   receivedSuccess: boolean;
   recompileInProgress: boolean;
   clientSource: string;
+  repositoryUrl: string | null;
 };
