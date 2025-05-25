@@ -34,8 +34,8 @@ export const useSelect = ({
   itemsToPrefetch = 3,
 }: UseSelectProps) => {
   useInput(
-    (_input, key) => {
-      if (key.downArrow) {
+    (input, key) => {
+      if (key.downArrow || (key.ctrl && input === 'n')) {
         state.focusNextOption();
 
         if (onFetchMore && state.focusedValue) {
@@ -49,7 +49,7 @@ export const useSelect = ({
         }
       }
 
-      if (key.upArrow) {
+      if (key.upArrow || (key.ctrl && input === 'p')) {
         state.focusPreviousOption();
       }
 
