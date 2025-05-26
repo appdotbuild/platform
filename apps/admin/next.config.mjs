@@ -10,6 +10,15 @@ const nextConfig = {
   experimental: {
     reactCompiler: true,
   },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/dashboard/apps',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

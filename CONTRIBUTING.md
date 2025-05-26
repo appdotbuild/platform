@@ -61,7 +61,7 @@ Activate the "Integrate with 1Password CLI
 
 ## Setting up the project
 
-First of all, go to [Neon console](https://console.neon.tech/app/projects/damp-surf-76179452/branches/br-proud-wave-a84j8pq6?branchId=br-proud-wave-a84j8pq6&database=neondb) into the AppDotBuild Organization
+First of all, go to [Neon console](https://console.neon.tech/app/projects/damp-surf-76179452/branches/br-proud-wave-a84j8pq6?branchId=br-proud-wave-a84j8pq6&database=neondb) into the app.build Organization
 
 ![Organization Picker](docs/images/organization-picker.png)
 

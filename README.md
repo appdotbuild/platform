@@ -1,4 +1,4 @@
-# AppDotBuild
+# App.Build
 
 CLI with AI capabilities to create full-stack applications
 
