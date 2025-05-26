@@ -100,13 +100,17 @@ export const useSendMessage = () => {
                 },
               };
 
+              // first message
               if (!oldData || !oldData.events) {
                 return { events: [parsedEvent] };
               }
 
+              // if there is already an event with the same traceId, replace the whole thread
               const existingSameTraceIdEventThread = oldData.events.some(
                 (e) => e.traceId === newEvent.traceId,
               );
+
+              // platform events should always be the last message in the thread
               if (
                 existingSameTraceIdEventThread &&
                 parsedEvent.message.kind !== MessageKind.PLATFORM_MESSAGE
@@ -121,6 +125,7 @@ export const useSendMessage = () => {
                 };
               }
 
+              // add the new message to the thread
               return {
                 ...oldData,
                 events: [...oldData.events, parsedEvent],
