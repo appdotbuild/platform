@@ -4,23 +4,53 @@ import { useState, useMemo } from 'react';
 import type { ParsedSseEvent } from '../../hooks/use-send-message';
 import { Panel } from '../shared/display/panel';
 import { type TaskDetail, TaskStatus } from '../shared/display/task-status';
-
-interface MessagesData {
-  events: ParsedSseEvent[];
-}
+import { useApplicationHistory } from '../../hooks/use-application';
 
 const VISIBLE_ITEMS = 3;
 
-export function PromptsHistory({
-  messagesData,
-}: {
-  messagesData: MessagesData;
-}) {
-  const totalEvents = messagesData.events.length;
+const EmptyHistoryMessage = () => {
+  return (
+    <Panel title="Previous Messages" variant="default">
+      <Text dimColor>No previous messages found.</Text>
+    </Panel>
+  );
+};
 
+export const LoadingHistoryMessage = () => {
+  return (
+    <Panel title="Previous Messages" variant="default">
+      <Text dimColor>Loading history...</Text>
+    </Panel>
+  );
+};
+
+export const ErrorHistoryMessage = () => {
+  return (
+    <Panel title="Previous Messages" variant="default">
+      <Text color="red">Error loading history</Text>
+    </Panel>
+  );
+};
+
+export function PromptsHistory({ appId }: { appId: string }) {
   const [scrollOffset, setScrollOffset] = useState(0);
+  const {
+    data: historyMessages,
+    isLoading,
+    error,
+  } = useApplicationHistory(appId);
+
+  const totalEvents = historyMessages?.length || 0;
+
+  const visibleEvents = useMemo(() => {
+    if (!historyMessages) return [];
+    const startIdx = Math.max(0, totalEvents - VISIBLE_ITEMS - scrollOffset);
+    const endIdx = totalEvents - scrollOffset;
+    return historyMessages.slice(startIdx, endIdx);
+  }, [historyMessages, totalEvents, scrollOffset]);
 
   useInput((_, key) => {
+    if (!historyMessages || !historyMessages.length) return;
     if (key.upArrow) {
       const maxOffset = Math.max(0, totalEvents - VISIBLE_ITEMS);
       setScrollOffset((prev) => Math.min(maxOffset, prev + 1));
@@ -29,12 +59,10 @@ export function PromptsHistory({
     }
   });
 
-  const visibleEvents = useMemo(() => {
-    const startIdx = Math.max(0, totalEvents - VISIBLE_ITEMS - scrollOffset);
-    const endIdx = totalEvents - scrollOffset;
-
-    return messagesData.events.slice(startIdx, endIdx);
-  }, [messagesData.events, totalEvents, scrollOffset]);
+  if (isLoading) return <LoadingHistoryMessage />;
+  if (error) return <ErrorHistoryMessage />;
+  if (!historyMessages || !historyMessages.length)
+    return <EmptyHistoryMessage />;
 
   const renderHistory = (event: ParsedSseEvent, groupIdx: number) => {
     const historyTitle =
@@ -48,10 +76,6 @@ export function PromptsHistory({
       if (!content || !content[0]) return [];
 
       const firstItem = content[0];
-      const lines = (firstItem.text || '').split('\n');
-      const truncatedText = lines.slice(0, 3).join('\n');
-      const finalText =
-        lines.length > 3 ? `${truncatedText}...` : truncatedText;
 
       const conversationMessage = event.message?.content?.[0];
       const role = conversationMessage?.role || 'user';
@@ -59,7 +83,7 @@ export function PromptsHistory({
       return [
         {
           role: role as 'assistant' | 'user',
-          text: finalText,
+          text: firstItem.text || '',
           highlight: false,
           icon: '',
         },

@@ -1,4 +1,4 @@
-import { AgentStatus, MessageKind } from '@appdotbuild/core';
+import { MessageKind } from '@appdotbuild/core';
 import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
 import {
@@ -10,7 +10,6 @@ import { LoadingMessage } from '../shared/display/loading-message.js';
 import { BuildStages } from './build-stages.js';
 import { PromptsHistory } from './prompts-history.js';
 import { RefinementPrompt } from './refinement-prompt.js';
-import { useMemo } from 'react';
 
 interface AppBuilderProps {
   initialPrompt: string;
@@ -31,25 +30,6 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
     useUserMessageLimitCheck(createApplicationError);
 
   const { isLoading } = useFetchMessageLimit();
-
-  const { historyEvents, nonHistoryEvents } = useMemo(() => {
-    if (!streamingMessagesData?.events) {
-      return { historyEvents: [], nonHistoryEvents: [] };
-    }
-
-    const history: typeof streamingMessagesData.events = [];
-    const nonHistory: typeof streamingMessagesData.events = [];
-
-    for (const event of streamingMessagesData.events) {
-      if (event.status === AgentStatus.HISTORY) {
-        history.push(event);
-      } else {
-        nonHistory.push(event);
-      }
-    }
-
-    return { historyEvents: history, nonHistoryEvents: nonHistory };
-  }, [streamingMessagesData?.events]);
 
   const handlerSubmitRefinement = (value: string) => {
     createApplication({
@@ -81,20 +61,18 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
         userMessageLimit={userMessageLimit || undefined}
       />
 
-      {historyEvents && historyEvents?.length > 0 && (
-        <PromptsHistory messagesData={{ events: historyEvents }} />
-      )}
+      {appId && <PromptsHistory appId={appId} />}
 
-      {nonHistoryEvents && (
+      {streamingMessagesData && (
         <BuildStages
-          messagesData={{ events: nonHistoryEvents }}
+          messagesData={streamingMessagesData}
           isStreaming={isStreamingMessages}
         />
       )}
 
-      {nonHistoryEvents && (
+      {streamingMessagesData && (
         <RefinementPrompt
-          messagesData={{ events: nonHistoryEvents }}
+          messagesData={streamingMessagesData}
           onSubmit={handlerSubmitRefinement}
           status={createApplicationStatus}
           userMessageLimit={userMessageLimit || undefined}

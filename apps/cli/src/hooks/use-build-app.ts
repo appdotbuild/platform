@@ -31,8 +31,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
   const messageQuery = useQuery({
     queryKey: queryKeys.applicationMessages(appId!),
     queryFn: () => {
-      // this should never happen due to `enabled`
-      if (!appId) return null;
+      if (!appId) return { events: [] };
 
       const events = queryClient.getQueryData<{ events: ParsedSseEvent[] }>(
         queryKeys.applicationMessages(appId),

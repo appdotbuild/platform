@@ -27,6 +27,8 @@ const getPhaseTitle = (phase: MessageKind) => {
       return 'Platform message';
     case MessageKind.USER_MESSAGE:
       return 'User message';
+    case MessageKind.REVIEW_RESULT:
+      return 'Generating application';
     default:
       return phase;
   }
@@ -66,23 +68,25 @@ const extractPhaseMessages = (
   return events.flatMap((event) => {
     let messagesToProcess = event.message.content;
 
-    if (
-      event.message.role === 'assistant' &&
-      event.message.content.length > 0
-    ) {
-      let lastUserMessageIndex = -1;
-      for (let i = event.message.content.length - 1; i >= 0; i--) {
-        const message = event.message.content[i];
-        if (message && message.role === 'user') {
-          lastUserMessageIndex = i;
-          break;
+    if (event.message.kind !== MessageKind.REVIEW_RESULT) {
+      if (
+        event.message.role === 'assistant' &&
+        event.message.content.length > 0
+      ) {
+        let lastUserMessageIndex = -1;
+        for (let i = event.message.content.length - 1; i >= 0; i--) {
+          const message = event.message.content[i];
+          if (message && message.role === 'user') {
+            lastUserMessageIndex = i;
+            break;
+          }
         }
-      }
 
-      if (lastUserMessageIndex !== -1) {
-        messagesToProcess = event.message.content.slice(
-          lastUserMessageIndex + 1,
-        );
+        if (lastUserMessageIndex !== -1) {
+          messagesToProcess = event.message.content.slice(
+            lastUserMessageIndex + 1,
+          );
+        }
       }
     }
 

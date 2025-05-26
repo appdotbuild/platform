@@ -67,5 +67,4 @@ export type App = {
   repositoryUrl?: string | null;
   appName?: string | null;
   appUrl?: string | null;
-  history?: AppPrompts[];
 };

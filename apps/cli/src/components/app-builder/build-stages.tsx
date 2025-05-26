@@ -7,7 +7,7 @@ import { PhaseGroupItem } from './phase-group-item.js';
 import { MessageKind } from '@appdotbuild/core';
 
 interface MessagesData {
-  events: ParsedSseEvent[];
+  events?: ParsedSseEvent[];
 }
 
 interface BuildStageProps {
@@ -16,8 +16,11 @@ interface BuildStageProps {
 }
 
 export function BuildStages({ messagesData, isStreaming }: BuildStageProps) {
-  const { phaseGroups, currentPhase, currentMessage } =
-    usePhaseGroup(messagesData);
+  if (!messagesData?.events?.length) return null;
+
+  const { phaseGroups, currentPhase, currentMessage } = usePhaseGroup({
+    events: messagesData.events || [],
+  });
 
   const lastInteractiveGroupIndex = useMemo(
     () =>
@@ -29,8 +32,6 @@ export function BuildStages({ messagesData, isStreaming }: BuildStageProps) {
       }, -1),
     [phaseGroups],
   );
-
-  if (!messagesData?.events.length) return null;
 
   const hasInteractive =
     currentMessage?.message.kind === MessageKind.REFINEMENT_REQUEST;

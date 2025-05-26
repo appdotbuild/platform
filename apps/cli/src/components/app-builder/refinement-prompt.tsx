@@ -24,7 +24,7 @@ export function RefinementPrompt({
   userMessageLimit,
   errorMessage,
 }: RefinementPromptProps) {
-  const currentMessage = messagesData.events.at(-1);
+  const currentMessage = messagesData.events?.at(-1);
   if (!currentMessage) return null;
 
   const isInteractive =

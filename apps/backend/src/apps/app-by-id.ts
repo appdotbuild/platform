@@ -2,7 +2,6 @@ import type { App } from '@appdotbuild/core/types/api';
 import { and, eq, getTableColumns } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { apps, db } from '../db';
-import { getAppPromptHistory } from './app-history';
 
 export async function appById(
   request: FastifyRequest,
@@ -26,13 +25,10 @@ export async function appById(
     });
   }
 
-  const appId = app[0]?.id;
-
-  const appPromptHistory = await getAppPromptHistory(appId);
-  const appWithHistory = {
-    ...app[0],
-    history: appPromptHistory,
-  };
-
-  return reply.send(appWithHistory);
+  if (!app || !app.length) {
+    return reply.status(404).send({
+      error: 'App not found',
+    });
+  }
+  return reply.send(app[0]);
 }

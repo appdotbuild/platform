@@ -101,7 +101,7 @@ export const useSendMessage = () => {
               };
 
               // first message
-              if (!oldData || !oldData.events) {
+              if (!oldData) {
                 return { events: [parsedEvent] };
               }
 

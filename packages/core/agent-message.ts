@@ -11,6 +11,7 @@ export enum MessageKind {
   FINAL_RESULT = 'FinalResult',
   PLATFORM_MESSAGE = 'PlatformMessage',
   USER_MESSAGE = 'UserMessage',
+  REVIEW_RESULT = 'ReviewResult',
 }
 
 type RequestId = string;

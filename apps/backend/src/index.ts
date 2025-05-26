@@ -18,6 +18,7 @@ import {
   orgCommitChangesEndpoint,
 } from './github';
 import { isDev, validateEnv } from './env';
+import { getAppPromptHistory } from './apps/app-history';
 
 config({ path: '.env' });
 validateEnv();
@@ -50,6 +51,7 @@ if (isDev) {
 
 app.get('/apps', authHandler, listApps);
 app.get('/apps/:id', authHandler, appById);
+app.get('/apps/:id/history', authHandler, getAppPromptHistory);
 app.get('/apps/:id/read-url', authHandler, appByIdUrl);
 
 app.post('/message', authHandler, postMessage);

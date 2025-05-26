@@ -1,9 +1,9 @@
-import type { Readable } from 'stream';
+import type { Readable } from 'node:stream';
+import type { AgentSseEvent, App, AppPrompts } from '@appdotbuild/core';
 import { config } from 'dotenv';
+import { useEnvironmentStore } from '../store/environment-store.js';
 import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
-import type { AgentSseEvent, App } from '@appdotbuild/core';
-import { useEnvironmentStore } from '../store/environment-store.js';
 import { convertPromptsToEvents } from '../utils/convert-prompts-to-events.js';
 
 // Load environment variables from .env file
@@ -27,13 +27,22 @@ export const getApp = async (appId: string) => {
     const appStatus = await apiClient.get<App & { readUrl: string }>(
       `/apps/${appId}`,
     );
-
-    return {
-      ...appStatus.data,
-      events: convertPromptsToEvents(appStatus.data.history),
-    };
+    return appStatus.data;
   } catch (error) {
     console.error('Error checking app deployment status:', error);
+    throw error;
+  }
+};
+
+export const getAppHistory = async (appId: string) => {
+  try {
+    const appHistory = await apiClient.get<AppPrompts[]>(
+      `/apps/${appId}/history`,
+    );
+
+    return convertPromptsToEvents(appHistory.data);
+  } catch (error) {
+    console.error('Error fetching app history:', error);
     throw error;
   }
 };

@@ -14,7 +14,7 @@ import {
   type TraceId,
   type UserContentMessage,
 } from '@appdotbuild/core';
-import type { ConversationMessage, Optional } from '@appdotbuild/core';
+import type { Optional } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
 import { and, eq } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
