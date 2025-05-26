@@ -9,9 +9,51 @@ on:
       - main
 
 jobs:
-  release:
+  build-binaries:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: Build CLI Binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            targets: |
+              bun-linux-x64
+              bun-linux-arm64
+              bun-linux-x64-musl
+              bun-linux-arm64-musl
+          - os: windows-latest
+            targets: bun-windows-x64
+          - os: macos-latest
+            targets: |
+              bun-darwin-x64
+              bun-darwin-arm64
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build binaries
+        run: bun run tools/create-cross-env-executables.ts tmp/dist/src/cli.js
+        working-directory: apps/cli
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-binaries-${{ matrix.os }}
+          path: apps/cli/tmp/dist/cli-*
+
+  release:
     name: Release apps/cli
+    needs: build-binaries
     runs-on: ubuntu-latest
 
     permissions:
@@ -32,6 +74,17 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          find artifacts -name "cli-*" -type f -exec cp {} release-assets/ \;
+          ls -la release-assets/
+
       - name: Release CLI
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -39,3 +92,12 @@ jobs:
           PUBLIC_STACK_PROJECT_ID: ${{ secrets.PUBLIC_STACK_PROJECT_ID }}
           PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
         run: bun run cli:release
+
+      - name: Upload release assets
+        if: steps.release.outputs.new_release_published == 'true'
+        run: |
+          for asset in release-assets/*; do
+            gh release upload ${{ steps.release.outputs.new_release_git_tag }} "$asset"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

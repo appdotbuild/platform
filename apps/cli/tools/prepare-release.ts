@@ -14,11 +14,6 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { exec as execNative } from 'child_process';
-import { promisify } from 'node:util';
-import { cliName, targetEnvs } from './cross-env-entrypoint';
-
-const exec = promisify(execNative);
 
 type PackageJson = {
   dependencies: Record<string, string>;
@@ -56,21 +51,4 @@ export async function prepareRelease() {
     path.join(__dirname, '../README.md'),
     path.join(__dirname, '../tmp', 'README.md'),
   );
-
-  await createCrossEnvExecutables(tmpPkgEntrypoint);
-}
-
-function createCrossEnvExecutables(cliEntrypointPath: string) {
-  try {
-    return Promise.all(
-      targetEnvs.map(async (targetEnv) => {
-        exec(
-          `bun build ${cliEntrypointPath} --target=${targetEnv.target} --compile --minify --sourcemap --outfile tmp/dist/${cliName}-${targetEnv.target}`,
-        );
-      }),
-    );
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
 }

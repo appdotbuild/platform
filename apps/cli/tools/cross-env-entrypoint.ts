@@ -3,7 +3,9 @@ import { spawnSync } from 'node:child_process';
 import console from 'node:console';
 import os from 'os';
 import path from 'path';
+import fs from 'fs';
 import { execSync } from 'node:child_process';
+import { APP_CONFIG_DIR } from '../src/constants';
 
 export const cliName = 'cli';
 export const targetEnvs = [
@@ -63,7 +65,62 @@ const getLinuxLibc = () => {
   return 'glibc';
 };
 
-export const crossEnvEntrypoint = () => {
+const GITHUB_REPO = 'appdotbuild/platform';
+
+async function downloadBinary(
+  binaryName: string,
+  version: string,
+): Promise<string> {
+  const cacheDir = path.join(APP_CONFIG_DIR, version);
+  const binaryPath = path.join(cacheDir, binaryName);
+
+  // Check if binary exists in cache
+  if (fs.existsSync(binaryPath)) {
+    return binaryPath;
+  }
+
+  // Create cache directory
+  fs.mkdirSync(cacheDir, { recursive: true });
+  const url = `https://github.com/${GITHUB_REPO}/releases/download/@app.build/cli-v${version}/${binaryName}`;
+  console.log(
+    `[cross-env-entrypoint] Downloading ${binaryName} from GitHub releases...`,
+  );
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to download binary: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const buffer = await response.arrayBuffer();
+    fs.writeFileSync(binaryPath, new Uint8Array(buffer));
+    fs.chmodSync(binaryPath, 0o755); // Make executable
+
+    console.log(`[cross-env-entrypoint] Downloaded ${binaryName} to cache`);
+    return binaryPath;
+  } catch (error) {
+    console.error(`[cross-env-entrypoint] Failed to download binary: ${error}`);
+    throw error;
+  }
+}
+
+function getPackageVersion() {
+  try {
+    const packagePath = path.join(__dirname, '../package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf-8'));
+    return packageJson.version;
+  } catch (error) {
+    console.error(
+      '[cross-env-entrypoint] Failed to read package version:',
+      error,
+    );
+    throw error;
+  }
+}
+
+export const crossEnvEntrypoint = async () => {
   const platform = os.platform();
   const arch = os.arch();
   let libc: string | undefined = undefined;
@@ -85,7 +142,7 @@ export const crossEnvEntrypoint = () => {
     return true;
   });
 
-  let binary;
+  let binary: string;
   if (!targetEnv) {
     // Fallback: use the Node.js entrypoint
     binary = path.join(__dirname, '../tmp/dist/cli.js');
@@ -97,8 +154,31 @@ export const crossEnvEntrypoint = () => {
   }
 
   // Compose the binary filename
-  let binaryName = `${cliName}-${targetEnv.target}`;
-  binary = path.join(__dirname, '../tmp/dist', binaryName);
+  const binaryName = `${cliName}-${targetEnv.target}`;
+
+  try {
+    // Get package version and download binary from GitHub releases
+    const version = getPackageVersion();
+    binary = await downloadBinary(binaryName, version);
+  } catch (error) {
+    // Fallback to local binary if download fails
+    console.warn(
+      '[cross-env-entrypoint] Failed to download binary, trying local fallback...',
+    );
+    binary = path.join(__dirname, '../tmp/dist', binaryName);
+
+    if (!fs.existsSync(binary)) {
+      // Final fallback: use Node.js entrypoint
+      binary = path.join(__dirname, '../tmp/dist/cli.js');
+      console.warn(
+        '[cross-env-entrypoint] Local binary not found, falling back to dist/cli.js',
+      );
+      spawnSync('node', [binary, ...process.argv.slice(2)], {
+        stdio: 'inherit',
+      });
+      return;
+    }
+  }
 
   const result = spawnSync(binary, process.argv.slice(2), { stdio: 'inherit' });
   if (result.error) {
@@ -119,5 +199,8 @@ export const crossEnvEntrypoint = () => {
 
 // only run if the file is executed directly
 if (require.main === module) {
-  crossEnvEntrypoint();
+  crossEnvEntrypoint().catch((error) => {
+    console.error('[cross-env-entrypoint] Fatal error:', error);
+    process.exit(1);
+  });
 }
