@@ -442,7 +442,7 @@ export async function postMessage(
 
                 appName = newAppName;
                 isIteration = true;
-                isAppCreated = true; // Mark app as created
+                isAppCreated = true;
               }
 
               const [, { appURL }] = await Promise.all([
@@ -762,16 +762,9 @@ async function saveAgentMessage(
 
     for (const contentBlock of lastAssistantMessage.content) {
       if (contentBlock.type === 'text') {
-        let text = contentBlock.text;
-
-        const CHARACTER_LIMIT = 5000;
-        if (text.length > CHARACTER_LIMIT) {
-          text = `${text.substring(0, CHARACTER_LIMIT - 3)}...`;
-        }
-
         await db.insert(appPrompts).values({
           id: uuidv4(),
-          prompt: text,
+          prompt: contentBlock.text,
           appId: applicationId,
           kind: 'agent',
         });
