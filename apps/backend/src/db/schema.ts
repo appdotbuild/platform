@@ -66,3 +66,5 @@ export const customMessageLimits = pgTable('custom_message_limits', {
     .notNull()
     .defaultNow(),
 });
+
+export type AppPrompts = typeof appPrompts.$inferSelect;

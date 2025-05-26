@@ -224,6 +224,7 @@ export async function postMessage(
         const messagesFromHistory = await getMessagesFromHistory(
           applicationId,
           traceId,
+          userId,
         );
 
         body = {
@@ -722,6 +723,7 @@ function streamLog(
 async function getMessagesFromHistory(
   applicationId: string,
   traceId: TraceId,
+  userId: string,
 ): Promise<ContentMessage[]> {
   const isTemporaryTraceId = traceId.startsWith(TEMPORARY_APPLICATION_ID);
 
@@ -732,11 +734,11 @@ async function getMessagesFromHistory(
       return memoryMessages;
     }
     // fallback for corner cases
-    return await getMessagesFromDB(applicationId);
+    return await getMessagesFromDB(applicationId, userId);
   }
 
   // for permanent apps, fetch from db
-  return await getMessagesFromDB(applicationId);
+  return await getMessagesFromDB(applicationId, userId);
 }
 
 function getMessagesFromMemory(traceId: TraceId): ContentMessage[] {
@@ -778,8 +780,13 @@ function getMessagesFromMemory(traceId: TraceId): ContentMessage[] {
 
 async function getMessagesFromDB(
   applicationId: string,
+  userId: string,
 ): Promise<ContentMessage[]> {
-  const history = await getAppPromptHistory(applicationId);
+  const history = await getAppPromptHistory(applicationId, userId);
+
+  if (!history || history.length === 0) {
+    return [];
+  }
 
   return history.map((prompt) => {
     if (prompt.kind === 'user') {

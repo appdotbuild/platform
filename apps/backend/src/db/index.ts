@@ -1,2 +1,2 @@
 export { db } from './db';
-export { appPrompts, apps } from './schema';
+export { appPrompts, apps, type AppPrompts } from './schema';
