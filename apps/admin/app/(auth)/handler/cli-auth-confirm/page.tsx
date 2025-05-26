@@ -79,8 +79,8 @@ export default function CliAuthConfirmPage() {
           </h1>
           <p className="text-gray-600 mb-4">
             The CLI application has been authorized successfully. Let's now
-            install the AppDotBuild Github App in your organization /
-            repositories of choice.
+            install the App.Build Github App in your organization / repositories
+            of choice.
           </p>
           <Button onClick={openGithubAppInstall}>
             <GitHubLogoIcon className="w-4 h-4 mr-2" />
