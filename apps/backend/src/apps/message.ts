@@ -806,9 +806,7 @@ async function saveAgentMessage(
   }
 
   try {
-    const messagesHistory: ConversationMessage[] = JSON.parse(
-      parsedMessage.message.content,
-    );
+    const messagesHistory = JSON.parse(parsedMessage.message.content);
 
     const lastAssistantMessage = messagesHistory
       .filter((msg) => msg.role === 'assistant')
