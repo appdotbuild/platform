@@ -98,7 +98,7 @@ const createInitialCommit = async ({
 
   if (
     commitData.parents.length > 0 ||
-    commitData.message === 'AppDotBuild: Initial commit'
+    commitData.message === 'App.Build: Initial commit'
   ) {
     return {
       statusCode: 400,
@@ -111,7 +111,7 @@ const createInitialCommit = async ({
     repo,
     owner,
     paths,
-    message: 'AppDotBuild: Initial commit',
+    message: 'App.Build: Initial commit',
     forceUpdate: true,
   });
 
@@ -314,7 +314,7 @@ async function createOrUpdateCommit(
     tree: treeSha,
     parents: latestCommitSha ? [latestCommitSha] : [],
     author: {
-      name: 'AppDotBuild',
+      name: 'App.Build',
       email: BOT_USER_EMAIL,
     },
   });
