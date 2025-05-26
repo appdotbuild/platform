@@ -15,5 +15,9 @@ export async function getECRCredentials() {
 
   const registryUrl = authData.proxyEndpoint;
 
+  if (!username || !password || !registryUrl) {
+    throw new Error('Failed to get auth token.');
+  }
+
   return { username, password, registryUrl };
 }

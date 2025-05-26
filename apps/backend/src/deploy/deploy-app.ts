@@ -1,6 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { exec as execNative, execSync } from 'node:child_process';
+import { exec as execNative, spawn } from 'node:child_process';
 import { eq } from 'drizzle-orm';
 import { createApiClient } from '@neondatabase/api-client';
 import { apps, db } from '../db';
@@ -13,6 +13,41 @@ import {
   getImageName,
 } from '../ecr';
 
+function dockerLogin({
+  username,
+  password,
+  registryUrl,
+}: {
+  username: string;
+  password: string;
+  registryUrl: string;
+}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('docker', [
+      'login',
+      '--username',
+      username,
+      '--password-stdin',
+      registryUrl,
+    ]);
+
+    child.stdin.write(password);
+    child.stdin.end();
+    child.stdout.on('data', (data) => {
+      logger.log(data.toString());
+    });
+
+    child.stderr.on('data', (data) => {
+      logger.error(data.toString());
+      reject(new Error(data.toString()));
+    });
+
+    child.on('close', (code) => {
+      resolve(code);
+    });
+  });
+}
+
 async function dockerLoginIfNeeded() {
   if (fs.existsSync('/root/.docker/config.json')) {
     logger.info('Docker config already exists, no login needed');
@@ -20,17 +55,12 @@ async function dockerLoginIfNeeded() {
   }
 
   return getECRCredentials().then(({ username, password, registryUrl }) => {
-    return new Promise((resolve) => {
-      const result = execSync(
-        `docker login --username ${username} --password-stdin ${registryUrl}`,
-        {
-          input: password,
-          stdio: 'inherit',
-        },
-      );
-
-      resolve(result);
-    });
+    return Promise.all([
+      dockerLogin({ username, password, registryUrl }),
+      exec(
+        `koyeb secrets create ecr-creds --type registry-private --registry-url ${registryUrl} --registry-username ${username} --registry-password ${password} --token ${process.env.KOYEB_CLI_TOKEN}`,
+      ),
+    ]);
   });
 }
 
