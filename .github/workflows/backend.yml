@@ -28,7 +28,7 @@ jobs:
           git-docker-dockerfile: apps/backend/Dockerfile.backend
           privileged: true
           skip-cache: true
-          service-env: |
+          service-env: >-
             AWS_ACCESS_KEY_ID=@AWS_ACCESS_KEY_ID
             AWS_SECRET_ACCESS_KEY=@AWS_SECRET_ACCESS_KEY
             AWS_REGION=@AWS_REGION
