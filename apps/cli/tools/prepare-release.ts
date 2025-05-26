@@ -65,7 +65,7 @@ function createCrossEnvExecutables(cliEntrypointPath: string) {
     return Promise.all(
       targetEnvs.map(async (targetEnv) => {
         exec(
-          `bun build ${cliEntrypointPath} --target=${targetEnv.target} --compile --outfile tmp/dist/${cliName}-${targetEnv.target}`,
+          `bun build ${cliEntrypointPath} --target=${targetEnv.target} --compile --minify --sourcemap --outfile tmp/dist/${cliName}-${targetEnv.target}`,
         );
       }),
     );
