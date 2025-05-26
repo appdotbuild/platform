@@ -1,0 +1,46 @@
+name: Build and deploy backend to dev
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  deploy:
+    concurrency:
+      group: '${{ github.ref_name }}'
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install and configure the Koyeb CLI
+        uses: koyeb-community/koyeb-actions@v2
+        with:
+          api_token: '${{ secrets.KOYEB_CLI_DEV }}'
+
+      - name: Build and deploy the application
+        uses: koyeb/action-git-deploy@v1
+        with:
+          app-name: platform-${{ github.ref_name }}
+          service-ports: '4444:http'
+          service-routes: '/:4444'
+          service-instance-type: 'medium'
+          git-builder: docker
+          git-docker-dockerfile: apps/backend/Dockerfile.backend
+          privileged: true
+          skip-cache: true
+          service-env: |
+            AWS_ACCESS_KEY_ID=@AWS_ACCESS_KEY_ID
+            AWS_SECRET_ACCESS_KEY=@AWS_SECRET_ACCESS_KEY
+            AWS_REGION=@AWS_REGION
+            AWS_ECR_URL=@AWS_ECR_URL
+            AWS_ECR_NAMESPACE=@AWS_ECR_NAMESPACE
+            NEON_API_KEY=@NEON_API_KEY
+            AGENT_API_SECRET_AUTH=@AGENT_API_SECRET_AUTH
+            STACK_PROJECT_ID=@STACK_PROJECT_ID
+            STACK_PUBLISHABLE_CLIENT_KEY=@STACK_PUBLISHABLE_CLIENT_KEY
+            STACK_SECRET_SERVER_KEY=@STACK_SECRET_SERVER_KEY
+            GITHUB_APP_ID=@GITHUB_APP_ID
+            GITHUB_APP_PRIVATE_KEY=@GITHUB_APP_PRIVATE_KEY
+            GITHUB_APP_BOT_EMAIL=@GITHUB_APP_BOT_EMAIL
+            DATABASE_URL=@DATABASE_URL
+            KOYEB_CLI_TOKEN=@KOYEB_CLI_TOKEN

@@ -1,9 +1,7 @@
-name: Build and deploy the application to Koyeb
+name: Build and deploy backend to production
 
 on:
-  push:
-    branches:
-      - '*'
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -15,12 +13,12 @@ jobs:
       - name: Install and configure the Koyeb CLI
         uses: koyeb-community/koyeb-actions@v2
         with:
-          api_token: '${{ secrets.KOYEB_CLI_DEV }}'
+          api_token: '${{ secrets.KOYEB_CLI_PROD }}'
 
       - name: Build and deploy the application
         uses: koyeb/action-git-deploy@v1
         with:
-          app-name: platform-${{ github.ref_name }}
+          app-name: platform-prod-${{ github.ref_name }}
           service-ports: '4444:http'
           service-routes: '/:4444'
           service-instance-type: 'medium'
@@ -42,5 +40,5 @@ jobs:
             GITHUB_APP_ID=@GITHUB_APP_ID
             GITHUB_APP_PRIVATE_KEY=@GITHUB_APP_PRIVATE_KEY
             GITHUB_APP_BOT_EMAIL=@GITHUB_APP_BOT_EMAIL
-            DATABASE_URL=@DATABASE_URL_DEV
+            DATABASE_URL=@DATABASE_URL
             KOYEB_CLI_TOKEN=@KOYEB_CLI_TOKEN
