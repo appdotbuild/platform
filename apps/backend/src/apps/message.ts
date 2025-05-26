@@ -221,8 +221,9 @@ export async function postMessage(
         traceId =
           `${PERMANENT_APPLICATION_ID}-${applicationId}.req-${request.id}` as TraceId;
 
-        const messagesFromHistory = await buildMessagesFromHistory(
+        const messagesFromHistory = await getMessagesFromHistory(
           applicationId,
+          traceId,
         );
 
         body = {
@@ -718,7 +719,64 @@ function streamLog(
   session.push({ log, level }, 'debug');
 }
 
-async function buildMessagesFromHistory(
+async function getMessagesFromHistory(
+  applicationId: string,
+  traceId: TraceId,
+): Promise<ContentMessage[]> {
+  const isTemporaryTraceId = traceId.startsWith(TEMPORARY_APPLICATION_ID);
+
+  if (isTemporaryTraceId) {
+    // for temp apps, first check in-memory
+    const memoryMessages = getMessagesFromMemory(traceId);
+    if (memoryMessages.length > 0) {
+      return memoryMessages;
+    }
+    // fallback for corner cases
+    return await getMessagesFromDB(applicationId);
+  }
+
+  // for permanent apps, fetch from db
+  return await getMessagesFromDB(applicationId);
+}
+
+function getMessagesFromMemory(traceId: TraceId): ContentMessage[] {
+  const previousRequest = previousRequestMap.get(traceId);
+  if (!previousRequest) {
+    return [];
+  }
+
+  try {
+    const messagesHistory = JSON.parse(previousRequest.message.content);
+    return messagesHistory.map(
+      (content: {
+        role: 'user' | 'assistant';
+        content: MessageContentBlock[];
+      }) => {
+        const { role, content: messageContent } = content;
+        if (role === 'user') {
+          const textContent = messageContent
+            .filter((c) => c.type === 'text')
+            .map((c) => c.text)
+            .join('');
+          return {
+            role: 'user' as const,
+            content: textContent,
+          } as UserContentMessage;
+        }
+        return {
+          role: 'assistant' as const,
+          content: JSON.stringify(messageContent),
+          kind: MessageKind.STAGE_RESULT,
+        } as AgentContentMessage;
+      },
+    );
+  } catch (error) {
+    app.log.error(`Error parsing messages from memory: ${error}`);
+    return [];
+  }
+}
+
+async function getMessagesFromDB(
   applicationId: string,
 ): Promise<ContentMessage[]> {
   const history = await getAppPromptHistory(applicationId);
