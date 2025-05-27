@@ -36,15 +36,8 @@ apiClient.interceptors.response.use(
     }
 
     if (error.response?.status === 429) {
-      const userMessageLimit = retrieveUserMessageLimit(error.response.headers);
-
-      const customError = new Error(
-        `Daily limit of ${userMessageLimit?.dailyMessageLimit} messages reached. The limit will reset the next day. \nPlease try again after the reset. If you require more access, please file an issue at github.com/appdotbuild/platform.`,
-      );
-
-      (customError as any).errorType = 'MESSAGE_LIMIT_ERROR';
-
-      throw customError;
+      retrieveUserMessageLimit(error.response.headers);
+      throw error;
     }
     return Promise.reject(error);
   },

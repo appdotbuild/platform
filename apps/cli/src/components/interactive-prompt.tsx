@@ -81,7 +81,7 @@ export function InteractivePrompt({
     onSubmitError?.({ prompt, question, errorMessage, retryMessage });
   };
 
-  if (userMessageLimit?.isUserLimitReached) {
+  if (showPrompt && userMessageLimit?.isUserLimitReached) {
     const limitReachedError = createMessageLimitError({
       userMessageLimit,
       question: question || 'Message limit reached',

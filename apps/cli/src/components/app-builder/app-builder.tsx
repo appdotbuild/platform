@@ -58,7 +58,9 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
         loadingText="Waiting for Agent response..."
         retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         showPrompt={!streamingMessagesData}
-        userMessageLimit={userMessageLimit || undefined}
+        userMessageLimit={
+          streamingMessagesData ? undefined : userMessageLimit || undefined
+        }
       />
 
       {appId && <PromptsHistory appId={appId} />}
