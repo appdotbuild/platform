@@ -82,7 +82,7 @@ export function PromptsHistory({ appId }: { appId: string }) {
 
       return [
         {
-          role: role as 'assistant' | 'user',
+          role: role as 'agent' | 'user',
           text: firstItem.text || '',
           highlight: false,
           icon: '',
