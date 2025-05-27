@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 
-type Environment = 'staging' | 'production';
+export type AgentEnvironment = 'staging' | 'production';
 
 interface EnvironmentStore {
-  environment: Environment;
-  setEnvironment: (env: Environment) => void;
+  environment: string;
+  setEnvironment: (env: AgentEnvironment) => void;
 }
 
 export const useEnvironmentStore = create<EnvironmentStore>((set) => ({

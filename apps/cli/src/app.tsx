@@ -7,7 +7,6 @@ import { Box, Text } from 'ink';
 import { Banner } from './components/ui/Banner';
 import { DebugPanel } from './debug/debugger-panel';
 import { useDebugStore } from './hooks/use-debug';
-import { useEnvironmentStore } from './store/environment-store';
 
 const queryClient = new QueryClient();
 
@@ -17,19 +16,10 @@ const useKeepAlive = () =>
     setInterval(() => {}, 100);
   }, []);
 
-export const App = ({ environment }: { environment?: string }) => {
+export const App = () => {
   useKeepAlive();
 
-  const setEnvironment = useEnvironmentStore((state) => state.setEnvironment);
   const isDebugPanelVisible = useDebugStore((state) => state.isVisible);
-
-  useEffect(() => {
-    if (environment === 'staging') {
-      setEnvironment('staging');
-    } else {
-      setEnvironment('production');
-    }
-  }, [environment, setEnvironment]);
 
   return (
     <QueryClientProvider client={queryClient}>

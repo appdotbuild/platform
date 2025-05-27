@@ -2,6 +2,10 @@
 import { render } from 'ink';
 import meow from 'meow';
 import { App } from './app.js';
+import {
+  AgentEnvironment,
+  useEnvironmentStore,
+} from './store/environment-store.js';
 
 const defaultAgentEnvironment =
   process.env.NODE_ENV === 'production' ? 'production' : 'staging';
@@ -30,4 +34,8 @@ const cli = meow(
   },
 );
 
-render(<App environment={cli.flags.env} />);
+// Set the environment for the agent
+useEnvironmentStore
+  .getState()
+  .setEnvironment(cli.flags.env as AgentEnvironment);
+render(<App />);
