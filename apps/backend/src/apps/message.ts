@@ -452,11 +452,10 @@ export async function postMessage(
               );
             }
 
-            // TODO: this should work, agent has a bug
-            // if (parsedMessage.status === AgentStatus.IDLE) {
-            //   abortController.abort();
-            //   break;
-            // }
+            if (parsedMessage.status === AgentStatus.IDLE) {
+              abortController.abort();
+              break;
+            }
           }
         } catch (error) {
           // this is a special case for incomplete messages

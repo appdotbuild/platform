@@ -18,11 +18,11 @@ const getPhaseTitle = (phase: MessageKind) => {
     case MessageKind.STAGE_RESULT:
       return 'Your application 1st draft is ready';
     case MessageKind.RUNTIME_ERROR:
-      return 'Creating event handlers';
+      return 'There was an error generating your application';
     case MessageKind.REFINEMENT_REQUEST:
-      return 'Refining your request';
+      return 'Expecting user input';
     case MessageKind.FINAL_RESULT:
-      return 'Building frontend components';
+      return 'Generation complete';
     case MessageKind.PLATFORM_MESSAGE:
       return 'Platform message';
     case MessageKind.USER_MESSAGE:
