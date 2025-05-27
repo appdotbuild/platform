@@ -20,7 +20,7 @@ const getPhaseTitle = (phase: MessageKind) => {
     case MessageKind.RUNTIME_ERROR:
       return 'Creating event handlers';
     case MessageKind.REFINEMENT_REQUEST:
-      return 'Running tests';
+      return 'Refining your request';
     case MessageKind.FINAL_RESULT:
       return 'Building frontend components';
     case MessageKind.PLATFORM_MESSAGE:
@@ -68,7 +68,8 @@ const extractPhaseMessages = (
   return events.flatMap((event) => {
     let messagesToProcess = event.message.content;
 
-    if (event.message.kind !== MessageKind.REVIEW_RESULT) {
+    // filter only messages for the current streaming phase and avoid showing historical context
+    if (event.message.kind !== MessageKind.REVIEW_RESULT && isCurrentPhase) {
       if (
         event.message.role === 'assistant' &&
         event.message.content.length > 0
