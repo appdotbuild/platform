@@ -39,7 +39,7 @@ export async function getUserCustomLimit(
 export async function checkMessageUsageLimit(
   userId: string,
 ): Promise<UserMessageLimit> {
-  const DEFAULT_MESSAGE_LIMIT = Number(process.env.DAILY_MESSAGE_LIMIT) || 50;
+  const DEFAULT_MESSAGE_LIMIT = Number(process.env.DAILY_MESSAGE_LIMIT) || 10;
   const startOfDay = getCurrentDayStart();
   const nextResetTime = getNextResetTime();
 
