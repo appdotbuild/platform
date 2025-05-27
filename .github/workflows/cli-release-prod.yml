@@ -1,17 +1,11 @@
 name: Release CLI
 
 on:
-  workflow_run:
-    workflows: ['CI']
-    types:
-      - completed
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   release:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    name: Release Beta CLI
+    name: Release CLI
     runs-on: ubuntu-latest
 
     permissions:
@@ -38,5 +32,4 @@ jobs:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
           PUBLIC_STACK_PROJECT_ID: ${{ secrets.PUBLIC_STACK_PROJECT_ID }}
           PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
-          BETA_RELEASE: true
         run: bun run cli:release

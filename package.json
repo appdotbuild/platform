@@ -30,6 +30,7 @@
     ]
   },
   "dependencies": {
+    "@aws-sdk/client-ecr": "3.812.0",
     "@inkjs/ui": "2.0.0",
     "@stackframe/js": "^2.8.6",
     "@tanstack/react-query": "5.69.0",

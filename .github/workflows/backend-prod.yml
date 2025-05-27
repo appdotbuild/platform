@@ -1,0 +1,45 @@
+name: Build and deploy backend to production
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    concurrency:
+      group: '${{ github.ref_name }}'
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install and configure the Koyeb CLI
+        uses: koyeb-community/koyeb-actions@v2
+        with:
+          api_token: '${{ secrets.KOYEB_CLI_PROD }}'
+
+      - name: Build and deploy to Koyeb
+        run: |
+          koyeb deploy . platform-${{ github.ref_name }}/main \
+            --instance-type medium \
+            --region fra \
+            --archive-builder docker \
+            --archive-docker-dockerfile apps/backend/Dockerfile.backend \
+            --privileged \
+            --type web \
+            --port 4444:http \
+            --route /:4444 \
+            --env AWS_ACCESS_KEY_ID=@AWS_ACCESS_KEY_ID \
+            --env AWS_SECRET_ACCESS_KEY=@AWS_SECRET_ACCESS_KEY \
+            --env AWS_REGION=@AWS_REGION \
+            --env AWS_ECR_URL=@AWS_ECR_URL \
+            --env AWS_ECR_NAMESPACE=@AWS_ECR_NAMESPACE \
+            --env NEON_API_KEY=@NEON_API_KEY \
+            --env AGENT_API_SECRET_AUTH=@AGENT_API_SECRET_AUTH \
+            --env STACK_PROJECT_ID=@STACK_PROJECT_ID \
+            --env STACK_PUBLISHABLE_CLIENT_KEY=@STACK_PUBLISHABLE_CLIENT_KEY \
+            --env STACK_SECRET_SERVER_KEY=@STACK_SECRET_SERVER_KEY \
+            --env GITHUB_APP_ID=@GITHUB_APP_ID \
+            --env GITHUB_APP_PRIVATE_KEY=@GITHUB_APP_PRIVATE_KEY \
+            --env GITHUB_APP_BOT_EMAIL=@GITHUB_APP_BOT_EMAIL \
+            --env DATABASE_URL=@DATABASE_URL \
+            --env KOYEB_CLI_TOKEN=@KOYEB_CLI_TOKEN

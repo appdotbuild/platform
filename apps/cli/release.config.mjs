@@ -26,7 +26,10 @@ export default {
       '@semantic-release/exec',
       {
         prepareCmd: 'bun tools/update-version.ts ${nextRelease.version}',
-        publishCmd: 'cd ./tmp && bun publish --access public',
+        publishCmd:
+          process.env.BETA_RELEASE === 'true'
+            ? 'cd ./tmp && bun publish --access public --tag beta'
+            : 'cd ./tmp && bun publish --access public',
       },
     ],
     [

@@ -1,49 +1,71 @@
 # syntax = docker/dockerfile:1
-
-# Adjust BUN_VERSION as desired
 ARG BUN_VERSION=1.2.8
 FROM oven/bun:${BUN_VERSION}-slim AS base
 
-# Bun app lives here
 WORKDIR /appdotbuild
 
-# Set production environment
 ENV NODE_ENV="production"
 ENV HUSKY=0
 
-# Install packages needed to build node modules
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y ca-certificates curl gnupg && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get update -qq && \
     apt-get install --no-install-recommends -y nodejs unzip
 
-# Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build node modules
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential pkg-config python-is-python3 curl
 
 RUN curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
 
-# Install node modules
 COPY bun.lock package.json ./
 COPY ./apps/backend /appdotbuild/apps/backend
 COPY ./packages/core /appdotbuild/packages/core
 
 RUN bun install --filter "backend"
-# RUN bun install --frozen-lockfile
 
-# Final stage for app image
 FROM base
 
-# Copy built application
+# Docker install
+RUN mkdir -pm755 /etc/apt/keyrings && curl -o /etc/apt/keyrings/docker.asc -fsSL "https://download.docker.com/linux/debian/gpg" && chmod a+r /etc/apt/keyrings/docker.asc && \
+    mkdir -pm755 /etc/apt/sources.list.d && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && apt-get install --no-install-recommends -y \
+    docker-ce \
+    docker-ce-cli \
+    containerd.io \
+    docker-buildx-plugin \
+    docker-compose-plugin \
+    pigz \
+    xz-utils && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /var/cache/debconf/* /var/log/* /tmp/* /var/tmp/*
+
+COPY --from=docker:dind /usr/local/bin/docker-init /usr/local/bin/docker-init
+
+# https://github.com/docker-library/docker
+ADD https://raw.githubusercontent.com/docker-library/docker/master/modprobe.sh /usr/local/bin/modprobe
+ADD https://raw.githubusercontent.com/docker-library/docker/master/dockerd-entrypoint.sh /usr/local/bin/
+ADD https://raw.githubusercontent.com/docker-library/docker/master/docker-entrypoint.sh /usr/local/bin/
+ADD https://raw.githubusercontent.com/moby/moby/master/hack/dind /usr/local/bin/dind
+
+ADD https://raw.githubusercontent.com/koyeb/koyeb-docker-compose/refs/heads/master/koyeb-entrypoint.sh /usr/local/bin/koyeb-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh /usr/local/bin/docker-entrypoint.sh /usr/local/bin/dind /usr/local/bin/koyeb-entrypoint.sh
+
+VOLUME /var/lib/docker
+
 COPY --from=build /appdotbuild /appdotbuild
 COPY --from=build /root /root
 
 ENV PATH="/root/.koyeb/bin:${PATH}"
-# Start the server by default, this can be overwritten at runtime
+
 EXPOSE 3000
 WORKDIR /appdotbuild
+
+# Launch Docker daemon
+ENTRYPOINT ["/usr/local/bin/koyeb-entrypoint.sh"]
+
 CMD [ "bun", "run", "backend:start" ]
