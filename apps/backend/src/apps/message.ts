@@ -196,6 +196,18 @@ export async function postMessage(
 
         appName = application[0]!.appName;
         isIteration = true;
+
+        // save iteration user message
+        try {
+          await db.insert(appPrompts).values({
+            id: uuidv4(),
+            prompt: requestBody.message,
+            appId: applicationId,
+            kind: 'user',
+          });
+        } catch (error) {
+          app.log.error(`Error saving iteration user message: ${error}`);
+        }
       }
 
       if (hasPreviousRequest) {
@@ -254,19 +266,6 @@ export async function postMessage(
         applicationId,
         traceId,
       };
-    }
-
-    if (isIteration && applicationId) {
-      try {
-        await db.insert(appPrompts).values({
-          id: uuidv4(),
-          prompt: requestBody.message,
-          appId: applicationId,
-          kind: 'user',
-        });
-      } catch (error) {
-        app.log.error(`Error saving user message: ${error}`);
-      }
     }
 
     const tempDirPath = path.join(
@@ -571,6 +570,18 @@ async function appCreation({
     appName: newAppName,
     githubUsername,
   });
+
+  // save first message after app creation
+  try {
+    await db.insert(appPrompts).values({
+      id: uuidv4(),
+      prompt: requestBody.message,
+      appId: applicationId,
+      kind: 'user',
+    });
+  } catch (error) {
+    app.log.error(`Error saving initial user message: ${error}`);
+  }
 
   session.push(
     new PlatformMessage(
