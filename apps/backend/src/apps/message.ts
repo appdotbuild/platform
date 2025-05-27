@@ -371,7 +371,13 @@ export async function postMessage(
             storePreviousRequest(parsedMessage.traceId, parsedMessage);
             session.push(message);
 
-            await saveAgentMessage(parsedMessage, applicationId, isAppCreated);
+            if (parsedMessage.status === 'idle') {
+              await saveAgentMessage(
+                parsedMessage,
+                applicationId,
+                isAppCreated,
+              );
+            }
 
             if (
               parsedMessage.message.unifiedDiff ===
