@@ -22,7 +22,7 @@ function dockerLogin({
   password: string;
   registryUrl: string;
 }) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const child = spawn('docker', [
       'login',
       '--username',
@@ -33,14 +33,6 @@ function dockerLogin({
 
     child.stdin.write(password);
     child.stdin.end();
-    child.stdout.on('data', (data) => {
-      logger.info(data.toString());
-    });
-
-    child.stderr.on('data', (data) => {
-      logger.error(data.toString());
-      reject(new Error(data.toString()));
-    });
 
     child.on('close', (code) => {
       resolve(code);
