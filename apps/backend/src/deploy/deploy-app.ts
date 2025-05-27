@@ -55,12 +55,7 @@ async function dockerLoginIfNeeded() {
   }
 
   return getECRCredentials().then(({ username, password, registryUrl }) => {
-    return Promise.all([
-      dockerLogin({ username, password, registryUrl }),
-      exec(
-        `koyeb secrets create ecr-creds --type registry-private --registry-url ${registryUrl} --registry-username ${username} --value ${password} --token ${process.env.KOYEB_CLI_TOKEN}`,
-      ),
-    ]);
+    return dockerLogin({ username, password, registryUrl });
   });
 }
 

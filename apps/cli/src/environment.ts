@@ -1,5 +1,5 @@
 const BACKEND_PRODUCTION_API_HOST =
-  'https://platform-prod-main-appbuild-prod-7e97a9d5.koyeb.app/';
+  'https://platform-main-appbuild-prod-d4a252a9.koyeb.app/';
 const BACKEND_DEV_API_HOST =
   'https://platform-main-appbuild-dev-6fdad96f.koyeb.app/';
 const BACKEND_LOCAL_API_HOST = 'http://127.0.0.1:4444';

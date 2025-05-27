@@ -1,0 +1,42 @@
+name: Refresh ECR credentials
+on:
+  schedule:
+    - cron: '50 */11 * * *' # every 11 hours at 50 minutes
+  workflow_dispatch:
+
+jobs:
+  refresh_token_dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install and configure the Koyeb CLI
+        uses: koyeb-community/koyeb-actions@v2
+        with:
+          api_token: '${{ secrets.KOYEB_CLI_DEV }}'
+
+      - name: Refresh ECR credentials
+        env:
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ECR_URL: ${{ secrets.AWS_ECR_URL }}
+        run: |
+          koyeb secrets update ecr-creds \
+            --registry-url "$AWS_ECR_URL" \
+            --registry-username AWS \
+            --value "$AWS_SECRET_ACCESS_KEY"
+
+  refresh_token_prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install and configure the Koyeb CLI
+        uses: koyeb-community/koyeb-actions@v2
+        with:
+          api_token: '${{ secrets.KOYEB_CLI_PROD }}'
+
+      - name: Refresh ECR credentials
+        env:
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ECR_URL: ${{ secrets.AWS_ECR_URL }}
+        run: |
+          koyeb secrets update ecr-creds \
+            --registry-url "$AWS_ECR_URL" \
+            --registry-username AWS \
+            --value "$AWS_SECRET_ACCESS_KEY"
