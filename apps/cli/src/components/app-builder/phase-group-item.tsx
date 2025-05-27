@@ -84,9 +84,8 @@ const extractPhaseMessages = (
         }
 
         if (lastUserMessageIndex !== -1) {
-          messagesToProcess = event.message.content.slice(
-            lastUserMessageIndex + 1,
-          );
+          // user message + subsequent messages
+          messagesToProcess = event.message.content.slice(lastUserMessageIndex);
         }
       }
     }
