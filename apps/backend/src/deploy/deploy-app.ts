@@ -1,6 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { exec as execNative, spawn } from 'node:child_process';
+import { exec as execNative, execSync } from 'node:child_process';
 import { eq } from 'drizzle-orm';
 import { createApiClient } from '@neondatabase/api-client';
 import { apps, db } from '../db';
@@ -23,20 +23,15 @@ function dockerLogin({
   registryUrl: string;
 }) {
   return new Promise((resolve) => {
-    const child = spawn('docker', [
-      'login',
-      '--username',
-      username,
-      '--password-stdin',
-      registryUrl,
-    ]);
+    const result = execSync(
+      `docker login --username ${username} --password-stdin ${registryUrl}`,
+      {
+        input: password,
+        stdio: 'inherit',
+      },
+    );
 
-    child.stdin.write(password);
-    child.stdin.end();
-
-    child.on('close', (code) => {
-      resolve(code);
-    });
+    resolve(result);
   });
 }
 
