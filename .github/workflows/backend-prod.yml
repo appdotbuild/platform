@@ -15,15 +15,29 @@ jobs:
         with:
           api_token: '${{ secrets.KOYEB_CLI_PROD }}'
 
-      - name: Build and deploy the application
-        uses: koyeb/action-git-deploy@v1
-        with:
-          app-name: platform-prod-${{ github.ref_name }}
-          service-ports: '4444:http'
-          service-routes: '/:4444'
-          service-instance-type: 'medium'
-          git-builder: docker
-          git-docker-dockerfile: apps/backend/Dockerfile.backend
-          privileged: true
-          skip-cache: true
-          service-env: AWS_ACCESS_KEY_ID=@AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY=@AWS_SECRET_ACCESS_KEY,AWS_REGION=@AWS_REGION,AWS_ECR_URL=@AWS_ECR_URL,AWS_ECR_NAMESPACE=@AWS_ECR_NAMESPACE,NEON_API_KEY=@NEON_API_KEY,AGENT_API_SECRET_AUTH=@AGENT_API_SECRET_AUTH,STACK_PROJECT_ID=@STACK_PROJECT_ID,STACK_PUBLISHABLE_CLIENT_KEY=@STACK_PUBLISHABLE_CLIENT_KEY,STACK_SECRET_SERVER_KEY=@STACK_SECRET_SERVER_KEY,GITHUB_APP_ID=@GITHUB_APP_ID,GITHUB_APP_PRIVATE_KEY=@GITHUB_APP_PRIVATE_KEY,GITHUB_APP_BOT_EMAIL=@GITHUB_APP_BOT_EMAIL,DATABASE_URL=@DATABASE_URL,KOYEB_CLI_TOKEN=@KOYEB_CLI_TOKEN
+      - name: Build and deploy to Koyeb
+        run: |
+          koyeb deploy . platform-${{ github.ref_name }}/main \
+            --instance-type medium \
+            --region was \
+            --archive-builder docker \
+            --archive-docker-dockerfile ./apps/backend/Dockerfile.backend \
+            --privileged \
+            --type web \
+            --port 4444:http \
+            --route /:4444 \
+            --env AWS_ACCESS_KEY_ID=@AWS_ACCESS_KEY_ID \
+            --env AWS_SECRET_ACCESS_KEY=@AWS_SECRET_ACCESS_KEY \
+            --env AWS_REGION=@AWS_REGION \
+            --env AWS_ECR_URL=@AWS_ECR_URL \
+            --env AWS_ECR_NAMESPACE=@AWS_ECR_NAMESPACE \
+            --env NEON_API_KEY=@NEON_API_KEY \
+            --env AGENT_API_SECRET_AUTH=@AGENT_API_SECRET_AUTH \
+            --env STACK_PROJECT_ID=@STACK_PROJECT_ID \
+            --env STACK_PUBLISHABLE_CLIENT_KEY=@STACK_PUBLISHABLE_CLIENT_KEY \
+            --env STACK_SECRET_SERVER_KEY=@STACK_SECRET_SERVER_KEY \
+            --env GITHUB_APP_ID=@GITHUB_APP_ID \
+            --env GITHUB_APP_PRIVATE_KEY=@GITHUB_APP_PRIVATE_KEY \
+            --env GITHUB_APP_BOT_EMAIL=@GITHUB_APP_BOT_EMAIL \
+            --env DATABASE_URL=@DATABASE_URL \
+            --env KOYEB_CLI_TOKEN=@KOYEB_CLI_TOKEN
