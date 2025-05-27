@@ -13,6 +13,7 @@ import {
   StreamingError,
   type TraceId,
   type UserContentMessage,
+  type ApplicationId,
 } from '@appdotbuild/core';
 import type { Optional } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
@@ -60,7 +61,7 @@ type RequestBody = {
   traceId?: TraceId;
 };
 
-const previousRequestMap = new Map<TraceId, AgentSseEvent>();
+const previousRequestMap = new Map<ApplicationId, AgentSseEvent>();
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
 
 const TEMPORARY_APPLICATION_ID = 'temp';
@@ -75,27 +76,6 @@ const updateToPermanentTraceId = (traceId: TraceId) =>
     TEMPORARY_APPLICATION_ID,
     PERMANENT_APPLICATION_ID,
   ) as TraceId;
-const downgradeToTemporaryTraceId = (traceId: TraceId) =>
-  traceId.replace(
-    PERMANENT_APPLICATION_ID,
-    TEMPORARY_APPLICATION_ID,
-  ) as TraceId;
-
-function storePreviousRequest(traceId: TraceId, agentMessage: AgentSseEvent) {
-  const isPermanentTraceId = traceId.startsWith(PERMANENT_APPLICATION_ID);
-  if (isPermanentTraceId) {
-    const correspondingTemporaryTraceId = downgradeToTemporaryTraceId(traceId);
-    const correspondingTemporaryRequest = previousRequestMap.get(
-      correspondingTemporaryTraceId,
-    );
-    // replace the temporary traceId with the permanent traceId in the map
-    if (correspondingTemporaryRequest) {
-      previousRequestMap.delete(correspondingTemporaryTraceId);
-    }
-  }
-
-  previousRequestMap.set(traceId, agentMessage);
-}
 
 export async function postMessage(
   request: FastifyRequest,
@@ -368,7 +348,7 @@ export async function postMessage(
 
             streamLog(session, `message sent to CLI: ${message}`, 'info');
             storeDevLogs(parsedMessage, message);
-            storePreviousRequest(parsedMessage.traceId, parsedMessage);
+            previousRequestMap.set(applicationId, parsedMessage);
             session.push(message);
 
             if (parsedMessage.status === 'idle') {
@@ -471,6 +451,12 @@ export async function postMessage(
                 ),
               );
             }
+
+            // TODO: this should work, agent has a bug
+            // if (parsedMessage.status === AgentStatus.IDLE) {
+            //   abortController.abort();
+            //   break;
+            // }
           }
         } catch (error) {
           // this is a special case for incomplete messages

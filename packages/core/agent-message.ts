@@ -15,7 +15,7 @@ export enum MessageKind {
 }
 
 type RequestId = string;
-type ApplicationId = string;
+export type ApplicationId = string;
 export type TraceId = `${'app' | 'temp'}-${ApplicationId}.req-${RequestId}`;
 
 export type MessageContentBlock = {

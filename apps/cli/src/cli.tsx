@@ -3,13 +3,15 @@ import { render } from 'ink';
 import meow from 'meow';
 import { App } from './app.js';
 
+const defaultAgentEnvironment =
+  process.env.NODE_ENV === 'production' ? 'production' : 'staging';
 const cli = meow(
   `
 	Usage
 	  $ npx appdotbuild
 
 	Options
-	  --env, -e  Environment (staging|production) [default: production]
+	  --env, -e  Environment (staging|production) [default: ${defaultAgentEnvironment}]
 
 	Examples
 	  $ npx appdotbuild --env staging
@@ -21,7 +23,7 @@ const cli = meow(
       env: {
         type: 'string',
         shortFlag: 'e',
-        default: 'production',
+        default: defaultAgentEnvironment,
         choices: ['staging', 'production'],
       },
     },

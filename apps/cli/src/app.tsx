@@ -17,11 +17,7 @@ const useKeepAlive = () =>
     setInterval(() => {}, 100);
   }, []);
 
-export const App = ({
-  environment = 'production',
-}: {
-  environment?: string;
-}) => {
+export const App = ({ environment }: { environment?: string }) => {
   useKeepAlive();
 
   const setEnvironment = useEnvironmentStore((state) => state.setEnvironment);
