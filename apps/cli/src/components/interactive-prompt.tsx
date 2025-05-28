@@ -102,16 +102,17 @@ export function InteractivePrompt({
       );
     }
 
-    if (item.status === 'success') {
-      return (
-        <SuccessMessage
-          key={`history-${index}`}
-          prompt={item.prompt}
-          question={item.question}
-          successMessage={item.successMessage || ''}
-        />
-      );
-    }
+    // TODO: we don't need this for now, but we might need it in the future
+    // if (item.status === 'success') {
+    //   return (
+    //     <SuccessMessage
+    //       key={`history-${index}`}
+    //       prompt={item.prompt}
+    //       question={item.question}
+    //       successMessage={item.successMessage || ''}
+    //     />
+    //   );
+    // }
   };
 
   return (

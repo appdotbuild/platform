@@ -9,12 +9,110 @@ import { InteractivePrompt } from '../interactive-prompt.js';
 import { LoadingMessage } from '../shared/display/loading-message.js';
 import { BuildStages } from './build-stages.js';
 import { PromptsHistory } from './prompts-history.js';
-import { RefinementPrompt } from './refinement-prompt.js';
+import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 
 interface AppBuilderProps {
   initialPrompt: string;
   appId?: string;
 }
+
+type AppBuilderState =
+  | 'initial'
+  | 'building'
+  | 'iteration_ready'
+  | 'refinement_requested'
+  | 'completed'
+  | 'error';
+
+interface PromptConfig {
+  question: string;
+  placeholder: string;
+  successMessage: string;
+  loadingText: string;
+}
+
+const createAppBuilderStateMachine = (
+  initialPrompt: string,
+  streamingMessagesData: { events: ParsedSseEvent[] } | undefined,
+  isStreamingMessages: boolean,
+  hasAppId: boolean,
+) => {
+  const getCurrentState = (): AppBuilderState => {
+    if (!streamingMessagesData) {
+      return 'initial';
+    }
+
+    const lastEvent = streamingMessagesData.events?.at(-1);
+
+    if (isStreamingMessages) {
+      return 'building';
+    }
+
+    if (!lastEvent) {
+      return 'initial';
+    }
+
+    switch (lastEvent.message.kind) {
+      case MessageKind.REFINEMENT_REQUEST:
+        return 'refinement_requested';
+      case MessageKind.PLATFORM_MESSAGE:
+      case MessageKind.FINAL_RESULT:
+        return hasAppId ? 'iteration_ready' : 'completed';
+      case MessageKind.RUNTIME_ERROR:
+        return 'error';
+      default:
+        return 'iteration_ready';
+    }
+  };
+
+  const currentState = getCurrentState();
+
+  const stateConfigs = (
+    initialPrompt: string,
+  ): Record<AppBuilderState, PromptConfig> => ({
+    initial: {
+      question: initialPrompt,
+      placeholder: 'e.g., Add a new feature, modify behavior...',
+      successMessage: 'Message sent to Agent...',
+      loadingText: 'Waiting for Agent response...',
+    },
+    building: {
+      question: 'Building your application...',
+      placeholder: '',
+      successMessage: '',
+      loadingText: 'Processing...',
+    },
+    iteration_ready: {
+      question: 'How would you like to modify your application?',
+      placeholder: 'e.g., Add a new feature, modify behavior...',
+      successMessage: 'The requested changes are being applied...',
+      loadingText: 'Applying changes...',
+    },
+    refinement_requested: {
+      question: 'Provide feedback to the assistant...',
+      placeholder: "Describe what you'd like to change or improve",
+      successMessage: 'Refinement request sent to Agent...',
+      loadingText: 'Waiting for Agent response...',
+    },
+    completed: {
+      question: 'Your application is ready!',
+      placeholder: 'Type a new request...',
+      successMessage: 'Processing new request...',
+      loadingText: 'Starting...',
+    },
+    error: {
+      question: 'An error occurred. Would you like to try again?',
+      placeholder: 'Modify your request...',
+      successMessage: 'Retrying...',
+      loadingText: 'Processing...',
+    },
+  });
+
+  return {
+    currentState,
+    config: stateConfigs(initialPrompt)[currentState],
+  };
+};
 
 export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
   const {
@@ -31,40 +129,34 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
 
   const { isLoading } = useFetchMessageLimit();
 
-  const handlerSubmitRefinement = (value: string) => {
+  const stateMachine = createAppBuilderStateMachine(
+    initialPrompt,
+    streamingMessagesData,
+    isStreamingMessages,
+    Boolean(appId),
+  );
+
+  const handleSubmit = (text: string) => {
+    if (isStreamingMessages) return;
+
     createApplication({
-      message: value,
-      applicationId: createApplicationData?.applicationId,
+      message: text,
+      applicationId: appId || createApplicationData?.applicationId,
     });
   };
 
-  if (isLoading)
+  if (isLoading) {
     return <LoadingMessage message={'⏳ Preparing application...'} />;
+  }
+
+  const { config } = stateMachine;
 
   return (
     <Box flexDirection="column">
-      <InteractivePrompt
-        question={initialPrompt}
-        successMessage="Message sent to Agent..."
-        placeholder="e.g., Add a new feature, modify behavior, or type 'exit' to finish"
-        onSubmit={(text: string) =>
-          createApplication({
-            message: text,
-            applicationId: appId,
-          })
-        }
-        status={createApplicationStatus}
-        errorMessage={createApplicationError?.message}
-        loadingText="Waiting for Agent response..."
-        retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
-        showPrompt={!streamingMessagesData}
-        userMessageLimit={
-          streamingMessagesData ? undefined : userMessageLimit || undefined
-        }
-      />
-
+      {/* App history for existing apps */}
       {appId && <PromptsHistory appId={appId} />}
 
+      {/* Build stages - show when we have streaming data */}
       {streamingMessagesData && (
         <BuildStages
           messagesData={streamingMessagesData}
@@ -72,39 +164,17 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
         />
       )}
 
-      {streamingMessagesData && (
-        <RefinementPrompt
-          messagesData={streamingMessagesData}
-          onSubmit={handlerSubmitRefinement}
-          status={createApplicationStatus}
-          userMessageLimit={userMessageLimit || undefined}
-          errorMessage={createApplicationError?.message}
-        />
-      )}
-
+      {/* Single interactive prompt - handles all states */}
       <InteractivePrompt
-        question="How would you like to modify your application?"
-        successMessage="The requested changes are being applied..."
-        placeholder="e.g., Add a new feature, modify behavior, or type 'exit' to finish"
-        onSubmit={(text: string) =>
-          isStreamingMessages
-            ? undefined
-            : createApplication({
-                message: text,
-                applicationId: appId || createApplicationData?.applicationId,
-              })
-        }
+        question={config.question}
+        placeholder={config.placeholder}
+        successMessage={config.successMessage}
+        loadingText={config.loadingText}
+        onSubmit={handleSubmit}
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
-        loadingText="Applying changes..."
         retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
-        showPrompt={Boolean(
-          streamingMessagesData &&
-            !isStreamingMessages &&
-            streamingMessagesData?.events?.at(-1)?.message.kind !==
-              MessageKind.REFINEMENT_REQUEST,
-        )}
-        userMessageLimit={userMessageLimit || undefined}
+        userMessageLimit={userMessageLimit}
       />
     </Box>
   );

@@ -157,10 +157,7 @@ export async function postMessage(
     if (applicationId) {
       app.log.info(`existing applicationId ${applicationId}`);
 
-      const hasPreviousRequest =
-        traceId && previousRequestMap.has(traceId as TraceId);
-
-      if (isIteration || !hasPreviousRequest) {
+      if (isIteration) {
         const application = await db
           .select()
           .from(apps)
@@ -175,8 +172,6 @@ export async function postMessage(
         }
 
         appName = application[0]!.appName;
-        isIteration = true;
-
         // save iteration user message
         try {
           await db.insert(appPrompts).values({
@@ -188,34 +183,10 @@ export async function postMessage(
         } catch (error) {
           app.log.error(`Error saving iteration user message: ${error}`);
         }
-      }
-
-      if (hasPreviousRequest) {
-        const previousRequest = previousRequestMap.get(traceId as TraceId);
-        if (!previousRequest) {
-          return reply.status(404).send({
-            error: 'Previous request not found',
-            status: 'error',
-          });
-        }
-
-        body = {
-          ...body,
-          ...getExistingConversationBody({
-            previousEvent: previousRequest,
-            existingTraceId: traceId as TraceId,
-            applicationId,
-            message: requestBody.message,
-            settings: requestBody.settings,
-          }),
-        };
-      } else {
-        traceId =
-          `${PERMANENT_APPLICATION_ID}-${applicationId}.req-${request.id}` as TraceId;
 
         const messagesFromHistory = await getMessagesFromHistory(
           applicationId,
-          traceId,
+          traceId as TraceId,
           userId,
         );
 
@@ -234,9 +205,30 @@ export async function postMessage(
           ],
         };
 
-        app.log.info(
+        streamLog(
+          session,
           `Loaded ${messagesFromHistory.length} messages from history for application ${applicationId}`,
         );
+      } else {
+        // for temporary apps, we need to get the previous request from the memory
+        const previousRequest = previousRequestMap.get(applicationId);
+        if (!previousRequest) {
+          return reply.status(404).send({
+            error: 'Previous request not found',
+            status: 'error',
+          });
+        }
+
+        body = {
+          ...body,
+          ...getExistingConversationBody({
+            previousEvent: previousRequest,
+            existingTraceId: traceId as TraceId,
+            applicationId,
+            message: requestBody.message,
+            settings: requestBody.settings,
+          }),
+        };
       }
     } else {
       applicationId = uuidv4();
@@ -364,6 +356,19 @@ export async function postMessage(
               '# Note: This is a valid empty diff (means no changes from template)'
             ) {
               parsedMessage.message.unifiedDiff = null;
+            }
+
+            if (
+              parsedMessage.message.unifiedDiff?.startsWith(
+                '# ERROR GENERATING DIFF',
+              )
+            ) {
+              terminateStreamWithError(
+                session,
+                'There was an error generating your application diff, try again with a different prompt.',
+                abortController,
+              );
+              return;
             }
 
             canDeploy = !!parsedMessage.message.unifiedDiff;
@@ -743,8 +748,8 @@ async function getMessagesFromHistory(
   return await getMessagesFromDB(applicationId, userId);
 }
 
-function getMessagesFromMemory(traceId: TraceId): ContentMessage[] {
-  const previousRequest = previousRequestMap.get(traceId);
+function getMessagesFromMemory(applicationId: ApplicationId): ContentMessage[] {
+  const previousRequest = previousRequestMap.get(applicationId);
   if (!previousRequest) {
     return [];
   }
@@ -838,4 +843,14 @@ async function saveAgentMessage(
   } catch (error) {
     app.log.error(`Error saving agent message: ${error}`);
   }
+}
+
+function terminateStreamWithError(
+  session: Session,
+  error: string,
+  abortController: AbortController,
+) {
+  session.push(new StreamingError(error), 'error');
+  abortController.abort();
+  session.removeAllListeners();
 }
