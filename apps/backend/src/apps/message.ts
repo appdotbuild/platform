@@ -259,7 +259,6 @@ export async function postMessage(
       `appdotbuild-template-${Date.now()}`,
     );
 
-    // TODO: isIteration alone doesn't mean we need to clone the repo, we need to check if there is a unified diff
     const volumePromise = isIteration
       ? cloneRepository({
           repo: `${githubUsername}/${appName}`,
@@ -329,7 +328,10 @@ export async function postMessage(
       const text = textDecoder.decode(value, { stream: true });
 
       if (isDev) {
-        fs.writeFileSync(`${logsFolder}/sse_messages-${Date.now()}.log`, text);
+        fs.appendFileSync(
+          `${logsFolder}/sse_messages-${applicationId}.log`,
+          text,
+        );
       }
 
       buffer += text;
@@ -409,11 +411,17 @@ export async function postMessage(
               }
 
               if (isIteration) {
+                fs.writeFileSync(
+                  `${logsFolder}/${applicationId}-agentState.json`,
+                  JSON.stringify(parsedMessage.message.agentState, null, 2),
+                );
                 await appIteration({
                   appName,
                   githubUsername,
                   githubAccessToken,
                   files,
+                  agentState: parsedMessage.message.agentState,
+                  applicationId,
                   traceId: traceId as TraceId,
                   session,
                   commitMessage:
@@ -426,6 +434,7 @@ export async function postMessage(
                 const { newAppName } = await appCreation({
                   applicationId,
                   appName,
+                  agentState: parsedMessage.message.agentState,
                   githubAccessToken,
                   githubUsername,
                   ownerId: request.user.id,
@@ -532,6 +541,7 @@ async function appCreation({
   applicationId,
   appName,
   traceId,
+  agentState,
   githubUsername,
   githubAccessToken,
   ownerId,
@@ -542,6 +552,7 @@ async function appCreation({
   applicationId: string;
   appName: string;
   traceId: TraceId;
+  agentState: AgentSseEvent['message']['agentState'];
   githubUsername: string;
   githubAccessToken: string;
   ownerId: string;
@@ -609,6 +620,8 @@ async function appIteration({
   githubUsername,
   githubAccessToken,
   files,
+  agentState,
+  applicationId,
   traceId,
   session,
   commitMessage,
@@ -617,8 +630,10 @@ async function appIteration({
   githubUsername: string;
   githubAccessToken: string;
   files: ReturnType<typeof readDirectoryRecursive>;
+  applicationId: string;
   traceId: string;
   session: Session;
+  agentState: AgentSseEvent['message']['agentState'];
   commitMessage: string;
 }) {
   const { commitSha } = await createUserCommit({
@@ -629,6 +644,13 @@ async function appIteration({
     branch: 'main',
     githubAccessToken,
   });
+
+  await db
+    .update(apps)
+    .set({
+      agentState: agentState,
+    })
+    .where(eq(apps.id, applicationId));
 
   const commitUrl = `https://github.com/${githubUsername}/${appName}/commit/${commitSha}`;
   session.push(

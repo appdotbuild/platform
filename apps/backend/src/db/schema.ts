@@ -6,6 +6,7 @@ import {
   boolean,
   integer,
   index,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 
 export const apps = pgTable(
@@ -24,7 +25,8 @@ export const apps = pgTable(
     s3Checksum: text(),
     deployStatus: text().default('pending'), // pending, deploying, deployed, failed
     traceId: text(),
-    typespecSchema: text(),
+    // TODO: this should be set per deployment, and not per app, so we can rollback to a previous state
+    agentState: jsonb('agentState'),
     receivedSuccess: boolean('receivedSuccess').notNull().default(false),
     recompileInProgress: boolean('recompileInProgress')
       .notNull()

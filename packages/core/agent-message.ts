@@ -5,13 +5,16 @@ export enum AgentStatus {
 }
 
 export enum MessageKind {
+  KEEP_ALIVE = 'KeepAlive',
   STAGE_RESULT = 'StageResult',
   RUNTIME_ERROR = 'RuntimeError',
   REFINEMENT_REQUEST = 'RefinementRequest',
   FINAL_RESULT = 'FinalResult',
+  REVIEW_RESULT = 'ReviewResult',
+
+  // these are Platform only messages, don't exist in the agent
   PLATFORM_MESSAGE = 'PlatformMessage',
   USER_MESSAGE = 'UserMessage',
-  REVIEW_RESULT = 'ReviewResult',
 }
 
 type RequestId = string;
