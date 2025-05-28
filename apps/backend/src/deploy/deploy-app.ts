@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { exec as execNative, execSync } from 'node:child_process';
+import os from 'node:os';
 import { eq } from 'drizzle-orm';
 import { createApiClient } from '@neondatabase/api-client';
 import { apps, db } from '../db';
@@ -36,12 +37,14 @@ function dockerLogin({
 }
 
 async function dockerLoginIfNeeded() {
-  if (fs.existsSync('/root/.docker/config.json')) {
+  if (fs.existsSync(path.join(os.homedir(), '.docker/config.json'))) {
     logger.info('Docker config already exists, no login needed');
     return Promise.resolve();
   }
 
+  logger.info('Getting ECR credentials');
   return getECRCredentials().then(({ username, password, registryUrl }) => {
+    logger.info('Logging in to ECR');
     return dockerLogin({ username, password, registryUrl });
   });
 }
@@ -134,6 +137,17 @@ export async function deployApp({
     throw new Error('Dockerfile not found');
   }
 
+  const imageName = getImageName(appId);
+
+  logger.info('Building Docker image');
+
+  const buildImagePromise = exec(`docker build -t ${imageName} .`, {
+    cwd: appDirectory,
+    // @ts-ignore
+    stdio: 'inherit',
+  });
+  const createRepositoryPromise = createRepositoryIfNotExists(appId);
+
   const koyebAppName = `app-${appId}`;
   const envVars = {
     APP_DATABASE_URL: connectionString,
@@ -148,24 +162,19 @@ export async function deployApp({
     }
   }
 
-  const imageName = getImageName(appId);
-
-  logger.info('Building Docker image');
-
   await Promise.all([
     dockerLoginIfNeeded(),
-    exec(`docker build -t ${imageName} .`, {
-      cwd: appDirectory,
-      // @ts-ignore
-      stdio: 'inherit',
-    }),
-    createRepositoryIfNotExists(appId),
+    buildImagePromise,
+    createRepositoryPromise,
   ]);
 
   logger.info('Pushing Docker image to ECR');
 
   await exec(`docker push ${imageName}`, {
     cwd: appDirectory,
+  }).then(() => {
+    logger.info('Cleaning up Docker image');
+    return exec(`docker rmi ${imageName}`);
   });
 
   logger.info('Starting Koyeb deployment', { koyebAppName });
