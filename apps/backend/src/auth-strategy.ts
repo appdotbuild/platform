@@ -9,10 +9,12 @@ type AuthError = {
   statusCode: number;
 };
 
-export async function validateAuth(
-  request: FastifyRequest,
-): Promise<
-  | (ServerUser & { githubAccessToken: string; githubUsername: string })
+export async function validateAuth(request: FastifyRequest): Promise<
+  | (ServerUser & {
+      githubAccessToken: string;
+      githubUsername: string;
+      isNeonEmployee: boolean;
+    })
   | AuthError
 > {
   const jwks = jose.createRemoteJWKSet(
@@ -105,6 +107,7 @@ export async function validateAuth(
       ...user,
       githubUsername,
       githubAccessToken: githubAccessToken?.accessToken as string,
+      isNeonEmployee: neonEmployee,
     };
   } catch (error) {
     logger.error('Stack Auth API call failed', { error });

@@ -1,18 +1,20 @@
 import { Box, Text, useInput } from 'ink';
 import { DEBUG_LOG_FILE, useDebugStore } from '../hooks/use-debug';
+import { useAuthStore } from '../auth/auth-store';
 
 export const DebugPanel = () => {
   const logs = useDebugStore((state) => state.logs);
   const isVisible = useDebugStore((state) => state.isVisible);
   const toggleVisibility = useDebugStore((state) => state.toggleVisibility);
+  const isNeonEmployee = useAuthStore((state) => state.isNeonEmployee);
 
   useInput((input, key) => {
-    if (key.ctrl && input === 'd') {
+    if (key.ctrl && input === 'd' && isNeonEmployee === true) {
       toggleVisibility();
     }
   });
 
-  if (!isVisible) return null;
+  if (!isVisible || isNeonEmployee !== true) return null;
 
   return (
     <Box

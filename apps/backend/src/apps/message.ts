@@ -102,6 +102,7 @@ export async function postMessage(
   reply: FastifyReply,
 ) {
   const userId = request.user.id;
+  const isNeonEmployee = request.user.isNeonEmployee;
 
   const {
     isUserLimitReached,
@@ -131,6 +132,7 @@ export async function postMessage(
     },
   });
 
+  const streamLog = createStreamLogger(session, isNeonEmployee);
   const abortController = new AbortController();
   const githubUsername = request.user.githubUsername;
   const githubAccessToken = request.user.githubAccessToken;
@@ -139,24 +141,18 @@ export async function postMessage(
   let traceId = requestBody.traceId;
 
   request.socket.on('close', () => {
-    streamLog(
-      session,
-      `Client disconnected for applicationId: ${applicationId}`,
-      'info',
-    );
+    streamLog(`Client disconnected for applicationId: ${applicationId}`);
     abortController.abort();
   });
 
-  streamLog(session, 'created SSE session', 'info');
+  streamLog('created SSE session');
 
   if (isDev) {
     fs.mkdirSync(logsFolder, { recursive: true });
   }
 
   streamLog(
-    session,
     `Received message request: ${JSON.stringify({ body: request.body })}`,
-    'info',
   );
 
   try {
@@ -187,7 +183,7 @@ export async function postMessage(
           .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
 
         if (application.length === 0) {
-          streamLog(session, 'application not found', 'error');
+          streamLog('application not found', 'error');
           return reply.status(404).send({
             error: 'Application not found',
             status: 'error',
@@ -306,7 +302,6 @@ export async function postMessage(
     if (!agentResponse.ok) {
       const errorData = await agentResponse.json();
       streamLog(
-        session,
         `Agent returned error: ${
           agentResponse.status
         }, errorData: ${JSON.stringify(errorData)}`,
@@ -333,7 +328,7 @@ export async function postMessage(
     const textDecoder = new TextDecoder();
 
     while (!abortController.signal.aborted) {
-      streamLog(session, 'reading the stream', 'info');
+      streamLog('reading the stream');
 
       const { done, value } = await reader.read();
 
@@ -362,11 +357,11 @@ export async function postMessage(
             );
 
             if (parsedMessage.message.kind === 'KeepAlive') {
-              streamLog(session, 'keep alive message received', 'info');
+              streamLog('keep alive message received');
               continue;
             }
 
-            streamLog(session, `message sent to CLI: ${message}`, 'info');
+            streamLog(`message sent to CLI: ${message}`);
             storeDevLogs(parsedMessage, message);
             storePreviousRequest(parsedMessage.traceId, parsedMessage);
             session.push(message);
@@ -478,22 +473,22 @@ export async function postMessage(
             error instanceof Error &&
             error.message.includes('Unterminated string')
           ) {
-            streamLog(session, 'Incomplete message', 'info');
+            streamLog('Incomplete message');
             continue;
           }
 
-          streamLog(session, `Error handling SSE message: ${error}`, 'error');
+          streamLog(`Error handling SSE message: ${error}`, 'error');
         }
       }
     }
 
-    streamLog(session, 'stream finished', 'info');
+    streamLog('stream finished');
     session.push({ done: true, traceId: traceId }, 'done');
     session.removeAllListeners();
 
     reply.raw.end();
   } catch (error) {
-    streamLog(session, `Unhandled error: ${error}`, 'error');
+    streamLog(`Unhandled error: ${error}`, 'error');
     session.push(
       new StreamingError((error as Error).message ?? 'Unknown error'),
       'error',
@@ -728,13 +723,15 @@ function getExistingConversationBody({
   };
 }
 
-function streamLog(
-  session: Session,
-  log: string,
-  level: 'info' | 'error' = 'info',
-) {
-  app.log[level](log);
-  session.push({ log, level }, 'debug');
+function createStreamLogger(session: Session, isNeonEmployee: boolean) {
+  return function streamLog(log: string, level: 'info' | 'error' = 'info') {
+    app.log[level](log);
+
+    // only push if is neon employee
+    if (isNeonEmployee) {
+      session.push({ log, level }, 'debug');
+    }
+  };
 }
 
 async function getMessagesFromHistory(

@@ -1,12 +1,11 @@
-import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AppRouter } from './routes';
-import { authenticate } from './auth/auth';
-import { useAuth } from './auth/use-auth';
 import { Box, Text } from 'ink';
+import { useEffect } from 'react';
+import { authenticate, ensureIsNeonEmployee } from './auth/auth';
+import { useAuth } from './auth/use-auth';
 import { Banner } from './components/ui/Banner';
 import { DebugPanel } from './debug/debugger-panel';
-import { useDebugStore } from './hooks/use-debug';
+import { AppRouter } from './routes';
 import { useEnvironmentStore } from './store/environment-store';
 
 const queryClient = new QueryClient();
@@ -25,7 +24,6 @@ export const App = ({
   useKeepAlive();
 
   const setEnvironment = useEnvironmentStore((state) => state.setEnvironment);
-  const isDebugPanelVisible = useDebugStore((state) => state.isVisible);
 
   useEffect(() => {
     if (environment === 'staging') {
@@ -42,11 +40,7 @@ export const App = ({
           <Box flexGrow={1} flexDirection="column" gap={1}>
             <AppRouter />
           </Box>
-          <Box
-            display={isDebugPanelVisible ? 'flex' : 'none'}
-            flexShrink={0}
-            flexBasis="40%"
-          >
+          <Box flexShrink={0} flexBasis="40%">
             <DebugPanel />
           </Box>
         </Box>
@@ -62,8 +56,11 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isAuthenticated) {
       void authenticate();
+    } else {
+      // ensure the user is a neon employee
+      void ensureIsNeonEmployee();
     }
-  }, [data, isLoading]);
+  }, [isAuthenticated]);
 
   let content = null;
 

@@ -1,11 +1,15 @@
 import fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
-import { type ServerUser } from '@stackframe/stack';
+import type { ServerUser } from '@stackframe/stack';
 import { v4 as uuidv4 } from 'uuid';
 import { validateAuth } from './auth-strategy';
 
 declare module 'fastify' {
   interface FastifyRequest {
-    user: ServerUser & { githubAccessToken: string; githubUsername: string };
+    user: ServerUser & {
+      githubAccessToken: string;
+      githubUsername: string;
+      isNeonEmployee: boolean;
+    };
   }
   export interface FastifyInstance {
     authenticate: any;
