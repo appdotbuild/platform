@@ -158,7 +158,6 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
       {/* App history for existing apps */}
       {appId && <PromptsHistory appId={appId} />}
 
-      <Text>{JSON.stringify(streamingMessagesData, null, 2)}</Text>
       {/* Build stages - show when we have streaming data */}
       {streamingMessagesData && (
         <BuildStages
