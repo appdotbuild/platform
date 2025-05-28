@@ -13,6 +13,18 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'App.build Admin',
   description: 'App.build Admin',
+  icons: {
+    icon: [
+      {
+        url: '/app-icon.svg',
+        media: '(prefers-color-scheme: light)',
+      },
+      {
+        url: '/app-icon.svg',
+        media: '(prefers-color-scheme: dark)',
+      },
+    ],
+  },
 };
 
 const sections = [
