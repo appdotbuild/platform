@@ -5,6 +5,7 @@ import { useEnvironmentStore } from '../store/environment-store.js';
 import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
 import { convertPromptsToEvents } from '../utils/convert-prompts-to-events.js';
+import { logger } from '../utils/logger.js';
 
 // Load environment variables from .env file
 config();
@@ -29,7 +30,7 @@ export const getApp = async (appId: string) => {
     );
     return appStatus.data;
   } catch (error) {
-    console.error('Error checking app deployment status:', error);
+    logger.error('Error checking app deployment status:', error);
     throw error;
   }
 };
@@ -42,7 +43,7 @@ export const getAppHistory = async (appId: string) => {
 
     return convertPromptsToEvents(appHistory.data);
   } catch (error) {
-    console.error('Error fetching app history:', error);
+    logger.error('Error fetching app history:', error);
     throw error;
   }
 };
@@ -61,7 +62,7 @@ export const listApps = async ({ pageParam }: { pageParam: number }) => {
     };
     return apps;
   } catch (error) {
-    console.error('Error fetching applications:', error);
+    logger.error('Error fetching applications:', error);
     throw error;
   }
 };

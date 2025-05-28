@@ -53,13 +53,13 @@ export type AppPrompts = {
 export type App = {
   id: string;
   name: string;
+  traceId: string;
   createdAt: Date;
   updatedAt: Date;
   ownerId: string;
   flyAppId?: string | null;
   s3Checksum?: string | null;
   deployStatus?: string | null;
-  traceId?: string | null;
   typespecSchema?: string | null;
   receivedSuccess: boolean;
   recompileInProgress: boolean;

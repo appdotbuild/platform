@@ -150,8 +150,9 @@ export async function postMessage(
       ],
       settings: requestBody.settings || { 'max-iterations': 3 },
     };
-    let isIteration =
-      !!applicationId && traceId?.startsWith(PERMANENT_APPLICATION_ID);
+    const isPermanentApp = (traceIdArg: string | undefined) =>
+      traceIdArg?.startsWith(PERMANENT_APPLICATION_ID);
+    let isIteration = Boolean(!!applicationId && isPermanentApp(traceId));
 
     let appName = null;
     if (applicationId) {
@@ -213,6 +214,7 @@ export async function postMessage(
         // for temporary apps, we need to get the previous request from the memory
         const previousRequest = previousRequestMap.get(applicationId);
         if (!previousRequest) {
+          streamLog(session, 'previous request not found', 'error');
           return reply.status(404).send({
             error: 'Previous request not found',
             status: 'error',
@@ -245,6 +247,7 @@ export async function postMessage(
       `appdotbuild-template-${Date.now()}`,
     );
 
+    // TODO: isIteration alone doesn't mean we need to clone the repo, we need to check if there is a unified diff
     const volumePromise = isIteration
       ? cloneRepository({
           repo: `${githubUsername}/${appName}`,
@@ -301,7 +304,6 @@ export async function postMessage(
 
     let buffer = '';
     let canDeploy = false;
-    let isAppCreated = isIteration;
     const textDecoder = new TextDecoder();
 
     while (!abortController.signal.aborted) {
@@ -342,15 +344,6 @@ export async function postMessage(
             storeDevLogs(parsedMessage, message);
             previousRequestMap.set(applicationId, parsedMessage);
             session.push(message);
-
-            if (parsedMessage.status === 'idle') {
-              await saveAgentMessage(
-                parsedMessage,
-                applicationId,
-                isAppCreated,
-              );
-            }
-
             if (
               parsedMessage.message.unifiedDiff ===
               '# Note: This is a valid empty diff (means no changes from template)'
@@ -434,7 +427,6 @@ export async function postMessage(
 
                 appName = newAppName;
                 isIteration = true;
-                isAppCreated = true;
               }
 
               const [, { appURL }] = await Promise.all([
@@ -458,6 +450,16 @@ export async function postMessage(
             }
 
             if (parsedMessage.status === AgentStatus.IDLE) {
+              streamLog(
+                session,
+                `before saving agent message, isPermanentApp: ${isPermanentApp(
+                  traceId,
+                )}`,
+                'info',
+              );
+              if (isPermanentApp(traceId)) {
+                await saveAgentMessage(parsedMessage, applicationId);
+              }
               abortController.abort();
               break;
             }
@@ -813,32 +815,31 @@ async function getMessagesFromDB(
 async function saveAgentMessage(
   parsedMessage: AgentSseEvent,
   applicationId: string,
-  isAppCreated?: boolean,
 ) {
-  if (!isAppCreated) {
-    return;
-  }
-
   try {
     const messagesHistory = JSON.parse(parsedMessage.message.content);
 
-    const lastAssistantMessage = messagesHistory
-      .filter((msg) => msg.role === 'assistant')
-      .pop();
+    const assistantMessages = messagesHistory.filter(
+      (msg) => msg.role === 'assistant',
+    );
 
-    if (!lastAssistantMessage) {
+    if (assistantMessages.length === 0) {
       return;
     }
 
-    for (const contentBlock of lastAssistantMessage.content) {
-      if (contentBlock.type === 'text') {
-        await db.insert(appPrompts).values({
-          id: uuidv4(),
-          prompt: contentBlock.text,
-          appId: applicationId,
-          kind: 'agent',
+    for (const assistantMessage of assistantMessages) {
+      const appPromptsToStore = assistantMessage.content
+        .filter((block) => block.type === 'text')
+        .map((block) => {
+          return {
+            id: uuidv4(),
+            prompt: block.text,
+            appId: applicationId,
+            kind: 'agent',
+          };
         });
-      }
+
+      await db.insert(appPrompts).values(appPromptsToStore);
     }
   } catch (error) {
     app.log.error(`Error saving agent message: ${error}`);

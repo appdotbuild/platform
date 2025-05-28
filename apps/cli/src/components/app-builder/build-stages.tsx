@@ -16,8 +16,6 @@ interface BuildStageProps {
 }
 
 export function BuildStages({ messagesData, isStreaming }: BuildStageProps) {
-  if (!messagesData?.events?.length) return null;
-
   const { phaseGroups, currentPhase, currentMessage } = usePhaseGroup({
     events: messagesData.events || [],
   });
@@ -32,6 +30,8 @@ export function BuildStages({ messagesData, isStreaming }: BuildStageProps) {
       }, -1),
     [phaseGroups],
   );
+
+  if (!messagesData?.events?.length) return null;
 
   const hasInteractive =
     currentMessage?.message.kind === MessageKind.REFINEMENT_REQUEST;

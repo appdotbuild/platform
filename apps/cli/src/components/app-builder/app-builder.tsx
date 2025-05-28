@@ -1,5 +1,5 @@
 import { MessageKind } from '@appdotbuild/core';
-import { Box } from 'ink';
+import { Box, Text } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
 import {
   useFetchMessageLimit,
@@ -14,6 +14,7 @@ import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 interface AppBuilderProps {
   initialPrompt: string;
   appId?: string;
+  traceId?: string;
 }
 
 type AppBuilderState =
@@ -114,7 +115,7 @@ const createAppBuilderStateMachine = (
   };
 };
 
-export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
+export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
   const {
     createApplication,
     createApplicationData,
@@ -141,6 +142,7 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
 
     createApplication({
       message: text,
+      traceId,
       applicationId: appId || createApplicationData?.applicationId,
     });
   };
@@ -156,6 +158,7 @@ export function AppBuilder({ initialPrompt, appId }: AppBuilderProps) {
       {/* App history for existing apps */}
       {appId && <PromptsHistory appId={appId} />}
 
+      <Text>{JSON.stringify(streamingMessagesData, null, 2)}</Text>
       {/* Build stages - show when we have streaming data */}
       {streamingMessagesData && (
         <BuildStages
