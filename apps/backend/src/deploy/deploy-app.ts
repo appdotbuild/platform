@@ -42,7 +42,9 @@ async function dockerLoginIfNeeded() {
     return Promise.resolve();
   }
 
+  logger.info('Getting ECR credentials');
   return getECRCredentials().then(({ username, password, registryUrl }) => {
+    logger.info('Logging in to ECR');
     return dockerLogin({ username, password, registryUrl });
   });
 }
@@ -135,6 +137,17 @@ export async function deployApp({
     throw new Error('Dockerfile not found');
   }
 
+  const imageName = getImageName(appId);
+
+  logger.info('Building Docker image');
+
+  const buildImagePromise = exec(`docker build -t ${imageName} .`, {
+    cwd: appDirectory,
+    // @ts-ignore
+    stdio: 'inherit',
+  });
+  const createRepositoryPromise = createRepositoryIfNotExists(appId);
+
   const koyebAppName = `app-${appId}`;
   const envVars = {
     APP_DATABASE_URL: connectionString,
@@ -149,24 +162,19 @@ export async function deployApp({
     }
   }
 
-  const imageName = getImageName(appId);
-
-  logger.info('Building Docker image');
-
   await Promise.all([
     dockerLoginIfNeeded(),
-    exec(`docker build -t ${imageName} .`, {
-      cwd: appDirectory,
-      // @ts-ignore
-      stdio: 'inherit',
-    }),
-    createRepositoryIfNotExists(appId),
+    buildImagePromise,
+    createRepositoryPromise,
   ]);
 
   logger.info('Pushing Docker image to ECR');
 
   await exec(`docker push ${imageName}`, {
     cwd: appDirectory,
+  }).then(() => {
+    logger.info('Cleaning up Docker image');
+    return exec(`docker rmi ${imageName}`);
   });
 
   logger.info('Starting Koyeb deployment', { koyebAppName });
