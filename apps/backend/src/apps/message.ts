@@ -61,21 +61,36 @@ type RequestBody = {
   traceId?: TraceId;
 };
 
-const previousRequestMap = new Map<ApplicationId, AgentSseEvent>();
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
 
-const TEMPORARY_APPLICATION_ID = 'temp';
-const PERMANENT_APPLICATION_ID = 'app';
+const previousRequestMap = new Map<ApplicationId, AgentSseEvent | null>();
+const isTemporaryApp = (applicationId: string) => {
+  return Boolean(previousRequestMap.get(applicationId));
+};
+const isPermanentApp = (applicationId: string) => {
+  return !isTemporaryApp(applicationId);
+};
+const cleanupTemporaryApp = (applicationId: string) => {
+  // we don't delete, so we can keep track of the app being temporary
+  previousRequestMap.set(applicationId, null);
+};
+const addPreviousRequestToMap = (
+  applicationId: string,
+  event: AgentSseEvent,
+) => {
+  const previousEvent = previousRequestMap.get(applicationId);
+  // this means that this app has been removed from the map, so we don't need to add it again
+  if (previousEvent === null) {
+    return;
+  }
 
-const generateTemporaryTraceId = (
+  previousRequestMap.set(applicationId, event);
+};
+
+const generateTraceId = (
   request: FastifyRequest,
   applicationId: string,
-): TraceId => `${TEMPORARY_APPLICATION_ID}-${applicationId}.req-${request.id}`;
-const updateToPermanentTraceId = (traceId: TraceId) =>
-  traceId.replace(
-    TEMPORARY_APPLICATION_ID,
-    PERMANENT_APPLICATION_ID,
-  ) as TraceId;
+): TraceId => `app-${applicationId}.req-${request.id}`;
 
 export async function postMessage(
   request: FastifyRequest,
@@ -150,9 +165,7 @@ export async function postMessage(
       ],
       settings: requestBody.settings || { 'max-iterations': 3 },
     };
-    const isPermanentApp = (traceIdArg: string | undefined) =>
-      traceIdArg?.startsWith(PERMANENT_APPLICATION_ID);
-    let isIteration = Boolean(!!applicationId && isPermanentApp(traceId));
+    let isIteration = Boolean(!!applicationId && isPermanentApp(applicationId));
 
     let appName = null;
     if (applicationId) {
@@ -187,7 +200,6 @@ export async function postMessage(
 
         const messagesFromHistory = await getMessagesFromHistory(
           applicationId,
-          traceId as TraceId,
           userId,
         );
 
@@ -234,7 +246,7 @@ export async function postMessage(
       }
     } else {
       applicationId = uuidv4();
-      traceId = generateTemporaryTraceId(request, applicationId);
+      traceId = generateTraceId(request, applicationId);
       body = {
         ...body,
         applicationId,
@@ -342,7 +354,7 @@ export async function postMessage(
 
             streamLog(session, `message sent to CLI: ${message}`, 'info');
             storeDevLogs(parsedMessage, message);
-            previousRequestMap.set(applicationId, parsedMessage);
+            addPreviousRequestToMap(applicationId, parsedMessage);
             session.push(message);
             if (
               parsedMessage.message.unifiedDiff ===
@@ -411,15 +423,13 @@ export async function postMessage(
                 appName =
                   parsedMessage.message.app_name ||
                   `appdotbuild-${uuidv4().slice(0, 4)}`;
-
-                traceId = updateToPermanentTraceId(traceId as TraceId);
                 const { newAppName } = await appCreation({
                   applicationId,
                   appName,
                   githubAccessToken,
                   githubUsername,
                   ownerId: request.user.id,
-                  traceId,
+                  traceId: traceId as TraceId,
                   session,
                   requestBody,
                   files,
@@ -453,11 +463,11 @@ export async function postMessage(
               streamLog(
                 session,
                 `before saving agent message, isPermanentApp: ${isPermanentApp(
-                  traceId,
+                  applicationId,
                 )}`,
                 'info',
               );
-              if (isPermanentApp(traceId)) {
+              if (isPermanentApp(applicationId)) {
                 await saveAgentMessage(parsedMessage, applicationId);
               }
               abortController.abort();
@@ -568,6 +578,8 @@ async function appCreation({
     appName: newAppName,
     githubUsername,
   });
+  cleanupTemporaryApp(applicationId);
+  streamLog(session, `app created: ${applicationId}`, 'info');
 
   // save first message after app creation
   try {
@@ -714,6 +726,7 @@ function getExistingConversationBody({
         content: message as Stringified<MessageContentBlock[]>,
       },
     ],
+    agentState: previousEvent.message.agentState,
     traceId: existingTraceId,
     applicationId,
     settings: settings || { 'max-iterations': 3 },
@@ -731,14 +744,11 @@ function streamLog(
 
 async function getMessagesFromHistory(
   applicationId: string,
-  traceId: TraceId,
   userId: string,
 ): Promise<ContentMessage[]> {
-  const isTemporaryTraceId = traceId.startsWith(TEMPORARY_APPLICATION_ID);
-
-  if (isTemporaryTraceId) {
+  if (isTemporaryApp(applicationId)) {
     // for temp apps, first check in-memory
-    const memoryMessages = getMessagesFromMemory(traceId);
+    const memoryMessages = getMessagesFromMemory(applicationId);
     if (memoryMessages.length > 0) {
       return memoryMessages;
     }
