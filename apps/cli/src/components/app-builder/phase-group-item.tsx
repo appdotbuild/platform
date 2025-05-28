@@ -66,36 +66,12 @@ const extractPhaseMessages = (
   isLastInteractiveGroup: boolean,
 ): TaskDetail[] => {
   return events.flatMap((event) => {
-    let messagesToProcess = event.message.content;
-
-    // filter only messages for the current streaming phase and avoid showing historical context
-    if (event.message.kind !== MessageKind.REVIEW_RESULT && isCurrentPhase) {
-      if (
-        event.message.role === 'assistant' &&
-        event.message.content.length > 0
-      ) {
-        let lastUserMessageIndex = -1;
-        for (let i = event.message.content.length - 1; i >= 0; i--) {
-          const message = event.message.content[i];
-          if (message && message.role === 'user') {
-            lastUserMessageIndex = i;
-            break;
-          }
-        }
-
-        if (lastUserMessageIndex !== -1) {
-          // user message + subsequent messages
-          messagesToProcess = event.message.content.slice(lastUserMessageIndex);
-        }
-      }
-    }
-
-    return messagesToProcess
+    return event.message.content
       .map((item, index) =>
         createTaskDetail(
           item,
           index,
-          messagesToProcess.length,
+          event.message.content.length,
           isCurrentPhase,
           isLastInteractiveGroup,
         ),
