@@ -8,6 +8,7 @@ import {
   index,
   jsonb,
 } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
 export const apps = pgTable(
   'apps',
@@ -33,6 +34,9 @@ export const apps = pgTable(
       .default(false),
     clientSource: text('clientSource').notNull().default('slack'), // "slack" or "cli"
     repositoryUrl: text(),
+    koyebAppId: text(),
+    koyebServiceId: text(),
+    koyebDomainId: text(),
     githubUsername: text(),
     neonProjectId: text(),
     appName: text(),
@@ -55,6 +59,26 @@ export const appPrompts = pgTable(
   (table) => [
     index('idx_app_prompts_appid_createdat').on(table.appId, table.createdAt),
   ],
+);
+
+export const deploymentsRelations = relations(apps, ({ many }) => ({
+  deployments: many(deployments),
+}));
+
+export const deployments = pgTable(
+  'deployments',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    appId: uuid('appId').references(() => apps.id),
+    koyebOrgId: text(),
+    koyebOrgEcrSecretId: text(),
+    koyebOrgName: text(),
+    ownerId: text('userId').notNull(),
+    createdAt: timestamp('createdAt', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('idx_ownerid').on(table.ownerId)],
 );
 
 export const customMessageLimits = pgTable('custom_message_limits', {

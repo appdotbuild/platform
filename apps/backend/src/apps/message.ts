@@ -489,16 +489,15 @@ export async function postMessage(
                 isPermanentApp = true;
               }
 
-              const [, { appURL }] = await Promise.all([
-                Promise.resolve(),
-                writeMemfsToTempDir(memfsVolume, virtualDir).then(
-                  (tempDirPath) =>
-                    deployApp({
-                      appId: applicationId!,
-                      appDirectory: tempDirPath,
-                    }),
-                ),
-              ]);
+              const { appURL } = await writeMemfsToTempDir(
+                memfsVolume,
+                virtualDir,
+              ).then((tempDirPath) =>
+                deployApp({
+                  appId: applicationId!,
+                  appDirectory: tempDirPath,
+                }),
+              );
 
               session.push(
                 new PlatformMessage(

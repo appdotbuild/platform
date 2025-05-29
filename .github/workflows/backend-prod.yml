@@ -42,4 +42,5 @@ jobs:
             --env GITHUB_APP_PRIVATE_KEY=@GITHUB_APP_PRIVATE_KEY \
             --env GITHUB_APP_BOT_EMAIL=@GITHUB_APP_BOT_EMAIL \
             --env DATABASE_URL=@DATABASE_URL \
-            --env KOYEB_CLI_TOKEN=@KOYEB_CLI_TOKEN
+            --env KOYEB_CLI_PAT_TOKEN=@KOYEB_CLI_PAT_TOKEN \
+            --env NODE_ENV=production
