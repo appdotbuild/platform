@@ -1,5 +1,5 @@
 import { MessageKind } from '@appdotbuild/core';
-import { Box, Text } from 'ink';
+import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
 import {
   useFetchMessageLimit,
@@ -137,6 +137,23 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
     Boolean(appId),
   );
 
+  const getBuildStagesTitle = (state: AppBuilderState): string => {
+    switch (state) {
+      case 'building':
+        return 'Build in Progress';
+      case 'iteration_ready':
+        return 'Build Complete';
+      case 'refinement_requested':
+        return 'Awaiting Feedback';
+      case 'completed':
+        return 'Application Ready';
+      case 'error':
+        return 'Build Failed';
+      default:
+        return 'Build in Progress';
+    }
+  };
+
   const handleSubmit = (text: string) => {
     if (isStreamingMessages) return;
 
@@ -163,6 +180,7 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
         <BuildStages
           messagesData={streamingMessagesData}
           isStreaming={isStreamingMessages}
+          title={getBuildStagesTitle(stateMachine.currentState)}
         />
       )}
 

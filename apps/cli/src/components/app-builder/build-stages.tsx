@@ -13,9 +13,14 @@ interface MessagesData {
 interface BuildStageProps {
   messagesData: MessagesData;
   isStreaming: boolean;
+  title?: string;
 }
 
-export function BuildStages({ messagesData, isStreaming }: BuildStageProps) {
+export function BuildStages({
+  messagesData,
+  isStreaming,
+  title = 'Build in Progress',
+}: BuildStageProps) {
   const { phaseGroups, currentPhase, currentMessage } = usePhaseGroup({
     events: messagesData.events || [],
   });
@@ -37,7 +42,7 @@ export function BuildStages({ messagesData, isStreaming }: BuildStageProps) {
     currentMessage?.message.kind === MessageKind.REFINEMENT_REQUEST;
 
   return (
-    <Panel title="Build in Progress" variant="info">
+    <Panel title={title} variant="info">
       <Box flexDirection="column" gap={1}>
         {phaseGroups?.map((group, groupIdx) => (
           <PhaseGroupItem

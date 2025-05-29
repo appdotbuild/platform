@@ -165,13 +165,12 @@ export async function postMessage(
       ],
       settings: requestBody.settings || { 'max-iterations': 3 },
     };
-    let isIteration = Boolean(!!applicationId && isPermanentApp(applicationId));
 
     let appName = null;
     if (applicationId) {
       app.log.info(`existing applicationId ${applicationId}`);
 
-      if (isIteration) {
+      if (isPermanentApp(applicationId)) {
         const application = await db
           .select()
           .from(apps)
@@ -207,6 +206,7 @@ export async function postMessage(
           ...body,
           applicationId,
           traceId,
+          agentState: application[0]!.agentState,
           allMessages: [
             ...messagesFromHistory,
             {
@@ -259,7 +259,7 @@ export async function postMessage(
       `appdotbuild-template-${Date.now()}`,
     );
 
-    const volumePromise = isIteration
+    const volumePromise = isPermanentApp(applicationId)
       ? cloneRepository({
           repo: `${githubUsername}/${appName}`,
           githubAccessToken,
@@ -269,11 +269,17 @@ export async function postMessage(
 
     // We are iterating over an existing app, so we wait for the promise here to read the files that where cloned.
     // and we add them to the body for the agent to use.
-    if (isIteration) {
+    if (isPermanentApp(applicationId)) {
       const { volume, virtualDir } = await volumePromise;
       body.allFiles = readDirectoryRecursive(virtualDir, virtualDir, volume);
     }
 
+    if (isDev) {
+      fs.writeFileSync(
+        `${logsFolder}/${applicationId}-body.json`,
+        JSON.stringify(JSON.stringify(body), null, 2),
+      );
+    }
     const agentResponse = await fetch(
       `${getAgentHost(requestBody.environment)}/message`,
       {
@@ -288,6 +294,12 @@ export async function postMessage(
         body: JSON.stringify(body),
       },
     );
+    if (isDev) {
+      fs.writeFileSync(
+        `${logsFolder}/${applicationId}-agent-response.json`,
+        JSON.stringify(JSON.stringify(agentResponse), null, 2),
+      );
+    }
 
     if (!agentResponse.ok) {
       const errorData = await agentResponse.json();
@@ -410,11 +422,8 @@ export async function postMessage(
                 );
               }
 
-              if (isIteration) {
-                fs.writeFileSync(
-                  `${logsFolder}/${applicationId}-agentState.json`,
-                  JSON.stringify(parsedMessage.message.agentState, null, 2),
-                );
+              if (isPermanentApp(applicationId)) {
+                streamLog(session, `app iteration: ${applicationId}`, 'info');
                 await appIteration({
                   appName,
                   githubUsername,
@@ -428,9 +437,14 @@ export async function postMessage(
                     parsedMessage.message.commit_message || 'feat: update',
                 });
               } else {
+                streamLog(
+                  session,
+                  `creating new app: ${applicationId}`,
+                  'info',
+                );
                 appName =
                   parsedMessage.message.app_name ||
-                  `appdotbuild-${uuidv4().slice(0, 4)}`;
+                  `app.build-${uuidv4().slice(0, 4)}`;
                 const { newAppName } = await appCreation({
                   applicationId,
                   appName,
@@ -443,9 +457,7 @@ export async function postMessage(
                   requestBody,
                   files,
                 });
-
                 appName = newAppName;
-                isIteration = true;
               }
 
               const [, { appURL }] = await Promise.all([
@@ -585,6 +597,7 @@ async function appCreation({
     clientSource: requestBody.clientSource,
     ownerId,
     traceId,
+    agentState,
     repositoryUrl,
     appName: newAppName,
     githubUsername,
