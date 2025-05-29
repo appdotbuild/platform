@@ -155,6 +155,13 @@
       "when": 1747665348822,
       "tag": "0021_slim_dark_beast",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1748464506735,
+      "tag": "0022_quiet_thing",
+      "breakpoints": true
     }
   ]
 }

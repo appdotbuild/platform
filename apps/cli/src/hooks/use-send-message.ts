@@ -62,11 +62,12 @@ export const useSendMessage = () => {
     mutationFn: async ({
       message,
       applicationId: passedAppId,
+      traceId: passedTraceId,
     }: SendMessageParams) => {
       return sendMessage({
         message,
         applicationId: passedAppId || metadata?.applicationId,
-        traceId: metadata?.traceId,
+        traceId: passedTraceId || metadata?.traceId,
         onMessage: (newEvent) => {
           if (!newEvent.traceId) {
             throw new Error('Trace ID not found');

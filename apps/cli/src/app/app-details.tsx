@@ -68,6 +68,7 @@ export function AppDetails() {
       <AppBuilder
         initialPrompt="How would you like to modify your application?"
         appId={app?.id}
+        traceId={app?.traceId}
       />
     </Box>
   );

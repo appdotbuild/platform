@@ -4,7 +4,7 @@ import { AgentStatus } from '@appdotbuild/core';
 import { useEffect } from 'react';
 
 export const queryKeys = {
-  applicationMessages: (id: string) => ['apps', id],
+  applicationMessages: (id: string) => ['apps', id, 'messages'],
 };
 
 export const useBuildApp = (existingApplicationId?: string) => {

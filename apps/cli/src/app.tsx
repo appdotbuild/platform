@@ -6,7 +6,6 @@ import { useAuth } from './auth/use-auth';
 import { Banner } from './components/ui/Banner';
 import { DebugPanel } from './debug/debugger-panel';
 import { AppRouter } from './routes';
-import { useEnvironmentStore } from './store/environment-store';
 
 const queryClient = new QueryClient();
 
@@ -16,22 +15,8 @@ const useKeepAlive = () =>
     setInterval(() => {}, 100);
   }, []);
 
-export const App = ({
-  environment = 'production',
-}: {
-  environment?: string;
-}) => {
+export const App = () => {
   useKeepAlive();
-
-  const setEnvironment = useEnvironmentStore((state) => state.setEnvironment);
-
-  useEffect(() => {
-    if (environment === 'staging') {
-      setEnvironment('staging');
-    } else {
-      setEnvironment('production');
-    }
-  }, [environment, setEnvironment]);
 
   return (
     <QueryClientProvider client={queryClient}>
