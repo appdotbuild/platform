@@ -4,7 +4,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "app.build": "tmp/dist/node-check.js"
+    "app.build": "dist/tools/cli-entrypoint.js"
   },
   "files": [
     "dist",
