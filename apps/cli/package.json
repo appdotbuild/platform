@@ -4,7 +4,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "app.build": "dist/cli.js"
+    "app.build": "tmp/dist/node-check.js"
   },
   "files": [
     "dist",
@@ -67,7 +67,7 @@
     "xo": "^0.53.1"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "publishConfig": {
     "access": "public"

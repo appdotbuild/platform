@@ -2,7 +2,7 @@ import { prepareRelease } from './prepare-release';
 
 async function build() {
   await Bun.build({
-    entrypoints: ['./src/cli.tsx'],
+    entrypoints: ['./src/cli.tsx', './src/node-check.js'],
     outdir: './tmp/dist',
     target: 'node',
     define: {
