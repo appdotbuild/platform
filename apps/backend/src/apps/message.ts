@@ -518,8 +518,6 @@ export async function postMessage(
               if (isPermanentApp) {
                 await saveAgentMessage(parsedMessage, applicationId);
               }
-              abortController.abort();
-              break;
             }
           }
         } catch (error) {
@@ -808,7 +806,7 @@ async function getMessagesFromHistory(
   applicationId: string,
   userId: string,
 ): Promise<ContentMessage[]> {
-  if (!(await appExistsInDb(applicationId))) {
+  if (previousRequestMap.has(applicationId)) {
     // for temp apps, first check in-memory
     const memoryMessages = getMessagesFromMemory(applicationId);
     if (memoryMessages.length > 0) {
