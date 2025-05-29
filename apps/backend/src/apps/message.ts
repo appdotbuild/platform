@@ -215,14 +215,13 @@ export async function postMessage(
         };
 
         streamLog(
-          session,
           `Loaded ${messagesFromHistory.length} messages from history for application ${applicationId}`,
         );
       } else {
         // for temporary apps, we need to get the previous request from the memory
         const previousRequest = previousRequestMap.get(applicationId);
         if (!previousRequest) {
-          streamLog(session, 'previous request not found', 'error');
+          streamLog('previous request not found', 'error');
           return reply.status(404).send({
             error: 'Previous request not found',
             status: 'error',
@@ -418,7 +417,7 @@ export async function postMessage(
               }
 
               if (isPermanentApp(applicationId)) {
-                streamLog(session, `app iteration: ${applicationId}`, 'info');
+                streamLog(`app iteration: ${applicationId}`, 'info');
                 await appIteration({
                   appName,
                   githubUsername,
@@ -432,11 +431,7 @@ export async function postMessage(
                     parsedMessage.message.commit_message || 'feat: update',
                 });
               } else {
-                streamLog(
-                  session,
-                  `creating new app: ${applicationId}`,
-                  'info',
-                );
+                streamLog(`creating new app: ${applicationId}`, 'info');
                 appName =
                   parsedMessage.message.app_name ||
                   `app.build-${uuidv4().slice(0, 4)}`;
@@ -451,6 +446,7 @@ export async function postMessage(
                   session,
                   requestBody,
                   files,
+                  streamLog,
                 });
                 appName = newAppName;
               }
@@ -477,7 +473,6 @@ export async function postMessage(
 
             if (parsedMessage.status === AgentStatus.IDLE) {
               streamLog(
-                session,
                 `before saving agent message, isPermanentApp: ${isPermanentApp(
                   applicationId,
                 )}`,
@@ -555,6 +550,7 @@ async function appCreation({
   session,
   requestBody,
   files,
+  streamLog,
 }: {
   applicationId: string;
   appName: string;
@@ -566,6 +562,7 @@ async function appCreation({
   session: Session;
   requestBody: RequestBody;
   files: ReturnType<typeof readDirectoryRecursive>;
+  streamLog: (log: string, level?: 'info' | 'error') => void;
 }) {
   if (isDev) {
     fs.writeFileSync(
@@ -598,7 +595,7 @@ async function appCreation({
     githubUsername,
   });
   cleanupTemporaryApp(applicationId);
-  streamLog(session, `app created: ${applicationId}`, 'info');
+  streamLog(`app created: ${applicationId}`, 'info');
 
   // save first message after app creation
   try {
