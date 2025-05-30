@@ -4,6 +4,7 @@ import {
   User,
   ExternalLink,
   Github,
+  Globe,
 } from '@appdotbuild/design/base/icons';
 import { ShowHide } from '@appdotbuild/design/components/show-hide/show-hide';
 import { Button } from '@appdotbuild/design/shadcn/button';
@@ -116,6 +117,25 @@ export default async function AppPage({ params }: { params: { id: string } }) {
                     <div className="font-medium">
                       {app.repositoryUrl || 'Not available'}
                     </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <div className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Deployment URL
+                  </div>
+                  <div className="font-medium">
+                    {app.appUrl ? (
+                      <a
+                        href={app.appUrl}
+                        className="text-primary hover:underline"
+                      >
+                        {app.appUrl}
+                      </a>
+                    ) : (
+                      'Not available'
+                    )}
                   </div>
                 </div>
               </div>
