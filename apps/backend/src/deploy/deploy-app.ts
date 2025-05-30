@@ -48,8 +48,29 @@ function dockerLogin({
   });
 }
 
+async function needsLogin() {
+  const dockerfilePath = path.join(os.homedir(), '.docker', 'config.json');
+
+  if (!fs.existsSync(dockerfilePath)) {
+    logger.info('Docker config file does not exist.');
+    return true;
+  }
+
+  const stats = fs.statSync(dockerfilePath);
+  const mtime = new Date(stats.mtime);
+
+  const now = new Date();
+  const twelveHoursAgo = new Date(now.getTime() - 11 * 60 * 60 * 1000);
+
+  const modifiedRecently = mtime > twelveHoursAgo;
+
+  return !modifiedRecently;
+}
+
 async function dockerLoginIfNeeded() {
-  if (fs.existsSync(path.join(os.homedir(), '.docker/config.json'))) {
+  const shouldLogin = await needsLogin();
+
+  if (!shouldLogin) {
     logger.info('Docker config already exists, no login needed');
     return Promise.resolve();
   }
