@@ -4,7 +4,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "app.build": "dist/tools/cli-entrypoint.js"
+    "app.build": "dist/entrypoint.js"
   },
   "files": [
     "dist",

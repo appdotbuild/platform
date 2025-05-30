@@ -1,14 +1,10 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'child_process';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 
 const requiredVersion = 22;
+// @ts-ignore
 const currentVersion = parseInt(process.version.substring(1).split('.')[0], 10);
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 if (currentVersion < requiredVersion) {
   console.error(
@@ -25,7 +21,7 @@ if (currentVersion < requiredVersion) {
 }
 
 // If version check passes, spawn the actual CLI
-const execPath = join(__dirname, '../cli.js');
+const execPath = require.resolve('./cli.js');
 const result = spawnSync(
   process.execPath,
   [execPath, ...process.argv.slice(2)],
