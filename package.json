@@ -14,7 +14,6 @@
     "cli": "bun --env-file=./apps/cli/.env ./apps/cli/dist/cli.js",
     "cli:release": "bun --filter './apps/cli' release",
     "cli:watch": "bun --env-file=./apps/cli/.env --watch ./apps/cli/src/cli.tsx",
-    "deploy:backend": "fly deploy --config=./apps/backend/fly.toml",
     "dev": "NODE_ENV=development NO_COLOR=1 bun --filter='./packages/mocked-agent' --filter='./apps/**' dev",
     "docker:build": "sh ./scripts/docker-build.sh",
     "lint": "bun --filter '*' lint",
