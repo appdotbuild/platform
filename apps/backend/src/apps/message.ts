@@ -421,17 +421,26 @@ export async function postMessage(
             canDeploy = !!parsedMessage.message.unifiedDiff;
 
             if (canDeploy) {
+              streamLog(
+                session,
+                `[appId: ${applicationId}] starting to deploy app`,
+                'info',
+              );
               const { volume, virtualDir, memfsVolume } = await volumePromise;
               const unifiedDiffPath = path.join(
                 virtualDir,
                 `unified_diff-${Date.now()}.patch`,
               );
 
+              streamLog(
+                session,
+                `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${parsedMessage.message.unifiedDiff}`,
+                'info',
+              );
               volume.writeFileSync(
                 unifiedDiffPath,
                 `${parsedMessage.message.unifiedDiff}\n\n`,
               );
-
               const respositoryPath = await applyDiff(
                 unifiedDiffPath,
                 virtualDir,
@@ -509,7 +518,10 @@ export async function postMessage(
               );
             }
 
-            if (parsedMessage.status === AgentStatus.IDLE) {
+            const canBreakStream =
+              parsedMessage.status === AgentStatus.IDLE &&
+              parsedMessage.kind !== MessageKind.REFINEMENT_REQUEST;
+            if (canBreakStream) {
               streamLog(
                 session,
                 `before saving agent message, isPermanentApp: ${isPermanentApp}`,
@@ -518,6 +530,8 @@ export async function postMessage(
               if (isPermanentApp) {
                 await saveAgentMessage(parsedMessage, applicationId);
               }
+              abortController.abort();
+              break;
             }
           }
         } catch (error) {
