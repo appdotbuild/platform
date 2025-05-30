@@ -16,6 +16,8 @@ interface PhaseGroupItemProps {
 const getPhaseTitle = (phase: MessageKind) => {
   switch (phase) {
     case MessageKind.STAGE_RESULT:
+      return 'Processing your application...';
+    case MessageKind.DEPLOYMENT_COMPLETE:
       return 'Your application 1st draft is ready';
     case MessageKind.RUNTIME_ERROR:
       return 'There was an error generating your application';

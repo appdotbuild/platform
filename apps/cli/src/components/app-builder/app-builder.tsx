@@ -56,9 +56,11 @@ const createAppBuilderStateMachine = (
     switch (lastEvent.message.kind) {
       case MessageKind.REFINEMENT_REQUEST:
         return 'refinement_requested';
-      case MessageKind.PLATFORM_MESSAGE:
+      case MessageKind.DEPLOYMENT_COMPLETE:
       case MessageKind.FINAL_RESULT:
         return hasAppId ? 'iteration_ready' : 'completed';
+      case MessageKind.PLATFORM_MESSAGE:
+        return 'building';
       case MessageKind.RUNTIME_ERROR:
         return 'error';
       default:

@@ -15,6 +15,7 @@ export enum MessageKind {
   // these are Platform only messages, don't exist in the agent
   PLATFORM_MESSAGE = 'PlatformMessage',
   USER_MESSAGE = 'UserMessage',
+  DEPLOYMENT_COMPLETE = 'DeploymentComplete',
 }
 
 type RequestId = string;
@@ -143,6 +144,25 @@ export class PlatformMessage extends AgentSseEvent {
       message: {
         role: 'assistant',
         kind: MessageKind.PLATFORM_MESSAGE,
+        content: JSON.stringify([
+          {
+            role: 'assistant',
+            content: [{ type: 'text', text: message }],
+          },
+        ]),
+      },
+    });
+  }
+}
+
+export class DeploymentCompleteMessage extends AgentSseEvent {
+  constructor(status: AgentStatus, traceId: TraceId, message: string) {
+    super({
+      status,
+      traceId,
+      message: {
+        role: 'assistant',
+        kind: MessageKind.DEPLOYMENT_COMPLETE,
         content: JSON.stringify([
           {
             role: 'assistant',

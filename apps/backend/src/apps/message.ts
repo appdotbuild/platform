@@ -10,6 +10,7 @@ import {
   MessageKind,
   type MessageLimitHeaders,
   PlatformMessage,
+  DeploymentCompleteMessage,
   StreamingError,
   type TraceId,
   type UserContentMessage,
@@ -501,7 +502,7 @@ export async function postMessage(
               ]);
 
               session.push(
-                new PlatformMessage(
+                new DeploymentCompleteMessage(
                   AgentStatus.IDLE,
                   traceId as TraceId,
                   `Your application has been deployed to ${appURL}`,
