@@ -1,4 +1,4 @@
-import { MessageKind } from '@appdotbuild/core';
+import { MessageKind, PlatformMessageType } from '@appdotbuild/core';
 import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
 import {
@@ -56,10 +56,13 @@ const createAppBuilderStateMachine = (
     switch (lastEvent.message.kind) {
       case MessageKind.REFINEMENT_REQUEST:
         return 'refinement_requested';
-      case MessageKind.DEPLOYMENT_COMPLETE:
-      case MessageKind.FINAL_RESULT:
-        return hasAppId ? 'iteration_ready' : 'completed';
       case MessageKind.PLATFORM_MESSAGE:
+        if (
+          lastEvent.message.metadata?.type ===
+          PlatformMessageType.DEPLOYMENT_COMPLETE
+        ) {
+          return hasAppId ? 'iteration_ready' : 'completed';
+        }
         return 'building';
       case MessageKind.RUNTIME_ERROR:
         return 'error';

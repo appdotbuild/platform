@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { ParsedSseEvent } from './use-send-message.js';
-import type { MessageKind } from '@appdotbuild/core';
+import { MessageKind } from '@appdotbuild/core';
 
 type PhaseGroup = {
   phase: MessageKind;
@@ -23,10 +23,14 @@ export function usePhaseGroup(messagesData: MessagesData) {
     const currentPhase = currentMessage?.message.kind;
     const phaseGroups = messagesData.events.reduce(
       (groups: PhaseGroup[], event, index) => {
-        if (
+        const shouldCreateNewGroup =
           index === 0 ||
-          messagesData.events[index - 1]?.message.kind !== event.message.kind
-        ) {
+          messagesData.events[index - 1]?.message.kind !== event.message.kind ||
+          (event.message.kind === MessageKind.PLATFORM_MESSAGE &&
+            messagesData.events[index - 1]?.message.metadata?.type !==
+              event.message.metadata?.type);
+
+        if (shouldCreateNewGroup) {
           groups.push({
             phase: event.message.kind,
             events: [event],

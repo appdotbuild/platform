@@ -1,3 +1,14 @@
+export enum PlatformMessageType {
+  DEPLOYMENT_COMPLETE = 'deployment_complete',
+  DEPLOYMENT_FAILED = 'deployment_failed',
+  REPO_CREATED = 'repo_created',
+  COMMIT_CREATED = 'commit_created',
+}
+
+export type PlatformMessageMetadata = {
+  type?: PlatformMessageType;
+};
+
 export type UserMessageLimit = {
   isUserLimitReached: boolean;
   dailyMessageLimit: number;

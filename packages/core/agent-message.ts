@@ -1,3 +1,5 @@
+import type { PlatformMessageMetadata } from './types/api.js';
+
 export enum AgentStatus {
   RUNNING = 'running',
   IDLE = 'idle',
@@ -9,13 +11,11 @@ export enum MessageKind {
   STAGE_RESULT = 'StageResult',
   RUNTIME_ERROR = 'RuntimeError',
   REFINEMENT_REQUEST = 'RefinementRequest',
-  FINAL_RESULT = 'FinalResult',
   REVIEW_RESULT = 'ReviewResult',
 
   // these are Platform only messages, don't exist in the agent
   PLATFORM_MESSAGE = 'PlatformMessage',
   USER_MESSAGE = 'UserMessage',
-  DEPLOYMENT_COMPLETE = 'DeploymentComplete',
 }
 
 type RequestId = string;
@@ -83,6 +83,7 @@ export class AgentSseEvent {
     unifiedDiff?: string;
     appName?: string;
     commitMessage?: string;
+    metadata?: PlatformMessageMetadata;
   };
 
   constructor(params: {
@@ -96,6 +97,7 @@ export class AgentSseEvent {
       unifiedDiff?: string;
       appName?: string;
       commitMessage?: string;
+      metadata?: PlatformMessageMetadata;
     };
   }) {
     this.status = params.status;
@@ -137,7 +139,12 @@ export class ErrorResponse {
 }
 
 export class PlatformMessage extends AgentSseEvent {
-  constructor(status: AgentStatus, traceId: TraceId, message: string) {
+  constructor(
+    status: AgentStatus,
+    traceId: TraceId,
+    message: string,
+    metadata?: PlatformMessageMetadata,
+  ) {
     super({
       status,
       traceId,
@@ -150,25 +157,7 @@ export class PlatformMessage extends AgentSseEvent {
             content: [{ type: 'text', text: message }],
           },
         ]),
-      },
-    });
-  }
-}
-
-export class DeploymentCompleteMessage extends AgentSseEvent {
-  constructor(status: AgentStatus, traceId: TraceId, message: string) {
-    super({
-      status,
-      traceId,
-      message: {
-        role: 'assistant',
-        kind: MessageKind.DEPLOYMENT_COMPLETE,
-        content: JSON.stringify([
-          {
-            role: 'assistant',
-            content: [{ type: 'text', text: message }],
-          },
-        ]),
+        metadata,
       },
     });
   }

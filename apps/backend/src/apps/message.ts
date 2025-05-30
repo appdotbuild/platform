@@ -10,7 +10,7 @@ import {
   MessageKind,
   type MessageLimitHeaders,
   PlatformMessage,
-  DeploymentCompleteMessage,
+  PlatformMessageType,
   StreamingError,
   type TraceId,
   type UserContentMessage,
@@ -502,10 +502,11 @@ export async function postMessage(
               ]);
 
               session.push(
-                new DeploymentCompleteMessage(
+                new PlatformMessage(
                   AgentStatus.IDLE,
                   traceId as TraceId,
                   `Your application has been deployed to ${appURL}`,
+                  { type: PlatformMessageType.DEPLOYMENT_COMPLETE },
                 ),
               );
             }
@@ -654,6 +655,7 @@ async function appCreation({
       AgentStatus.IDLE,
       traceId as TraceId,
       `Your application has been uploaded to this github repository: ${repositoryUrl}`,
+      { type: PlatformMessageType.REPO_CREATED },
     ),
   );
 
@@ -703,6 +705,7 @@ async function appIteration({
       AgentStatus.IDLE,
       traceId as TraceId,
       `committed in existing app - commit url: ${commitUrl}`,
+      { type: PlatformMessageType.COMMIT_CREATED },
     ),
   );
 }

@@ -1,4 +1,8 @@
-import { type MessageContentBlock, MessageKind } from '@appdotbuild/core';
+import {
+  type MessageContentBlock,
+  MessageKind,
+  PlatformMessageType,
+} from '@appdotbuild/core';
 import { useMemo } from 'react';
 import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 import { type TaskDetail, TaskStatus } from '../shared/display/task-status.js';
@@ -13,24 +17,29 @@ interface PhaseGroupItemProps {
   phaseGroupsLength: number;
 }
 
-const getPhaseTitle = (phase: MessageKind) => {
+const getPhaseTitle = (
+  phase: MessageKind,
+  metadata?: { type?: PlatformMessageType },
+) => {
   switch (phase) {
     case MessageKind.STAGE_RESULT:
       return 'Processing your application...';
-    case MessageKind.DEPLOYMENT_COMPLETE:
-      return 'Your application 1st draft is ready';
+    case MessageKind.PLATFORM_MESSAGE:
+      if (metadata?.type === PlatformMessageType.DEPLOYMENT_COMPLETE) {
+        return 'Your application 1st draft is ready';
+      }
+      if (metadata?.type === PlatformMessageType.REPO_CREATED) {
+        return 'Repository created';
+      }
+      return 'Platform message';
     case MessageKind.RUNTIME_ERROR:
       return 'There was an error generating your application';
     case MessageKind.REFINEMENT_REQUEST:
       return 'Expecting user input';
-    case MessageKind.FINAL_RESULT:
-      return 'Generation complete';
-    case MessageKind.PLATFORM_MESSAGE:
-      return 'Platform message';
     case MessageKind.USER_MESSAGE:
       return 'User message';
     case MessageKind.REVIEW_RESULT:
-      return 'Generating application';
+      return 'Processing request...';
     default:
       return phase;
   }
@@ -112,10 +121,12 @@ export function PhaseGroupItem({
     [group.events, isCurrentPhase, isLastInteractiveGroup],
   );
 
+  const metadata = group.events[0]?.message?.metadata;
+
   return (
     <TaskStatus
       key={`${group.phase}-${groupIndex}`}
-      title={getPhaseTitle(group.phase)}
+      title={getPhaseTitle(group.phase, metadata)}
       status={status}
       details={phaseMessages}
     />
