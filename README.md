@@ -1,4 +1,4 @@
-# App.Build
+# App.build
 
 CLI with AI capabilities to create full-stack applications
 

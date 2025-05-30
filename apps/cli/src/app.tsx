@@ -63,7 +63,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Banner title="Welcome to App.Build CLI">
+      <Banner title="Welcome to app.build CLI">
         Create, deploy, and manage your applications with ease
       </Banner>
       {content}

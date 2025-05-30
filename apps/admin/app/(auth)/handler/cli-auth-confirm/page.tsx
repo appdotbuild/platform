@@ -79,7 +79,7 @@ export default function CliAuthConfirmPage() {
           </h1>
           <p className="text-gray-600 mb-4">
             The CLI application has been authorized successfully. Let's now
-            install the App.Build Github App in your organization / repositories
+            install the App.build Github App in your organization / repositories
             of choice.
           </p>
           <Button onClick={openGithubAppInstall}>

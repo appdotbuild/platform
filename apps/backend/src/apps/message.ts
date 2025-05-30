@@ -17,7 +17,7 @@ import {
 } from '@appdotbuild/core';
 import type { Optional } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { app } from '../app';
@@ -64,26 +64,33 @@ type RequestBody = {
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
 
 const previousRequestMap = new Map<ApplicationId, AgentSseEvent | null>();
-const isTemporaryApp = (applicationId: string) => {
-  return Boolean(previousRequestMap.get(applicationId));
+const appExistsInDb = async (
+  applicationId: string | undefined,
+): Promise<boolean> => {
+  if (!applicationId) {
+    return false;
+  }
+
+  const exists = await db
+    .select({ exists: sql`1` })
+    .from(apps)
+    .where(eq(apps.id, applicationId))
+    .limit(1);
+
+  const appExists = exists.length > 0;
+
+  return appExists;
 };
-const isPermanentApp = (applicationId: string) => {
-  return !isTemporaryApp(applicationId);
-};
+
 const cleanupTemporaryApp = (applicationId: string) => {
   // we don't delete, so we can keep track of the app being temporary
-  previousRequestMap.set(applicationId, null);
+  previousRequestMap.delete(applicationId);
 };
+
 const addPreviousRequestToMap = (
   applicationId: string,
   event: AgentSseEvent,
 ) => {
-  const previousEvent = previousRequestMap.get(applicationId);
-  // this means that this app has been removed from the map, so we don't need to add it again
-  if (previousEvent === null) {
-    return;
-  }
-
   previousRequestMap.set(applicationId, event);
 };
 
@@ -163,10 +170,11 @@ export async function postMessage(
     };
 
     let appName = null;
+    let isPermanentApp = await appExistsInDb(applicationId);
     if (applicationId) {
       app.log.info(`existing applicationId ${applicationId}`);
 
-      if (isPermanentApp(applicationId)) {
+      if (isPermanentApp) {
         const application = await db
           .select()
           .from(apps)
@@ -180,6 +188,10 @@ export async function postMessage(
           });
         }
 
+        streamLog(
+          `application found: ${JSON.stringify(application[0])}`,
+          'info',
+        );
         appName = application[0]!.appName;
         // save iteration user message
         try {
@@ -254,17 +266,28 @@ export async function postMessage(
       `appdotbuild-template-${Date.now()}`,
     );
 
-    const volumePromise = isPermanentApp(applicationId)
+    streamLog(`isPermanentApp ${isPermanentApp}, appName ${appName}`, 'info');
+    const volumePromise = isPermanentApp
       ? cloneRepository({
           repo: `${githubUsername}/${appName}`,
           githubAccessToken,
           tempDirPath,
-        }).then(copyDirToMemfs)
+        })
+          .then(copyDirToMemfs)
+          .catch((error) => {
+            streamLog(`Error cloning repository: ${error}`, 'error');
+            terminateStreamWithError(
+              session,
+              'There was an error cloning your repository, try again with a different prompt.',
+              abortController,
+            );
+            return reply.status(500);
+          })
       : createMemoryFileSystem();
 
     // We are iterating over an existing app, so we wait for the promise here to read the files that where cloned.
     // and we add them to the body for the agent to use.
-    if (isPermanentApp(applicationId)) {
+    if (isPermanentApp && volumePromise) {
       const { volume, virtualDir } = await volumePromise;
       body.allFiles = readDirectoryRecursive(virtualDir, virtualDir, volume);
     }
@@ -275,6 +298,13 @@ export async function postMessage(
         JSON.stringify(JSON.stringify(body), null, 2),
       );
     }
+
+    streamLog(
+      `sending request to ${getAgentHost(
+        requestBody.environment,
+      )} agent, body: ${JSON.stringify(body)}`,
+      'info',
+    );
     const agentResponse = await fetch(
       `${getAgentHost(requestBody.environment)}/message`,
       {
@@ -387,17 +417,24 @@ export async function postMessage(
             canDeploy = !!parsedMessage.message.unifiedDiff;
 
             if (canDeploy) {
+              streamLog(
+                `[appId: ${applicationId}] starting to deploy app`,
+                'info',
+              );
               const { volume, virtualDir, memfsVolume } = await volumePromise;
               const unifiedDiffPath = path.join(
                 virtualDir,
                 `unified_diff-${Date.now()}.patch`,
               );
 
+              streamLog(
+                `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${parsedMessage.message.unifiedDiff}`,
+                'info',
+              );
               volume.writeFileSync(
                 unifiedDiffPath,
                 `${parsedMessage.message.unifiedDiff}\n\n`,
               );
-
               const respositoryPath = await applyDiff(
                 unifiedDiffPath,
                 virtualDir,
@@ -416,7 +453,7 @@ export async function postMessage(
                 );
               }
 
-              if (isPermanentApp(applicationId)) {
+              if (isPermanentApp) {
                 streamLog(`app iteration: ${applicationId}`, 'info');
                 await appIteration({
                   appName,
@@ -449,6 +486,7 @@ export async function postMessage(
                   streamLog,
                 });
                 appName = newAppName;
+                isPermanentApp = true;
               }
 
               const [, { appURL }] = await Promise.all([
@@ -471,14 +509,15 @@ export async function postMessage(
               );
             }
 
-            if (parsedMessage.status === AgentStatus.IDLE) {
+            const canBreakStream =
+              parsedMessage.status === AgentStatus.IDLE &&
+              parsedMessage.kind !== MessageKind.REFINEMENT_REQUEST;
+            if (canBreakStream) {
               streamLog(
-                `before saving agent message, isPermanentApp: ${isPermanentApp(
-                  applicationId,
-                )}`,
+                `before saving agent message, isPermanentApp: ${isPermanentApp}`,
                 'info',
               );
-              if (isPermanentApp(applicationId)) {
+              if (isPermanentApp) {
                 await saveAgentMessage(parsedMessage, applicationId);
               }
               abortController.abort();
@@ -775,7 +814,7 @@ async function getMessagesFromHistory(
   applicationId: string,
   userId: string,
 ): Promise<ContentMessage[]> {
-  if (isTemporaryApp(applicationId)) {
+  if (previousRequestMap.has(applicationId)) {
     // for temp apps, first check in-memory
     const memoryMessages = getMessagesFromMemory(applicationId);
     if (memoryMessages.length > 0) {
