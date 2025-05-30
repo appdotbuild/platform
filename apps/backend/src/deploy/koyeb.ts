@@ -22,7 +22,7 @@ type CreateKoyebAppResponse = {
 };
 
 export async function createKoyebOrganization(githubUsername: string) {
-  const koyebOrgName = `appbuild-${githubUsername.toLowerCase()}`;
+  const koyebOrgName = getOrgName(githubUsername);
 
   const response = await fetch(`https://app.koyeb.com/v1/organizations`, {
     headers: {
@@ -255,6 +255,14 @@ export async function getKoyebDomain({
   const data = await response.json();
 
   return { koyebDomainName: data.domain.name };
+}
+
+function getOrgName(githubUsername: string) {
+  if (process.env.NODE_ENV === 'production') {
+    return `appbuild-${githubUsername}`;
+  }
+
+  return `appbuild-dev-${githubUsername}`;
 }
 
 function getDomainName(appId: string) {
