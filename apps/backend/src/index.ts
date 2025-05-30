@@ -49,6 +49,10 @@ if (isDev) {
   app.post('/github/org/commit', authHandler, orgCommitChangesEndpoint);
 }
 
+app.get('/auth/is-neon-employee', authHandler, async (request, reply) => {
+  return reply.send({ isNeonEmployee: request.user.isNeonEmployee });
+});
+
 app.get('/apps', authHandler, listApps);
 app.get('/apps/:id', authHandler, appById);
 app.get('/apps/:id/history', authHandler, appHistory);

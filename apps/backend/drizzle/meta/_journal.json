@@ -162,6 +162,13 @@
       "when": 1748464506735,
       "tag": "0022_quiet_thing",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1748601477982,
+      "tag": "0023_strong_molten_man",
+      "breakpoints": true
     }
   ]
 }

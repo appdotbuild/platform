@@ -18,6 +18,7 @@ const tokenConfigSchema = z.object({
       value: z.string(),
     })
     .optional(),
+  isNeonEmployee: z.boolean().optional(),
 });
 
 type TokenConfig = z.infer<typeof tokenConfigSchema>;
@@ -181,6 +182,7 @@ export class TokenStorage {
       const config = this.readConfig();
       delete config.refreshToken;
       delete config.accessToken;
+      delete config.isNeonEmployee;
       this.writeConfig(config);
     } catch (error) {
       // If we can't read the config, just write an empty one
@@ -218,6 +220,22 @@ export class TokenStorage {
 
     const bufferMs = 300 * 1000;
     return Date.now() >= expiry - bufferMs;
+  }
+
+  // Save if is neon employee
+  saveIfNeonEmployee(isNeonEmployee: boolean): void {
+    const config = this.readConfig();
+    config.isNeonEmployee = isNeonEmployee;
+    this.writeConfig(config);
+  }
+
+  getIsNeonEmployee(): boolean | undefined {
+    try {
+      const config = this.readConfig();
+      return config.isNeonEmployee;
+    } catch (error) {
+      return undefined;
+    }
   }
 }
 

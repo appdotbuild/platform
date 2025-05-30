@@ -2,8 +2,10 @@ import { StackClientApp } from '@stackframe/js';
 import { decodeJwt } from 'jose';
 import open from 'open';
 import { tokenStorage } from './auth-storage.js';
+import { useAuthStore } from './auth-store.js';
 import { getAuthHost } from '../environment.js';
 import { logger } from '../utils/logger.js';
+import { apiClient } from '../api/api-client.js';
 
 type TokenResponse = {
   access_token: string;
@@ -124,4 +126,27 @@ export async function authenticate(): Promise<string> {
   }
 
   throw new Error('Unexpected token format received from authentication');
+}
+
+export async function ensureIsNeonEmployee(): Promise<boolean> {
+  //check if already has stored the value to avoid unnecessary API calls
+  const stored = tokenStorage.getIsNeonEmployee();
+
+  if (stored !== undefined) {
+    useAuthStore.getState().setIsNeonEmployee(stored);
+    return stored;
+  }
+
+  try {
+    const response = await apiClient.get('/auth/is-neon-employee');
+    const isNeonEmployee = response.data.isNeonEmployee;
+
+    tokenStorage.saveIfNeonEmployee(isNeonEmployee);
+
+    useAuthStore.getState().setIsNeonEmployee(isNeonEmployee);
+
+    return isNeonEmployee;
+  } catch (error) {
+    return false;
+  }
 }

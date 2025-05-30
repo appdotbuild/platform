@@ -16,7 +16,7 @@ type RequiredEnvVars =
   | 'GITHUB_APP_BOT_EMAIL'
   | 'DATABASE_URL'
   | 'DATABASE_URL_DEV'
-  | 'KOYEB_CLI_TOKEN';
+  | 'KOYEB_CLI_PAT_TOKEN';
 
 type EnvVars = {
   [K in RequiredEnvVars]: string;
@@ -47,7 +47,7 @@ export const requiredVars: RequiredEnvVars[] = [
   'GITHUB_APP_PRIVATE_KEY',
   'GITHUB_APP_BOT_EMAIL',
   isDev ? 'DATABASE_URL_DEV' : 'DATABASE_URL',
-  'KOYEB_CLI_TOKEN',
+  'KOYEB_CLI_PAT_TOKEN',
 ] as const;
 
 function assertEnvVarsPresent(vars: RequiredEnvVars[]) {

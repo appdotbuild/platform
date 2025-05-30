@@ -17,7 +17,7 @@ import {
 } from '@appdotbuild/core';
 import type { Optional } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { app } from '../app';
@@ -64,26 +64,33 @@ type RequestBody = {
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
 
 const previousRequestMap = new Map<ApplicationId, AgentSseEvent | null>();
-const isTemporaryApp = (applicationId: string) => {
-  return Boolean(previousRequestMap.get(applicationId));
+const appExistsInDb = async (
+  applicationId: string | undefined,
+): Promise<boolean> => {
+  if (!applicationId) {
+    return false;
+  }
+
+  const exists = await db
+    .select({ exists: sql`1` })
+    .from(apps)
+    .where(eq(apps.id, applicationId))
+    .limit(1);
+
+  const appExists = exists.length > 0;
+
+  return appExists;
 };
-const isPermanentApp = (applicationId: string) => {
-  return !isTemporaryApp(applicationId);
-};
+
 const cleanupTemporaryApp = (applicationId: string) => {
   // we don't delete, so we can keep track of the app being temporary
-  previousRequestMap.set(applicationId, null);
+  previousRequestMap.delete(applicationId);
 };
+
 const addPreviousRequestToMap = (
   applicationId: string,
   event: AgentSseEvent,
 ) => {
-  const previousEvent = previousRequestMap.get(applicationId);
-  // this means that this app has been removed from the map, so we don't need to add it again
-  if (previousEvent === null) {
-    return;
-  }
-
   previousRequestMap.set(applicationId, event);
 };
 
@@ -97,6 +104,7 @@ export async function postMessage(
   reply: FastifyReply,
 ) {
   const userId = request.user.id;
+  const isNeonEmployee = request.user.isNeonEmployee;
 
   const {
     isUserLimitReached,
@@ -126,6 +134,7 @@ export async function postMessage(
     },
   });
 
+  const streamLog = createStreamLogger(session, isNeonEmployee);
   const abortController = new AbortController();
   const githubUsername = request.user.githubUsername;
   const githubAccessToken = request.user.githubAccessToken;
@@ -134,24 +143,18 @@ export async function postMessage(
   let traceId = requestBody.traceId;
 
   request.socket.on('close', () => {
-    streamLog(
-      session,
-      `Client disconnected for applicationId: ${applicationId}`,
-      'info',
-    );
+    streamLog(`Client disconnected for applicationId: ${applicationId}`);
     abortController.abort();
   });
 
-  streamLog(session, 'created SSE session', 'info');
+  streamLog('created SSE session');
 
   if (isDev) {
     fs.mkdirSync(logsFolder, { recursive: true });
   }
 
   streamLog(
-    session,
     `Received message request: ${JSON.stringify({ body: request.body })}`,
-    'info',
   );
 
   try {
@@ -167,23 +170,28 @@ export async function postMessage(
     };
 
     let appName = null;
+    let isPermanentApp = await appExistsInDb(applicationId);
     if (applicationId) {
       app.log.info(`existing applicationId ${applicationId}`);
 
-      if (isPermanentApp(applicationId)) {
+      if (isPermanentApp) {
         const application = await db
           .select()
           .from(apps)
           .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
 
         if (application.length === 0) {
-          streamLog(session, 'application not found', 'error');
+          streamLog('application not found', 'error');
           return reply.status(404).send({
             error: 'Application not found',
             status: 'error',
           });
         }
 
+        streamLog(
+          `application found: ${JSON.stringify(application[0])}`,
+          'info',
+        );
         appName = application[0]!.appName;
         // save iteration user message
         try {
@@ -219,14 +227,13 @@ export async function postMessage(
         };
 
         streamLog(
-          session,
           `Loaded ${messagesFromHistory.length} messages from history for application ${applicationId}`,
         );
       } else {
         // for temporary apps, we need to get the previous request from the memory
         const previousRequest = previousRequestMap.get(applicationId);
         if (!previousRequest) {
-          streamLog(session, 'previous request not found', 'error');
+          streamLog('previous request not found', 'error');
           return reply.status(404).send({
             error: 'Previous request not found',
             status: 'error',
@@ -259,17 +266,28 @@ export async function postMessage(
       `appdotbuild-template-${Date.now()}`,
     );
 
-    const volumePromise = isPermanentApp(applicationId)
+    streamLog(`isPermanentApp ${isPermanentApp}, appName ${appName}`, 'info');
+    const volumePromise = isPermanentApp
       ? cloneRepository({
           repo: `${githubUsername}/${appName}`,
           githubAccessToken,
           tempDirPath,
-        }).then(copyDirToMemfs)
+        })
+          .then(copyDirToMemfs)
+          .catch((error) => {
+            streamLog(`Error cloning repository: ${error}`, 'error');
+            terminateStreamWithError(
+              session,
+              'There was an error cloning your repository, try again with a different prompt.',
+              abortController,
+            );
+            return reply.status(500);
+          })
       : createMemoryFileSystem();
 
     // We are iterating over an existing app, so we wait for the promise here to read the files that where cloned.
     // and we add them to the body for the agent to use.
-    if (isPermanentApp(applicationId)) {
+    if (isPermanentApp && volumePromise) {
       const { volume, virtualDir } = await volumePromise;
       body.allFiles = readDirectoryRecursive(virtualDir, virtualDir, volume);
     }
@@ -280,6 +298,13 @@ export async function postMessage(
         JSON.stringify(JSON.stringify(body), null, 2),
       );
     }
+
+    streamLog(
+      `sending request to ${getAgentHost(
+        requestBody.environment,
+      )} agent, body: ${JSON.stringify(body)}`,
+      'info',
+    );
     const agentResponse = await fetch(
       `${getAgentHost(requestBody.environment)}/message`,
       {
@@ -304,7 +329,6 @@ export async function postMessage(
     if (!agentResponse.ok) {
       const errorData = await agentResponse.json();
       streamLog(
-        session,
         `Agent returned error: ${
           agentResponse.status
         }, errorData: ${JSON.stringify(errorData)}`,
@@ -330,7 +354,7 @@ export async function postMessage(
     const textDecoder = new TextDecoder();
 
     while (!abortController.signal.aborted) {
-      streamLog(session, 'reading the stream', 'info');
+      streamLog('reading the stream');
 
       const { done, value } = await reader.read();
 
@@ -362,11 +386,11 @@ export async function postMessage(
             );
 
             if (parsedMessage.message.kind === 'KeepAlive') {
-              streamLog(session, 'keep alive message received', 'info');
+              streamLog('keep alive message received');
               continue;
             }
 
-            streamLog(session, `message sent to CLI: ${message}`, 'info');
+            streamLog(`message sent to CLI: ${message}`);
             storeDevLogs(parsedMessage, message);
             addPreviousRequestToMap(applicationId, parsedMessage);
             session.push(message);
@@ -393,17 +417,24 @@ export async function postMessage(
             canDeploy = !!parsedMessage.message.unifiedDiff;
 
             if (canDeploy) {
+              streamLog(
+                `[appId: ${applicationId}] starting to deploy app`,
+                'info',
+              );
               const { volume, virtualDir, memfsVolume } = await volumePromise;
               const unifiedDiffPath = path.join(
                 virtualDir,
                 `unified_diff-${Date.now()}.patch`,
               );
 
+              streamLog(
+                `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${parsedMessage.message.unifiedDiff}`,
+                'info',
+              );
               volume.writeFileSync(
                 unifiedDiffPath,
                 `${parsedMessage.message.unifiedDiff}\n\n`,
               );
-
               const respositoryPath = await applyDiff(
                 unifiedDiffPath,
                 virtualDir,
@@ -422,8 +453,8 @@ export async function postMessage(
                 );
               }
 
-              if (isPermanentApp(applicationId)) {
-                streamLog(session, `app iteration: ${applicationId}`, 'info');
+              if (isPermanentApp) {
+                streamLog(`app iteration: ${applicationId}`, 'info');
                 await appIteration({
                   appName,
                   githubUsername,
@@ -437,11 +468,7 @@ export async function postMessage(
                     parsedMessage.message.commit_message || 'feat: update',
                 });
               } else {
-                streamLog(
-                  session,
-                  `creating new app: ${applicationId}`,
-                  'info',
-                );
+                streamLog(`creating new app: ${applicationId}`, 'info');
                 appName =
                   parsedMessage.message.app_name ||
                   `app.build-${uuidv4().slice(0, 4)}`;
@@ -456,20 +483,21 @@ export async function postMessage(
                   session,
                   requestBody,
                   files,
+                  streamLog,
                 });
                 appName = newAppName;
+                isPermanentApp = true;
               }
 
-              const [, { appURL }] = await Promise.all([
-                Promise.resolve(),
-                writeMemfsToTempDir(memfsVolume, virtualDir).then(
-                  (tempDirPath) =>
-                    deployApp({
-                      appId: applicationId!,
-                      appDirectory: tempDirPath,
-                    }),
-                ),
-              ]);
+              const { appURL } = await writeMemfsToTempDir(
+                memfsVolume,
+                virtualDir,
+              ).then((tempDirPath) =>
+                deployApp({
+                  appId: applicationId!,
+                  appDirectory: tempDirPath,
+                }),
+              );
 
               session.push(
                 new PlatformMessage(
@@ -480,15 +508,15 @@ export async function postMessage(
               );
             }
 
-            if (parsedMessage.status === AgentStatus.IDLE) {
+            const canBreakStream =
+              parsedMessage.status === AgentStatus.IDLE &&
+              parsedMessage.kind !== MessageKind.REFINEMENT_REQUEST;
+            if (canBreakStream) {
               streamLog(
-                session,
-                `before saving agent message, isPermanentApp: ${isPermanentApp(
-                  applicationId,
-                )}`,
+                `before saving agent message, isPermanentApp: ${isPermanentApp}`,
                 'info',
               );
-              if (isPermanentApp(applicationId)) {
+              if (isPermanentApp) {
                 await saveAgentMessage(parsedMessage, applicationId);
               }
               abortController.abort();
@@ -501,22 +529,22 @@ export async function postMessage(
             error instanceof Error &&
             error.message.includes('Unterminated string')
           ) {
-            streamLog(session, 'Incomplete message', 'info');
+            streamLog('Incomplete message');
             continue;
           }
 
-          streamLog(session, `Error handling SSE message: ${error}`, 'error');
+          streamLog(`Error handling SSE message: ${error}`, 'error');
         }
       }
     }
 
-    streamLog(session, 'stream finished', 'info');
+    streamLog('stream finished');
     session.push({ done: true, traceId: traceId }, 'done');
     session.removeAllListeners();
 
     reply.raw.end();
   } catch (error) {
-    streamLog(session, `Unhandled error: ${error}`, 'error');
+    streamLog(`Unhandled error: ${error}`, 'error');
     session.push(
       new StreamingError((error as Error).message ?? 'Unknown error'),
       'error',
@@ -560,6 +588,7 @@ async function appCreation({
   session,
   requestBody,
   files,
+  streamLog,
 }: {
   applicationId: string;
   appName: string;
@@ -571,6 +600,7 @@ async function appCreation({
   session: Session;
   requestBody: RequestBody;
   files: ReturnType<typeof readDirectoryRecursive>;
+  streamLog: (log: string, level?: 'info' | 'error') => void;
 }) {
   if (isDev) {
     fs.writeFileSync(
@@ -603,7 +633,7 @@ async function appCreation({
     githubUsername,
   });
   cleanupTemporaryApp(applicationId);
-  streamLog(session, `app created: ${applicationId}`, 'info');
+  streamLog(`app created: ${applicationId}`, 'info');
 
   // save first message after app creation
   try {
@@ -768,20 +798,22 @@ function getExistingConversationBody({
   };
 }
 
-function streamLog(
-  session: Session,
-  log: string,
-  level: 'info' | 'error' = 'info',
-) {
-  app.log[level](log);
-  session.push({ log, level }, 'debug');
+function createStreamLogger(session: Session, isNeonEmployee: boolean) {
+  return function streamLog(log: string, level: 'info' | 'error' = 'info') {
+    app.log[level](log);
+
+    // only push if is neon employee
+    if (isNeonEmployee) {
+      session.push({ log, level }, 'debug');
+    }
+  };
 }
 
 async function getMessagesFromHistory(
   applicationId: string,
   userId: string,
 ): Promise<ContentMessage[]> {
-  if (isTemporaryApp(applicationId)) {
+  if (previousRequestMap.has(applicationId)) {
     // for temp apps, first check in-memory
     const memoryMessages = getMessagesFromMemory(applicationId);
     if (memoryMessages.length > 0) {
