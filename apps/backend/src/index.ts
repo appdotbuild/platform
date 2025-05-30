@@ -19,6 +19,7 @@ import {
   userCommitChangesEndpoint,
 } from './github';
 import { logger } from './logger';
+import { dockerLoginIfNeeded } from './docker';
 
 config({ path: '.env' });
 validateEnv();
@@ -75,5 +76,12 @@ export const start = async () => {
 };
 
 if (process.env.NODE_ENV !== 'test') {
-  start();
+  start()
+    .then(() => {
+      return dockerLoginIfNeeded();
+    })
+    .catch((err) => {
+      logger.error('Failed to login to ECR', { error: err });
+      process.exit(1);
+    });
 }
