@@ -56,7 +56,7 @@ const createTaskDetail = (
   isLastInteractiveGroup: boolean,
 ): TaskDetail | null => {
   const textMessages = messageContent.content.filter((c) => c.type === 'text');
-  const message = textMessages[0];
+  const message = textMessages.map((c) => c.text).join('');
   if (!message) return null;
 
   const isLastMessage = index === messageContentLength - 1;
@@ -64,7 +64,7 @@ const createTaskDetail = (
     isCurrentPhase && isLastInteractiveGroup && isLastMessage;
 
   return {
-    text: message.text,
+    text: message,
     highlight: shouldHighlight,
     icon: '⎿',
     role: messageContent.role,

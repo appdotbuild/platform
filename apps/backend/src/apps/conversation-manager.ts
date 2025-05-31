@@ -63,6 +63,22 @@ export class ConversationManager {
     }
   }
 
+  addMessagesToConversation(
+    applicationId: string,
+    messages: ContentMessage[],
+  ): void {
+    const existingData = this.conversationMap.get(applicationId);
+    if (existingData) {
+      existingData.allMessages.push(...messages);
+      this.conversationMap.set(applicationId, existingData);
+    } else {
+      this.conversationMap.set(applicationId, {
+        allMessages: messages,
+        agentState: undefined,
+      });
+    }
+  }
+
   /**
    * Get conversation history for an application
    */
@@ -117,6 +133,7 @@ export class ConversationManager {
 
   /**
    * Extract messages from an agent SSE event
+   * Following the same logic as Python continue_conversation method
    */
   private extractMessagesFromEvent(event: AgentSseEvent): ContentMessage[] {
     try {
@@ -126,29 +143,67 @@ export class ConversationManager {
         return [];
       }
 
-      return messagesHistory.map(
-        (content: {
-          role: 'user' | 'assistant';
-          content: MessageContentBlock[];
-        }) => {
-          const { role, content: messageContent } = content;
+      return messagesHistory
+        .map((messageRaw) => {
+          const role = messageRaw.role;
+          const rawContent = messageRaw.content || '';
+
+          let currentContentStr = '';
+          let hasTextContent = false;
+
+          if (typeof rawContent === 'string') {
+            currentContentStr = rawContent;
+            hasTextContent = currentContentStr.length > 0;
+          } else if (
+            Array.isArray(rawContent) &&
+            rawContent.length > 0 &&
+            typeof rawContent[0] === 'object'
+          ) {
+            // Check if it's a text content block
+            if ('text' in rawContent[0] && rawContent[0].type === 'text') {
+              currentContentStr = rawContent[0].text || '';
+              hasTextContent = currentContentStr.length > 0;
+            }
+            // Skip tool_use and other non-text content
+            else if (
+              'type' in rawContent[0] &&
+              rawContent[0].type === 'tool_use'
+            ) {
+              return null; // Filter out tool_use messages
+            }
+          }
+
+          // Only include messages with actual text content
+          if (!hasTextContent) {
+            return null;
+          }
+
           if (role === 'user') {
-            const textContent = messageContent
-              .filter((c) => c.type === 'text')
-              .map((c) => c.text)
-              .join('');
             return {
               role: 'user' as const,
-              content: textContent,
-            } as UserContentMessage;
+              content: JSON.stringify([
+                {
+                  type: 'text',
+                  text: currentContentStr,
+                },
+              ]),
+            };
+          } else if (role === 'assistant') {
+            return {
+              role: 'assistant' as const,
+              content: JSON.stringify([
+                {
+                  type: 'text',
+                  text: currentContentStr,
+                },
+              ]),
+              kind: MessageKind.STAGE_RESULT,
+            };
           }
-          return {
-            role: 'assistant' as const,
-            content: JSON.stringify(messageContent),
-            kind: MessageKind.STAGE_RESULT,
-          } as AgentContentMessage;
-        },
-      );
+
+          return null;
+        })
+        .filter(Boolean) as ContentMessage[]; // Remove null entries
     } catch (error) {
       app.log.error(`Error parsing messages from event: ${error}`);
       return [];

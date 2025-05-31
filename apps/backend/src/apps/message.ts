@@ -182,25 +182,24 @@ export async function postMessage(
         }
 
         streamLog(
-          `application found: ${JSON.stringify(application[0])}`,
+          `application found: ${JSON.stringify(application[0]?.id)}`,
           'info',
         );
         appName = application[0]!.appName;
-        // save iteration user message
-        try {
-          await db.insert(appPrompts).values({
-            id: uuidv4(),
-            prompt: requestBody.message,
-            appId: applicationId,
-            kind: 'user',
-          });
-        } catch (error) {
-          app.log.error(`Error saving iteration user message: ${error}`);
-        }
-
         const messagesFromHistory = await getMessagesFromHistory(
           applicationId,
           userId,
+        );
+
+        streamLog(
+          `messagesFromHistory: ${JSON.stringify(messagesFromHistory)}`,
+          'info',
+        );
+
+        //add existing messages to in-memory conversation
+        conversationManager.addMessagesToConversation(
+          applicationId,
+          messagesFromHistory,
         );
 
         body = {
@@ -228,10 +227,12 @@ export async function postMessage(
           conversationManager.getConversation(applicationId);
         if (!existingConversation) {
           streamLog('previous request not found', 'error');
-          return reply.status(404).send({
-            error: 'Previous request not found',
-            status: 'error',
-          });
+          terminateStreamWithError(
+            session,
+            'Previous request not found',
+            abortController,
+          );
+          return;
         }
 
         body = {
@@ -254,6 +255,7 @@ export async function postMessage(
         traceId,
       };
     }
+
     // add user message to conversation
     conversationManager.addUserMessageToConversation(
       applicationId,
@@ -318,12 +320,6 @@ export async function postMessage(
         body: JSON.stringify(body),
       },
     );
-    if (isDev) {
-      fs.writeFileSync(
-        `${logsFolder}/${applicationId}-agent-response.json`,
-        JSON.stringify(JSON.stringify(agentResponse), null, 2),
-      );
-    }
 
     if (!agentResponse.ok) {
       const errorData = await agentResponse.json();
@@ -389,10 +385,9 @@ export async function postMessage(
               continue;
             }
 
-            streamLog(`message sent to CLI: ${message}`);
             storeDevLogs(parsedMessage, message);
             conversationManager.addConversation(applicationId, parsedMessage);
-            const parsedMessageWithFullMessage = {
+            const parsedMessageWithFullMessagesHistory = {
               ...parsedMessage,
               message: {
                 ...parsedMessage.message,
@@ -403,7 +398,12 @@ export async function postMessage(
                 ),
               },
             };
-            session.push(JSON.stringify(parsedMessageWithFullMessage));
+            const messageToSend = JSON.stringify(
+              parsedMessageWithFullMessagesHistory,
+            );
+            streamLog(`message sent to CLI: ${messageToSend}`);
+            session.push(messageToSend);
+
             if (
               parsedMessage.message.unifiedDiff ===
               '# Note: This is a valid empty diff (means no changes from template)'
@@ -477,7 +477,9 @@ export async function postMessage(
                   commitMessage:
                     parsedMessage.message.commit_message || 'feat: update',
                 });
-              } else {
+              } else if (
+                parsedMessage.message.kind !== MessageKind.REFINEMENT_REQUEST
+              ) {
                 streamLog(`creating new app: ${applicationId}`, 'info');
                 appName =
                   parsedMessage.message.app_name ||
@@ -530,13 +532,6 @@ export async function postMessage(
               parsedMessage.status === AgentStatus.IDLE &&
               parsedMessage.kind !== MessageKind.REFINEMENT_REQUEST;
             if (canBreakStream) {
-              streamLog(
-                `before saving agent message, isPermanentApp: ${isPermanentApp}`,
-                'info',
-              );
-              if (isPermanentApp) {
-                await saveAgentMessage(parsedMessage, applicationId);
-              }
               abortController.abort();
               break;
             }
@@ -551,11 +546,25 @@ export async function postMessage(
             continue;
           }
 
-          streamLog(`Error handling SSE message: ${error}`, 'error');
+          streamLog(
+            `Error handling SSE message: ${error}, for message: ${message}`,
+            'error',
+          );
         }
       }
     }
 
+    streamLog(
+      `[appId: ${applicationId}] before saving agent message, isPermanentApp: ${isPermanentApp}`,
+      'info',
+    );
+    if (isPermanentApp) {
+      await saveAgentMessage(
+        conversationManager.getConversationHistory(applicationId),
+        applicationId,
+      );
+      conversationManager.removeConversation(applicationId);
+    }
     streamLog('stream finished');
     session.push({ done: true, traceId: traceId }, 'done');
     session.removeAllListeners();
@@ -650,20 +659,7 @@ async function appCreation({
     appName: newAppName,
     githubUsername,
   });
-  conversationManager.removeConversation(applicationId);
   streamLog(`app created: ${applicationId}`, 'info');
-
-  // save first message after app creation
-  try {
-    await db.insert(appPrompts).values({
-      id: uuidv4(),
-      prompt: requestBody.message,
-      appId: applicationId,
-      kind: 'user',
-    });
-  } catch (error) {
-    app.log.error(`Error saving initial user message: ${error}`);
-  }
 
   session.push(
     new PlatformMessage(
@@ -860,33 +856,61 @@ async function getMessagesFromDB(
 }
 
 async function saveAgentMessage(
-  parsedMessage: AgentSseEvent,
+  messagesHistory: ContentMessage[],
   applicationId: string,
 ) {
   try {
-    const messagesHistory = JSON.parse(parsedMessage.message.content);
-
-    const assistantMessages = messagesHistory.filter(
-      (msg) => msg.role === 'assistant',
-    );
-
-    if (assistantMessages.length === 0) {
+    if (messagesHistory.length === 0) {
       return;
     }
 
-    for (const assistantMessage of assistantMessages) {
-      const appPromptsToStore = assistantMessage.content
+    if (isDev) {
+      fs.writeFileSync(
+        `${logsFolder}/messages-history-${applicationId}.json`,
+        JSON.stringify(messagesHistory, null, 2),
+      );
+    }
+
+    // TODO: diffing mechanism instead of full replace?
+    // delete all existing prompts for the app ONCE
+    await db.delete(appPrompts).where(eq(appPrompts.appId, applicationId));
+
+    // collect all prompts from all messages
+    const allAppPromptsToStore = [];
+    for (const message of messagesHistory) {
+      let contentBlocks = [];
+
+      try {
+        // Try to parse as JSON first
+        const parsedContent = JSON.parse(message.content as string);
+        if (Array.isArray(parsedContent)) {
+          contentBlocks = parsedContent;
+        } else {
+          // If it's not an array, treat as single text block
+          contentBlocks = [{ type: 'text', text: String(parsedContent) }];
+        }
+      } catch (error) {
+        // If JSON parsing fails, treat as plain text
+        contentBlocks = [{ type: 'text', text: message.content as string }];
+      }
+
+      const appPromptsToStore = contentBlocks
         .filter((block) => block.type === 'text')
         .map((block) => {
           return {
             id: uuidv4(),
             prompt: block.text,
             appId: applicationId,
-            kind: 'agent',
+            kind: message.role,
           };
         });
 
-      await db.insert(appPrompts).values(appPromptsToStore);
+      allAppPromptsToStore.push(...appPromptsToStore);
+    }
+
+    // store all prompts at once
+    if (allAppPromptsToStore.length > 0) {
+      await db.insert(appPrompts).values(allAppPromptsToStore);
     }
   } catch (error) {
     app.log.error(`Error saving agent message: ${error}`);
