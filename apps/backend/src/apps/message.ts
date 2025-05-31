@@ -44,6 +44,10 @@ import {
 import { getAppPromptHistory } from './app-history';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
+import {
+  conversationManager,
+  type ConversationData,
+} from './conversation-manager';
 
 type Body = {
   applicationId?: string;
@@ -65,7 +69,6 @@ type RequestBody = {
 
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
 
-const previousRequestMap = new Map<ApplicationId, AgentSseEvent | null>();
 const appExistsInDb = async (
   applicationId: string | undefined,
 ): Promise<boolean> => {
@@ -82,18 +85,6 @@ const appExistsInDb = async (
   const appExists = exists.length > 0;
 
   return appExists;
-};
-
-const cleanupTemporaryApp = (applicationId: string) => {
-  // we don't delete, so we can keep track of the app being temporary
-  previousRequestMap.delete(applicationId);
-};
-
-const addPreviousRequestToMap = (
-  applicationId: string,
-  event: AgentSseEvent,
-) => {
-  previousRequestMap.set(applicationId, event);
 };
 
 const generateTraceId = (
@@ -233,8 +224,9 @@ export async function postMessage(
         );
       } else {
         // for temporary apps, we need to get the previous request from the memory
-        const previousRequest = previousRequestMap.get(applicationId);
-        if (!previousRequest) {
+        const existingConversation =
+          conversationManager.getConversation(applicationId);
+        if (!existingConversation) {
           streamLog('previous request not found', 'error');
           return reply.status(404).send({
             error: 'Previous request not found',
@@ -245,10 +237,10 @@ export async function postMessage(
         body = {
           ...body,
           ...getExistingConversationBody({
-            previousEvent: previousRequest,
+            existingConversation,
             existingTraceId: traceId as TraceId,
             applicationId,
-            message: requestBody.message,
+            userMessage: requestBody.message,
             settings: requestBody.settings,
           }),
         };
@@ -262,6 +254,11 @@ export async function postMessage(
         traceId,
       };
     }
+    // add user message to conversation
+    conversationManager.addUserMessageToConversation(
+      applicationId,
+      requestBody.message,
+    );
 
     const tempDirPath = path.join(
       os.tmpdir(),
@@ -394,8 +391,19 @@ export async function postMessage(
 
             streamLog(`message sent to CLI: ${message}`);
             storeDevLogs(parsedMessage, message);
-            addPreviousRequestToMap(applicationId, parsedMessage);
-            session.push(message);
+            conversationManager.addConversation(applicationId, parsedMessage);
+            const parsedMessageWithFullMessage = {
+              ...parsedMessage,
+              message: {
+                ...parsedMessage.message,
+                content: JSON.stringify(
+                  conversationManager.getConversationHistoryForClient(
+                    applicationId,
+                  ),
+                ),
+              },
+            };
+            session.push(JSON.stringify(parsedMessageWithFullMessage));
             if (
               parsedMessage.message.unifiedDiff ===
               '# Note: This is a valid empty diff (means no changes from template)'
@@ -642,7 +650,7 @@ async function appCreation({
     appName: newAppName,
     githubUsername,
   });
-  cleanupTemporaryApp(applicationId);
+  conversationManager.removeConversation(applicationId);
   streamLog(`app created: ${applicationId}`, 'info');
 
   // save first message after app creation
@@ -758,52 +766,29 @@ async function createUserUpstreamApp({
 }
 
 function getExistingConversationBody({
-  previousEvent,
-  message,
+  existingConversation,
+  userMessage,
   settings,
   existingTraceId,
   applicationId,
 }: {
-  previousEvent: AgentSseEvent;
+  existingConversation: ConversationData;
   existingTraceId: string;
   applicationId: string;
-  message: string;
+  userMessage: string;
   settings?: Record<string, any>;
 }) {
-  const messagesHistory = JSON.parse(previousEvent.message.content);
-  const messages = messagesHistory.map(
-    (content: {
-      role: 'user' | 'assistant';
-      content: MessageContentBlock[];
-    }) => {
-      const { role, content: messageContent } = content;
-      if (role === 'user') {
-        const textContent = messageContent
-          .filter((c) => c.type === 'text')
-          .map((c) => c.text)
-          .join('');
-        return {
-          role: 'user' as const,
-          content: textContent,
-        } as UserContentMessage;
-      }
-      return {
-        role: 'assistant' as const,
-        content: JSON.stringify(messageContent),
-        kind: MessageKind.STAGE_RESULT,
-      } as AgentContentMessage;
-    },
-  );
+  const messages = existingConversation.allMessages;
 
   return {
     allMessages: [
       ...messages,
       {
         role: 'user' as const,
-        content: message as Stringified<MessageContentBlock[]>,
+        content: userMessage as Stringified<MessageContentBlock[]>,
       },
     ],
-    agentState: previousEvent.message.agentState,
+    agentState: existingConversation.agentState,
     traceId: existingTraceId,
     applicationId,
     settings: settings || { 'max-iterations': 3 },
@@ -825,7 +810,7 @@ async function getMessagesFromHistory(
   applicationId: string,
   userId: string,
 ): Promise<ContentMessage[]> {
-  if (previousRequestMap.has(applicationId)) {
+  if (conversationManager.hasConversation(applicationId)) {
     // for temp apps, first check in-memory
     const memoryMessages = getMessagesFromMemory(applicationId);
     if (memoryMessages.length > 0) {
@@ -840,36 +825,9 @@ async function getMessagesFromHistory(
 }
 
 function getMessagesFromMemory(applicationId: ApplicationId): ContentMessage[] {
-  const previousRequest = previousRequestMap.get(applicationId);
-  if (!previousRequest) {
-    return [];
-  }
-
   try {
-    const messagesHistory = JSON.parse(previousRequest.message.content);
-    return messagesHistory.map(
-      (content: {
-        role: 'user' | 'assistant';
-        content: MessageContentBlock[];
-      }) => {
-        const { role, content: messageContent } = content;
-        if (role === 'user') {
-          const textContent = messageContent
-            .filter((c) => c.type === 'text')
-            .map((c) => c.text)
-            .join('');
-          return {
-            role: 'user' as const,
-            content: textContent,
-          } as UserContentMessage;
-        }
-        return {
-          role: 'assistant' as const,
-          content: JSON.stringify(messageContent),
-          kind: MessageKind.STAGE_RESULT,
-        } as AgentContentMessage;
-      },
-    );
+    const messages = conversationManager.getConversationHistory(applicationId);
+    return messages;
   } catch (error) {
     app.log.error(`Error parsing messages from memory: ${error}`);
     return [];
