@@ -1,9 +1,10 @@
 import type { UserMessageLimit } from '@appdotbuild/core';
-import { TextInput as InkTextInput, Spinner } from '@inkjs/ui';
+import { Spinner } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box, Text } from 'ink';
 import { useEffect, useState } from 'react';
 import { Panel } from '../display/panel.js';
+import { TextInput as LocalTextInput } from '../text-input/text-input.js';
 
 export interface TextInputProps {
   question?: string;
@@ -56,7 +57,7 @@ export function TextInput({
           {submittedValue ? (
             <Text color="gray">{submittedValue}</Text>
           ) : (
-            <InkTextInput
+            <LocalTextInput
               placeholder={placeholder}
               onSubmit={(value) => {
                 setSubmittedValue(value);
