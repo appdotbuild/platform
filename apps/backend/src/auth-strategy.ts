@@ -96,13 +96,6 @@ export async function validateAuth(request: FastifyRequest): Promise<
       githubUsername,
     );
 
-    if (!neonEmployee) {
-      return {
-        error: 'Invalid authentication',
-        statusCode: 401,
-      };
-    }
-
     return {
       ...user,
       githubUsername,
