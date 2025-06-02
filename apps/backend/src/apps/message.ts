@@ -32,6 +32,7 @@ import {
   createUserCommit,
   createUserInitialCommit,
   createUserRepository,
+  addAppURL,
 } from '../github';
 import {
   type FileData,
@@ -499,6 +500,13 @@ export async function postMessage(
                   appDirectory: tempDirPath,
                 }),
               );
+
+              await addAppURL({
+                repo: appName,
+                owner: githubUsername,
+                appURL: appURL,
+                githubAccessToken,
+              });
 
               session.push(
                 new PlatformMessage(
