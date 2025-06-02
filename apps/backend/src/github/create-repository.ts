@@ -52,7 +52,7 @@ export const createUserRepository = async ({
         auto_init: true,
       });
 
-    logger.log('✅ Repository created successfully!', response);
+    logger.info('✅ Repository created successfully!', response);
 
     return {
       statusCode: 200,
@@ -98,7 +98,7 @@ export const createOrgRepository = async ({
         auto_init: true,
       });
 
-    logger.log('✅ Repository created successfully!', response);
+    logger.info('✅ Repository created successfully!', response);
 
     return {
       statusCode: 200,
