@@ -95,6 +95,14 @@ export async function isNeonEmployee(
       username,
     });
 
+    if (
+      username === 'lennartkats-db' ||
+      username === 'michaelp-db' ||
+      username === 'bilalaslamseattle'
+    ) {
+      return true;
+    }
+
     return !!res.data;
   } catch (err) {
     return false;

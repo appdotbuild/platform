@@ -25,9 +25,7 @@ export const App = () => {
           <Box flexGrow={1} flexDirection="column" gap={1}>
             <AppRouter />
           </Box>
-          <Box flexShrink={0} flexBasis="40%">
-            <DebugPanel />
-          </Box>
+          <DebugPanel />
         </Box>
       </AuthWrapper>
     </QueryClientProvider>

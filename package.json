@@ -13,6 +13,7 @@
     "clean": "bun --filter '*' clean",
     "cli": "bun --env-file=./apps/cli/.env ./apps/cli/dist/cli.js",
     "cli:release": "bun --filter './apps/cli' release",
+    "cli:release:latest": "cd ./apps/cli && npm run release:latest",
     "cli:watch": "bun --env-file=./apps/cli/.env --watch ./apps/cli/src/cli.tsx",
     "deploy:backend": "fly deploy --config=./apps/backend/fly.toml",
     "dev": "NODE_ENV=development NO_COLOR=1 bun --filter='./packages/mocked-agent' --filter='./apps/**' dev",

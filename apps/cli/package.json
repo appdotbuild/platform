@@ -18,6 +18,7 @@
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
     "release": "bun run build:cli && semantic-release --config release.config.mjs",
+    "release:latest": "sh tools/latest.sh",
     "start": "node tmp/dist/cli.js",
     "start:inspect": "node --inspect tmp/dist/cli.js",
     "test": "prettier --check . && xo && ava",

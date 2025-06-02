@@ -1,35 +1,24 @@
-name: Release CLI stable
+name: Promote CLI to Latest
 
 on:
   workflow_dispatch:
 
 jobs:
-  release:
-    name: Release CLI
+  promote:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write # to be able to publish a GitHub release
-      issues: write # to be able to comment on released issues
-      pull-requests: write # to be able to comment on released pull requests
-      id-token: write # to enable use of OIDC for npm provenance
-
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          fetch-depth: 0 # Required for semantic-release to access full git history
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org/'
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v1
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Release CLI
+      - name: Run promote script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
-          PUBLIC_STACK_PROJECT_ID: ${{ secrets.PUBLIC_STACK_PROJECT_ID }}
-          PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
-        run: bun run cli:release
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm run cli:release:latest
