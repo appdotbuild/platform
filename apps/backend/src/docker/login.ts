@@ -39,9 +39,9 @@ async function needsLogin() {
   const mtime = new Date(stats.mtime);
 
   const now = new Date();
-  const twelveHoursAgo = new Date(now.getTime() - 11 * 60 * 60 * 1000);
+  const elevenHoursAgo = new Date(now.getTime() - 11 * 60 * 60 * 1000);
 
-  const modifiedRecently = mtime > twelveHoursAgo;
+  const modifiedRecently = mtime > elevenHoursAgo;
 
   return !modifiedRecently;
 }
