@@ -2,21 +2,18 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
-  type AgentContentMessage,
   type AgentSseEvent,
   AgentStatus,
-  type ContentMessage,
-  type MessageContentBlock,
   MessageKind,
   type MessageLimitHeaders,
   PlatformMessage,
   PlatformMessageType,
   StreamingError,
   type TraceId,
-  type UserContentMessage,
   type ApplicationId,
+  type ConversationMessage,
 } from '@appdotbuild/core';
-import type { Optional } from '@appdotbuild/core';
+import type { AgentSseEventMessage, Optional } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
 import { and, eq, sql } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -51,7 +48,7 @@ import {
 
 type Body = {
   applicationId?: string;
-  allMessages: ContentMessage[];
+  allMessages: AgentSseEventMessage['messages'];
   traceId: string;
   settings: Record<string, any>;
   agentState?: any;
@@ -156,7 +153,7 @@ export async function postMessage(
       allMessages: [
         {
           role: 'user',
-          content: requestBody.message as Stringified<MessageContentBlock[]>,
+          content: requestBody.message,
         },
       ],
       settings: requestBody.settings || { 'max-iterations': 3 },
@@ -211,9 +208,7 @@ export async function postMessage(
             ...messagesFromHistory,
             {
               role: 'user' as const,
-              content: requestBody.message as Stringified<
-                MessageContentBlock[]
-              >,
+              content: requestBody.message,
             },
           ],
         };
@@ -781,7 +776,7 @@ function getExistingConversationBody({
       ...messages,
       {
         role: 'user' as const,
-        content: userMessage as Stringified<MessageContentBlock[]>,
+        content: userMessage,
       },
     ],
     agentState: existingConversation.agentState,
@@ -805,7 +800,7 @@ function createStreamLogger(session: Session, isNeonEmployee: boolean) {
 async function getMessagesFromHistory(
   applicationId: string,
   userId: string,
-): Promise<ContentMessage[]> {
+): Promise<ConversationMessage[]> {
   if (conversationManager.hasConversation(applicationId)) {
     // for temp apps, first check in-memory
     const memoryMessages = getMessagesFromMemory(applicationId);
@@ -820,7 +815,9 @@ async function getMessagesFromHistory(
   return await getMessagesFromDB(applicationId, userId);
 }
 
-function getMessagesFromMemory(applicationId: ApplicationId): ContentMessage[] {
+function getMessagesFromMemory(
+  applicationId: ApplicationId,
+): ConversationMessage[] {
   try {
     const messages = conversationManager.getConversationHistory(applicationId);
     return messages;
@@ -833,7 +830,7 @@ function getMessagesFromMemory(applicationId: ApplicationId): ContentMessage[] {
 async function getMessagesFromDB(
   applicationId: string,
   userId: string,
-): Promise<ContentMessage[]> {
+): Promise<ConversationMessage[]> {
   const history = await getAppPromptHistory(applicationId, userId);
 
   if (!history || history.length === 0) {
@@ -845,18 +842,18 @@ async function getMessagesFromDB(
       return {
         role: 'user' as const,
         content: prompt.prompt,
-      } as UserContentMessage;
+      };
     }
     return {
       role: 'assistant' as const,
       content: prompt.prompt,
       kind: MessageKind.STAGE_RESULT,
-    } as AgentContentMessage;
+    };
   });
 }
 
 async function saveAgentMessage(
-  messagesHistory: ContentMessage[],
+  messagesHistory: ConversationMessage[],
   applicationId: string,
 ) {
   try {
@@ -871,47 +868,21 @@ async function saveAgentMessage(
       );
     }
 
-    // TODO: diffing mechanism instead of full replace?
     // delete all existing prompts for the app ONCE
     await db.delete(appPrompts).where(eq(appPrompts.appId, applicationId));
 
     // collect all prompts from all messages
-    const allAppPromptsToStore = [];
-    for (const message of messagesHistory) {
-      let contentBlocks = [];
-
-      try {
-        // Try to parse as JSON first
-        const parsedContent = JSON.parse(message.content as string);
-        if (Array.isArray(parsedContent)) {
-          contentBlocks = parsedContent;
-        } else {
-          // If it's not an array, treat as single text block
-          contentBlocks = [{ type: 'text', text: String(parsedContent) }];
-        }
-      } catch (error) {
-        // If JSON parsing fails, treat as plain text
-        contentBlocks = [{ type: 'text', text: message.content as string }];
-      }
-
-      const appPromptsToStore = contentBlocks
-        .filter((block) => block.type === 'text')
-        .map((block) => {
-          return {
-            id: uuidv4(),
-            prompt: block.text,
-            appId: applicationId,
-            kind: message.role,
-          };
-        });
-
-      allAppPromptsToStore.push(...appPromptsToStore);
-    }
+    const appPromptsToStore = messagesHistory.map((message) => {
+      return {
+        id: uuidv4(),
+        prompt: message.content,
+        appId: applicationId,
+        kind: message.role,
+      };
+    });
 
     // store all prompts at once
-    if (allAppPromptsToStore.length > 0) {
-      await db.insert(appPrompts).values(allAppPromptsToStore);
-    }
+    await db.insert(appPrompts).values(appPromptsToStore);
   } catch (error) {
     app.log.error(`Error saving agent message: ${error}`);
   }

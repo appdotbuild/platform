@@ -1,3 +1,9 @@
+import { z } from 'zod';
+
+type RequestId = string;
+export type ApplicationId = string;
+export type TraceId = `app-${ApplicationId}.req-${RequestId}`;
+
 import type { PlatformMessageMetadata } from './types/api.js';
 
 export enum AgentStatus {
@@ -18,115 +24,47 @@ export enum MessageKind {
   USER_MESSAGE = 'UserMessage',
 }
 
-type RequestId = string;
-export type ApplicationId = string;
-export type TraceId = `app-${ApplicationId}.req-${RequestId}`;
+export const agentStatusSchema = z.nativeEnum(AgentStatus);
+export const messageKindSchema = z.nativeEnum(MessageKind);
 
-export type MessageContentBlock = {
-  type: 'text' | 'tool_use' | 'tool_use_result';
-  text: string;
-};
+// Conversation message
+export const conversationMessageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string(),
+});
 
-export type ConversationMessage = {
-  role: 'user' | 'assistant';
-  content: MessageContentBlock[];
-};
+// Agent SSE Event message object
+export const agentSseEventMessageSchema = z.object({
+  kind: messageKindSchema,
+  messages: z.array(conversationMessageSchema),
+  agentState: z.record(z.unknown()).optional(),
+  unifiedDiff: z.string().optional(),
+  appName: z.string().optional(),
+  commitMessage: z.string().optional(),
+});
 
-export type ContentMessage = UserContentMessage | AgentContentMessage;
+// Agent SSE Event
+export const agentSseEventSchema = z.object({
+  status: agentStatusSchema,
+  traceId: z.string(),
+  createdAt: z.date().optional(),
+  message: agentSseEventMessageSchema,
+});
 
-export class UserContentMessage {
-  role: 'user';
-  content: Stringified<MessageContentBlock[]>;
+// Agent Request
+export const agentRequestSchema = z.object({
+  allMessages: z.array(conversationMessageSchema),
+  applicationId: z.string(),
+  traceId: z.string(),
+  agentState: z.record(z.unknown()).optional(),
+  settings: z.record(z.unknown()).optional(),
+});
 
-  constructor(content: Stringified<MessageContentBlock[]>) {
-    this.role = 'user';
-    this.content = content;
-  }
-}
-
-export class AgentContentMessage {
-  role: 'assistant';
-  kind: MessageKind;
-  content: Stringified<MessageContentBlock[]>;
-  agentState?: Record<string, unknown>;
-  unifiedDiff?: string;
-  appName?: string;
-  commitMessage?: string;
-
-  constructor(params: {
-    kind: MessageKind;
-    content: Stringified<MessageContentBlock[]>;
-    agentState?: Record<string, unknown>;
-    unifiedDiff?: string;
-    appName?: string;
-    commitMessage?: string;
-  }) {
-    this.role = 'assistant';
-    this.kind = params.kind;
-    this.content = params.content;
-    this.agentState = params.agentState;
-    this.unifiedDiff = params.unifiedDiff;
-    this.appName = params.appName;
-    this.commitMessage = params.commitMessage;
-  }
-}
-
-export class AgentSseEvent {
-  status: AgentStatus;
-  traceId?: TraceId;
-  createdAt?: Date;
-  message: {
-    role: 'assistant';
-    kind: MessageKind;
-    content: Stringified<ConversationMessage[]>;
-    agentState?: Record<string, unknown>;
-    unifiedDiff?: string;
-    appName?: string;
-    commitMessage?: string;
-    metadata?: PlatformMessageMetadata;
-  };
-
-  constructor(params: {
-    status: AgentStatus;
-    traceId?: TraceId;
-    message: {
-      role: 'assistant';
-      kind: MessageKind;
-      content: Stringified<ConversationMessage[]>;
-      agentState?: Record<string, unknown>;
-      unifiedDiff?: string;
-      appName?: string;
-      commitMessage?: string;
-      metadata?: PlatformMessageMetadata;
-    };
-  }) {
-    this.status = params.status;
-    this.traceId = params.traceId;
-    this.message = params.message;
-  }
-}
-
-export class AgentRequest {
-  allMessages: ConversationMessage[];
-  applicationId: string;
-  traceId: TraceId;
-  agentState?: Record<string, unknown>;
-  settings?: Record<string, unknown>;
-
-  constructor(params: {
-    allMessages: ConversationMessage[];
-    applicationId: string;
-    traceId: TraceId;
-    agentState?: Record<string, unknown>;
-    settings?: Record<string, unknown>;
-  }) {
-    this.allMessages = params.allMessages;
-    this.applicationId = params.applicationId;
-    this.traceId = params.traceId;
-    this.agentState = params.agentState;
-    this.settings = params.settings;
-  }
-}
+// Type inference helpers
+export type ConversationMessage = z.infer<typeof conversationMessageSchema>;
+export type AgentSseEventMessage = z.infer<typeof agentSseEventMessageSchema>;
+export type AgentSseEvent = z.infer<typeof agentSseEventSchema>;
+export type AgentRequest = z.infer<typeof agentRequestSchema>;
 
 export class ErrorResponse {
   error: string;
@@ -138,28 +76,18 @@ export class ErrorResponse {
   }
 }
 
-export class PlatformMessage extends AgentSseEvent {
-  constructor(
-    status: AgentStatus,
-    traceId: TraceId,
-    message: string,
-    metadata?: PlatformMessageMetadata,
-  ) {
-    super({
-      status,
-      traceId,
-      message: {
-        role: 'assistant',
-        kind: MessageKind.PLATFORM_MESSAGE,
-        content: JSON.stringify([
-          {
-            role: 'assistant',
-            content: [{ type: 'text', text: message }],
-          },
-        ]),
-        metadata,
-      },
-    });
+export class PlatformMessage {
+  status: AgentStatus;
+  traceId: TraceId;
+  message: AgentSseEventMessage;
+
+  constructor(status: AgentStatus, traceId: TraceId, message: string) {
+    this.status = status;
+    this.traceId = traceId;
+    this.message = {
+      kind: 'PlatformMessage',
+      messages: [{ role: 'assistant', content: message }],
+    };
   }
 }
 
