@@ -1,11 +1,10 @@
 import type { MutationStatus } from '@tanstack/react-query';
-import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 import { InputSelector } from '../input-selector.js';
-import { MessageKind } from '@appdotbuild/core';
+import { AgentSseEvent, MessageKind } from '@appdotbuild/core';
 import type { UserMessageLimit } from '@appdotbuild/core';
 
 interface MessagesData {
-  events: ParsedSseEvent[];
+  events: AgentSseEvent[];
 }
 
 interface RefinementPromptProps {

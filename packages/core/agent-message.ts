@@ -38,9 +38,9 @@ export const agentSseEventMessageSchema = z.object({
   kind: messageKindSchema,
   messages: z.array(conversationMessageSchema),
   agentState: z.record(z.unknown()).optional(),
-  unifiedDiff: z.string().optional(),
-  appName: z.string().optional(),
-  commitMessage: z.string().optional(),
+  unifiedDiff: z.string().nullish(),
+  app_name: z.string().nullish(),
+  commit_message: z.string().nullish(),
 });
 
 // Agent SSE Event
@@ -85,7 +85,7 @@ export class PlatformMessage {
     this.status = status;
     this.traceId = traceId;
     this.message = {
-      kind: 'PlatformMessage',
+      kind: MessageKind.PLATFORM_MESSAGE,
       messages: [{ role: 'assistant', content: message }],
     };
   }

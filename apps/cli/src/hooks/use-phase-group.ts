@@ -1,14 +1,13 @@
 import { useMemo } from 'react';
-import type { ParsedSseEvent } from './use-send-message.js';
-import { MessageKind } from '@appdotbuild/core';
+import type { AgentSseEvent, MessageKind } from '@appdotbuild/core';
 
 type PhaseGroup = {
   phase: MessageKind;
-  events: ParsedSseEvent[];
+  events: AgentSseEvent[];
 };
 
 type MessagesData = {
-  events: ParsedSseEvent[];
+  events: AgentSseEvent[];
 };
 
 export function usePhaseGroup(messagesData: MessagesData) {

@@ -1,9 +1,9 @@
 import { MessageKind } from '@appdotbuild/core';
 import { Box, Text, useInput } from 'ink';
 import { useState, useMemo } from 'react';
-import type { ParsedSseEvent } from '../../hooks/use-send-message';
+import type { AgentSseEvent } from '@appdotbuild/core';
 import { Panel } from '../shared/display/panel';
-import { type TaskDetail, TaskStatus } from '../shared/display/task-status';
+import { TaskStatus } from '../shared/display/task-status';
 import { useApplicationHistory } from '../../hooks/use-application';
 
 const VISIBLE_ITEMS = 3;
@@ -64,30 +64,28 @@ export function PromptsHistory({ appId }: { appId: string }) {
   if (!historyMessages || !historyMessages.length)
     return <EmptyHistoryMessage />;
 
-  const renderHistory = (event: ParsedSseEvent, groupIdx: number) => {
+  const renderHistory = (event: AgentSseEvent, groupIdx: number) => {
     const historyTitle =
       event.message.kind === MessageKind.PLATFORM_MESSAGE
         ? 'Agent message'
         : 'User message';
 
     const historyDetails = () => {
-      const content = event.message?.content?.[0]?.content;
+      const content = event.message?.messages;
 
-      if (!content || !content[0]) return [];
+      if (!content.length) return [];
 
       const firstItem = content[0];
-
-      const conversationMessage = event.message?.content?.[0];
-      const role = conversationMessage?.role || 'user';
+      const role = firstItem?.role || 'user';
 
       return [
         {
-          role: role as 'agent' | 'user',
-          text: firstItem.text || '',
+          role,
+          text: firstItem?.content || '',
           highlight: false,
           icon: '',
         },
-      ] as TaskDetail[];
+      ];
     };
 
     const createdAtFormatted = event.createdAt

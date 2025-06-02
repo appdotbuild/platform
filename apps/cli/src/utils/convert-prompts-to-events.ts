@@ -3,15 +3,15 @@ import {
   MessageKind,
   type AppPrompts,
   PromptKind,
+  AgentSseEvent,
 } from '@appdotbuild/core';
-import type { ParsedSseEvent } from '../hooks/use-send-message';
 
 export function convertPromptsToEvents(appPrompts?: AppPrompts[]) {
   return appPrompts?.map((prompt) => {
     const contentMessages = [
       {
-        role: prompt.kind,
-        content: [{ type: 'text', text: prompt.prompt }],
+        role: prompt.kind === PromptKind.USER ? 'user' : 'assistant',
+        content: prompt.prompt,
       },
     ];
     return {
@@ -19,14 +19,13 @@ export function convertPromptsToEvents(appPrompts?: AppPrompts[]) {
       traceId: `app-${prompt.appId || ''}.req-${prompt.id}`,
       createdAt: prompt.createdAt,
       message: {
-        role: prompt.kind,
+        messages: contentMessages,
         kind:
           prompt.kind === PromptKind.USER
             ? MessageKind.USER_MESSAGE
             : MessageKind.PLATFORM_MESSAGE,
-        content: contentMessages,
         agentState: {},
       },
-    } as ParsedSseEvent & { createdAt: Date };
+    } as AgentSseEvent & { createdAt: Date };
   });
 }

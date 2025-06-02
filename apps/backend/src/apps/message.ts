@@ -12,6 +12,7 @@ import {
   type TraceId,
   type ApplicationId,
   type ConversationMessage,
+  agentSseEventSchema,
 } from '@appdotbuild/core';
 import type { AgentSseEventMessage, Optional } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
@@ -370,29 +371,51 @@ export async function postMessage(
       for (const message of messages) {
         try {
           if (session.isConnected) {
-            const parsedMessage = JSON.parse(message);
+            const parsedEvent = JSON.parse(message);
             buffer = buffer.slice(
               'data: '.length + message.length + '\n\n'.length,
             );
 
-            if (parsedMessage.message.kind === 'KeepAlive') {
+            if (parsedEvent.message.kind === 'KeepAlive') {
               streamLog('keep alive message received');
               continue;
             }
 
-            storeDevLogs(parsedMessage, message);
-            conversationManager.addConversation(applicationId, parsedMessage);
-            const parsedMessageWithFullMessagesHistory = {
-              ...parsedMessage,
+            let completeParsedMessage: AgentSseEvent;
+            try {
+              completeParsedMessage = agentSseEventSchema.parse(parsedEvent);
+            } catch (error) {
+              streamLog(
+                `Error validating schema for message: ${JSON.stringify(
+                  parsedEvent,
+                )}. Error: ${error}`,
+                'error',
+              );
+              terminateStreamWithError(
+                session,
+                'There was an error validating the message schema, try again with a different prompt.',
+                abortController,
+              );
+              return;
+            }
+
+            storeDevLogs(completeParsedMessage, message);
+            conversationManager.addConversation(
+              applicationId,
+              completeParsedMessage,
+            );
+
+            const parsedMessageWithFullMessagesHistory: AgentSseEvent = {
+              ...completeParsedMessage,
               message: {
-                ...parsedMessage.message,
-                content: JSON.stringify(
+                ...completeParsedMessage.message,
+                messages:
                   conversationManager.getConversationHistoryForClient(
                     applicationId,
                   ),
-                ),
               },
             };
+
             const messageToSend = JSON.stringify(
               parsedMessageWithFullMessagesHistory,
             );
@@ -400,14 +423,14 @@ export async function postMessage(
             session.push(messageToSend);
 
             if (
-              parsedMessage.message.unifiedDiff ===
+              completeParsedMessage.message.unifiedDiff ===
               '# Note: This is a valid empty diff (means no changes from template)'
             ) {
-              parsedMessage.message.unifiedDiff = null;
+              completeParsedMessage.message.unifiedDiff = null;
             }
 
             if (
-              parsedMessage.message.unifiedDiff?.startsWith(
+              completeParsedMessage.message.unifiedDiff?.startsWith(
                 '# ERROR GENERATING DIFF',
               )
             ) {
@@ -419,7 +442,7 @@ export async function postMessage(
               return;
             }
 
-            canDeploy = !!parsedMessage.message.unifiedDiff;
+            canDeploy = !!completeParsedMessage.message.unifiedDiff;
 
             if (canDeploy) {
               streamLog(
@@ -433,12 +456,12 @@ export async function postMessage(
               );
 
               streamLog(
-                `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${parsedMessage.message.unifiedDiff}`,
+                `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${completeParsedMessage.message.unifiedDiff}`,
                 'info',
               );
               volume.writeFileSync(
                 unifiedDiffPath,
-                `${parsedMessage.message.unifiedDiff}\n\n`,
+                `${completeParsedMessage.message.unifiedDiff}\n\n`,
               );
               const respositoryPath = await applyDiff(
                 unifiedDiffPath,
@@ -461,28 +484,30 @@ export async function postMessage(
               if (isPermanentApp) {
                 streamLog(`app iteration: ${applicationId}`, 'info');
                 await appIteration({
-                  appName,
+                  appName: appName!,
                   githubUsername,
                   githubAccessToken,
                   files,
-                  agentState: parsedMessage.message.agentState,
+                  agentState: completeParsedMessage.message.agentState,
                   applicationId,
                   traceId: traceId as TraceId,
                   session,
                   commitMessage:
-                    parsedMessage.message.commit_message || 'feat: update',
+                    completeParsedMessage.message.commit_message ||
+                    'feat: update',
                 });
               } else if (
-                parsedMessage.message.kind !== MessageKind.REFINEMENT_REQUEST
+                completeParsedMessage.message.kind !==
+                MessageKind.REFINEMENT_REQUEST
               ) {
                 streamLog(`creating new app: ${applicationId}`, 'info');
                 appName =
-                  parsedMessage.message.app_name ||
+                  completeParsedMessage.message.app_name ||
                   `app.build-${uuidv4().slice(0, 4)}`;
                 const { newAppName } = await appCreation({
                   applicationId,
                   appName,
-                  agentState: parsedMessage.message.agentState,
+                  agentState: completeParsedMessage.message.agentState,
                   githubAccessToken,
                   githubUsername,
                   ownerId: request.user.id,
@@ -524,8 +549,9 @@ export async function postMessage(
             }
 
             const canBreakStream =
-              parsedMessage.status === AgentStatus.IDLE &&
-              parsedMessage.kind !== MessageKind.REFINEMENT_REQUEST;
+              completeParsedMessage.status === AgentStatus.IDLE &&
+              completeParsedMessage.message.kind !==
+                MessageKind.REFINEMENT_REQUEST;
             if (canBreakStream) {
               abortController.abort();
               break;
