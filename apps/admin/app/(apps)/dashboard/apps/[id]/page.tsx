@@ -4,6 +4,7 @@ import {
   User,
   ExternalLink,
   Github,
+  Globe,
 } from '@appdotbuild/design/base/icons';
 import { ShowHide } from '@appdotbuild/design/components/show-hide/show-hide';
 import { Button } from '@appdotbuild/design/shadcn/button';
@@ -132,6 +133,12 @@ export default async function AppPage({ params }: { params: { id: string } }) {
                     <h3 className="text-lg font-semibold">Deployment</h3>
                     <p className="text-sm text-muted-foreground">
                       Fly.io App ID: {app.flyAppId}
+                    </p>
+                    <p>
+                      <Link href={app.appUrl}>
+                        <Globe className="h-4 w-4" />
+                        {app.appUrl}
+                      </Link>
                     </p>
                   </div>
                 </div>

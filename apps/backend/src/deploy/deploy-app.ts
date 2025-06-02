@@ -1,7 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { exec as execNative, execSync } from 'node:child_process';
-import os from 'node:os';
+import { exec as execNative } from 'node:child_process';
 import { eq } from 'drizzle-orm';
 import { createApiClient } from '@neondatabase/api-client';
 import { apps, db, deployments } from '../db';
@@ -9,11 +8,11 @@ import { logger } from '../logger';
 import { promisify } from 'node:util';
 import { isProduction } from '../env';
 import {
-  getECRCredentials,
   createRepositoryIfNotExists,
   getImageName,
   generateScopedPullToken,
 } from '../ecr';
+import { dockerLoginIfNeeded } from '../docker';
 import {
   createEcrSecret,
   updateEcrSecret,
@@ -25,62 +24,6 @@ import {
   createKoyebDomain,
   getKoyebDomain,
 } from './koyeb';
-
-function dockerLogin({
-  username,
-  password,
-  registryUrl,
-}: {
-  username: string;
-  password: string;
-  registryUrl: string;
-}) {
-  return new Promise((resolve) => {
-    const result = execSync(
-      `docker login --username ${username} --password-stdin ${registryUrl}`,
-      {
-        input: password,
-        stdio: 'inherit',
-      },
-    );
-
-    resolve(result);
-  });
-}
-
-async function needsLogin() {
-  const dockerfilePath = path.join(os.homedir(), '.docker', 'config.json');
-
-  if (!fs.existsSync(dockerfilePath)) {
-    logger.info('Docker config file does not exist.');
-    return true;
-  }
-
-  const stats = fs.statSync(dockerfilePath);
-  const mtime = new Date(stats.mtime);
-
-  const now = new Date();
-  const twelveHoursAgo = new Date(now.getTime() - 11 * 60 * 60 * 1000);
-
-  const modifiedRecently = mtime > twelveHoursAgo;
-
-  return !modifiedRecently;
-}
-
-async function dockerLoginIfNeeded() {
-  const shouldLogin = await needsLogin();
-
-  if (!shouldLogin) {
-    logger.info('Docker config already exists, no login needed');
-    return Promise.resolve();
-  }
-
-  logger.info('Getting ECR credentials');
-  return getECRCredentials().then(({ username, password, registryUrl }) => {
-    logger.info('Logging in to ECR');
-    return dockerLogin({ username, password, registryUrl });
-  });
-}
 
 const exec = promisify(execNative);
 const NEON_DEFAULT_DATABASE_NAME = 'neondb';
