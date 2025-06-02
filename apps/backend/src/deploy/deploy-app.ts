@@ -1,73 +1,29 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { exec as execNative, execSync } from 'node:child_process';
-import os from 'node:os';
+import { exec as execNative } from 'node:child_process';
 import { eq } from 'drizzle-orm';
 import { createApiClient } from '@neondatabase/api-client';
-import { apps, db } from '../db';
+import { apps, db, deployments } from '../db';
 import { logger } from '../logger';
 import { promisify } from 'node:util';
 import { isProduction } from '../env';
 import {
-  getECRCredentials,
   createRepositoryIfNotExists,
   getImageName,
+  generateScopedPullToken,
 } from '../ecr';
-
-function dockerLogin({
-  username,
-  password,
-  registryUrl,
-}: {
-  username: string;
-  password: string;
-  registryUrl: string;
-}) {
-  return new Promise((resolve) => {
-    const result = execSync(
-      `docker login --username ${username} --password-stdin ${registryUrl}`,
-      {
-        input: password,
-        stdio: 'inherit',
-      },
-    );
-
-    resolve(result);
-  });
-}
-
-async function dockerLoginIfNeeded() {
-  if (fs.existsSync(path.join(os.homedir(), '.docker/config.json'))) {
-    logger.info('Docker config already exists, no login needed');
-    return Promise.resolve();
-  }
-
-  logger.info('Getting ECR credentials');
-  return getECRCredentials().then(({ username, password, registryUrl }) => {
-    logger.info('Logging in to ECR');
-    return dockerLogin({ username, password, registryUrl });
-  });
-}
-
-async function createKoyebApp({
-  koyebAppName,
-  appDirectory,
-}: {
-  koyebAppName: string;
-  appDirectory: string;
-}) {
-  try {
-    await exec(
-      `koyeb app create ${koyebAppName} --token ${process.env.KOYEB_CLI_TOKEN}`,
-      { cwd: appDirectory },
-    );
-
-    return { created: true };
-  } catch {
-    logger.info('App already exists, skipping creation');
-    return { created: false };
-  }
-}
+import { dockerLoginIfNeeded } from '../docker';
+import {
+  createEcrSecret,
+  updateEcrSecret,
+  createKoyebApp,
+  createKoyebOrganization,
+  createKoyebService,
+  getOrganizationToken,
+  updateKoyebService,
+  createKoyebDomain,
+  getKoyebDomain,
+} from './koyeb';
 
 const exec = promisify(execNative);
 const NEON_DEFAULT_DATABASE_NAME = 'neondb';
@@ -87,21 +43,30 @@ export async function deployApp({
     .select({
       deployStatus: apps.deployStatus,
       neonProjectId: apps.neonProjectId,
+      ownerId: apps.ownerId,
+      githubUsername: apps.githubUsername,
+      koyebAppId: apps.koyebAppId,
+      koyebServiceId: apps.koyebServiceId,
+      koyebDomainId: apps.koyebDomainId,
     })
     .from(apps)
     .where(eq(apps.id, appId));
 
-  if (!app[0]) {
+  const currentApp = app[0];
+
+  if (!currentApp) {
     throw new Error(`App ${appId} not found`);
   }
 
   // deployed is okay, but deploying is not
-  if (app[0].deployStatus === 'deploying') {
+  if (currentApp.deployStatus === 'deploying') {
     throw new Error(`App ${appId} is already being deployed`);
   }
 
   let connectionString: string | undefined;
-  let neonProjectId = app[0].neonProjectId;
+  let neonProjectId = currentApp.neonProjectId;
+
+  const githubUsername = currentApp.githubUsername?.toLowerCase();
 
   if (neonProjectId) {
     connectionString = await getNeonProjectConnectionString({
@@ -124,6 +89,32 @@ export async function deployApp({
     throw new Error('Failed to create Neon database');
   }
 
+  const deployment = await db
+    .select({
+      koyebOrgId: deployments.koyebOrgId,
+      koyebOrgName: deployments.koyebOrgName,
+      koyebOrgEcrSecretId: deployments.koyebOrgEcrSecretId,
+    })
+    .from(deployments)
+    .where(eq(deployments.ownerId, currentApp.ownerId!));
+
+  let koyebOrgId = deployment[0]?.koyebOrgId;
+  let koyebOrgName = deployment[0]?.koyebOrgName;
+  let koyebOrgEcrSecretId = deployment[0]?.koyebOrgEcrSecretId;
+
+  if (!koyebOrgId) {
+    ({ koyebOrgId, koyebOrgName } = await createKoyebOrganization(
+      githubUsername!,
+    ));
+
+    await db.insert(deployments).values({
+      appId,
+      ownerId: currentApp.ownerId!,
+      koyebOrgId,
+      koyebOrgName,
+    });
+  }
+
   await db
     .update(apps)
     .set({
@@ -137,7 +128,7 @@ export async function deployApp({
     throw new Error('Dockerfile not found');
   }
 
-  const imageName = getImageName(appId);
+  const imageName = getImageName(appId, githubUsername!);
 
   logger.info('Building Docker image');
 
@@ -146,7 +137,10 @@ export async function deployApp({
     // @ts-ignore
     stdio: 'inherit',
   });
-  const createRepositoryPromise = createRepositoryIfNotExists(appId);
+  const createRepositoryPromise = createRepositoryIfNotExists(
+    appId,
+    githubUsername!,
+  );
 
   const koyebAppName = `app-${appId}`;
   const envVars = {
@@ -179,21 +173,70 @@ export async function deployApp({
 
   logger.info('Starting Koyeb deployment', { koyebAppName });
 
-  const { created } = await createKoyebApp({
-    koyebAppName,
-    appDirectory,
-  });
-  const command = created ? 'create' : 'update';
+  const userToken = await getOrganizationToken(koyebOrgId);
 
-  await exec(
-    `koyeb service ${command} service --app ${koyebAppName} --docker ${imageName}:latest --docker-private-registry-secret ecr-creds --port 80:http --route /:80 --token ${process.env.KOYEB_CLI_TOKEN} ${envVarsString}`,
-    { cwd: appDirectory },
-  );
+  let koyebAppId = currentApp.koyebAppId;
+  let koyebServiceId = currentApp.koyebServiceId;
+  let koyebDomainId = currentApp.koyebDomainId;
+  const scopedPullToken = await generateScopedPullToken(githubUsername!);
+
+  const ecrParams = {
+    token: userToken,
+    username: scopedPullToken.username,
+    password: scopedPullToken.password,
+    url: scopedPullToken.registry.replace('https://', ''),
+  };
+
+  if (!koyebOrgEcrSecretId) {
+    koyebOrgEcrSecretId = await createEcrSecret(ecrParams);
+  } else {
+    await updateEcrSecret({
+      ...ecrParams,
+      secretId: koyebOrgEcrSecretId,
+    });
+  }
+
+  await db
+    .update(deployments)
+    .set({
+      koyebOrgEcrSecretId,
+    })
+    .where(eq(deployments.ownerId, currentApp.ownerId!));
+
+  if (!koyebAppId) {
+    ({ koyebAppId } = await createKoyebApp({
+      koyebAppName,
+      token: userToken,
+    }));
+  }
+
+  if (!koyebDomainId) {
+    ({ koyebDomainId } = await createKoyebDomain({
+      koyebAppId,
+      koyebAppName,
+      token: userToken,
+    }));
+  }
+
+  const params = {
+    dockerImage: imageName,
+    databaseUrl: connectionString,
+    token: userToken,
+  };
+
+  if (!koyebServiceId) {
+    ({ koyebServiceId } = await createKoyebService({ ...params, koyebAppId }));
+  } else {
+    await updateKoyebService({ ...params, serviceId: koyebServiceId });
+  }
 
   await db
     .update(apps)
     .set({
       flyAppId: koyebAppName,
+      koyebAppId,
+      koyebServiceId,
+      koyebDomainId,
       deployStatus: 'deployed',
     })
     .where(eq(apps.id, appId));
@@ -204,15 +247,11 @@ export async function deployApp({
     appId,
   });
 
-  const { stdout } = await exec(
-    `koyeb apps get ${koyebAppName} -o json --token=${process.env.KOYEB_CLI_TOKEN}`,
-  );
-
-  logger.info('Getting app URL', { stdout });
-  const { domains } = JSON.parse(stdout);
-  const { name } = domains[0];
-
-  const appUrl = `https://${name}`;
+  const { koyebDomainName } = await getKoyebDomain({
+    koyebDomainId,
+    token: userToken,
+  });
+  const appUrl = `https://${koyebDomainName}`;
 
   await db
     .update(apps)

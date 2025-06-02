@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { applyPatches } from 'diff';
 import type { Volume } from 'memfs';
+import { logger } from '../logger';
 
 export async function applyDiff(
   diffPath: string,
@@ -15,9 +16,15 @@ export async function applyDiff(
     applyPatches(diff.toString(), {
       loadFile: (patch, callback) => {
         const isNewFile = patch.oldFileName === '/dev/null';
-        const fileName = resolveFilePath(
-          patch.newFileName || patch.oldFileName,
-        );
+        const patchFileName = patch.newFileName || patch.oldFileName;
+
+        if (!patchFileName) {
+          logger.info('[loading] No file name: %s', patch);
+          callback(undefined, '');
+          return;
+        }
+
+        const fileName = resolveFilePath(patchFileName);
 
         if (isNewFile) {
           callback(undefined, '');
@@ -33,9 +40,16 @@ export async function applyDiff(
       },
       patched: (patch, patchedContent, callback) => {
         const isDeleted = patch.newFileName === '/dev/null';
-        const fileName = resolveFilePath(
-          patch.newFileName || patch.oldFileName,
-        );
+
+        const patchFileName = patch.newFileName || patch.oldFileName;
+
+        if (!patchFileName) {
+          logger.info('[patched] No file name: %s', patch);
+          callback(undefined);
+          return;
+        }
+
+        const fileName = resolveFilePath(patchFileName);
 
         if (isDeleted) {
           volume.unlinkSync(resolveFilePath(patch.oldFileName));
@@ -52,9 +66,9 @@ export async function applyDiff(
         callback(undefined);
       },
       complete: (err) => {
-        console.log('complete patching');
+        logger.info('complete patching');
         if (err) {
-          console.log('Failed with error:', err);
+          logger.error('Failed with error:', err);
         }
         resolve(targetDir);
       },

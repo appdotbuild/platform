@@ -23,6 +23,7 @@ export const DebugPanel = () => {
       width="100%"
       flexDirection="column"
       gap={1}
+      flexBasis="40%"
     >
       <Box flexDirection="column">
         <Text bold color="yellow">
