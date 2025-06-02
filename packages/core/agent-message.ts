@@ -37,7 +37,7 @@ export const conversationMessageSchema = z.object({
 export const agentSseEventMessageSchema = z.object({
   kind: messageKindSchema,
   messages: z.array(conversationMessageSchema),
-  agentState: z.record(z.unknown()).optional(),
+  agentState: z.record(z.unknown()).nullish(),
   unifiedDiff: z.string().nullish(),
   app_name: z.string().nullish(),
   commit_message: z.string().nullish(),
