@@ -1,13 +1,18 @@
 import { Box, Text, useInput } from 'ink';
 import { useSafeNavigate } from '../../routes.js';
 import { useAuthStore } from '../../auth/auth-store.js';
+import { clearTerminal } from '../../utils/terminal.js';
+import { useLocation } from 'react-router';
 
 export const ShortcutHints = () => {
   const { goBack } = useSafeNavigate();
   const isNeonEmployee = useAuthStore((state) => state.isNeonEmployee);
 
+  const { pathname } = useLocation();
+
   useInput((input, key) => {
     if (key.ctrl && input === 'b') {
+      if (pathname.startsWith('/apps/')) clearTerminal();
       goBack();
     }
   });

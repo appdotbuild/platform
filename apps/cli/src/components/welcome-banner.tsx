@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Static } from 'ink';
-import { Banner } from './ui/Banner';
+import { Banner } from './ui/banner';
 
 export function WelcomeBanner() {
   const bannerContent = useMemo(
