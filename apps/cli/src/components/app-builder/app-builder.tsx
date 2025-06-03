@@ -5,11 +5,10 @@ import {
   useFetchMessageLimit,
   useUserMessageLimitCheck,
 } from '../../hooks/use-message-limit.js';
+import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 import { InteractivePrompt } from '../interactive-prompt.js';
 import { LoadingMessage } from '../shared/display/loading-message.js';
 import { BuildStages } from './build-stages.js';
-import { PromptsHistory } from './prompts-history.js';
-import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 
 interface AppBuilderProps {
   initialPrompt: string;
@@ -177,9 +176,6 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
 
   return (
     <Box flexDirection="column">
-      {/* App history for existing apps */}
-      {appId && <PromptsHistory appId={appId} />}
-
       {/* Build stages - show when we have streaming data */}
       {streamingMessagesData && (
         <BuildStages

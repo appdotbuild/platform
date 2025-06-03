@@ -49,42 +49,44 @@ export function TextInput({
   if (!showPrompt) return null;
 
   return (
-    <Panel title={question} variant="default" boxProps={{ width: '100%' }}>
-      <Box flexDirection="column" gap={1}>
-        <Box>
-          <Text color="blue">❯ </Text>
-          {submittedValue ? (
-            <Text color="gray">{submittedValue}</Text>
-          ) : (
-            <InkTextInput
-              placeholder={placeholder}
-              onSubmit={(value) => {
-                setSubmittedValue(value);
-                onSubmit(value);
-              }}
-              isDisabled={
-                userMessageLimit?.isUserLimitReached || status === 'pending'
-              }
-              {...textInputProps}
-            />
+    <Box flexDirection="column" gap={1}>
+      <Panel variant="default" boxProps={{ width: '100%' }}>
+        <Box flexDirection="column" gap={1}>
+          <Box>
+            <Text color="blue">❯ </Text>
+            {submittedValue ? (
+              <Text color="gray">{submittedValue}</Text>
+            ) : (
+              <InkTextInput
+                placeholder={placeholder}
+                onSubmit={(value) => {
+                  setSubmittedValue(value);
+                  onSubmit(value);
+                }}
+                isDisabled={
+                  userMessageLimit?.isUserLimitReached || status === 'pending'
+                }
+                {...textInputProps}
+              />
+            )}
+          </Box>
+          {status === 'pending' && (
+            <Box gap={1}>
+              <Spinner />
+              <Text color="yellow">{loadingText}</Text>
+            </Box>
           )}
         </Box>
-        {status === 'pending' && (
-          <Box gap={1}>
-            <Spinner />
-            <Text color="yellow">{loadingText}</Text>
-          </Box>
-        )}
+      </Panel>
 
-        {userMessageLimit && (
-          <Box justifyContent="flex-end" marginTop={1}>
-            <Text color={!userMessageLimit.isUserLimitReached ? 'gray' : 'red'}>
-              {userMessageLimit.remainingMessages} /{' '}
-              {userMessageLimit.dailyMessageLimit} messages remaining
-            </Text>
-          </Box>
-        )}
-      </Box>
-    </Panel>
+      {userMessageLimit && (
+        <Box justifyContent="flex-end">
+          <Text color={!userMessageLimit.isUserLimitReached ? 'gray' : 'red'}>
+            {userMessageLimit.remainingMessages} /{' '}
+            {userMessageLimit.dailyMessageLimit} messages remaining
+          </Text>
+        </Box>
+      )}
+    </Box>
   );
 }

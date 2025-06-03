@@ -1,22 +1,22 @@
+import queryString from 'query-string';
+import { useCallback, useMemo } from 'react';
 import {
-  createSearchParams,
   MemoryRouter,
   Route,
   Routes,
+  type URLSearchParamsInit,
+  createSearchParams,
   useNavigate,
   useParams,
   useSearchParams,
-  type URLSearchParamsInit,
 } from 'react-router';
-import queryString from 'query-string';
-import { AppHomeScreen } from './app/app-home-screen.js';
-import { AppsListScreen } from './app/apps-list-screen.js';
-import { AppDetails } from './app/app-details.js';
-import { z, ZodObject, ZodType } from 'zod';
-import { useCallback, useMemo } from 'react';
-import { ShortcutHints } from './components/ui/shortcut-hints.js';
+import { type ZodObject, type ZodType, z } from 'zod';
 import { AppBuildScreen } from './app/app-build-screen.js';
+import { AppDetails } from './app/app-details.js';
+import { AppHomeScreen } from './app/app-home-screen.js';
 import { AppLogoutScreen } from './app/app-logout-screen.js';
+import { AppsListScreen } from './app/apps-list-screen.js';
+import { ShortcutHints } from './components/ui/shortcut-hints.js';
 
 export type RoutePath = RouterDefinition[number]['path'];
 type RouterDefinition = typeof ROUTES_DEFINITIONS;

@@ -3,9 +3,9 @@ import { Box, Text } from 'ink';
 import { useEffect } from 'react';
 import { authenticate, ensureIsNeonEmployee } from './auth/auth';
 import { useAuth } from './auth/use-auth';
-import { Banner } from './components/ui/Banner';
 import { DebugPanel } from './debug/debugger-panel';
 import { AppRouter } from './routes';
+import { WelcomeBanner } from './components/welcome-banner';
 
 const queryClient = new QueryClient();
 
@@ -22,7 +22,7 @@ export const App = () => {
     <QueryClientProvider client={queryClient}>
       <AuthWrapper>
         <Box display="flex" gap={1} width="100%">
-          <Box flexGrow={1} flexDirection="column" gap={1}>
+          <Box flexGrow={1} flexDirection="column">
             <AppRouter />
           </Box>
           <DebugPanel />
@@ -61,9 +61,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Banner title="Welcome to app.build CLI">
-        Create, deploy, and manage your applications with ease
-      </Banner>
+      <WelcomeBanner />
       {content}
     </Box>
   );

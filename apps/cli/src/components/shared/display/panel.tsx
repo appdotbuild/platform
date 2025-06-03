@@ -22,24 +22,16 @@ type PanelProps = {
   boxProps?: BoxProps;
 };
 
-export function Panel({
-  children,
-  title,
-  variant = 'default',
-  boxProps,
-}: PanelProps) {
-  const { borderColor } = variantColors[variant];
-
+export function Panel({ children, title, boxProps }: PanelProps) {
   return (
     <Box
+      borderColor={'white'}
       borderStyle="round"
-      borderColor={borderColor}
       flexDirection="column"
-      padding={1}
       {...boxProps}
     >
       {title && (
-        <Box marginBottom={2}>
+        <Box marginBottom={1}>
           <Text bold>{title}</Text>
         </Box>
       )}

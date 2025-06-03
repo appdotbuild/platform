@@ -54,7 +54,7 @@ export const Select = <T extends string>({
           ? 'success'
           : 'default'
       }
-      boxProps={{ width: '100%' }}
+      boxProps={{ width: '100%', padding: 1 }}
     >
       <Box flexDirection="column" gap={1}>
         <Box>

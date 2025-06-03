@@ -106,7 +106,7 @@ export function InteractivePrompt({
   };
 
   return (
-    <Box flexDirection="column" gap={1} width="100%">
+    <Box flexDirection="column" gap={1} width="100%" marginTop={1}>
       {history.map((input, index) => renderHistoryItem(input, index))}
 
       <TextInput
