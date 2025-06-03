@@ -5,6 +5,7 @@ import { Select } from '../components/shared/input/select.js';
 import type { SelectItem } from '../components/shared/input/types.js';
 import { useListApps } from '../hooks/use-application.js';
 import { useSafeNavigate } from '../routes.js';
+import { WelcomeBanner } from '../components/welcome-banner.js';
 
 export const getStatusEmoji = (status?: string | null): string => {
   switch (status) {
@@ -53,7 +54,9 @@ export const AppsListScreen = () => {
   };
 
   if (isLoading)
-    return <LoadingMessage message={'⏳ Loading applications...'} />;
+    return (
+      <LoadingMessage message={'⏳ Loading applications...'} showWelcome />
+    );
 
   if (error) {
     return (
@@ -78,7 +81,8 @@ export const AppsListScreen = () => {
   }));
 
   return (
-    <Box flexDirection="column" padding={1}>
+    <Box flexDirection="column" gap={1}>
+      <WelcomeBanner />
       <Box marginBottom={1}>
         <Text bold>🤖 Your Applications</Text>
       </Box>

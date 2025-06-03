@@ -1,6 +1,7 @@
 import { Box, Text } from 'ink';
 import { Select } from '../components/shared/input/select.js';
 import { type RoutePath, useSafeNavigate } from '../routes.js';
+import { WelcomeBanner } from '../components/welcome-banner.js';
 
 const items = [
   { label: '🆕 Create new app', value: '/app/build' as const },
@@ -21,7 +22,8 @@ export function AppHomeScreen() {
   const { safeNavigate } = useSafeNavigate();
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" gap={1}>
+      <WelcomeBanner />
       <Box marginBottom={1}>
         <Text bold>🤖 App Manager</Text>
       </Box>

@@ -1,8 +1,16 @@
 import { Box, Text } from 'ink';
+import { WelcomeBanner } from '../../welcome-banner';
 
-export const LoadingMessage = ({ message }: { message: string }) => {
+export const LoadingMessage = ({
+  message,
+  showWelcome = false,
+}: {
+  message: string;
+  showWelcome?: boolean;
+}) => {
   return (
-    <Box paddingY={1}>
+    <Box flexDirection="column" gap={1}>
+      {showWelcome && <WelcomeBanner />}
       <Text>{message}</Text>
     </Box>
   );

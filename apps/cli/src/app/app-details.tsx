@@ -14,7 +14,7 @@ export function AppDetails() {
   } = useApplication(appId);
 
   if (isLoadingApp || !appId)
-    return <LoadingMessage message={'⏳ Loading application...'} />;
+    return <LoadingMessage message={'⏳ Loading application...'} showWelcome />;
 
   if (errorApp) {
     return <Text color="red">Error: {errorApp.message}</Text>;

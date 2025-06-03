@@ -5,7 +5,6 @@ import { authenticate, ensureIsNeonEmployee } from './auth/auth';
 import { useAuth } from './auth/use-auth';
 import { DebugPanel } from './debug/debugger-panel';
 import { AppRouter } from './routes';
-import { WelcomeBanner } from './components/welcome-banner';
 
 const queryClient = new QueryClient();
 
@@ -61,7 +60,6 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <Box flexDirection="column" gap={1}>
-      <WelcomeBanner />
       {content}
     </Box>
   );

@@ -3,7 +3,7 @@ import {
   MessageKind,
   PlatformMessageType,
 } from '@appdotbuild/core';
-import { Box } from 'ink';
+import { Box, Text } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
 import {
   useFetchMessageLimit,
@@ -12,9 +12,11 @@ import {
 import { InteractivePrompt } from '../interactive-prompt.js';
 import { LoadingMessage } from '../shared/display/loading-message.js';
 import { BuildStages } from './build-stages.js';
+import { Panel } from '../shared/display/panel.js';
 
 interface AppBuilderProps {
   initialPrompt: string;
+  showTitle?: boolean;
   appId?: string;
   traceId?: string;
 }
@@ -122,7 +124,12 @@ const createAppBuilderStateMachine = (
   };
 };
 
-export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
+export function AppBuilder({
+  initialPrompt,
+  appId,
+  traceId,
+  showTitle = false,
+}: AppBuilderProps) {
   const {
     createApplication,
     createApplicationData,
@@ -179,6 +186,13 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
 
   return (
     <Box flexDirection="column">
+      {showTitle && (
+        <Box flexDirection="column" marginTop={1} marginBottom={0.5}>
+          <Text bold color="whiteBright">
+            🤖 {config.question}
+          </Text>
+        </Box>
+      )}
       {/* Build stages - show when we have streaming data */}
       {streamingMessagesData && (
         <BuildStages

@@ -1,9 +1,9 @@
+import { type AgentSseEvent, MessageKind } from '@appdotbuild/core';
 import { Box } from 'ink';
 import { useMemo } from 'react';
 import { usePhaseGroup } from '../../hooks/use-phase-group.js';
 import { Panel } from '../shared/display/panel.js';
 import { PhaseGroupItem } from './phase-group-item.js';
-import { AgentSseEvent, MessageKind } from '@appdotbuild/core';
 
 interface MessagesData {
   events?: AgentSseEvent[];
