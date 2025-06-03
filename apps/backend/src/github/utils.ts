@@ -87,14 +87,6 @@ export async function isNeonEmployee(
   username: string,
 ) {
   try {
-    const octokit = new Octokit({
-      auth: githubAccessToken,
-    });
-    const res = await octokit.rest.orgs.getMembershipForUser({
-      org: 'neondatabase-labs',
-      username,
-    });
-
     if (
       username === 'lennartkats-db' ||
       username === 'michaelp-db' ||
@@ -102,6 +94,14 @@ export async function isNeonEmployee(
     ) {
       return true;
     }
+
+    const octokit = new Octokit({
+      auth: githubAccessToken,
+    });
+    const res = await octokit.rest.orgs.getMembershipForUser({
+      org: 'neondatabase-labs',
+      username,
+    });
 
     return !!res.data;
   } catch (err) {

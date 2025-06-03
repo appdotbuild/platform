@@ -1,14 +1,13 @@
 import {
-  type MessageContentBlock,
+  AgentSseEvent,
   MessageKind,
   PlatformMessageType,
 } from '@appdotbuild/core';
 import { useMemo } from 'react';
-import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 import { type TaskDetail, TaskStatus } from '../shared/display/task-status.js';
 
 interface PhaseGroupItemProps {
-  group: { phase: MessageKind; events: ParsedSseEvent[] };
+  group: { phase: MessageKind; events: AgentSseEvent[] };
   groupIndex: number;
   currentPhase: MessageKind | undefined;
   isStreaming: boolean;
@@ -48,15 +47,14 @@ const getPhaseTitle = (
 const createTaskDetail = (
   messageContent: {
     role: 'assistant' | 'user';
-    content: MessageContentBlock[];
+    content: string;
   },
   index: number,
   messageContentLength: number,
   isCurrentPhase: boolean,
   isLastInteractiveGroup: boolean,
 ): TaskDetail | null => {
-  const textMessages = messageContent.content.filter((c) => c.type === 'text');
-  const message = textMessages[0];
+  const message = messageContent.content;
   if (!message) return null;
 
   const isLastMessage = index === messageContentLength - 1;
@@ -64,7 +62,7 @@ const createTaskDetail = (
     isCurrentPhase && isLastInteractiveGroup && isLastMessage;
 
   return {
-    text: message.text,
+    text: message,
     highlight: shouldHighlight,
     icon: '⎿',
     role: messageContent.role,
@@ -72,17 +70,17 @@ const createTaskDetail = (
 };
 
 const extractPhaseMessages = (
-  events: ParsedSseEvent[],
+  events: AgentSseEvent[],
   isCurrentPhase: boolean,
   isLastInteractiveGroup: boolean,
 ): TaskDetail[] => {
   return events.flatMap((event) => {
-    return event.message.content
-      .map((item, index) =>
+    return event.message.messages
+      .map((message, index) =>
         createTaskDetail(
-          item,
+          message,
           index,
-          event.message.content.length,
+          event.message.messages.length,
           isCurrentPhase,
           isLastInteractiveGroup,
         ),

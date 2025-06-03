@@ -2,21 +2,18 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
-  type AgentContentMessage,
   type AgentSseEvent,
   AgentStatus,
-  type ContentMessage,
-  type MessageContentBlock,
   MessageKind,
   type MessageLimitHeaders,
   PlatformMessage,
   PlatformMessageType,
   StreamingError,
   type TraceId,
-  type UserContentMessage,
-  type ApplicationId,
+  type ConversationMessage,
+  agentSseEventSchema,
 } from '@appdotbuild/core';
-import type { Optional } from '@appdotbuild/core';
+import type { AgentSseEventMessage, Optional } from '@appdotbuild/core';
 import { type Session, createSession } from 'better-sse';
 import { and, eq, sql } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -44,10 +41,14 @@ import {
 import { getAppPromptHistory } from './app-history';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
+import {
+  conversationManager,
+  type ConversationData,
+} from './conversation-manager';
 
 type Body = {
   applicationId?: string;
-  allMessages: ContentMessage[];
+  allMessages: AgentSseEventMessage['messages'];
   traceId: string;
   settings: Record<string, any>;
   agentState?: any;
@@ -65,7 +66,6 @@ type RequestBody = {
 
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
 
-const previousRequestMap = new Map<ApplicationId, AgentSseEvent | null>();
 const appExistsInDb = async (
   applicationId: string | undefined,
 ): Promise<boolean> => {
@@ -82,18 +82,6 @@ const appExistsInDb = async (
   const appExists = exists.length > 0;
 
   return appExists;
-};
-
-const cleanupTemporaryApp = (applicationId: string) => {
-  // we don't delete, so we can keep track of the app being temporary
-  previousRequestMap.delete(applicationId);
-};
-
-const addPreviousRequestToMap = (
-  applicationId: string,
-  event: AgentSseEvent,
-) => {
-  previousRequestMap.set(applicationId, event);
 };
 
 const generateTraceId = (
@@ -165,13 +153,13 @@ export async function postMessage(
       allMessages: [
         {
           role: 'user',
-          content: requestBody.message as Stringified<MessageContentBlock[]>,
+          content: requestBody.message,
         },
       ],
       settings: requestBody.settings || { 'max-iterations': 3 },
     };
 
-    let appName = null;
+    let appName: string | null = null;
     let isPermanentApp = await appExistsInDb(applicationId);
     if (applicationId) {
       app.log.info(`existing applicationId ${applicationId}`);
@@ -191,25 +179,19 @@ export async function postMessage(
         }
 
         streamLog(
-          `application found: ${JSON.stringify(application[0])}`,
+          `application found: ${JSON.stringify(application[0]?.id)}`,
           'info',
         );
         appName = application[0]!.appName;
-        // save iteration user message
-        try {
-          await db.insert(appPrompts).values({
-            id: uuidv4(),
-            prompt: requestBody.message,
-            appId: applicationId,
-            kind: 'user',
-          });
-        } catch (error) {
-          app.log.error(`Error saving iteration user message: ${error}`);
-        }
-
         const messagesFromHistory = await getMessagesFromHistory(
           applicationId,
           userId,
+        );
+
+        //add existing messages to in-memory conversation
+        conversationManager.addMessagesToConversation(
+          applicationId,
+          messagesFromHistory,
         );
 
         body = {
@@ -221,9 +203,7 @@ export async function postMessage(
             ...messagesFromHistory,
             {
               role: 'user' as const,
-              content: requestBody.message as Stringified<
-                MessageContentBlock[]
-              >,
+              content: requestBody.message,
             },
           ],
         };
@@ -233,22 +213,25 @@ export async function postMessage(
         );
       } else {
         // for temporary apps, we need to get the previous request from the memory
-        const previousRequest = previousRequestMap.get(applicationId);
-        if (!previousRequest) {
+        const existingConversation =
+          conversationManager.getConversation(applicationId);
+        if (!existingConversation) {
           streamLog('previous request not found', 'error');
-          return reply.status(404).send({
-            error: 'Previous request not found',
-            status: 'error',
-          });
+          terminateStreamWithError(
+            session,
+            'Previous request not found',
+            abortController,
+          );
+          return;
         }
 
         body = {
           ...body,
           ...getExistingConversationBody({
-            previousEvent: previousRequest,
+            existingConversation,
             existingTraceId: traceId as TraceId,
             applicationId,
-            message: requestBody.message,
+            userMessage: requestBody.message,
             settings: requestBody.settings,
           }),
         };
@@ -263,12 +246,17 @@ export async function postMessage(
       };
     }
 
+    // add user message to conversation
+    conversationManager.addUserMessageToConversation(
+      applicationId,
+      requestBody.message,
+    );
+
     const tempDirPath = path.join(
       os.tmpdir(),
       `appdotbuild-template-${Date.now()}`,
     );
 
-    streamLog(`isPermanentApp ${isPermanentApp}, appName ${appName}`, 'info');
     const volumePromise = isPermanentApp
       ? cloneRepository({
           repo: `${githubUsername}/${appName}`,
@@ -321,12 +309,6 @@ export async function postMessage(
         body: JSON.stringify(body),
       },
     );
-    if (isDev) {
-      fs.writeFileSync(
-        `${logsFolder}/${applicationId}-agent-response.json`,
-        JSON.stringify(JSON.stringify(agentResponse), null, 2),
-      );
-    }
 
     if (!agentResponse.ok) {
       const errorData = await agentResponse.json();
@@ -382,29 +364,68 @@ export async function postMessage(
       for (const message of messages) {
         try {
           if (session.isConnected) {
-            const parsedMessage = JSON.parse(message);
+            const parsedEvent = JSON.parse(message);
             buffer = buffer.slice(
               'data: '.length + message.length + '\n\n'.length,
             );
 
-            if (parsedMessage.message.kind === 'KeepAlive') {
-              streamLog('keep alive message received');
+            let completeParsedMessage: AgentSseEvent;
+            try {
+              completeParsedMessage = agentSseEventSchema.parse(parsedEvent);
+            } catch (error) {
+              streamLog(
+                `[appId: ${applicationId}] Error validating schema for message: ${JSON.stringify(
+                  parsedEvent,
+                )}. Error: ${JSON.stringify(error)}`,
+                'error',
+              );
+              terminateStreamWithError(
+                session,
+                'There was an error validating the message schema, try again with a different prompt.',
+                abortController,
+              );
+              return;
+            }
+
+            if (parsedEvent.message.kind === 'KeepAlive') {
+              streamLog(
+                `[appId: ${applicationId}] keep alive message received`,
+                'info',
+              );
               continue;
             }
 
-            streamLog(`message sent to CLI: ${message}`);
-            storeDevLogs(parsedMessage, message);
-            addPreviousRequestToMap(applicationId, parsedMessage);
-            session.push(message);
+            storeDevLogs(completeParsedMessage, message);
+            conversationManager.addConversation(
+              applicationId,
+              completeParsedMessage,
+            );
+
+            const parsedMessageWithFullMessagesHistory: AgentSseEvent = {
+              ...completeParsedMessage,
+              message: {
+                ...completeParsedMessage.message,
+                messages:
+                  conversationManager.getConversationHistory(applicationId),
+              },
+            };
+
+            streamLog(
+              `[appId: ${applicationId}] message sent to CLI: ${JSON.stringify(
+                parsedMessageWithFullMessagesHistory,
+              )}`,
+            );
+            session.push(parsedMessageWithFullMessagesHistory);
+
             if (
-              parsedMessage.message.unifiedDiff ===
+              completeParsedMessage.message.unifiedDiff ===
               '# Note: This is a valid empty diff (means no changes from template)'
             ) {
-              parsedMessage.message.unifiedDiff = null;
+              completeParsedMessage.message.unifiedDiff = null;
             }
 
             if (
-              parsedMessage.message.unifiedDiff?.startsWith(
+              completeParsedMessage.message.unifiedDiff?.startsWith(
                 '# ERROR GENERATING DIFF',
               )
             ) {
@@ -416,7 +437,7 @@ export async function postMessage(
               return;
             }
 
-            canDeploy = !!parsedMessage.message.unifiedDiff;
+            canDeploy = !!completeParsedMessage.message.unifiedDiff;
 
             if (canDeploy) {
               streamLog(
@@ -430,12 +451,12 @@ export async function postMessage(
               );
 
               streamLog(
-                `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${parsedMessage.message.unifiedDiff}`,
+                `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${completeParsedMessage.message.unifiedDiff}`,
                 'info',
               );
               volume.writeFileSync(
                 unifiedDiffPath,
-                `${parsedMessage.message.unifiedDiff}\n\n`,
+                `${completeParsedMessage.message.unifiedDiff}\n\n`,
               );
               const respositoryPath = await applyDiff(
                 unifiedDiffPath,
@@ -455,29 +476,33 @@ export async function postMessage(
                 );
               }
 
-              if (isPermanentApp) {
-                streamLog(`app iteration: ${applicationId}`, 'info');
+              if (isPermanentApp && appName) {
+                streamLog(`[appId: ${applicationId}] app iteration`, 'info');
                 await appIteration({
-                  appName,
+                  appName: appName,
                   githubUsername,
                   githubAccessToken,
                   files,
-                  agentState: parsedMessage.message.agentState,
+                  agentState: completeParsedMessage.message.agentState,
                   applicationId,
                   traceId: traceId as TraceId,
                   session,
                   commitMessage:
-                    parsedMessage.message.commit_message || 'feat: update',
+                    completeParsedMessage.message.commit_message ||
+                    'feat: update',
                 });
-              } else {
-                streamLog(`creating new app: ${applicationId}`, 'info');
+              } else if (
+                completeParsedMessage.message.kind !==
+                MessageKind.REFINEMENT_REQUEST
+              ) {
+                streamLog(`[appId: ${applicationId}] creating new app`, 'info');
                 appName =
-                  parsedMessage.message.app_name ||
+                  completeParsedMessage.message.app_name ||
                   `app.build-${uuidv4().slice(0, 4)}`;
                 const { newAppName } = await appCreation({
                   applicationId,
                   appName,
-                  agentState: parsedMessage.message.agentState,
+                  agentState: completeParsedMessage.message.agentState,
                   githubAccessToken,
                   githubUsername,
                   ownerId: request.user.id,
@@ -502,7 +527,7 @@ export async function postMessage(
               );
 
               await addAppURL({
-                repo: appName,
+                repo: appName as string,
                 owner: githubUsername,
                 appURL: appURL,
                 githubAccessToken,
@@ -519,16 +544,10 @@ export async function postMessage(
             }
 
             const canBreakStream =
-              parsedMessage.status === AgentStatus.IDLE &&
-              parsedMessage.kind !== MessageKind.REFINEMENT_REQUEST;
+              completeParsedMessage.status === AgentStatus.IDLE &&
+              completeParsedMessage.message.kind !==
+                MessageKind.REFINEMENT_REQUEST;
             if (canBreakStream) {
-              streamLog(
-                `before saving agent message, isPermanentApp: ${isPermanentApp}`,
-                'info',
-              );
-              if (isPermanentApp) {
-                await saveAgentMessage(parsedMessage, applicationId);
-              }
               abortController.abort();
               break;
             }
@@ -539,22 +558,32 @@ export async function postMessage(
             error instanceof Error &&
             error.message.includes('Unterminated string')
           ) {
-            streamLog('Incomplete message');
+            streamLog(`[appId: ${applicationId}] incomplete message`, 'error');
             continue;
           }
 
-          streamLog(`Error handling SSE message: ${error}`, 'error');
+          streamLog(
+            `[appId: ${applicationId}] Error handling SSE message: ${error}, for message: ${message}`,
+            'error',
+          );
         }
       }
     }
 
-    streamLog('stream finished');
+    if (isPermanentApp) {
+      await saveAgentMessage(
+        conversationManager.getConversationHistory(applicationId),
+        applicationId,
+      );
+      conversationManager.removeConversation(applicationId);
+    }
+    streamLog(`[appId: ${applicationId}] stream finished`, 'info');
     session.push({ done: true, traceId: traceId }, 'done');
     session.removeAllListeners();
 
     reply.raw.end();
   } catch (error) {
-    streamLog(`Unhandled error: ${error}`, 'error');
+    streamLog(`[appId: ${applicationId}] Unhandled error: ${error}`, 'error');
     session.push(
       new StreamingError((error as Error).message ?? 'Unknown error'),
       'error',
@@ -642,20 +671,7 @@ async function appCreation({
     appName: newAppName,
     githubUsername,
   });
-  cleanupTemporaryApp(applicationId);
   streamLog(`app created: ${applicationId}`, 'info');
-
-  // save first message after app creation
-  try {
-    await db.insert(appPrompts).values({
-      id: uuidv4(),
-      prompt: requestBody.message,
-      appId: applicationId,
-      kind: 'user',
-    });
-  } catch (error) {
-    app.log.error(`Error saving initial user message: ${error}`);
-  }
 
   session.push(
     new PlatformMessage(
@@ -758,52 +774,29 @@ async function createUserUpstreamApp({
 }
 
 function getExistingConversationBody({
-  previousEvent,
-  message,
+  existingConversation,
+  userMessage,
   settings,
   existingTraceId,
   applicationId,
 }: {
-  previousEvent: AgentSseEvent;
+  existingConversation: ConversationData;
   existingTraceId: string;
   applicationId: string;
-  message: string;
+  userMessage: string;
   settings?: Record<string, any>;
 }) {
-  const messagesHistory = JSON.parse(previousEvent.message.content);
-  const messages = messagesHistory.map(
-    (content: {
-      role: 'user' | 'assistant';
-      content: MessageContentBlock[];
-    }) => {
-      const { role, content: messageContent } = content;
-      if (role === 'user') {
-        const textContent = messageContent
-          .filter((c) => c.type === 'text')
-          .map((c) => c.text)
-          .join('');
-        return {
-          role: 'user' as const,
-          content: textContent,
-        } as UserContentMessage;
-      }
-      return {
-        role: 'assistant' as const,
-        content: JSON.stringify(messageContent),
-        kind: MessageKind.STAGE_RESULT,
-      } as AgentContentMessage;
-    },
-  );
+  const messages = existingConversation.allMessages;
 
   return {
     allMessages: [
       ...messages,
       {
         role: 'user' as const,
-        content: message as Stringified<MessageContentBlock[]>,
+        content: userMessage,
       },
     ],
-    agentState: previousEvent.message.agentState,
+    agentState: existingConversation.agentState,
     traceId: existingTraceId,
     applicationId,
     settings: settings || { 'max-iterations': 3 },
@@ -824,10 +817,11 @@ function createStreamLogger(session: Session, isNeonEmployee: boolean) {
 async function getMessagesFromHistory(
   applicationId: string,
   userId: string,
-): Promise<ContentMessage[]> {
-  if (previousRequestMap.has(applicationId)) {
+): Promise<ConversationMessage[]> {
+  if (conversationManager.hasConversation(applicationId)) {
     // for temp apps, first check in-memory
-    const memoryMessages = getMessagesFromMemory(applicationId);
+    const memoryMessages =
+      conversationManager.getConversationHistory(applicationId);
     if (memoryMessages.length > 0) {
       return memoryMessages;
     }
@@ -839,47 +833,10 @@ async function getMessagesFromHistory(
   return await getMessagesFromDB(applicationId, userId);
 }
 
-function getMessagesFromMemory(applicationId: ApplicationId): ContentMessage[] {
-  const previousRequest = previousRequestMap.get(applicationId);
-  if (!previousRequest) {
-    return [];
-  }
-
-  try {
-    const messagesHistory = JSON.parse(previousRequest.message.content);
-    return messagesHistory.map(
-      (content: {
-        role: 'user' | 'assistant';
-        content: MessageContentBlock[];
-      }) => {
-        const { role, content: messageContent } = content;
-        if (role === 'user') {
-          const textContent = messageContent
-            .filter((c) => c.type === 'text')
-            .map((c) => c.text)
-            .join('');
-          return {
-            role: 'user' as const,
-            content: textContent,
-          } as UserContentMessage;
-        }
-        return {
-          role: 'assistant' as const,
-          content: JSON.stringify(messageContent),
-          kind: MessageKind.STAGE_RESULT,
-        } as AgentContentMessage;
-      },
-    );
-  } catch (error) {
-    app.log.error(`Error parsing messages from memory: ${error}`);
-    return [];
-  }
-}
-
 async function getMessagesFromDB(
   applicationId: string,
   userId: string,
-): Promise<ContentMessage[]> {
+): Promise<ConversationMessage[]> {
   const history = await getAppPromptHistory(applicationId, userId);
 
   if (!history || history.length === 0) {
@@ -891,45 +848,48 @@ async function getMessagesFromDB(
       return {
         role: 'user' as const,
         content: prompt.prompt,
-      } as UserContentMessage;
+      };
     }
     return {
       role: 'assistant' as const,
       content: prompt.prompt,
       kind: MessageKind.STAGE_RESULT,
-    } as AgentContentMessage;
+    };
   });
 }
 
 async function saveAgentMessage(
-  parsedMessage: AgentSseEvent,
+  messagesHistory: ConversationMessage[],
   applicationId: string,
 ) {
   try {
-    const messagesHistory = JSON.parse(parsedMessage.message.content);
-
-    const assistantMessages = messagesHistory.filter(
-      (msg) => msg.role === 'assistant',
-    );
-
-    if (assistantMessages.length === 0) {
+    if (messagesHistory.length === 0) {
       return;
     }
 
-    for (const assistantMessage of assistantMessages) {
-      const appPromptsToStore = assistantMessage.content
-        .filter((block) => block.type === 'text')
-        .map((block) => {
-          return {
-            id: uuidv4(),
-            prompt: block.text,
-            appId: applicationId,
-            kind: 'agent',
-          };
-        });
-
-      await db.insert(appPrompts).values(appPromptsToStore);
+    if (isDev) {
+      fs.writeFileSync(
+        `${logsFolder}/messages-history-${applicationId}.json`,
+        JSON.stringify(messagesHistory, null, 2),
+      );
     }
+
+    // TODO: we might not need to delete all existing prompts for the app, since we can add 1 by 1 now
+    // delete all existing prompts for the app ONCE
+    await db.delete(appPrompts).where(eq(appPrompts.appId, applicationId));
+
+    // collect all prompts from all messages
+    const appPromptsToStore = messagesHistory.map((message) => {
+      return {
+        id: uuidv4(),
+        prompt: message.content,
+        appId: applicationId,
+        kind: message.role,
+      };
+    });
+
+    // store all prompts at once
+    await db.insert(appPrompts).values(appPromptsToStore);
   } catch (error) {
     app.log.error(`Error saving agent message: ${error}`);
   }

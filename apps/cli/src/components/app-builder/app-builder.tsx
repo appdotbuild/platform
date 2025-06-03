@@ -1,11 +1,14 @@
-import { MessageKind, PlatformMessageType } from '@appdotbuild/core';
+import {
+  type AgentSseEvent,
+  MessageKind,
+  PlatformMessageType,
+} from '@appdotbuild/core';
 import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
 import {
   useFetchMessageLimit,
   useUserMessageLimitCheck,
 } from '../../hooks/use-message-limit.js';
-import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 import { InteractivePrompt } from '../interactive-prompt.js';
 import { LoadingMessage } from '../shared/display/loading-message.js';
 import { BuildStages } from './build-stages.js';
@@ -33,7 +36,7 @@ interface PromptConfig {
 
 const createAppBuilderStateMachine = (
   initialPrompt: string,
-  streamingMessagesData: { events: ParsedSseEvent[] } | undefined,
+  streamingMessagesData: { events: AgentSseEvent[] } | undefined,
   isStreamingMessages: boolean,
   hasAppId: boolean,
 ) => {
