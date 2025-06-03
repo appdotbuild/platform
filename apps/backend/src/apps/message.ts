@@ -416,11 +416,12 @@ export async function postMessage(
               },
             };
 
-            const messageToSend = JSON.stringify(
-              parsedMessageWithFullMessagesHistory,
+            streamLog(
+              `message sent to CLI: ${JSON.stringify(
+                parsedMessageWithFullMessagesHistory,
+              )}`,
             );
-            streamLog(`message sent to CLI: ${messageToSend}`);
-            session.push(messageToSend);
+            session.push(parsedMessageWithFullMessagesHistory);
 
             if (
               completeParsedMessage.message.unifiedDiff ===
@@ -532,7 +533,7 @@ export async function postMessage(
               );
 
               await addAppURL({
-                repo: appName,
+                repo: appName!,
                 owner: githubUsername,
                 appURL: appURL,
                 githubAccessToken,

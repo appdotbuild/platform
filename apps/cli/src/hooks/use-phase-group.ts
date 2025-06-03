@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { AgentSseEvent, MessageKind } from '@appdotbuild/core';
+import { type AgentSseEvent, MessageKind } from '@appdotbuild/core';
 
 type PhaseGroup = {
   phase: MessageKind;

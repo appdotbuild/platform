@@ -1,4 +1,8 @@
-import { AgentSseEvent, MessageKind } from '@appdotbuild/core';
+import {
+  AgentSseEvent,
+  MessageKind,
+  PlatformMessageType,
+} from '@appdotbuild/core';
 import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
 import {

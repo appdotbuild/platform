@@ -1,4 +1,8 @@
-import { AgentSseEvent, MessageKind } from '@appdotbuild/core';
+import {
+  AgentSseEvent,
+  MessageKind,
+  PlatformMessageType,
+} from '@appdotbuild/core';
 import { useMemo } from 'react';
 import { type TaskDetail, TaskStatus } from '../shared/display/task-status.js';
 

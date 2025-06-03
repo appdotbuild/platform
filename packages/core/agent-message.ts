@@ -1,10 +1,15 @@
 import { z } from 'zod';
 
+export enum PlatformMessageType {
+  DEPLOYMENT_COMPLETE = 'deployment_complete',
+  DEPLOYMENT_FAILED = 'deployment_failed',
+  REPO_CREATED = 'repo_created',
+  COMMIT_CREATED = 'commit_created',
+}
+
 type RequestId = string;
 export type ApplicationId = string;
 export type TraceId = `app-${ApplicationId}.req-${RequestId}`;
-
-import type { PlatformMessageMetadata } from './types/api.js';
 
 export enum AgentStatus {
   RUNNING = 'running',
@@ -33,6 +38,10 @@ export const conversationMessageSchema = z.object({
   content: z.string(),
 });
 
+export type PlatformMessageMetadata = {
+  type?: PlatformMessageType;
+};
+
 // Agent SSE Event message object
 export const agentSseEventMessageSchema = z.object({
   kind: messageKindSchema,
@@ -41,6 +50,13 @@ export const agentSseEventMessageSchema = z.object({
   unifiedDiff: z.string().nullish(),
   app_name: z.string().nullish(),
   commit_message: z.string().nullish(),
+
+  // Platform message metadata
+  metadata: z
+    .object({
+      type: z.nativeEnum(PlatformMessageType).optional(),
+    })
+    .optional(),
 });
 
 // Agent SSE Event
@@ -80,14 +96,21 @@ export class PlatformMessage {
   status: AgentStatus;
   traceId: TraceId;
   message: AgentSseEventMessage;
+  metadata?: PlatformMessageMetadata;
 
-  constructor(status: AgentStatus, traceId: TraceId, message: string) {
+  constructor(
+    status: AgentStatus,
+    traceId: TraceId,
+    message: string,
+    metadata?: PlatformMessageMetadata,
+  ) {
     this.status = status;
     this.traceId = traceId;
     this.message = {
       kind: MessageKind.PLATFORM_MESSAGE,
       messages: [{ role: 'assistant', content: message }],
     };
+    this.metadata = metadata;
   }
 }
 
