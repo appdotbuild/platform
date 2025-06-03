@@ -44,6 +44,11 @@ import {
 import { getAppPromptHistory } from './app-history';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
+import {
+  decrementActiveSession,
+  incrementActiveSession,
+  incrementActiveSessions,
+} from './active-sse-sessions';
 
 type Body = {
   applicationId?: string;
@@ -105,6 +110,33 @@ export async function postMessage(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
+  try {
+    const canIncrement = await incrementActiveSessions();
+    if (!canIncrement) {
+      return reply.status(429).send(
+        JSON.stringify({
+          title: "We're too popular! 🎉",
+          message:
+            'app.build is experiencing high demand right now. Please try again in a few moments.',
+          suggestion: 'Need priority access? Contact support@app.build',
+          status: 'busy',
+        }),
+      );
+    }
+  } catch (error) {
+    app.log.error(`Error incrementing active session: ${error}`);
+    return reply.status(500).send({
+      error: 'An error occurred while processing your request',
+      status: 'error',
+    });
+  }
+
+  const a = await new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true);
+    }, 10000);
+  });
+
   const userId = request.user.id;
   const isNeonEmployee = request.user.isNeonEmployee;
 
@@ -566,6 +598,8 @@ export async function postMessage(
       status: 'error',
       traceId,
     });
+  } finally {
+    decrementActiveSession();
   }
 }
 

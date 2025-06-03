@@ -1,6 +1,7 @@
 import {
   pgTable,
   text,
+  check,
   timestamp,
   uuid,
   boolean,
@@ -8,7 +9,10 @@ import {
   index,
   jsonb,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
+
+export const MAX_ACTIVE_CONNECTIONS = 50;
+export const COUNTER_ID = 1;
 
 export const apps = pgTable(
   'apps',
@@ -93,5 +97,31 @@ export const customMessageLimits = pgTable('custom_message_limits', {
     .defaultNow(),
 });
 
+export const activeSessions = pgTable(
+  'active_sessions',
+  {
+    id: uuid('id').primaryKey(),
+    userId: text('userId').notNull(),
+    traceId: text('traceId').notNull(),
+    applicationId: text('applicationId'),
+    requestId: text('requestId'),
+    ipAddress: text('ipAddress'),
+    userAgent: text('userAgent'),
+    startedAt: timestamp('startedAt', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    lastActiveAt: timestamp('lastActiveAt', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('idx_active_sessions_userid').on(table.userId),
+    index('idx_active_sessions_lastactive').on(table.lastActiveAt),
+    index('idx_active_sessions_traceid').on(table.traceId),
+    index('idx_active_sessions_appid').on(table.applicationId),
+  ],
+);
+
 export type AppPrompts = typeof appPrompts.$inferSelect;
 export type App = typeof apps.$inferSelect;
+export type ActiveSession = typeof activeSessions.$inferSelect;
