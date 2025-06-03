@@ -1,23 +1,21 @@
-import { MessageKind } from '@appdotbuild/core';
+import { type AgentSseEvent, MessageKind } from '@appdotbuild/core';
 import { memo } from 'react';
-import type { ParsedSseEvent } from '../../hooks/use-send-message';
 import { type TaskDetail, TaskStatus } from '../shared/display/task-status';
 
-function MessageItem({ event }: { event: ParsedSseEvent }) {
+function MessageItem({ event }: { event: AgentSseEvent }) {
   const messageTitle =
     event.message.kind === MessageKind.PLATFORM_MESSAGE
       ? 'Agent message'
       : 'User message';
 
   const messageDetails = () => {
-    const content = event.message?.content;
+    const messages = event.message?.messages;
 
-    if (!content || content.length === 0) return [];
+    if (!messages || messages.length === 0) return [];
 
-    const role = event.message.role || 'user';
-
-    // Get the text from the first content item
-    const text = content[0]?.content?.[0]?.text || '';
+    const firstMessage = messages[0];
+    const role = firstMessage?.role || 'user';
+    const text = firstMessage?.content || '';
 
     return [
       {
@@ -48,6 +46,6 @@ function MessageItem({ event }: { event: ParsedSseEvent }) {
   );
 }
 
-export const AppMessageItem = memo(({ event }: { event: ParsedSseEvent }) => {
+export const AppMessageItem = memo(({ event }: { event: AgentSseEvent }) => {
   return <MessageItem event={event} />;
 });

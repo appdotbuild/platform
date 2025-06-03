@@ -1,8 +1,7 @@
-import type { App } from '@appdotbuild/core';
+import type { App, AgentSseEvent } from '@appdotbuild/core';
 import { Static } from 'ink';
 import { useMemo } from 'react';
 import { useApplicationHistory } from '../../hooks/use-application';
-import type { ParsedSseEvent } from '../../hooks/use-send-message';
 import { LoadingMessage } from '../shared/display/loading-message';
 import { AppDetailsPanel } from './app-details-panel';
 import { AppMessageItem } from './app-message-item';
@@ -12,7 +11,7 @@ export function AppMessages({ app }: { app: App }) {
   const { data: historyMessages, isLoading } = useApplicationHistory(app.id);
 
   const staticItems = useMemo(() => {
-    const items: Array<'app-details' | 'chat-header' | ParsedSseEvent> = [
+    const items: Array<'app-details' | 'chat-header' | AgentSseEvent> = [
       'app-details',
       'chat-header',
     ];
@@ -42,7 +41,7 @@ export function AppMessages({ app }: { app: App }) {
           return <AppMessagesHeader key={'history-header'} />;
         }
 
-        const event = item as ParsedSseEvent;
+        const event = item as AgentSseEvent;
         return (
           <AppMessageItem
             key={`${event.message.kind}-${index}`}
