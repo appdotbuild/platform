@@ -32,10 +32,16 @@ export const useListApps = () => {
   });
 };
 
-export const useApplicationHistory = (appId: string | undefined) => {
+export const useApplicationHistory = (
+  appId: string | undefined,
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryKey: applicationQueryKeys.appHistory(appId ?? ''),
     queryFn: () => getAppHistory(appId!),
-    enabled: !!appId,
+    enabled: !!appId && options?.enabled !== false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 };

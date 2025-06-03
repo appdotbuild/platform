@@ -1,8 +1,7 @@
 import { type AgentSseEvent, MessageKind } from '@appdotbuild/core';
-import { Box } from 'ink';
+import { Box, Text } from 'ink';
 import { useMemo } from 'react';
 import { usePhaseGroup } from '../../hooks/use-phase-group.js';
-import { Panel } from '../shared/display/panel.js';
 import { PhaseGroupItem } from './phase-group-item.js';
 
 interface MessagesData {
@@ -41,7 +40,10 @@ export function BuildStages({
     currentMessage?.message.kind === MessageKind.REFINEMENT_REQUEST;
 
   return (
-    <Panel title={title} variant="info">
+    <Box flexDirection="column" marginTop={1} marginBottom={0.5}>
+      <Text bold color="whiteBright">
+        🤖 {title}
+      </Text>
       <Box flexDirection="column" gap={1}>
         {phaseGroups?.map((group, groupIdx) => (
           <PhaseGroupItem
@@ -56,6 +58,6 @@ export function BuildStages({
           />
         ))}
       </Box>
-    </Panel>
+    </Box>
   );
 }

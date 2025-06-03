@@ -131,6 +131,7 @@ export const useSendMessage = () => {
     onSuccess: (result) => {
       void queryClient.invalidateQueries({
         queryKey: applicationQueryKeys.app(result.applicationId),
+        exact: true,
       });
     },
   });
