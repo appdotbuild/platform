@@ -80,29 +80,6 @@ export class ConversationManager {
   }
 
   /**
-   * Get conversation history formatted for client consumption
-   */
-  getConversationHistoryForClient(applicationId: string): any[] {
-    const data = this.conversationMap.get(applicationId);
-    if (!data) return [];
-
-    return data.allMessages.map((message) => {
-      if (message.role === 'user') {
-        return {
-          role: 'user',
-          content: message.content,
-        };
-      } else {
-        return {
-          role: 'assistant',
-          content: message.content,
-          kind: MessageKind.STAGE_RESULT,
-        };
-      }
-    });
-  }
-
-  /**
    * Get the previous event for an application
    */
   getConversation(applicationId: string): ConversationData | null {
@@ -155,5 +132,4 @@ export class ConversationManager {
   }
 }
 
-// Export a singleton instance
 export const conversationManager = new ConversationManager();

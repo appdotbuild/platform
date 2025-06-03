@@ -189,11 +189,6 @@ export async function postMessage(
           userId,
         );
 
-        streamLog(
-          `messagesFromHistory: ${JSON.stringify(messagesFromHistory)}`,
-          'info',
-        );
-
         //add existing messages to in-memory conversation
         conversationManager.addMessagesToConversation(
           applicationId,
@@ -376,19 +371,14 @@ export async function postMessage(
               'data: '.length + message.length + '\n\n'.length,
             );
 
-            if (parsedEvent.message.kind === 'KeepAlive') {
-              streamLog('keep alive message received');
-              continue;
-            }
-
             let completeParsedMessage: AgentSseEvent;
             try {
               completeParsedMessage = agentSseEventSchema.parse(parsedEvent);
             } catch (error) {
               streamLog(
-                `Error validating schema for message: ${JSON.stringify(
+                `[appId: ${applicationId}] Error validating schema for message: ${JSON.stringify(
                   parsedEvent,
-                )}. Error: ${error}`,
+                )}. Error: ${JSON.stringify(error)}`,
                 'error',
               );
               terminateStreamWithError(
@@ -397,6 +387,14 @@ export async function postMessage(
                 abortController,
               );
               return;
+            }
+
+            if (parsedEvent.message.kind === 'KeepAlive') {
+              streamLog(
+                `[appId: ${applicationId}] keep alive message received`,
+                'info',
+              );
+              continue;
             }
 
             storeDevLogs(completeParsedMessage, message);
@@ -410,14 +408,12 @@ export async function postMessage(
               message: {
                 ...completeParsedMessage.message,
                 messages:
-                  conversationManager.getConversationHistoryForClient(
-                    applicationId,
-                  ),
+                  conversationManager.getConversationHistory(applicationId),
               },
             };
 
             streamLog(
-              `message sent to CLI: ${JSON.stringify(
+              `[appId: ${applicationId}] message sent to CLI: ${JSON.stringify(
                 parsedMessageWithFullMessagesHistory,
               )}`,
             );
@@ -483,7 +479,7 @@ export async function postMessage(
               }
 
               if (isPermanentApp) {
-                streamLog(`app iteration: ${applicationId}`, 'info');
+                streamLog(`[appId: ${applicationId}] app iteration`, 'info');
                 await appIteration({
                   appName: appName!,
                   githubUsername,
@@ -501,7 +497,7 @@ export async function postMessage(
                 completeParsedMessage.message.kind !==
                 MessageKind.REFINEMENT_REQUEST
               ) {
-                streamLog(`creating new app: ${applicationId}`, 'info');
+                streamLog(`[appId: ${applicationId}] creating new app`, 'info');
                 appName =
                   completeParsedMessage.message.app_name ||
                   `app.build-${uuidv4().slice(0, 4)}`;
@@ -564,22 +560,18 @@ export async function postMessage(
             error instanceof Error &&
             error.message.includes('Unterminated string')
           ) {
-            streamLog('Incomplete message');
+            streamLog(`[appId: ${applicationId}] incomplete message`, 'error');
             continue;
           }
 
           streamLog(
-            `Error handling SSE message: ${error}, for message: ${message}`,
+            `[appId: ${applicationId}] Error handling SSE message: ${error}, for message: ${message}`,
             'error',
           );
         }
       }
     }
 
-    streamLog(
-      `[appId: ${applicationId}] before saving agent message, isPermanentApp: ${isPermanentApp}`,
-      'info',
-    );
     if (isPermanentApp) {
       await saveAgentMessage(
         conversationManager.getConversationHistory(applicationId),
@@ -587,13 +579,13 @@ export async function postMessage(
       );
       conversationManager.removeConversation(applicationId);
     }
-    streamLog('stream finished');
+    streamLog(`[appId: ${applicationId}] stream finished`, 'info');
     session.push({ done: true, traceId: traceId }, 'done');
     session.removeAllListeners();
 
     reply.raw.end();
   } catch (error) {
-    streamLog(`Unhandled error: ${error}`, 'error');
+    streamLog(`[appId: ${applicationId}] Unhandled error: ${error}`, 'error');
     session.push(
       new StreamingError((error as Error).message ?? 'Unknown error'),
       'error',
@@ -830,7 +822,8 @@ async function getMessagesFromHistory(
 ): Promise<ConversationMessage[]> {
   if (conversationManager.hasConversation(applicationId)) {
     // for temp apps, first check in-memory
-    const memoryMessages = getMessagesFromMemory(applicationId);
+    const memoryMessages =
+      conversationManager.getConversationHistory(applicationId);
     if (memoryMessages.length > 0) {
       return memoryMessages;
     }
@@ -840,18 +833,6 @@ async function getMessagesFromHistory(
 
   // for permanent apps, fetch from db
   return await getMessagesFromDB(applicationId, userId);
-}
-
-function getMessagesFromMemory(
-  applicationId: ApplicationId,
-): ConversationMessage[] {
-  try {
-    const messages = conversationManager.getConversationHistory(applicationId);
-    return messages;
-  } catch (error) {
-    app.log.error(`Error parsing messages from memory: ${error}`);
-    return [];
-  }
 }
 
 async function getMessagesFromDB(
@@ -895,6 +876,7 @@ async function saveAgentMessage(
       );
     }
 
+    // TODO: we might not need to delete all existing prompts for the app, since we can add 1 by 1 now
     // delete all existing prompts for the app ONCE
     await db.delete(appPrompts).where(eq(appPrompts.appId, applicationId));
 
