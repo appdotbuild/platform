@@ -8,10 +8,24 @@
       "name": "Attach by Process ID",
       "processId": "${command:PickProcess}",
       "request": "attach",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "type": "node"
+    },
+    {
+      "name": "Attach to CLI",
+      "type": "bun",
+      "request": "attach",
+      "url": "ws://localhost:6499/cli",
+      "stopOnEntry": false,
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "name": "Attach to Backend",
+      "type": "bun",
+      "request": "attach",
+      "url": "ws://localhost:6500/backend",
+      "stopOnEntry": false,
+      "internalConsoleOptions": "openOnSessionStart"
     }
   ]
 }

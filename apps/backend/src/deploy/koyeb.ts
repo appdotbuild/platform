@@ -1,4 +1,9 @@
+import type { FastifyReply } from 'fastify';
+import type { FastifyRequest } from 'fastify';
 import { logger } from '../logger';
+import { eq } from 'drizzle-orm';
+import { deployments } from '../db/schema';
+import { db } from '../db';
 
 type KoyebOrgSwitchResponse = {
   token: {
@@ -107,7 +112,10 @@ export async function createKoyebService({
 
   const data = await response.json();
 
-  return { koyebServiceId: data.service.id };
+  return {
+    koyebServiceId: data.service.id,
+    deploymentId: data.service.latest_deployment_id,
+  };
 }
 
 export async function updateKoyebService({
@@ -139,7 +147,10 @@ export async function updateKoyebService({
 
   const data = await response.json();
 
-  return data.service.id;
+  return {
+    koyebServiceId: data.service.id,
+    deploymentId: data.service.latest_deployment_id,
+  };
 }
 
 export async function createEcrSecret({
@@ -257,6 +268,62 @@ export async function getKoyebDomain({
   return { koyebDomainName: data.domain.name };
 }
 
+export async function getKoyebDeployment({
+  deploymentId,
+  token,
+}: {
+  deploymentId: string;
+  token: string;
+}) {
+  const response = await fetch(
+    `https://app.koyeb.com/v1/deployments/${deploymentId}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  const data = await response.json();
+
+  return { koyebDeploymentStatus: data.deployment.status };
+}
+
+export const getKoyebDeploymentEndpoint = async (
+  request: FastifyRequest<{
+    Params: { id: string };
+  }>,
+  reply: FastifyReply,
+) => {
+  const { id } = request.params;
+  const deploymentData = await db
+    .select({
+      koyebOrgId: deployments.koyebOrgId,
+    })
+    .from(deployments)
+    .where(eq(deployments.ownerId, request.user.id!));
+
+  const koyebOrgId = deploymentData[0]?.koyebOrgId;
+
+  if (!koyebOrgId) {
+    return reply
+      .status(404)
+      .send({ message: 'Organization for user not found' });
+  }
+
+  const userToken = await getOrganizationToken(koyebOrgId);
+
+  const deploymentChecker = getDeploymentChecker({
+    deploymentId: id,
+    token: userToken,
+  });
+
+  const response = await deploymentChecker();
+
+  return reply.send(response);
+};
+
 function getOrgName(githubUsername: string) {
   if (process.env.NODE_ENV === 'production') {
     return `appbuild-${githubUsername}`;
@@ -310,4 +377,99 @@ function getKoyebServiceBody({
       privileged: false,
     },
   };
+}
+
+function getDeploymentChecker({
+  deploymentId,
+  token,
+}: {
+  deploymentId: string;
+  token: string;
+}) {
+  const MAX_RETRIES = 15;
+  const INITIAL_DELAY = 5000;
+  const MAX_DELAY = 30000;
+
+  async function checkDeployment(retryCount = 0): Promise<{
+    message: string;
+    isDeployed: boolean;
+    type: 'HEALTHY' | 'STOPPING' | 'ERROR';
+  }> {
+    try {
+      const { koyebDeploymentStatus } = await getKoyebDeployment({
+        deploymentId,
+        token,
+      });
+
+      if (koyebDeploymentStatus === 'HEALTHY') {
+        logger.info('Deployment check successful');
+        return {
+          message: `Your application has been deployed`,
+          isDeployed: true,
+          type: 'HEALTHY',
+        };
+      }
+
+      if (koyebDeploymentStatus === 'STOPPING') {
+        logger.info(
+          'Deployment is stopping, a new deployment its being created',
+        );
+        return {
+          message: `Current deployment is stopping, a new deployment its being created`,
+          isDeployed: false,
+          type: 'STOPPING',
+        };
+      }
+
+      if (koyebDeploymentStatus === 'ERROR') {
+        logger.error('There was an error deploying your application.', {});
+        return {
+          message: `There was an error deploying your application.`,
+          isDeployed: false,
+          type: 'ERROR',
+        };
+      }
+
+      if (retryCount >= MAX_RETRIES) {
+        logger.error('Max retries reached for deployment check');
+        return {
+          message: `There was an error deploying your application.`,
+          isDeployed: false,
+          type: 'ERROR',
+        };
+      }
+
+      const delay = Math.min(
+        INITIAL_DELAY * Math.pow(2, retryCount),
+        MAX_DELAY,
+      );
+
+      logger.info('Deployment not ready, retrying...', {
+        retryCount,
+        nextRetryIn: delay,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return checkDeployment(retryCount + 1);
+    } catch (error) {
+      logger.error('Error checking deployment', { error });
+      if (retryCount >= MAX_RETRIES) {
+        return {
+          message: `There was an error deploying your application.`,
+          isDeployed: false,
+          type: 'ERROR',
+        };
+      }
+
+      const delay = Math.min(
+        INITIAL_DELAY * Math.pow(2, retryCount),
+        MAX_DELAY,
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return checkDeployment(retryCount + 1);
+    }
+  }
+
+  return checkDeployment;
 }
