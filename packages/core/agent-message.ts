@@ -1,33 +1,37 @@
 import { z } from 'zod';
 
-export enum PlatformMessageType {
-  DEPLOYMENT_COMPLETE = 'deployment_complete',
-  DEPLOYMENT_FAILED = 'deployment_failed',
-  REPO_CREATED = 'repo_created',
-  COMMIT_CREATED = 'commit_created',
-}
+export const PlatformMessageType = {
+  DEPLOYMENT_COMPLETE: 'deployment_complete',
+  DEPLOYMENT_FAILED: 'deployment_failed',
+  REPO_CREATED: 'repo_created',
+  COMMIT_CREATED: 'commit_created',
+} as const;
+
+export const AgentStatus = {
+  RUNNING: 'running',
+  IDLE: 'idle',
+  HISTORY: 'history',
+} as const;
+
+export const MessageKind = {
+  KEEP_ALIVE: 'KeepAlive',
+  STAGE_RESULT: 'StageResult',
+  RUNTIME_ERROR: 'RuntimeError',
+  REFINEMENT_REQUEST: 'RefinementRequest',
+  REVIEW_RESULT: 'ReviewResult',
+
+  // these are Platform only messages, don't exist in the agent
+  PLATFORM_MESSAGE: 'PlatformMessage',
+  USER_MESSAGE: 'UserMessage',
+} as const;
 
 type RequestId = string;
 export type ApplicationId = string;
 export type TraceId = `app-${ApplicationId}.req-${RequestId}`;
-
-export enum AgentStatus {
-  RUNNING = 'running',
-  IDLE = 'idle',
-  HISTORY = 'history',
-}
-
-export enum MessageKind {
-  KEEP_ALIVE = 'KeepAlive',
-  STAGE_RESULT = 'StageResult',
-  RUNTIME_ERROR = 'RuntimeError',
-  REFINEMENT_REQUEST = 'RefinementRequest',
-  REVIEW_RESULT = 'ReviewResult',
-
-  // these are Platform only messages, don't exist in the agent
-  PLATFORM_MESSAGE = 'PlatformMessage',
-  USER_MESSAGE = 'UserMessage',
-}
+export type AgentStatus = (typeof AgentStatus)[keyof typeof AgentStatus];
+export type MessageKind = (typeof MessageKind)[keyof typeof MessageKind];
+export type PlatformMessageType =
+  (typeof PlatformMessageType)[keyof typeof PlatformMessageType];
 
 export const agentStatusSchema = z.nativeEnum(AgentStatus);
 export const messageKindSchema = z.nativeEnum(MessageKind);

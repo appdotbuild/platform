@@ -10,7 +10,6 @@ import {
   PlatformMessageType,
   StreamingError,
   type TraceId,
-  type ApplicationId,
   type ConversationMessage,
   agentSseEventSchema,
 } from '@appdotbuild/core';
@@ -258,7 +257,6 @@ export async function postMessage(
       `appdotbuild-template-${Date.now()}`,
     );
 
-    streamLog(`isPermanentApp ${isPermanentApp}, appName ${appName}`, 'info');
     const volumePromise = isPermanentApp
       ? cloneRepository({
           repo: `${githubUsername}/${appName}`,
@@ -441,7 +439,7 @@ export async function postMessage(
 
             canDeploy = !!completeParsedMessage.message.unifiedDiff;
 
-            if (canDeploy) {
+            if (canDeploy && appName) {
               streamLog(
                 `[appId: ${applicationId}] starting to deploy app`,
                 'info',
@@ -481,7 +479,7 @@ export async function postMessage(
               if (isPermanentApp) {
                 streamLog(`[appId: ${applicationId}] app iteration`, 'info');
                 await appIteration({
-                  appName: appName!,
+                  appName,
                   githubUsername,
                   githubAccessToken,
                   files,
@@ -529,7 +527,7 @@ export async function postMessage(
               );
 
               await addAppURL({
-                repo: appName!,
+                repo: appName,
                 owner: githubUsername,
                 appURL: appURL,
                 githubAccessToken,
