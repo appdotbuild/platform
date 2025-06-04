@@ -1,15 +1,10 @@
 import { render } from 'ink';
 import meow from 'meow';
 import { App } from './app.js';
-import {
-  AgentEnvironment,
-  PlatformEnvironment,
-  useEnvironmentStore,
-} from './store/environment-store.js';
+import { Environment, useEnvironmentStore } from './store/environment-store.js';
 
-const defaultAgentEnvironment =
-  process.env.NODE_ENV === 'production' ? 'production' : 'staging';
-const defaultPlatformEnvironment = process.env.NODE_ENV ?? 'development';
+// in the CLI, node_env is only production or development
+const defaultEnv = process.env.NODE_ENV ?? 'development';
 
 const cli = meow(
   `
@@ -17,41 +12,25 @@ const cli = meow(
 	  $ npx @app.build/cli
 
 	Options
-	  --agent-env, -a  Agent environment (staging|production) (optional) [default: ${defaultAgentEnvironment}]
-	  --platform-env, -p  Platform environment (staging|production) (optional) [default: ${defaultPlatformEnvironment}]
+	  --env, -e Agent and platform environment (staging|production) (optional) [default: ${defaultEnv}]
 
 	Examples
 	  $ npx @app.build/cli
 	  $ npx @app.build/cli --agent-env staging
-	  $ npx @app.build/cli --agent-env production --platform-env staging
 `,
   {
     importMeta: import.meta,
     flags: {
-      agentEnv: {
+      env: {
         type: 'string',
         shortFlag: 'a',
-        default: defaultAgentEnvironment,
-        choices: ['staging', 'production'],
-      },
-      platformEnv: {
-        type: 'string',
-        shortFlag: 'p',
-        default: defaultPlatformEnvironment,
+        default: defaultEnv,
         choices: ['staging', 'production', 'development'],
       },
     },
   },
 );
 
-// Set the environment for the agent
-useEnvironmentStore
-  .getState()
-  .setAgentEnvironment(cli.flags.agentEnv as AgentEnvironment);
-
-// Set the environment for the platform
-useEnvironmentStore
-  .getState()
-  .setPlatformEnvironment(cli.flags.platformEnv as PlatformEnvironment);
+useEnvironmentStore.getState().setEnvironment(cli.flags.env as Environment);
 
 render(<App />);

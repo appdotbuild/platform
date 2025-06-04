@@ -10,8 +10,9 @@ const AUTH_HOST_PRODUCTION = 'https://app.build';
 const AUTH_HOST_DEV = 'http://localhost:3001';
 
 export function getBackendHost() {
-  const platformEnvironment =
-    useEnvironmentStore.getState().platformEnvironment;
+  const platformEnvironment = useEnvironmentStore
+    .getState()
+    .platformEnvironment();
 
   if (platformEnvironment === 'production') {
     return BACKEND_PRODUCTION_API_HOST;

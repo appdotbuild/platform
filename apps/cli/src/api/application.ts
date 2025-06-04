@@ -85,7 +85,7 @@ export async function sendMessage({
   traceId,
   onMessage,
 }: SendMessageParams): Promise<SendMessageResult> {
-  const agentEnvironment = useEnvironmentStore.getState().agentEnvironment;
+  const agentEnvironment = useEnvironmentStore.getState().agentEnvironment();
 
   const response = await apiClient.post(
     '/message',
