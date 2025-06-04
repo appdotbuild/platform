@@ -81,7 +81,7 @@ const createAppBuilderStateMachine = (
   ): Record<AppBuilderState, PromptConfig> => ({
     initial: {
       question: initialPrompt,
-      placeholder: 'e.g., Add a new feature, modify behavior...',
+      placeholder: 'e.g., Describe the app you want to build',
       successMessage: 'Message sent to Agent...',
       loadingText: 'Waiting for Agent response...',
     },
@@ -92,8 +92,8 @@ const createAppBuilderStateMachine = (
       loadingText: 'Processing...',
     },
     iteration_ready: {
-      question: 'How would you like to modify your application?',
-      placeholder: 'e.g., Add a new feature, modify behavior...',
+      question: 'How would you like to modify in your application?',
+      placeholder: 'e.g., Add a new feature, modify behavior, fix an issue...',
       successMessage: 'The requested changes are being applied...',
       loadingText: 'Applying changes...',
     },
