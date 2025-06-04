@@ -72,7 +72,9 @@ export async function checkMessageUsageLimit(
     };
   } catch (error) {
     app.log.error(
-      `Error checking daily message limit for user ${userId}: ${error}`,
+      `Error checking daily message limit for user ${userId}: ${JSON.stringify(
+        error,
+      )}`,
     );
 
     return {

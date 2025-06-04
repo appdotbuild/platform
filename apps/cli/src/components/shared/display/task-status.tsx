@@ -1,4 +1,6 @@
+import chalk from 'chalk';
 import { Box, Text } from 'ink';
+import Markdown from 'ink-markdown';
 
 export type TaskStatus = 'running' | 'done' | 'error';
 
@@ -47,17 +49,21 @@ export const TaskStatus = ({ title, status, details, duration }: TaskProps) => {
             return (
               <Box key={index}>
                 {detail.highlight ? (
-                  <Text>
-                    <Text color="yellow">{detail.icon || '⎿'}</Text>
-                    <Text color="white" bold>
-                      {' '}
-                      {text}
-                    </Text>
-                  </Text>
+                  <>
+                    <Text color="yellow">{detail.icon} </Text>
+                    <Markdown>{text}</Markdown>
+                  </>
                 ) : (
-                  <Text color="gray">
-                    {detail.icon || '⎿'} {text}
-                  </Text>
+                  <>
+                    <Text color="gray">{detail.icon} </Text>
+                    <Markdown
+                      paragraph={chalk.gray}
+                      listitem={chalk.gray}
+                      strong={chalk.gray}
+                    >
+                      {text}
+                    </Markdown>
+                  </>
                 )}
               </Box>
             );
