@@ -1,9 +1,10 @@
 import type { UserMessageLimit } from '@appdotbuild/core';
-import { TextInput as InkTextInput, Spinner } from '@inkjs/ui';
+import { Spinner } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box, Text } from 'ink';
 import { useEffect, useState } from 'react';
 import { Panel } from '../display/panel.js';
+import { BufferedTextInput } from './buffered-text-input.js';
 
 export interface TextInputProps {
   question?: string;
@@ -52,11 +53,13 @@ export function TextInput({
     <Panel title={question} variant="default" boxProps={{ width: '100%' }}>
       <Box flexDirection="column" gap={1}>
         <Box>
-          <Text color="blue">❯ </Text>
           {submittedValue ? (
-            <Text color="gray">{submittedValue}</Text>
+            <>
+              <Text color="blue">❯ </Text>
+              <Text color="gray">{submittedValue}</Text>
+            </>
           ) : (
-            <InkTextInput
+            <BufferedTextInput
               placeholder={placeholder}
               onSubmit={(value) => {
                 setSubmittedValue(value);
@@ -65,7 +68,6 @@ export function TextInput({
               isDisabled={
                 userMessageLimit?.isUserLimitReached || status === 'pending'
               }
-              {...textInputProps}
             />
           )}
         </Box>
