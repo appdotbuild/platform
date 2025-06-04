@@ -14,8 +14,11 @@ export const apiClient = axios.create({
   },
 });
 
-// Auth token injection
+// Dynamic baseURL and auth token injection
 apiClient.interceptors.request.use(async (config) => {
+  // Always get the current baseURL from the environment store
+  config.baseURL = getBackendHost();
+
   const token = await authenticate();
 
   if (token) {

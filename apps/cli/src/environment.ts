@@ -13,8 +13,6 @@ export function getBackendHost() {
   const platformEnvironment =
     useEnvironmentStore.getState().platformEnvironment;
 
-  console.log('platformEnvironment', platformEnvironment);
-
   if (platformEnvironment === 'production') {
     return BACKEND_PRODUCTION_API_HOST;
   } else if (platformEnvironment === 'staging') {
