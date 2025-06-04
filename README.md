@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo.png" alt="app.build logo" width="400">
+  <img src="logo.png" alt="app.build logo" width="150">
 </div>
 
 # app.build (platform)
