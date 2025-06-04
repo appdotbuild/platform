@@ -1,5 +1,5 @@
 import {
-  AgentSseEvent,
+  type AgentSseEvent,
   MessageKind,
   PlatformMessageType,
 } from '@appdotbuild/core';
@@ -40,6 +40,7 @@ const createAppBuilderStateMachine = (
   streamingMessagesData: { events: AgentSseEvent[] } | undefined,
   isStreamingMessages: boolean,
   hasAppId: boolean,
+  isLoading: boolean,
 ) => {
   const getCurrentState = (): AppBuilderState => {
     if (!streamingMessagesData) {
@@ -48,7 +49,7 @@ const createAppBuilderStateMachine = (
 
     const lastEvent = streamingMessagesData.events?.at(-1);
 
-    if (isStreamingMessages) {
+    if (isStreamingMessages || isLoading) {
       return 'building';
     }
 
@@ -66,7 +67,7 @@ const createAppBuilderStateMachine = (
         ) {
           return hasAppId ? 'iteration_ready' : 'completed';
         }
-        return 'building';
+        return 'iteration_ready';
       case MessageKind.RUNTIME_ERROR:
         return 'error';
       default:
@@ -81,7 +82,7 @@ const createAppBuilderStateMachine = (
   ): Record<AppBuilderState, PromptConfig> => ({
     initial: {
       question: initialPrompt,
-      placeholder: 'e.g., Add a new feature, modify behavior...',
+      placeholder: 'e.g., Describe the app you want to build',
       successMessage: 'Message sent to Agent...',
       loadingText: 'Waiting for Agent response...',
     },
@@ -92,8 +93,8 @@ const createAppBuilderStateMachine = (
       loadingText: 'Processing...',
     },
     iteration_ready: {
-      question: 'How would you like to modify your application?',
-      placeholder: 'e.g., Add a new feature, modify behavior...',
+      question: 'How would you like to modify in your application?',
+      placeholder: 'e.g., Add a new feature, modify behavior, fix an issue...',
       successMessage: 'The requested changes are being applied...',
       loadingText: 'Applying changes...',
     },
@@ -128,6 +129,7 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
     createApplication,
     createApplicationData,
     createApplicationError,
+    createApplicationPending,
     createApplicationStatus,
     streamingMessagesData,
     isStreamingMessages,
@@ -143,6 +145,7 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
     streamingMessagesData,
     isStreamingMessages,
     Boolean(appId),
+    createApplicationPending,
   );
 
   const getBuildStagesTitle = (state: AppBuilderState): string => {
