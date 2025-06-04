@@ -1,3 +1,5 @@
+import { useEnvironmentStore } from './store/environment-store';
+
 const BACKEND_PRODUCTION_API_HOST =
   'https://platform-main-appbuild-prod-d4a252a9.koyeb.app/';
 const BACKEND_DEV_API_HOST =
@@ -8,9 +10,14 @@ const AUTH_HOST_PRODUCTION = 'https://app.build';
 const AUTH_HOST_DEV = 'http://localhost:3001';
 
 export function getBackendHost() {
-  if (process.env.NODE_ENV === 'production') {
+  const platformEnvironment =
+    useEnvironmentStore.getState().platformEnvironment;
+
+  console.log('platformEnvironment', platformEnvironment);
+
+  if (platformEnvironment === 'production') {
     return BACKEND_PRODUCTION_API_HOST;
-  } else if (process.env.NODE_ENV === 'staging') {
+  } else if (platformEnvironment === 'staging') {
     return BACKEND_DEV_API_HOST;
   } else {
     return BACKEND_LOCAL_API_HOST;

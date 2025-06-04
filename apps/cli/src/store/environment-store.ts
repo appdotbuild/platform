@@ -1,13 +1,19 @@
 import { create } from 'zustand';
 
 export type AgentEnvironment = 'staging' | 'production';
+export type PlatformEnvironment = AgentEnvironment;
 
 interface EnvironmentStore {
-  environment: string;
-  setEnvironment: (env: AgentEnvironment) => void;
+  agentEnvironment: AgentEnvironment;
+  setAgentEnvironment: (env: AgentEnvironment) => void;
+  platformEnvironment: PlatformEnvironment;
+  setPlatformEnvironment: (env: PlatformEnvironment) => void;
 }
 
 export const useEnvironmentStore = create<EnvironmentStore>((set) => ({
-  environment: 'production',
-  setEnvironment: (environment) => set({ environment }),
+  agentEnvironment: 'production',
+  platformEnvironment: 'production',
+
+  setAgentEnvironment: (agentEnvironment) => set({ agentEnvironment }),
+  setPlatformEnvironment: (platformEnvironment) => set({ platformEnvironment }),
 }));

@@ -3,30 +3,42 @@ import meow from 'meow';
 import { App } from './app.js';
 import {
   AgentEnvironment,
+  PlatformEnvironment,
   useEnvironmentStore,
 } from './store/environment-store.js';
 
 const defaultAgentEnvironment =
   process.env.NODE_ENV === 'production' ? 'production' : 'staging';
+
+const defaultPlatformEnvironment = process.env.NODE_ENV;
+
 const cli = meow(
   `
 	Usage
-	  $ npx appdotbuild
+	  $ npx @app.build/cli
 
 	Options
-	  --env, -e  Environment (staging|production) [default: ${defaultAgentEnvironment}]
+	  --agent-env, -a  Agent environment (staging|production) (optional) [default: ${defaultAgentEnvironment}]
+	  --platform-env, -p  Platform environment (staging|production) (optional) [default: ${defaultPlatformEnvironment}]
 
 	Examples
-	  $ npx appdotbuild --env staging
-	  $ npx appdotbuild --env production
+	  $ npx @app.build/cli
+	  $ npx @app.build/cli --agent-env staging
+	  $ npx @app.build/cli --agent-env production --platform-env staging
 `,
   {
     importMeta: import.meta,
     flags: {
-      env: {
+      agentEnv: {
         type: 'string',
-        shortFlag: 'e',
+        shortFlag: 'a',
         default: defaultAgentEnvironment,
+        choices: ['staging', 'production'],
+      },
+      platformEnv: {
+        type: 'string',
+        shortFlag: 'p',
+        default: defaultPlatformEnvironment,
         choices: ['staging', 'production'],
       },
     },
@@ -36,5 +48,11 @@ const cli = meow(
 // Set the environment for the agent
 useEnvironmentStore
   .getState()
-  .setEnvironment(cli.flags.env as AgentEnvironment);
+  .setAgentEnvironment(cli.flags.agentEnv as AgentEnvironment);
+
+// Set the environment for the platform
+useEnvironmentStore
+  .getState()
+  .setPlatformEnvironment(cli.flags.platformEnv as PlatformEnvironment);
+
 render(<App />);
