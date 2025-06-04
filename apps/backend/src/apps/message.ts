@@ -301,6 +301,7 @@ export async function postMessage(
         method: 'POST',
         headers: {
           Accept: 'text/event-stream',
+          'Accept-Encoding': 'br, gzip, deflate',
           Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH}`,
           Connection: 'keep-alive',
           'Content-Type': 'application/json',
