@@ -44,7 +44,7 @@ export const TaskStatus = ({ title, status, details, duration }: TaskProps) => {
           {details.map((detail, index) => {
             const text =
               detail.role === 'assistant'
-                ? ` 🤖 ${detail.text}`
+                ? `🤖 ${detail.text}`
                 : `👤 ${detail.text}`;
             return (
               <Box key={index}>
