@@ -10,6 +10,8 @@ export const ShortcutHints = () => {
 
   const { pathname } = useLocation();
 
+  const isAppPath = pathname.startsWith('/apps/');
+
   useInput((input, key) => {
     if (key.ctrl && input === 'b') {
       if (pathname.startsWith('/apps/')) clearTerminal();
@@ -18,10 +20,11 @@ export const ShortcutHints = () => {
   });
 
   return (
-    <Box marginTop={1} flexDirection="column">
-      <Text dimColor>Press 'ctrl+b' to go back to the previous step</Text>
+    <Box marginTop={1} flexDirection="row">
+      {isAppPath && <Text dimColor>"/" to see commands | </Text>}
+      <Text dimColor>'ctrl+b' to go back | </Text>
       {isNeonEmployee === true && (
-        <Text dimColor>Press 'ctrl+d' to toggle debug panel</Text>
+        <Text dimColor>'ctrl+d' to toggle debug panel</Text>
       )}
     </Box>
   );

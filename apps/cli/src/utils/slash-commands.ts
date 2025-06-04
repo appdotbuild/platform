@@ -1,8 +1,5 @@
-// Defines the available slash commands and their descriptions.
+import { type AgentSseEvent, MessageKind } from '@appdotbuild/core';
 
-import { AgentSseEvent, MessageKind } from '@appdotbuild/core';
-
-// Used for autocompletion in the text input.
 export interface SlashCommand {
   label: string;
   value: string;
@@ -15,12 +12,12 @@ export const SLASH_COMMANDS_OPTIONS = {
 
 export const SLASH_COMMANDS: Array<SlashCommand> = [
   {
-    label: '/exit - exit the cli',
-    value: 'exit',
-  },
-  {
     label: '/details - show app details',
     value: 'details',
+  },
+  {
+    label: '/exit - exit the cli',
+    value: 'exit',
   },
 ];
 
