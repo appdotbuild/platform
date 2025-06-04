@@ -12,7 +12,6 @@ import {
 import { InteractivePrompt } from '../interactive-prompt.js';
 import { LoadingMessage } from '../shared/display/loading-message.js';
 import { BuildStages } from './build-stages.js';
-import { Panel } from '../shared/display/panel.js';
 
 interface AppBuilderProps {
   initialPrompt: string;
@@ -137,7 +136,8 @@ export function AppBuilder({
     createApplicationStatus,
     streamingMessagesData,
     isStreamingMessages,
-  } = useBuildApp(appId);
+    abortRequest,
+  } = useBuildApp();
 
   const { userMessageLimit, isUserReachedMessageLimit } =
     useUserMessageLimitCheck(createApplicationError);
@@ -209,6 +209,7 @@ export function AppBuilder({
         successMessage={config.successMessage}
         loadingText={config.loadingText}
         onSubmit={handleSubmit}
+        onAbort={abortRequest}
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
         retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}

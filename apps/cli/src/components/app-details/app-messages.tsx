@@ -2,7 +2,6 @@ import type { AgentSseEvent, App } from '@appdotbuild/core';
 import { Static } from 'ink';
 import { useMemo } from 'react';
 import { useApplicationHistory } from '../../hooks/use-application';
-import { useBuildApp } from '../../hooks/use-build-app';
 import { LoadingMessage } from '../shared/display/loading-message';
 import { WelcomeBanner } from '../welcome-banner';
 import { AppDetailsPanel } from './app-details-panel';
@@ -10,10 +9,7 @@ import { AppHistoryHeader } from './app-history-header';
 import { AppHistoryItem } from './app-history-item';
 
 export function AppMessages({ app }: { app: App }) {
-  const { isStreamingMessages } = useBuildApp(app.id);
-  const { data: historyMessages, isLoading } = useApplicationHistory(app.id, {
-    enabled: !isStreamingMessages,
-  });
+  const { data: historyMessages, isLoading } = useApplicationHistory(app.id);
 
   const staticItems = useMemo(() => {
     const items: Array<

@@ -5,7 +5,6 @@ import { Box } from 'ink';
 import { useRef } from 'react';
 import { usePromptHistory } from '../hooks/use-prompt-history.js';
 import { ErrorMessage } from './shared/display/error-message.js';
-import { SuccessMessage } from './shared/display/success-message.js';
 import { TextInput } from './shared/input/text-input.js';
 import { createMessageLimitError } from '../hooks/use-message-limit.js';
 import { useUserMessageLimitCheck } from '../hooks/use-message-limit.js';
@@ -35,6 +34,7 @@ export interface ErrorProps {
 export type InteractivePromptProps = {
   question?: string;
   onSubmit: (value: string) => void;
+  onAbort?: () => void;
   placeholder?: string;
   status?: MutationStatus;
   errorMessage?: string;
@@ -54,6 +54,7 @@ export function InteractivePrompt({
   showPrompt = true,
   loadingText = 'Loading...',
   onSubmit,
+  onAbort,
   successMessage = '',
   onSubmitSuccess,
   errorMessage = '',
@@ -116,6 +117,7 @@ export function InteractivePrompt({
         status={displayStatus}
         loadingText={loadingText}
         onSubmit={onSubmit}
+        onAbort={onAbort}
         onSubmitSuccess={handleSubmitSuccess}
         onSubmitError={handleSubmitError}
         userMessageLimit={userMessageLimitCheck}

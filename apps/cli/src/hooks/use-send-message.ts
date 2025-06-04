@@ -48,16 +48,24 @@ export const useSendMessage = () => {
     traceId: string;
   } | null>(null);
 
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
+
   const result = useMutation({
     mutationFn: async ({
       message,
       applicationId: passedAppId,
       traceId: passedTraceId,
     }: SendMessageParams) => {
+      // Create a new AbortController for this request
+      const controller = new AbortController();
+      setAbortController(controller);
+
       return sendMessage({
         message,
         applicationId: passedAppId || metadata?.applicationId,
         traceId: passedTraceId || metadata?.traceId,
+        abortSignal: controller.signal,
         onMessage: (newEvent) => {
           if (!newEvent.traceId) {
             throw new Error('Trace ID not found');
@@ -136,8 +144,16 @@ export const useSendMessage = () => {
     },
   });
 
-  // we need this to keep the previous application id
-  return { ...result, data: metadata };
+  const abortSignal = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+      // reset the mutation state when aborting
+      result.reset();
+    }
+  };
+
+  return { ...result, data: metadata, abortSignal };
 };
 
 function extractApplicationId(traceId: TraceId) {

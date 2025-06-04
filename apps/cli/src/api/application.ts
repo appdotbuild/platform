@@ -71,6 +71,7 @@ export type SendMessageParams = {
   message: string;
   applicationId?: string;
   traceId?: string;
+  abortSignal?: AbortSignal;
   onMessage?: (data: AgentSseEvent) => void;
 };
 
@@ -83,6 +84,7 @@ export async function sendMessage({
   message,
   applicationId,
   traceId,
+  abortSignal,
   onMessage,
 }: SendMessageParams): Promise<SendMessageResult> {
   const environment = useEnvironmentStore.getState().environment;
@@ -101,6 +103,7 @@ export async function sendMessage({
         Accept: 'text/event-stream',
       },
       responseType: 'stream',
+      signal: abortSignal,
     },
   );
 
@@ -115,6 +118,7 @@ export async function sendMessage({
     onEvent: (event) => {
       console.log('event', event);
     },
+    abortSignal,
   });
 
   return {

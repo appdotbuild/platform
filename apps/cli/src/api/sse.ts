@@ -1,7 +1,7 @@
 import readline from 'readline';
-import { Readable } from 'stream';
+import type { Readable } from 'stream';
+import type { AgentSseEvent } from '@appdotbuild/core';
 import { useDebugStore } from '../hooks/use-debug';
-import { AgentSseEvent } from '@appdotbuild/core';
 
 type SSEEvent = {
   event?: string;
@@ -15,6 +15,7 @@ type ParseSSEOptions = {
   onError?: (error: Error, raw?: string) => void;
   onEvent?: (event: SSEEvent) => void;
   onClose?: () => void;
+  abortSignal?: AbortSignal;
 };
 
 function safeJSONParse(data: string) {
@@ -27,11 +28,20 @@ function safeJSONParse(data: string) {
 
 export function parseSSE(
   stream: Readable,
-  { onMessage, onError, onClose }: ParseSSEOptions,
+  { onMessage, onError, onClose, abortSignal }: ParseSSEOptions,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const rl = readline.createInterface({ input: stream });
     let buffer = '';
+
+    if (abortSignal) {
+      abortSignal.addEventListener('abort', () => {
+        rl.close();
+        stream.destroy();
+        onError?.(new Error('Request aborted'));
+        reject(new Error('Request aborted'));
+      });
+    }
 
     rl.on('line', (line) => {
       if (line.trim() === '') {
@@ -44,7 +54,7 @@ export function parseSSE(
             if (key === 'event') event.event = value;
             if (key === 'data') event.data = value;
             if (key === 'id') event.id = value;
-            if (key === 'retry') event.retry = parseInt(value);
+            if (key === 'retry') event.retry = Number.parseInt(value);
           }
 
           try {
@@ -73,7 +83,7 @@ export function parseSSE(
         }
         buffer = '';
       } else {
-        buffer += line + '\n';
+        buffer += `${line}\n`;
       }
     });
 
