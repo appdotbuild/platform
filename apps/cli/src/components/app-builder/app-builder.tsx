@@ -92,8 +92,8 @@ const createAppBuilderStateMachine = (
       loadingText: 'Processing...',
     },
     iteration_ready: {
-      question: 'How would you like to modify your application?',
-      placeholder: 'e.g., Add a new feature, modify behavior...',
+      question: 'How would you like to modify in your application?',
+      placeholder: 'e.g., Add a new feature, modify behavior, fix an issue...',
       successMessage: 'The requested changes are being applied...',
       loadingText: 'Applying changes...',
     },
