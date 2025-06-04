@@ -2,7 +2,7 @@ import { type AgentSseEvent, MessageKind } from '@appdotbuild/core';
 import { memo } from 'react';
 import { type TaskDetail, TaskStatus } from '../shared/display/task-status';
 
-function MessageItem({ event }: { event: AgentSseEvent }) {
+function HistoryItem({ event }: { event: AgentSseEvent }) {
   const messageTitle =
     event.message.kind === MessageKind.PLATFORM_MESSAGE
       ? 'Agent message'
@@ -46,6 +46,6 @@ function MessageItem({ event }: { event: AgentSseEvent }) {
   );
 }
 
-export const AppMessageItem = memo(({ event }: { event: AgentSseEvent }) => {
-  return <MessageItem event={event} />;
+export const AppHistoryItem = memo(({ event }: { event: AgentSseEvent }) => {
+  return <HistoryItem event={event} />;
 });

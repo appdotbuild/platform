@@ -1,13 +1,13 @@
-import type { App, AgentSseEvent } from '@appdotbuild/core';
+import type { AgentSseEvent, App } from '@appdotbuild/core';
 import { Static } from 'ink';
 import { useMemo } from 'react';
 import { useApplicationHistory } from '../../hooks/use-application';
 import { useBuildApp } from '../../hooks/use-build-app';
 import { LoadingMessage } from '../shared/display/loading-message';
-import { AppDetailsPanel } from './app-details-panel';
-import { AppMessageItem } from './app-message-item';
-import { AppMessagesHeader } from './app-messages-header';
 import { WelcomeBanner } from '../welcome-banner';
+import { AppDetailsPanel } from './app-details-panel';
+import { AppHistoryHeader } from './app-history-header';
+import { AppHistoryItem } from './app-history-item';
 
 export function AppMessages({ app }: { app: App }) {
   const { isStreamingMessages } = useBuildApp(app.id);
@@ -48,12 +48,12 @@ export function AppMessages({ app }: { app: App }) {
         }
 
         if (item === 'app-messages-header') {
-          return <AppMessagesHeader key={index} />;
+          return <AppHistoryHeader key={index} />;
         }
 
         const event = item as AgentSseEvent;
         return (
-          <AppMessageItem
+          <AppHistoryItem
             key={`${event.message.kind}-${index}`}
             event={event}
           />

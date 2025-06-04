@@ -40,7 +40,7 @@ export function BuildStages({
     currentMessage?.message.kind === MessageKind.REFINEMENT_REQUEST;
 
   return (
-    <Box flexDirection="column" marginTop={1} marginBottom={0.5}>
+    <Box flexDirection="column" marginTop={2} marginBottom={0.5}>
       <Text bold color="whiteBright">
         🤖 {title}
       </Text>
