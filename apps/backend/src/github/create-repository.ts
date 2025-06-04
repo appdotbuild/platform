@@ -48,7 +48,7 @@ export const createUserRepository = async ({
         name: repo,
         ...(appURL && { homepage: appURL }),
         description: 'Created by App.build',
-        private: true, // remove later
+        private: false,
         auto_init: true,
       });
 
@@ -94,7 +94,7 @@ export const createOrgRepository = async ({
         name: repo,
         ...(appURL && { homepage: appURL }),
         description: 'Created by appdotbuild',
-        private: true, // remove later
+        private: false,
         auto_init: true,
       });
 
