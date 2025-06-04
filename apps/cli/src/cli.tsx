@@ -9,7 +9,7 @@ import {
 
 const defaultAgentEnvironment =
   process.env.NODE_ENV === 'production' ? 'production' : 'staging';
-const defaultPlatformEnvironment = process.env.NODE_ENV ?? 'local';
+const defaultPlatformEnvironment = process.env.NODE_ENV ?? 'development';
 
 const cli = meow(
   `
@@ -38,7 +38,7 @@ const cli = meow(
         type: 'string',
         shortFlag: 'p',
         default: defaultPlatformEnvironment,
-        choices: ['staging', 'production', 'local'],
+        choices: ['staging', 'production', 'development'],
       },
     },
   },

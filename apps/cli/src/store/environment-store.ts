@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export type AgentEnvironment = 'staging' | 'production';
-export type PlatformEnvironment = 'staging' | 'production' | 'local';
+export type PlatformEnvironment = 'staging' | 'production' | 'development';
 
 interface EnvironmentStore {
   agentEnvironment: AgentEnvironment;

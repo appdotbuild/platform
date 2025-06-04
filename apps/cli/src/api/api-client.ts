@@ -8,7 +8,6 @@ import { authenticate } from '../auth/auth.js';
 import { getBackendHost } from '../environment.js';
 
 export const apiClient = axios.create({
-  baseURL: getBackendHost(),
   headers: {
     'Content-Type': 'application/json',
   },
