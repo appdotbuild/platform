@@ -1,8 +1,11 @@
-import { type AgentSseEvent, MessageKind } from '@appdotbuild/core';
-import { Box, Text } from 'ink';
+import type { AgentSseEvent } from '@appdotbuild/core';
+import { Box, Static, Text } from 'ink';
 import { useMemo } from 'react';
-import { usePhaseGroup } from '../../hooks/use-phase-group.js';
-import { PhaseGroupItem } from './phase-group-item.js';
+import { useApplication } from '../../hooks/use-application.js';
+import { useRouteParams } from '../../routes.js';
+import { AppDetailsPanel } from '../app-details/app-details-panel.js';
+import { BuildStagesHeader } from './build-stages-header.js';
+import { BuilderItem } from './builder-item.js';
 
 interface MessagesData {
   events?: AgentSseEvent[];
@@ -12,52 +15,79 @@ interface BuildStageProps {
   messagesData: MessagesData;
   isStreaming: boolean;
   title?: string;
+  extraEvents?: AgentSseEvent[];
 }
 
 export function BuildStages({
   messagesData,
-  isStreaming,
   title = 'Build in Progress',
+  extraEvents = [],
 }: BuildStageProps) {
-  const { phaseGroups, currentPhase, currentMessage } = usePhaseGroup({
-    events: messagesData.events || [],
-  });
+  const { appId } = useRouteParams('/apps/:appId');
+  const { data: app } = useApplication(appId);
 
-  const lastInteractiveGroupIndex = useMemo(
-    () =>
-      phaseGroups?.reduce((lastIndex, group, currentIndex) => {
-        const hasInteractiveInGroup = group.events.some(
-          (e) => e.message.kind === MessageKind.REFINEMENT_REQUEST,
-        );
-        return hasInteractiveInGroup ? currentIndex : lastIndex;
-      }, -1),
-    [phaseGroups],
-  );
+  const staticItems = useMemo(() => {
+    const items = ['header'];
 
-  if (!messagesData?.events?.length) return null;
+    if (messagesData.events) {
+      for (const event of messagesData.events) {
+        if ((event.message.metadata as any)?.type === 'app_details_panel')
+          continue;
 
-  const hasInteractive =
-    currentMessage?.message.kind === MessageKind.REFINEMENT_REQUEST;
+        if (event.message.messages) {
+          for (const [msgIndex] of event.message.messages.entries()) {
+            items.push(`message-${msgIndex}-${event.traceId || 'unknown'}`);
+          }
+        }
+      }
+    }
+
+    const hasAppDetailsEvent = extraEvents?.some((event) => {
+      return (event.message.metadata as any)?.type === 'app_details_panel';
+    });
+
+    if (hasAppDetailsEvent) {
+      items.push('app-details-panel');
+    }
+
+    return items;
+  }, [messagesData.events, extraEvents]);
+
+  if (!messagesData?.events?.length && !extraEvents?.length) return null;
 
   return (
-    <Box flexDirection="column" marginTop={2} marginBottom={0.5}>
-      <Text bold color="whiteBright">
-        🤖 {title}
-      </Text>
-      <Box flexDirection="column" gap={1}>
-        {phaseGroups?.map((group, groupIdx) => (
-          <PhaseGroupItem
-            key={`${group.phase}-${groupIdx}`}
-            group={group}
-            groupIndex={groupIdx}
-            currentPhase={currentPhase}
-            isStreaming={isStreaming}
-            hasInteractive={hasInteractive}
-            lastInteractiveGroupIndex={lastInteractiveGroupIndex}
-            phaseGroupsLength={phaseGroups.length}
-          />
-        ))}
-      </Box>
+    <Box flexDirection="column" marginTop={2}>
+      <Static items={staticItems}>
+        {(item, index) => {
+          if (item === 'header') {
+            return <BuildStagesHeader key={index} title={title} />;
+          }
+
+          if (item === 'app-details-panel') {
+            return app ? (
+              <AppDetailsPanel key={index} app={app} />
+            ) : (
+              <Box key={index} marginLeft={2} marginTop={1}>
+                <Text color="red">
+                  🔍 App Details Panel (No app data available)
+                </Text>
+              </Box>
+            );
+          }
+
+          if (typeof item === 'string' && item.startsWith('message-')) {
+            return (
+              <BuilderItem
+                key={index}
+                item={item}
+                messagesData={messagesData}
+              />
+            );
+          }
+
+          return null;
+        }}
+      </Static>
     </Box>
   );
 }

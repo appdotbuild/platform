@@ -45,6 +45,7 @@ export type InteractivePromptProps = {
   onSubmitError?: (args: ErrorProps) => void;
   showPrompt?: boolean;
   userMessageLimit?: UserMessageLimit;
+  onSlashCommand?: (command: string) => void;
 } & TextInputProps;
 
 export function InteractivePrompt({
@@ -61,6 +62,7 @@ export function InteractivePrompt({
   retryMessage = '',
   onSubmitError,
   userMessageLimit,
+  onSlashCommand,
   ...infiniteInputProps
 }: InteractivePromptProps) {
   const { userMessageLimit: userMessageLimitCheck } =
@@ -120,6 +122,7 @@ export function InteractivePrompt({
         onAbort={onAbort}
         onSubmitSuccess={handleSubmitSuccess}
         onSubmitError={handleSubmitError}
+        onSlashCommand={onSlashCommand}
         userMessageLimit={userMessageLimitCheck}
         {...infiniteInputProps}
       />
