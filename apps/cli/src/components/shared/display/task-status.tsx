@@ -1,4 +1,5 @@
 import { Box, Text } from 'ink';
+import { MarkdownBlock } from '../input/markdown-block';
 
 export type TaskStatus = 'running' | 'done' | 'error';
 
@@ -30,7 +31,7 @@ export const TaskStatus = ({ title, status, details, duration }: TaskProps) => {
   }[status];
 
   return (
-    <Box flexDirection="column" gap={1}>
+    <Box flexDirection="column" gap={1} marginBottom={1}>
       <Box>
         <Text color={statusColor}>
           {statusSymbol} {title}
@@ -56,7 +57,8 @@ export const TaskStatus = ({ title, status, details, duration }: TaskProps) => {
                   </Text>
                 ) : (
                   <Text color="gray">
-                    {detail.icon || '⎿'} {text}
+                    {detail.icon || '⎿'}
+                    <MarkdownBlock content={text} />
                   </Text>
                 )}
               </Box>

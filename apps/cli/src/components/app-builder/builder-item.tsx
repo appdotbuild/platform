@@ -1,5 +1,6 @@
 import type { AgentSseEvent } from '@appdotbuild/core';
 import { Box, Text } from 'ink';
+import { MarkdownBlock } from '../shared/input/markdown-block';
 
 export const BuilderItem = ({
   item,
@@ -24,7 +25,8 @@ export const BuilderItem = ({
   return (
     <Box key={item} marginLeft={2} marginTop={1}>
       <Text color="gray">
-        ⎿ {message.role === 'user' ? '👤' : '🤖'} {message.content}
+        ⎿ {message.role === 'user' ? '👤' : '🤖'}
+        <MarkdownBlock content={message.content} />
       </Text>
     </Box>
   );
