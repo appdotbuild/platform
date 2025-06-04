@@ -1,6 +1,7 @@
 import readline from 'readline';
 import { Readable } from 'stream';
 import { useDebugStore } from '../hooks/use-debug';
+import { AgentSseEvent } from '@appdotbuild/core';
 
 type SSEEvent = {
   event?: string;
@@ -10,7 +11,7 @@ type SSEEvent = {
 };
 
 type ParseSSEOptions = {
-  onMessage: (data: any) => void;
+  onMessage: (data: AgentSseEvent) => void;
   onError?: (error: Error, raw?: string) => void;
   onEvent?: (event: SSEEvent) => void;
   onClose?: () => void;
@@ -65,8 +66,7 @@ export function parseSSE(
               return;
             }
 
-            const parsedMessage = safeJSONParse(parsedData);
-            onMessage(parsedMessage);
+            onMessage(parsedData);
           } catch (err) {
             console.log('error in parsing', event.data, err);
           }

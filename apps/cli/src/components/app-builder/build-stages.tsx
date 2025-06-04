@@ -1,13 +1,12 @@
 import { Box } from 'ink';
 import { useMemo } from 'react';
 import { usePhaseGroup } from '../../hooks/use-phase-group.js';
-import type { ParsedSseEvent } from '../../hooks/use-send-message.js';
 import { Panel } from '../shared/display/panel.js';
 import { PhaseGroupItem } from './phase-group-item.js';
-import { MessageKind } from '@appdotbuild/core';
+import { AgentSseEvent, MessageKind } from '@appdotbuild/core';
 
 interface MessagesData {
-  events?: ParsedSseEvent[];
+  events?: AgentSseEvent[];
 }
 
 interface BuildStageProps {

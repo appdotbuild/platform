@@ -1,6 +1,5 @@
 import {
   type AgentSseEvent,
-  type MessageContentBlock,
   MessageKind,
   type TraceId,
 } from '@appdotbuild/core';
@@ -40,15 +39,6 @@ export type MessagePart =
       elements: (ChoiceElement | ActionElement)[];
     };
 
-export type ParsedSseEvent = Omit<AgentSseEvent, 'message'> & {
-  message: {
-    content: {
-      role: 'assistant' | 'user';
-      content: MessageContentBlock[];
-    }[];
-  } & Omit<AgentSseEvent['message'], 'content'>;
-};
-
 export const useSendMessage = () => {
   const queryClient = useQueryClient();
 
@@ -73,7 +63,9 @@ export const useSendMessage = () => {
             throw new Error('Trace ID not found');
           }
 
-          const applicationId = extractApplicationId(newEvent.traceId);
+          const applicationId = extractApplicationId(
+            newEvent.traceId as TraceId,
+          );
           if (!applicationId) {
             throw new Error('Application ID not found');
           }
@@ -89,15 +81,15 @@ export const useSendMessage = () => {
             (
               oldData:
                 | {
-                    events: ParsedSseEvent[];
+                    events: AgentSseEvent[];
                   }
                 | undefined,
-            ): { events: ParsedSseEvent[] } => {
+            ): { events: AgentSseEvent[] } => {
               const parsedEvent = {
                 ...newEvent,
                 message: {
                   ...newEvent.message,
-                  content: JSON.parse(newEvent.message.content),
+                  content: newEvent.message.messages,
                 },
               };
 

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSendMessage, type ParsedSseEvent } from './use-send-message.js';
-import { AgentStatus } from '@appdotbuild/core';
+import { useSendMessage } from './use-send-message.js';
+import { AgentStatus, AgentSseEvent } from '@appdotbuild/core';
 import { useEffect } from 'react';
 
 export const queryKeys = {
@@ -33,7 +33,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
     queryFn: () => {
       if (!appId) return { events: [] };
 
-      const events = queryClient.getQueryData<{ events: ParsedSseEvent[] }>(
+      const events = queryClient.getQueryData<{ events: AgentSseEvent[] }>(
         queryKeys.applicationMessages(appId),
       );
 
