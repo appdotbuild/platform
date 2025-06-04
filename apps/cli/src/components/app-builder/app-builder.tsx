@@ -81,7 +81,7 @@ const createAppBuilderStateMachine = (
   ): Record<AppBuilderState, PromptConfig> => ({
     initial: {
       question: initialPrompt,
-      placeholder: 'e.g., Add a new feature, modify behavior...',
+      placeholder: 'e.g., Describe the app you want to build',
       successMessage: 'Message sent to Agent...',
       loadingText: 'Waiting for Agent response...',
     },

@@ -1,7 +1,11 @@
+// Import this first!
+import './instrument';
+
 import fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import type { ServerUser } from '@stackframe/stack';
 import { v4 as uuidv4 } from 'uuid';
 import { validateAuth } from './auth-strategy';
+import * as Sentry from '@sentry/node';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -21,6 +25,8 @@ export const app = fastify({
   disableRequestLogging: true,
   genReqId: () => uuidv4(),
 });
+
+Sentry.setupFastifyErrorHandler(app);
 
 app.decorate(
   'authenticate',
