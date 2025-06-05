@@ -1,13 +1,16 @@
 import { Box, Text, useInput } from 'ink';
 import { useSafeNavigate } from '../../routes.js';
 import { useAuthStore } from '../../auth/auth-store.js';
+import { useTerminalState } from '../../hooks/use-terminal-state.js';
 
 export const ShortcutHints = () => {
   const { goBack } = useSafeNavigate();
   const isNeonEmployee = useAuthStore((state) => state.isNeonEmployee);
+  const { clearTerminal } = useTerminalState();
 
   useInput((input, key) => {
     if (key.ctrl && input === 'b') {
+      clearTerminal();
       goBack();
     }
   });

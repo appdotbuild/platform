@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Box, Text } from 'ink';
+import { useTerminalState } from '../../../hooks/use-terminal-state.js';
 
 export type BufferedTextInputProps = {
   placeholder?: string;
@@ -20,6 +21,8 @@ export function BufferedTextInput({
   const inputBuffer = useRef(defaultValue);
   const isReadyRef = useRef(false);
   const intervalRef = useRef<NodeJS.Timeout>();
+  const { setRawMode } = useTerminalState();
+  const isActiveRef = useRef(false);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -31,6 +34,8 @@ export function BufferedTextInput({
   }, []);
 
   const drawInput = () => {
+    if (!isActiveRef.current) return;
+
     process.stdout.write('\x1b[s');
 
     for (let i = 2; i <= 6; i++) {
@@ -79,14 +84,14 @@ export function BufferedTextInput({
       }, 10);
     };
 
-    if (process.stdin.isTTY && !isDisabled) {
-      process.stdin.pause();
-      process.stdin.setRawMode(true);
-      process.stdin.resume();
+    if (!isDisabled) {
+      isActiveRef.current = true;
+      setRawMode(true);
+      startDrawing();
     }
 
     const handleData = (chunk: Buffer) => {
-      if (isDisabled) return;
+      if (isDisabled || !isActiveRef.current) return;
 
       const char = chunk.toString();
       const code = char.charCodeAt(0);
@@ -119,12 +124,25 @@ export function BufferedTextInput({
       }
       if (!isDisabled) {
         process.stdin.off('data', handleData);
-        if (process.stdin.isTTY) {
-          process.stdin.setRawMode(false);
-        }
+        setRawMode(false);
       }
+      inputBuffer.current = '';
+      displayTextRef.current = '';
+      isActiveRef.current = false;
     };
-  }, [onChange, onSubmit, isDisabled]);
+  }, [onChange, onSubmit, isDisabled, setRawMode]);
+
+  useEffect(() => {
+    if (isDisabled) {
+      setRawMode(false);
+      inputBuffer.current = '';
+      displayTextRef.current = '';
+      isActiveRef.current = false;
+    } else {
+      isActiveRef.current = true;
+      startDrawing();
+    }
+  }, [isDisabled, setRawMode]);
 
   return (
     <Box height={1}>

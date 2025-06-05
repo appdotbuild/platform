@@ -1,10 +1,11 @@
 import { Spinner } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box, Newline, Text } from 'ink';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Select as InkSelect } from '../../ui/select/index.js';
 import { Panel } from '../display/panel.js';
 import type { SelectItem } from './types.js';
+import { useTerminalState } from '../../../hooks/use-terminal-state.js';
 
 export type SelectProps<T extends string> = {
   question: string;
@@ -33,6 +34,16 @@ export const Select = <T extends string>({
 }: SelectProps<T>) => {
   const [selectedValue, setSelectedValue] = useState('');
   const [isSuccessSubmitted, setIsSuccessSubmitted] = useState(false);
+  const { setRawMode } = useTerminalState();
+
+  useEffect(() => {
+    if (showPrompt && !isSuccessSubmitted) {
+      setRawMode(true);
+    }
+    return () => {
+      setRawMode(false);
+    };
+  }, [showPrompt, isSuccessSubmitted, setRawMode]);
 
   if (selectedValue && status === 'success' && !isSuccessSubmitted) {
     setIsSuccessSubmitted(true);
