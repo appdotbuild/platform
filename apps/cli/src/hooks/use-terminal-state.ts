@@ -19,11 +19,6 @@ export function useTerminalState() {
     }
   };
 
-  const clearTerminal = () => {
-    process.stdout.write('\x1b[2J');
-    process.stdout.write('\x1b[H');
-  };
-
   useEffect(() => {
     return () => {
       if (isRawModeRef.current) {
@@ -34,3 +29,8 @@ export function useTerminalState() {
 
   return { setRawMode, isRawMode: isRawModeRef.current, clearTerminal };
 }
+
+export const clearTerminal = () => {
+  process.stdout.write('\x1b[2J');
+  process.stdout.write('\x1b[H');
+};

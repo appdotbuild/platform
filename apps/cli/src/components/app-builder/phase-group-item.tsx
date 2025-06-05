@@ -1,5 +1,5 @@
 import {
-  AgentSseEvent,
+  type AgentSseEvent,
   MessageKind,
   PlatformMessageType,
 } from '@appdotbuild/core';

@@ -12,7 +12,8 @@ import {
 import { InteractivePrompt } from '../interactive-prompt.js';
 import { LoadingMessage } from '../shared/display/loading-message.js';
 import { BuildStages } from './build-stages.js';
-import { PromptsHistory } from './prompts-history.js';
+import { LoadingHistoryMessage, PromptsHistory } from './prompts-history.js';
+import { useApplicationHistory } from '../../hooks/use-application.js';
 
 interface AppBuilderProps {
   initialPrompt: string;
@@ -135,6 +136,9 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
     isStreamingMessages,
   } = useBuildApp(appId);
 
+  const { data: historyMessages, isLoading: isLoadingHistory } =
+    useApplicationHistory(appId);
+
   const { userMessageLimit, isUserReachedMessageLimit } =
     useUserMessageLimitCheck(createApplicationError);
 
@@ -187,7 +191,13 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
   return (
     <Box flexDirection="column">
       {/* App history for existing apps */}
-      {appId && !hasNewEvents && <PromptsHistory appId={appId} />}
+      {isLoadingHistory && <LoadingHistoryMessage />}
+      {appId &&
+        !hasNewEvents &&
+        historyMessages &&
+        historyMessages?.length > 0 && (
+          <PromptsHistory key={'history'} historyMessages={historyMessages} />
+        )}
 
       {/* Build stages - show when we have streaming data */}
       {streamingMessagesData && (

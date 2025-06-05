@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { authenticate, ensureIsNeonEmployee } from './auth/auth';
 import { useAuth } from './auth/use-auth';
 import { Banner } from './components/ui/Banner';
+import { WelcomeBanner } from './components/welcome-banner';
 import { DebugPanel } from './debug/debugger-panel';
 import { AppRouter } from './routes';
 
@@ -61,13 +62,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Static items={['banner']}>
-        {() => (
-          <Banner key="banner" title="Welcome to app.build CLI">
-            Create, deploy, and manage your applications with ease
-          </Banner>
-        )}
-      </Static>
+      <WelcomeBanner />
       {content}
     </Box>
   );

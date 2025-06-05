@@ -5,6 +5,7 @@ import {
   AgentEnvironment,
   useEnvironmentStore,
 } from './store/environment-store.js';
+import { clearTerminal } from './hooks/use-terminal-state.js';
 
 const defaultAgentEnvironment =
   process.env.NODE_ENV === 'production' ? 'production' : 'staging';
@@ -33,6 +34,7 @@ const cli = meow(
   },
 );
 
+clearTerminal();
 // Set the environment for the agent
 useEnvironmentStore
   .getState()

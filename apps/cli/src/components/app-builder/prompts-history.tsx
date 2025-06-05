@@ -4,9 +4,8 @@ import { useState, useMemo } from 'react';
 import type { AgentSseEvent } from '@appdotbuild/core';
 import { Panel } from '../shared/display/panel';
 import { TaskStatus } from '../shared/display/task-status';
-import { useApplicationHistory } from '../../hooks/use-application';
 
-const VISIBLE_ITEMS = 3;
+const VISIBLE_ITEMS = 1;
 
 const EmptyHistoryMessage = () => {
   return (
@@ -32,13 +31,16 @@ export const ErrorHistoryMessage = () => {
   );
 };
 
-export function PromptsHistory({ appId }: { appId: string }) {
+export function PromptsHistory({
+  historyMessages,
+  isLoading = false,
+  error,
+}: {
+  historyMessages?: AgentSseEvent[];
+  isLoading?: boolean;
+  error?: Error;
+}) {
   const [scrollOffset, setScrollOffset] = useState(0);
-  const {
-    data: historyMessages,
-    isLoading,
-    error,
-  } = useApplicationHistory(appId);
 
   const totalEvents = historyMessages?.length || 0;
 

@@ -1,50 +1,42 @@
 import type { App } from '@appdotbuild/core';
 import { Box, Text } from 'ink';
 import { getStatusColor, getStatusEmoji } from '../app/apps-list-screen';
-import { Panel } from './shared/display/panel';
 
 export function AppDetailsPanel({ app }: { app: App }) {
   return (
-    <Panel
-      title="📋 Application Details"
-      variant="info"
-      boxProps={{ marginBottom: 1 }}
+    <Box
+      borderStyle="round"
+      borderColor="gray"
+      paddingX={1}
+      width={'100%'}
+      flexDirection="column"
+      marginBottom={1}
     >
-      <Box flexDirection="column" gap={1}>
-        <Text>
-          <Text color="gray">ID: </Text>
-          <Text bold>{app.id}</Text>
-        </Text>
+      <Text>📋 Application Details</Text>
 
-        <Text>
-          <Text color="gray">Name: </Text>
-          <Text bold>{app.name}</Text>
-        </Text>
-
-        <Text>
-          <Text color="gray">GitHub: </Text>
-          <Text bold>{app.repositoryUrl}</Text>
-        </Text>
-
-        <Text>
-          <Text color="gray">App URL: </Text>
-          <Text bold>{app.appUrl}</Text>
-        </Text>
-
-        <Text>
-          <Text color="gray">Status: </Text>
+      <Text dimColor>
+        <Text color="yellowBright">⎿</Text> id: <Text bold>{app.id}</Text>
+      </Text>
+      <Text dimColor>
+        <Text color="yellowBright">⎿</Text> name: <Text bold>{app.name}</Text>
+      </Text>
+      <Text dimColor>
+        <Text color="yellowBright">⎿</Text> github:{' '}
+        <Text bold>{app.repositoryUrl}</Text>
+      </Text>
+      <Text dimColor>
+        <Text color="yellowBright">⎿</Text> app url:{' '}
+        <Text bold>{app.appUrl}</Text>
+      </Text>
+      <Text dimColor>
+        <Text dimColor>
+          <Text color="yellowBright">⎿</Text> app status:{' '}
           {getStatusEmoji(app.deployStatus)}{' '}
-          <Text color={getStatusColor(app.deployStatus)} bold>
+          <Text bold color={getStatusColor(app.deployStatus)}>
             {app.deployStatus}
           </Text>
         </Text>
-
-        {app.recompileInProgress && (
-          <Box marginTop={1}>
-            <Text color="yellow">⚡️ Application is recompiling...</Text>
-          </Box>
-        )}
-      </Box>
-    </Panel>
+      </Text>
+    </Box>
   );
 }
