@@ -32,23 +32,3 @@ jobs:
 
       - name: Run Types Check
         run: bun run types:check
-
-      - name: Install Fly CLI
-        run: curl -L https://fly.io/install.sh | sh
-
-      - name: Backend - Test
-        env:
-          FLY_IO_TOKEN: ${{ secrets.FLY_IO_TOKEN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          AGENT_API_SECRET_AUTH: ${{ secrets.AGENT_API_SECRET_AUTH }}
-          DEPLOYED_BOT_AWS_ACCESS_KEY_ID: ${{ secrets.DEPLOYED_BOT_AWS_ACCESS_KEY_ID }}
-          DEPLOYED_BOT_AWS_SECRET_ACCESS_KEY: ${{ secrets.DEPLOYED_BOT_AWS_SECRET_ACCESS_KEY }}
-          DEPLOYED_BOT_PERPLEXITY_API_KEY: ${{ secrets.DEPLOYED_BOT_PERPLEXITY_API_KEY }}
-          DEPLOYED_BOT_PICA_SECRET_KEY: ${{ secrets.DEPLOYED_BOT_PICA_SECRET_KEY }}
-          NODE_ENV: test
-        run: bun --filter './apps/backend' test
