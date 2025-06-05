@@ -1,10 +1,6 @@
-import {
-  type AgentSseEvent,
-  MessageKind,
-  PlatformMessageType,
-} from '@appdotbuild/core';
 import { Box } from 'ink';
 import { useBuildApp } from '../../hooks/use-build-app.js';
+import { createAppBuilderStateMachine } from '../../hooks/use-build-stage.js';
 import {
   useFetchMessageLimit,
   useUserMessageLimitCheck,
@@ -13,10 +9,6 @@ import { InteractivePrompt } from '../interactive-prompt.js';
 import { LoadingMessage } from '../shared/display/loading-message.js';
 import { BuildStages } from './build-stages.js';
 import { PromptsHistory } from './prompts-history.js';
-import {
-  AppBuilderState,
-  createAppBuilderStateMachine,
-} from '../../hooks/use-build-stage.js';
 
 interface AppBuilderProps {
   initialPrompt: string;
@@ -48,23 +40,6 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
     createApplicationPending,
   );
 
-  const getBuildStagesTitle = (state: AppBuilderState): string => {
-    switch (state) {
-      case 'building':
-        return 'Build in Progress';
-      case 'iteration_ready':
-        return 'Build Complete';
-      case 'refinement_requested':
-        return 'Awaiting Feedback';
-      case 'completed':
-        return 'Application Ready';
-      case 'error':
-        return 'Build Failed';
-      default:
-        return 'Build in Progress';
-    }
-  };
-
   const handleSubmit = (text: string) => {
     if (isStreamingMessages) return;
 
@@ -94,7 +69,6 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
         <BuildStages
           messagesData={streamingMessagesData}
           isStreaming={isStreamingMessages}
-          title={getBuildStagesTitle(stateMachine.currentState)}
         />
       )}
 

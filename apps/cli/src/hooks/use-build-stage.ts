@@ -1,5 +1,5 @@
 import {
-  AgentSseEvent,
+  type AgentSseEvent,
   MessageKind,
   PlatformMessageType,
 } from '@appdotbuild/core';
@@ -18,6 +18,18 @@ interface PromptConfig {
   successMessage: string;
   loadingText: string;
 }
+
+export interface MessagesData {
+  events?: AgentSseEvent[];
+}
+
+export type MessageDetail = {
+  role: 'assistant' | 'user';
+  text: string;
+  highlight: boolean;
+  icon: string;
+  kind?: MessageKind;
+};
 
 export const createAppBuilderStateMachine = (
   initialPrompt: string,
