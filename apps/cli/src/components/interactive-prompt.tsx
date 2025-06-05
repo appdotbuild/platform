@@ -5,7 +5,6 @@ import { Box } from 'ink';
 import { useRef } from 'react';
 import { usePromptHistory } from '../hooks/use-prompt-history.js';
 import { ErrorMessage } from './shared/display/error-message.js';
-import { SuccessMessage } from './shared/display/success-message.js';
 import { TextInput } from './shared/input/text-input.js';
 import { createMessageLimitError } from '../hooks/use-message-limit.js';
 import { useUserMessageLimitCheck } from '../hooks/use-message-limit.js';

@@ -1,9 +1,7 @@
-import { Box } from 'ink';
-import { useMemo } from 'react';
-import { usePhaseGroup } from '../../hooks/use-phase-group.js';
-import { Panel } from '../shared/display/panel.js';
-import { PhaseGroupItem } from './phase-group-item.js';
-import { AgentSseEvent, MessageKind } from '@appdotbuild/core';
+import type { AgentSseEvent } from '@appdotbuild/core';
+import { Box, Static, Text } from 'ink';
+import { Panel } from '../shared/display/panel';
+import { TaskStatus } from '../shared/display/task-status';
 
 interface MessagesData {
   events?: AgentSseEvent[];
@@ -15,47 +13,73 @@ interface BuildStageProps {
   title?: string;
 }
 
+export type MessageDetail = {
+  role: 'assistant' | 'user';
+  text: string;
+  highlight: boolean;
+  icon: string;
+};
+
+export type MessageProps = {
+  title: string;
+  status: TaskStatus;
+  details?: MessageDetail[];
+  duration?: string;
+};
+
+const SimpleMessage = ({
+  title,
+  message,
+  idx,
+}: {
+  title: string;
+  message: MessageDetail;
+  idx: number;
+}) => {
+  return (
+    <Box key={idx} flexDirection="column" gap={0.5} paddingX={1}>
+      {idx === 0 && (
+        <Box marginBottom={1}>
+          <Text bold underline>
+            {title}
+          </Text>
+        </Box>
+      )}
+
+      <Text
+        key={message.text}
+        color={message.role === 'user' ? 'gray' : 'white'}
+      >
+        {message.icon} {message.text}
+      </Text>
+    </Box>
+  );
+};
+
 export function BuildStages({
   messagesData,
-  isStreaming,
   title = 'Build in Progress',
 }: BuildStageProps) {
-  const { phaseGroups, currentPhase, currentMessage } = usePhaseGroup({
-    events: messagesData.events || [],
-  });
-
-  const lastInteractiveGroupIndex = useMemo(
-    () =>
-      phaseGroups?.reduce((lastIndex, group, currentIndex) => {
-        const hasInteractiveInGroup = group.events.some(
-          (e) => e.message.kind === MessageKind.REFINEMENT_REQUEST,
-        );
-        return hasInteractiveInGroup ? currentIndex : lastIndex;
-      }, -1),
-    [phaseGroups],
-  );
-
   if (!messagesData?.events?.length) return null;
 
-  const hasInteractive =
-    currentMessage?.message.kind === MessageKind.REFINEMENT_REQUEST;
+  const messages = messagesData.events[0]?.message.messages || [];
 
   return (
-    <Panel title={title} variant="info">
-      <Box flexDirection="column" gap={1}>
-        {phaseGroups?.map((group, groupIdx) => (
-          <PhaseGroupItem
-            key={`${group.phase}-${groupIdx}`}
-            group={group}
-            groupIndex={groupIdx}
-            currentPhase={currentPhase}
-            isStreaming={isStreaming}
-            hasInteractive={hasInteractive}
-            lastInteractiveGroupIndex={lastInteractiveGroupIndex}
-            phaseGroupsLength={phaseGroups.length}
-          />
-        ))}
-      </Box>
-    </Panel>
+    <Static items={[...messages]}>
+      {(item, idx) => {
+        const message = {
+          role: item.role,
+          text: item.content,
+          highlight: false,
+          icon: item.role === 'assistant' ? '🤖' : '👤',
+        };
+
+        return (
+          <Box key={idx} flexDirection="column" width="100%" marginBottom={1}>
+            <SimpleMessage title={title} message={message} idx={idx} />
+          </Box>
+        );
+      }}
+    </Static>
   );
 }

@@ -16,7 +16,7 @@ export const ShortcutHints = () => {
   });
 
   return (
-    <Box marginTop={1} flexDirection="column">
+    <Box flexDirection="column">
       <Text dimColor>Press 'ctrl+b' to go back to the previous step</Text>
       {isNeonEmployee === true && (
         <Text dimColor>Press 'ctrl+d' to toggle debug panel</Text>

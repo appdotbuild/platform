@@ -27,7 +27,7 @@ export function AppDetails() {
   }
 
   return (
-    <Box flexDirection="column" padding={1}>
+    <Box flexDirection="column">
       <Static items={['app-details-panel']}>
         {() => <AppDetailsPanel key="app-details-panel" app={app} />}
       </Static>
