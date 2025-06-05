@@ -181,10 +181,13 @@ export function AppBuilder({ initialPrompt, appId, traceId }: AppBuilderProps) {
 
   const { config } = stateMachine;
 
+  const hasNewEvents =
+    streamingMessagesData && streamingMessagesData?.events?.length > 0;
+
   return (
     <Box flexDirection="column">
       {/* App history for existing apps */}
-      {appId && <PromptsHistory appId={appId} />}
+      {appId && !hasNewEvents && <PromptsHistory appId={appId} />}
 
       {/* Build stages - show when we have streaming data */}
       {streamingMessagesData && (

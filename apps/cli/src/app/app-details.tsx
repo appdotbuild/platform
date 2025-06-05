@@ -1,10 +1,11 @@
-import { Box, Text } from 'ink';
+import { Box, Static, Text } from 'ink';
 import { AppBuilder } from '../components/app-builder/app-builder.js';
 import { LoadingMessage } from '../components/shared/display/loading-message.js';
 import { Panel } from '../components/shared/display/panel.js';
 import { useApplication } from '../hooks/use-application.js';
 import { useRouteParams } from '../routes.js';
 import { getStatusColor, getStatusEmoji } from './apps-list-screen.js';
+import { AppDetailsPanel } from '../components/app-details-panel.js';
 
 export function AppDetails() {
   const { appId } = useRouteParams('/apps/:appId');
@@ -27,44 +28,9 @@ export function AppDetails() {
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Panel title="📋 Application Details" variant="info">
-        <Box flexDirection="column" gap={1}>
-          <Text>
-            <Text color="gray">ID: </Text>
-            <Text bold>{app.id}</Text>
-          </Text>
-
-          <Text>
-            <Text color="gray">Name: </Text>
-            <Text bold>{app.name}</Text>
-          </Text>
-
-          <Text>
-            <Text color="gray">GitHub: </Text>
-            <Text bold>{app.repositoryUrl}</Text>
-          </Text>
-
-          <Text>
-            <Text color="gray">App URL: </Text>
-            <Text bold>{app.appUrl}</Text>
-          </Text>
-
-          <Text>
-            <Text color="gray">Status: </Text>
-            {getStatusEmoji(app.deployStatus)}{' '}
-            <Text color={getStatusColor(app.deployStatus)} bold>
-              {app.deployStatus}
-            </Text>
-          </Text>
-
-          {app.recompileInProgress && (
-            <Box marginTop={1}>
-              <Text color="yellow">⚡️ Application is recompiling...</Text>
-            </Box>
-          )}
-        </Box>
-      </Panel>
-
+      <Static items={['app-details-panel']}>
+        {() => <AppDetailsPanel key="app-details-panel" app={app} />}
+      </Static>
       <AppBuilder
         initialPrompt="How would you like to modify your application?"
         appId={app?.id}
