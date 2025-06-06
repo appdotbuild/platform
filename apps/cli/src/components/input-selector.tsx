@@ -1,7 +1,7 @@
 import {
-  InteractivePrompt,
-  type InteractivePromptProps,
-} from './interactive-prompt.js';
+  TerminalInput,
+  type TerminalInputProps,
+} from './chat/terminal-input.js';
 import {
   ConfirmPrompt,
   type ConfirmPromptProps,
@@ -17,7 +17,7 @@ import {
 import { Select, type SelectProps } from './shared/input/select.js';
 
 type InputSelectorProps =
-  | ({ type: 'text-input' } & InteractivePromptProps)
+  | ({ type: 'text-input' } & TerminalInputProps)
   | ({ type: 'select' } & SelectProps<string>)
   | ({ type: 'boolean' } & ConfirmPromptProps)
   | ({ type: 'multi-select' } & MultiSelectProps)
@@ -26,7 +26,7 @@ type InputSelectorProps =
 export function InputSelector(props: InputSelectorProps) {
   switch (props.type) {
     case 'text-input':
-      return <InteractivePrompt {...props} />;
+      return <TerminalInput {...props} />;
     case 'select':
       return <Select {...props} />;
     case 'boolean':

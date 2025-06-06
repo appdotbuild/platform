@@ -1,11 +1,10 @@
 import { Spinner } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box, Newline, Text } from 'ink';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Select as InkSelect } from '../../ui/select/index.js';
 import { Panel } from '../display/panel.js';
 import type { SelectItem } from './types.js';
-import { useTerminalState } from '../../../hooks/use-terminal-state.js';
 
 export type SelectProps<T extends string> = {
   question: string;

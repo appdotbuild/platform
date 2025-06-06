@@ -1,8 +1,9 @@
 import { render } from 'ink';
 import meow from 'meow';
 import { App } from './app.js';
+import { useTerminalState } from './hooks/use-terminal-state.js';
 import {
-  AgentEnvironment,
+  type AgentEnvironment,
   useEnvironmentStore,
 } from './store/environment-store.js';
 
@@ -32,6 +33,9 @@ const cli = meow(
     },
   },
 );
+
+const { clearTerminal } = useTerminalState();
+clearTerminal();
 
 // Set the environment for the agent
 useEnvironmentStore

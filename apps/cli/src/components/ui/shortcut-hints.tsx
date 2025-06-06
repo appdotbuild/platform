@@ -1,7 +1,7 @@
 import { Box, Text, useInput } from 'ink';
-import { useSafeNavigate } from '../../routes.js';
 import { useAuthStore } from '../../auth/auth-store.js';
 import { useTerminalState } from '../../hooks/use-terminal-state.js';
+import { useSafeNavigate } from '../../routes.js';
 
 export const ShortcutHints = () => {
   const { goBack } = useSafeNavigate();
@@ -16,10 +16,10 @@ export const ShortcutHints = () => {
   });
 
   return (
-    <Box flexDirection="column">
-      <Text dimColor>Press 'ctrl+b' to go back to the previous step</Text>
+    <Box flexDirection="row" gap={1}>
+      <Text dimColor>'ctrl+b' to go to the previous step |</Text>
       {isNeonEmployee === true && (
-        <Text dimColor>Press 'ctrl+d' to toggle debug panel</Text>
+        <Text dimColor>'ctrl+d' to toggle debug panel</Text>
       )}
     </Box>
   );

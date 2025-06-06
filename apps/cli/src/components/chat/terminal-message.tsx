@@ -1,6 +1,7 @@
 import { MessageKind, PlatformMessageType } from '@appdotbuild/core';
 import { Box, Text } from 'ink';
-import type { MessageDetail } from '../../hooks/use-build-stage';
+import type { MessageDetail } from '../../hooks/use-terminal-chat';
+import type { GroupHeader } from '../../utils/convert-events-to-message';
 import { MarkdownBlock } from '../shared/input/markdown-block';
 
 const getPhaseTitle = (
@@ -31,7 +32,20 @@ const getPhaseTitle = (
   }
 };
 
-export const MessageItem = ({
+export const TerminalGroupMessage = ({ message }: { message: GroupHeader }) => {
+  return (
+    <Text color="yellow" bold>
+      {message.kind === MessageKind.REFINEMENT_REQUEST && 'Refinement Request'}
+      {message.kind === MessageKind.PLATFORM_MESSAGE &&
+        `Platform Message${message.type ? ` - ${message.type}` : ''}`}
+      {message.kind === MessageKind.REVIEW_RESULT && 'Review Result'}
+      {message.kind === MessageKind.STAGE_RESULT && 'Stage Result'}
+      {message.kind === MessageKind.USER_MESSAGE && 'User Message'}
+    </Text>
+  );
+};
+
+export const TerminalMessage = ({
   message,
   metadata,
 }: {

@@ -406,8 +406,13 @@ export async function postMessage(
               ...completeParsedMessage,
               message: {
                 ...completeParsedMessage.message,
-                messages:
-                  conversationManager.getConversationHistory(applicationId),
+                messages: [
+                  {
+                    role: 'assistant',
+                    content:
+                      completeParsedMessage.message.messages[0]?.content || '',
+                  },
+                ],
               },
             };
 

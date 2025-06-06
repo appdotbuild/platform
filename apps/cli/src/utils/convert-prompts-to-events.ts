@@ -1,9 +1,9 @@
 import {
+  type AgentSseEvent,
   AgentStatus,
-  MessageKind,
   type AppPrompts,
+  MessageKind,
   PromptKind,
-  AgentSseEvent,
 } from '@appdotbuild/core';
 
 export function convertPromptsToEvents(appPrompts?: AppPrompts[]) {

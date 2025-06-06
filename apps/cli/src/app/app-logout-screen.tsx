@@ -40,7 +40,7 @@ export function AppLogoutScreen() {
             { label: 'Yes, log out', value: 'yes' },
             { label: 'No, go back', value: 'no' },
           ]}
-          onSubmit={(value) => {
+          onSubmit={(value: string) => {
             if (value === 'yes') {
               void handleLogout();
             }
