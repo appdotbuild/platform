@@ -14,9 +14,9 @@
     "zod": "3.24.1"
   },
   "devDependencies": {
-    "next": "15.1.4"
+    "next": "15.2.4"
   },
   "peerDependencies": {
-    "next": "15.1.4"
+    "next": "15.2.4"
   }
 }

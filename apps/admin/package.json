@@ -29,7 +29,7 @@
     "@uiw/react-codemirror": "4.23.8",
     "babel-plugin-react-compiler": "19.0.0-beta-21e868a-20250216",
     "jszip": "3.10.1",
-    "next": "15.1.4",
+    "next": "15.2.4",
     "next-safe-action": "7.10.2",
     "react": "18.3.0",
     "react-dom": "18.3.0",

@@ -3,16 +3,16 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "build-storybook": "storybook build",
     "clean": "rm -rf node_modules",
     "dev": "pnpm storybook:start",
     "storybook:start": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
     "types:check": "tsc --noEmit"
   },
   "dependencies": {
-    "@next/font": "14.1.0",
     "@appdotbuild/design": "workspace:*",
-    "next": "15.1.4",
+    "@next/font": "14.1.0",
+    "next": "15.2.4",
     "react": "18.3.0",
     "react-dom": "18.3.0"
   },

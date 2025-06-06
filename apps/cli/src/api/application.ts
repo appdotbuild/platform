@@ -85,7 +85,7 @@ export async function sendMessage({
   traceId,
   onMessage,
 }: SendMessageParams): Promise<SendMessageResult> {
-  const environment = useEnvironmentStore.getState().environment;
+  const agentEnvironment = useEnvironmentStore.getState().agentEnvironment();
 
   const response = await apiClient.post(
     '/message',
@@ -94,7 +94,7 @@ export async function sendMessage({
       clientSource: 'cli',
       applicationId,
       traceId,
-      environment,
+      environment: agentEnvironment,
     },
     {
       headers: {

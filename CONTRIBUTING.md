@@ -25,21 +25,21 @@ brew install oven-sh/bun/bun
 
 if not, you can find the instructions for your case [here](https://bun.sh/docs/installation#macos-and-linux).
 
-### flyctl
+### koyeb
 
 Run
 
 ```bash
-brew install flyctl
+brew install koyeb/tap/koyeb
 ```
 
 or
 
 ```bash
-curl -L https://fly.io/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
 ```
 
-Docs [here](https://fly.io/docs/flyctl/install/)
+Docs [here](https://www.koyeb.com/docs/build-and-deploy/cli/installation)
 
 ## 1Password CLI
 
@@ -84,6 +84,8 @@ bun setup
 ```
 
 ## Starting the project
+
+First of all make sure that docker is running.
 
 Now you will need to run 2 different terminals, one with all the necessary servers, and the other one with the CLI.
 

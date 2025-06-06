@@ -96,6 +96,17 @@ export async function validateAuth(request: FastifyRequest): Promise<
       githubUsername,
     );
 
+    const NEON_EMPLOYEE_GROUP = 'neon';
+    const userGroup = user.serverMetadata?.user_group;
+    if (neonEmployee && userGroup !== NEON_EMPLOYEE_GROUP) {
+      await user.update({
+        serverMetadata: {
+          ...user.serverMetadata,
+          user_group: NEON_EMPLOYEE_GROUP,
+        },
+      });
+    }
+
     return {
       ...user,
       githubUsername,
