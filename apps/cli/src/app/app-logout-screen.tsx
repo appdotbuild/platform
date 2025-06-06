@@ -51,12 +51,13 @@ export function AppLogoutScreen() {
         />
       )}
       {logoutPhase === 'processing' && (
-        <InputSelector type="markdown" content="Logging out..." />
+        <InputSelector type="markdown" content="Logging out..." mode="chat" />
       )}
       {logoutPhase === 'completed' && (
         <InputSelector
           type="markdown"
           content="You have been logged out. Goodbye!"
+          mode="chat"
         />
       )}
     </Box>
