@@ -33,6 +33,7 @@ export function TerminalChat({
   const [lastProcessedEventId, setLastProcessedEventId] = useState<
     string | null
   >(null);
+  const [processedEventCount, setProcessedEventCount] = useState(0);
 
   const { isLoading: isLoadingHistory, data: historyMessages } =
     useApplicationHistory(appId);
@@ -92,9 +93,8 @@ export function TerminalChat({
   useEffect(() => {
     if (!streamingMessagesData?.events?.length) return;
 
-    const newEvents = streamingMessagesData.events.filter((event) => {
-      const eventId = event.traceId;
-      return !lastProcessedEventId || eventId > lastProcessedEventId;
+    const newEvents = streamingMessagesData.events.filter((_, index) => {
+      return index >= processedEventCount;
     });
 
     if (newEvents.length === 0) return;
@@ -103,11 +103,8 @@ export function TerminalChat({
     if (messages.length === 0) return;
 
     setStaticMessages((prev) => [...prev, ...messages]);
-    const lastEvent = newEvents[newEvents.length - 1];
-    if (lastEvent?.traceId) {
-      setLastProcessedEventId(lastEvent.traceId);
-    }
-  }, [streamingMessagesData, lastProcessedEventId]);
+    setProcessedEventCount(processedEventCount + newEvents.length);
+  }, [streamingMessagesData, processedEventCount]);
 
   const stateMachine = useTerminalChat({
     initialPrompt,

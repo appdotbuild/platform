@@ -10,7 +10,6 @@ import {
 import { usePromptHistory } from '../../hooks/use-prompt-history';
 import { ErrorMessage } from '../shared/display/error-message';
 import { TextInput } from '../shared/input/text-input';
-import { TerminalSuggestions } from './terminal-suggestions';
 
 export interface InputHistoryItem {
   prompt: string;
