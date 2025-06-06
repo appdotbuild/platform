@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 export const PlatformMessageType = {
   DEPLOYMENT_COMPLETE: 'deployment_complete',
+  DEPLOYMENT_IN_PROGRESS: 'deployment_in_progress',
+  DEPLOYMENT_STOPPING: 'deployment_stopping',
   DEPLOYMENT_FAILED: 'deployment_failed',
   REPO_CREATED: 'repo_created',
   COMMIT_CREATED: 'commit_created',
@@ -44,6 +46,7 @@ export const conversationMessageSchema = z.object({
 
 export type PlatformMessageMetadata = {
   type?: PlatformMessageType;
+  deploymentId?: string;
 };
 
 // Agent SSE Event message object
@@ -69,6 +72,12 @@ export const agentSseEventSchema = z.object({
   traceId: z.string(),
   createdAt: z.date().optional(),
   message: agentSseEventMessageSchema,
+  metadata: z
+    .object({
+      type: z.nativeEnum(PlatformMessageType).optional(),
+      deploymentId: z.string().optional(),
+    })
+    .optional(),
 });
 
 // Agent Request

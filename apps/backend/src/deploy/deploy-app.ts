@@ -23,6 +23,7 @@ import {
   updateKoyebService,
   createKoyebDomain,
   getKoyebDomain,
+  getKoyebDeployment,
 } from './koyeb';
 
 const exec = promisify(execNative);
@@ -224,10 +225,18 @@ export async function deployApp({
     token: userToken,
   };
 
+  let deploymentId: string;
+
   if (!koyebServiceId) {
-    ({ koyebServiceId } = await createKoyebService({ ...params, koyebAppId }));
+    ({ koyebServiceId, deploymentId } = await createKoyebService({
+      ...params,
+      koyebAppId,
+    }));
   } else {
-    await updateKoyebService({ ...params, serviceId: koyebServiceId });
+    ({ deploymentId } = await updateKoyebService({
+      ...params,
+      serviceId: koyebServiceId,
+    }));
   }
 
   await db
@@ -266,7 +275,7 @@ export async function deployApp({
     }
   }
 
-  return { appURL: appUrl };
+  return { appURL: appUrl, deploymentId };
 }
 
 async function getNeonProjectConnectionString({

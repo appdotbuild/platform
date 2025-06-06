@@ -20,6 +20,7 @@ import {
 } from './github';
 import { logger } from './logger';
 import { dockerLoginIfNeeded } from './docker';
+import { getKoyebDeploymentEndpoint } from './deploy';
 
 config({ path: '.env' });
 validateEnv();
@@ -61,6 +62,7 @@ app.get('/apps/:id/read-url', authHandler, appByIdUrl);
 
 app.post('/message', authHandler, postMessage);
 app.get('/message-limit', authHandler, getUserMessageLimit);
+app.get('/deployment-status/:id', authHandler, getKoyebDeploymentEndpoint);
 
 export const start = async () => {
   try {
