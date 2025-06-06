@@ -1,7 +1,7 @@
+import { type AgentSseEvent, AgentStatus } from '@appdotbuild/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSendMessage } from './use-send-message.js';
-import { AgentStatus, AgentSseEvent } from '@appdotbuild/core';
 import { useEffect } from 'react';
+import { useSendMessage } from './use-send-message.js';
 
 export const queryKeys = {
   applicationMessages: (id: string) => ['apps', id, 'messages'],

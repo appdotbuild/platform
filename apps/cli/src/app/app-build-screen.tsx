@@ -1,5 +1,5 @@
-import { AppBuilder } from '../components/app-builder/app-builder.js';
+import { TerminalChat } from '../components/chat/terminal-chat.js';
 
 export const AppBuildScreen = () => {
-  return <AppBuilder initialPrompt="What would you like to build?" />;
+  return <TerminalChat initialPrompt="What would you like to build?" />;
 };

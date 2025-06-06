@@ -1,8 +1,4 @@
-import {
-  type AgentSseEvent,
-  MessageKind,
-  type TraceId,
-} from '@appdotbuild/core';
+import type { AgentSseEvent, TraceId } from '@appdotbuild/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { type SendMessageParams, sendMessage } from '../api/application.js';
@@ -98,27 +94,7 @@ export const useSendMessage = () => {
                 return { events: [parsedEvent] };
               }
 
-              // if there is already an event with the same traceId, replace the whole thread
-              const existingSameTraceIdEventThread = oldData.events.some(
-                (e) => e.traceId === newEvent.traceId,
-              );
-
-              // platform events should always be the last message in the thread
-              if (
-                existingSameTraceIdEventThread &&
-                parsedEvent.message.kind !== MessageKind.PLATFORM_MESSAGE
-              ) {
-                const existingPlatformEvents = oldData.events.filter(
-                  (e) => e.message.kind === MessageKind.PLATFORM_MESSAGE,
-                );
-
-                return {
-                  ...oldData,
-                  events: [parsedEvent, ...existingPlatformEvents],
-                };
-              }
-
-              // add the new message to the thread
+              // always append to the end, no fancy logic
               return {
                 ...oldData,
                 events: [...oldData.events, parsedEvent],

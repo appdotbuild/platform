@@ -1,9 +1,9 @@
 import {
+  type AgentSseEvent,
   AgentStatus,
-  MessageKind,
   type AppPrompts,
+  MessageKind,
   PromptKind,
-  AgentSseEvent,
 } from '@appdotbuild/core';
 
 export function convertPromptsToEvents(appPrompts?: AppPrompts[]) {
@@ -23,7 +23,7 @@ export function convertPromptsToEvents(appPrompts?: AppPrompts[]) {
         kind:
           prompt.kind === PromptKind.USER
             ? MessageKind.USER_MESSAGE
-            : MessageKind.PLATFORM_MESSAGE,
+            : MessageKind.AGENT_MESSAGE,
         agentState: {},
       },
     } as AgentSseEvent & { createdAt: Date };

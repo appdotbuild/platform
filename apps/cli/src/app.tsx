@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Box, Text } from 'ink';
+import { Box, Static, Text } from 'ink';
 import { useEffect } from 'react';
 import { authenticate, ensureIsNeonEmployee } from './auth/auth';
 import { useAuth } from './auth/use-auth';
@@ -61,9 +61,13 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Banner title="Welcome to app.build CLI">
-        Create, deploy, and manage your applications with ease
-      </Banner>
+      <Static items={['banner']}>
+        {() => (
+          <Banner key="banner" title="Welcome to app.build CLI">
+            Create, deploy, and manage your applications with ease
+          </Banner>
+        )}
+      </Static>
       {content}
     </Box>
   );

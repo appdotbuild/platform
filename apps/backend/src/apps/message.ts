@@ -406,8 +406,7 @@ export async function postMessage(
               ...completeParsedMessage,
               message: {
                 ...completeParsedMessage.message,
-                messages:
-                  conversationManager.getConversationHistory(applicationId),
+                messages: completeParsedMessage.message.messages,
               },
             };
 
