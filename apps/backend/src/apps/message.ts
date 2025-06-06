@@ -406,13 +406,7 @@ export async function postMessage(
               ...completeParsedMessage,
               message: {
                 ...completeParsedMessage.message,
-                messages: [
-                  {
-                    role: 'assistant',
-                    content:
-                      completeParsedMessage.message.messages[0]?.content || '',
-                  },
-                ],
+                messages: completeParsedMessage.message.messages,
               },
             };
 
