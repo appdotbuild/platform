@@ -9,14 +9,14 @@ import {
 } from '../../hooks/use-message-limit';
 import { useTerminalChat } from '../../hooks/use-terminal-chat';
 import {
-  type GroupHeader,
-  type MessageOrGroup,
+  type Message,
   convertEventToMessages,
 } from '../../utils/convert-events-to-message';
 import { LoadingMessage } from '../shared/display/loading-message';
 import { TerminalInput } from './terminal-input';
 import { TerminalLoading } from './terminal-loading';
-import { TerminalGroupMessage, TerminalMessage } from './terminal-message';
+import { TerminalMessage } from './terminal-message';
+import console from 'console';
 
 export function TerminalChat({
   initialPrompt,
@@ -28,11 +28,8 @@ export function TerminalChat({
   traceId?: string;
 }) {
   const [userInput, setUserInput] = useState<string[]>([]);
-  const [staticMessages, setStaticMessages] = useState<MessageOrGroup[]>([]);
+  const [staticMessages, setStaticMessages] = useState<Message[]>([]);
   const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
-  const [lastProcessedEventId, setLastProcessedEventId] = useState<
-    string | null
-  >(null);
   const [processedEventCount, setProcessedEventCount] = useState(0);
 
   const { isLoading: isLoadingHistory, data: historyMessages } =
@@ -71,22 +68,14 @@ export function TerminalChat({
     const lastMessage = userInput[0];
     if (!lastMessage) return;
 
-    const userInputMessages: MessageOrGroup[] = [
-      {
-        kind: MessageKind.USER_MESSAGE,
-        isGroupHeader: true,
-      },
-      {
-        role: 'user',
-        content: lastMessage,
-        highlight: false,
-        icon: '👤',
-        isGroupHeader: false,
-        kind: MessageKind.USER_MESSAGE,
-      },
-    ];
+    const userInputMessage: Message = {
+      role: 'user',
+      content: lastMessage,
+      icon: '👤',
+      kind: MessageKind.USER_MESSAGE,
+    };
 
-    setStaticMessages((prev) => [...prev, ...userInputMessages]);
+    setStaticMessages((prev) => [...prev, userInputMessage]);
   }, [userInput]);
 
   // load new streaming messages
@@ -138,33 +127,11 @@ export function TerminalChat({
   return (
     <Box flexDirection="column" width="100%" height="100%" paddingX={1}>
       <Static items={staticMessages}>
-        {(message, index) => {
-          if (message.isGroupHeader) {
-            return (
-              <Box
-                key={index}
-                flexDirection="column"
-                width="100%"
-                marginBottom={1}
-              >
-                <TerminalGroupMessage message={message} />
-              </Box>
-            );
-          }
-
-          return (
-            <Box
-              key={index}
-              flexDirection="column"
-              width="100%"
-              marginBottom={1}
-            >
-              <TerminalMessage
-                message={{ ...message, text: message.content }}
-              />
-            </Box>
-          );
-        }}
+        {(message, index) => (
+          <Box key={index} flexDirection="column" width="100%" marginBottom={1}>
+            <TerminalMessage message={{ ...message, text: message.content }} />
+          </Box>
+        )}
       </Static>
 
       <TerminalInput

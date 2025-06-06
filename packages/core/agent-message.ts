@@ -23,6 +23,7 @@ export const MessageKind = {
   // these are Platform only messages, don't exist in the agent
   PLATFORM_MESSAGE: 'PlatformMessage',
   USER_MESSAGE: 'UserMessage',
+  AGENT_MESSAGE: 'AgentMessage',
 } as const;
 
 type RequestId = string;

@@ -26,7 +26,6 @@ export interface MessagesData {
 export type MessageDetail = {
   role: 'assistant' | 'user';
   text: string;
-  highlight: boolean;
   icon: string;
   kind?: MessageKind;
 };
