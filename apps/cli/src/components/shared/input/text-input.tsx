@@ -78,15 +78,6 @@ export function TextInput({
           )}
         </Box>
       </Panel>
-
-      {userMessageLimit && (
-        <Box justifyContent="flex-end">
-          <Text color={!userMessageLimit.isUserLimitReached ? 'gray' : 'red'}>
-            {userMessageLimit.remainingMessages} /{' '}
-            {userMessageLimit.dailyMessageLimit} messages remaining
-          </Text>
-        </Box>
-      )}
     </Box>
   );
 }
