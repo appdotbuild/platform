@@ -1,8 +1,4 @@
-import {
-  AgentStatus,
-  MessageKind,
-  PlatformMessageType,
-} from '@appdotbuild/core';
+import { MessageKind, PlatformMessageType } from '@appdotbuild/core';
 import { Box, Text } from 'ink';
 import type { MessageDetail } from '../../hooks/use-terminal-chat';
 import { MarkdownBlock } from '../shared/input/markdown-block';
@@ -44,12 +40,23 @@ const AgentHeader = ({
   message: MessageDetail;
   metadata?: { type?: PlatformMessageType };
 }) => {
+  const isHistoryMessage = message.kind === MessageKind.AGENT_MESSAGE;
+
   const phaseTitle = getPhaseTitle(
     message.kind || MessageKind.STAGE_RESULT,
     metadata,
   );
 
-  const isHistoryMessage = message.kind === MessageKind.AGENT_MESSAGE;
+  if (message.role === 'user') {
+    return (
+      <Box>
+        <Text color={isHistoryMessage ? 'green' : 'gray'}>👤 </Text>
+        <Text bold color={isHistoryMessage ? 'green' : 'gray'}>
+          {phaseTitle}
+        </Text>
+      </Box>
+    );
+  }
 
   let textColor = 'white';
   let icon = '🤖';
@@ -82,11 +89,25 @@ export const TerminalMessage = ({
   const isHistoryMessage = message.kind === MessageKind.AGENT_MESSAGE;
 
   return (
-    <Box flexDirection="column" gap={1} paddingX={1}>
+    <Box
+      flexDirection="column"
+      gap={1}
+      paddingX={1}
+      borderLeft
+      borderStyle={{
+        topLeft: '',
+        top: '',
+        topRight: '',
+        left: '┃',
+        bottomLeft: '',
+        bottom: '',
+        bottomRight: '',
+        right: '',
+      }}
+      borderColor={message.role === 'user' ? 'gray' : 'yellowBright'}
+    >
       <Box flexDirection="row">
-        {message.role === 'assistant' && (
-          <AgentHeader message={message} metadata={metadata} />
-        )}
+        <AgentHeader message={message} metadata={metadata} />
       </Box>
       <Box gap={1}>
         <Text
