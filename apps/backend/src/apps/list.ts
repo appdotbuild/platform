@@ -38,15 +38,11 @@ export async function listApps(
 
   const { ...columns } = getTableColumns(apps);
 
-  const countResultP = db
-    .select({ count: sql`count(*)` })
-    .from(apps)
-    .where(eq(apps.ownerId, user.id));
+  const countResultP = db.select({ count: sql`count(*)` }).from(apps);
 
   const appsP = db
     .select(columns)
     .from(apps)
-    .where(eq(apps.ownerId, user.id))
     .orderBy(desc(apps.createdAt))
     .limit(pagesize)
     .offset(offset);
