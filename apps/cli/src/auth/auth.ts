@@ -62,7 +62,7 @@ export async function fetchAccessToken(refreshToken: string): Promise<{
   };
 }
 
-export async function authenticate(): Promise<string> {
+export async function authenticate(onAuthOpened?: () => void): Promise<string> {
   // Check if we already have a valid access token
   const accessToken = tokenStorage.getAccessToken();
   if (accessToken) {
@@ -100,12 +100,13 @@ export async function authenticate(): Promise<string> {
     // @ts-expect-error - method exists, but types don't reflect it.
     promptLink: (url: string) => {
       logger.link('💻 🔗 Opening auth link in your default browser:', url);
+      onAuthOpened?.();
       open(url);
     },
   });
 
   if (newRefreshTokenResponse.status === 'error') {
-    throw new Error('Authentication failed: ' + newRefreshTokenResponse.error);
+    throw new Error(`Authentication failed: ${newRefreshTokenResponse.error}`);
   }
 
   const newAccessToken = await fetchAccessToken(newRefreshTokenResponse.data);

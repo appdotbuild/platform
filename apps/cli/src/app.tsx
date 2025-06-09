@@ -1,3 +1,4 @@
+// @ts-strict
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Box, Static, Text } from 'ink';
 import { useEffect } from 'react';
@@ -5,6 +6,7 @@ import { authenticate, ensureIsNeonEmployee } from './auth/auth';
 import { useAuth } from './auth/use-auth';
 import { Banner } from './components/ui/Banner';
 import { DebugPanel } from './debug/debugger-panel';
+import { useAnalytics } from './hooks/use-analytics';
 import { AppRouter } from './routes';
 
 const queryClient = new QueryClient();
@@ -34,6 +36,7 @@ export const App = () => {
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { data, error, isLoading } = useAuth();
+  const { trackEvent } = useAnalytics();
   const isAuthenticated = !isLoading && !!data?.isLoggedIn;
 
   useEffect(() => {
@@ -42,8 +45,13 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     } else {
       // ensure the user is a neon employee
       void ensureIsNeonEmployee();
+
+      // track identify event when user is authenticated
+      trackEvent({
+        eventType: 'identify',
+      });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, trackEvent]);
 
   let content = null;
 

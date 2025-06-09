@@ -27,6 +27,7 @@
     "@octokit/app": "14.0.0",
     "@octokit/auth-app": "5.0.0",
     "@octokit/rest": "20.0.0",
+    "@segment/analytics-node": "^2.2.1",
     "@stackframe/stack": "2.8.11",
     "aws-sdk": "2.1692.0",
     "better-sse": "0.14.1",
