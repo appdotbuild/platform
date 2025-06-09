@@ -39,7 +39,7 @@ export function Panel({
       {...boxProps}
     >
       {title && (
-        <Box marginBottom={2}>
+        <Box marginBottom={1}>
           <Text bold>{title}</Text>
         </Box>
       )}

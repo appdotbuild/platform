@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import fs from 'fs';
 import path from 'path';
 import { APP_CONFIG_DIR } from '../constants.js';
-import { useAuthStore } from '../auth/auth-store.js';
 
 export const DEBUG_LOG_FILE = path.join(APP_CONFIG_DIR, 'debug.log');
 

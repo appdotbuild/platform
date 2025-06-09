@@ -33,6 +33,16 @@ export const Select = <T extends string>({
 }: SelectProps<T>) => {
   const [selectedValue, setSelectedValue] = useState('');
   const [isSuccessSubmitted, setIsSuccessSubmitted] = useState(false);
+  // const { setRawMode } = useTerminalState();
+
+  // useEffect(() => {
+  //   if (showPrompt && !isSuccessSubmitted) {
+  //     // setRawMode(true);
+  //   }
+  //   return () => {
+  //     setRawMode(false);
+  //   };
+  // }, [showPrompt, isSuccessSubmitted, setRawMode]);
 
   if (selectedValue && status === 'success' && !isSuccessSubmitted) {
     setIsSuccessSubmitted(true);

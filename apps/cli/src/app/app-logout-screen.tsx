@@ -40,7 +40,7 @@ export function AppLogoutScreen() {
             { label: 'Yes, log out', value: 'yes' },
             { label: 'No, go back', value: 'no' },
           ]}
-          onSubmit={(value) => {
+          onSubmit={(value: string) => {
             if (value === 'yes') {
               void handleLogout();
             }
@@ -51,12 +51,13 @@ export function AppLogoutScreen() {
         />
       )}
       {logoutPhase === 'processing' && (
-        <InputSelector type="markdown" content="Logging out..." />
+        <InputSelector type="markdown" content="Logging out..." mode="chat" />
       )}
       {logoutPhase === 'completed' && (
         <InputSelector
           type="markdown"
           content="You have been logged out. Goodbye!"
+          mode="chat"
         />
       )}
     </Box>

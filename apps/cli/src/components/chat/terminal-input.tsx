@@ -1,14 +1,15 @@
+import type { UserMessageLimit } from '@appdotbuild/core';
 import type { TextInputProps } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
-import type { UserMessageLimit } from '@appdotbuild/core';
 import { Box } from 'ink';
 import { useRef } from 'react';
-import { usePromptHistory } from '../hooks/use-prompt-history.js';
-import { ErrorMessage } from './shared/display/error-message.js';
-import { SuccessMessage } from './shared/display/success-message.js';
-import { TextInput } from './shared/input/text-input.js';
-import { createMessageLimitError } from '../hooks/use-message-limit.js';
-import { useUserMessageLimitCheck } from '../hooks/use-message-limit.js';
+import {
+  createMessageLimitError,
+  useUserMessageLimitCheck,
+} from '../../hooks/use-message-limit';
+import { usePromptHistory } from '../../hooks/use-prompt-history';
+import { ErrorMessage } from '../shared/display/error-message';
+import { TextInput } from '../shared/input/text-input';
 
 export interface InputHistoryItem {
   prompt: string;
@@ -32,7 +33,7 @@ export interface ErrorProps {
   question: string;
 }
 
-export type InteractivePromptProps = {
+export type TerminalInputProps = {
   question?: string;
   onSubmit: (value: string) => void;
   placeholder?: string;
@@ -47,7 +48,7 @@ export type InteractivePromptProps = {
   userMessageLimit?: UserMessageLimit;
 } & TextInputProps;
 
-export function InteractivePrompt({
+export function TerminalInput({
   question = '',
   placeholder,
   status = 'idle',
@@ -61,11 +62,11 @@ export function InteractivePrompt({
   onSubmitError,
   userMessageLimit,
   ...infiniteInputProps
-}: InteractivePromptProps) {
+}: TerminalInputProps) {
   const { userMessageLimit: userMessageLimitCheck } =
     useUserMessageLimitCheck(errorMessage);
 
-  const { history, addSuccessItem, addErrorItem } = usePromptHistory();
+  const { addSuccessItem, addErrorItem } = usePromptHistory();
 
   const previousStatus = useRef(status);
   const displayStatus = previousStatus.current === 'error' ? 'idle' : status;
@@ -89,26 +90,8 @@ export function InteractivePrompt({
     return <ErrorMessage {...limitReachedError} />;
   }
 
-  const renderHistoryItem = (item: InputHistoryItem, index: number) => {
-    if (item.status === 'error') {
-      return (
-        <ErrorMessage
-          key={`history-${index}`}
-          prompt={item.prompt}
-          question={item.question}
-          errorMessage={item.errorMessage || ''}
-          retryMessage={item.retryMessage || ''}
-        />
-      );
-    }
-
-    return null;
-  };
-
   return (
     <Box flexDirection="column" gap={1} width="100%">
-      {history.map((input, index) => renderHistoryItem(input, index))}
-
       <TextInput
         showPrompt={showPrompt}
         question={question}

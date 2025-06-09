@@ -1,7 +1,11 @@
 import { render } from 'ink';
 import meow from 'meow';
 import { App } from './app.js';
-import { Environment, useEnvironmentStore } from './store/environment-store.js';
+import { useTerminalState } from './hooks/use-terminal-state.js';
+import {
+  type Environment,
+  useEnvironmentStore,
+} from './store/environment-store.js';
 
 // in the CLI, node_env is only production or development
 const defaultEnv = process.env.NODE_ENV ?? 'development';
@@ -31,6 +35,10 @@ const cli = meow(
   },
 );
 
+const { clearTerminal } = useTerminalState();
+clearTerminal();
+
+// Set the environment for the agent
 useEnvironmentStore.getState().setEnvironment(cli.flags.env as Environment);
 
 render(<App />);
