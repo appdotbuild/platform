@@ -40,7 +40,7 @@ const AgentHeader = ({
   message: MessageDetail;
   metadata?: { type?: PlatformMessageType };
 }) => {
-  const isHistoryMessage = message.kind === MessageKind.AGENT_MESSAGE;
+  const isHistoryMessage = (message as any).isHistory || false;
 
   const phaseTitle = getPhaseTitle(
     message.kind || MessageKind.STAGE_RESULT,
@@ -86,7 +86,7 @@ export const TerminalMessage = ({
   message: MessageDetail;
   metadata?: { type?: PlatformMessageType };
 }) => {
-  const isHistoryMessage = message.kind === MessageKind.AGENT_MESSAGE;
+  const isHistoryMessage = (message as any).isHistory || false;
 
   return (
     <Box

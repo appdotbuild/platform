@@ -53,7 +53,7 @@ export function TerminalChat({
   useEffect(() => {
     if (!historyMessages?.length || hasLoadedHistory) return;
 
-    const messages = convertEventToMessages(historyMessages);
+    const messages = convertEventToMessages(historyMessages, true);
     if (messages.length === 0) return;
 
     setStaticMessages(messages);
@@ -128,7 +128,10 @@ export function TerminalChat({
       <Static items={staticMessages}>
         {(message, index) => (
           <Box key={index} flexDirection="column" width="100%">
-            <TerminalMessage message={{ ...message, text: message.content }} />
+            <TerminalMessage
+              message={{ ...message, text: message.content }}
+              metadata={message.metadata}
+            />
           </Box>
         )}
       </Static>

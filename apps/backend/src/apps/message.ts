@@ -867,7 +867,8 @@ async function getMessagesFromDB(
     return {
       role: 'assistant' as const,
       content: prompt.prompt,
-      kind: MessageKind.STAGE_RESULT,
+      kind: prompt.messageKind || MessageKind.STAGE_RESULT,
+      metadata: prompt.metadata,
     };
   });
 }

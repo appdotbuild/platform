@@ -5,9 +5,14 @@ export interface Message {
   content: string;
   icon: string;
   kind: MessageKind;
+  metadata?: any;
+  isHistory?: boolean;
 }
 
-export function convertEventToMessages(events: AgentSseEvent[]): Message[] {
+export function convertEventToMessages(
+  events: AgentSseEvent[],
+  isHistory = false,
+): Message[] {
   const result: Message[] = [];
 
   for (const event of events) {
@@ -20,6 +25,8 @@ export function convertEventToMessages(events: AgentSseEvent[]): Message[] {
         content: message.content,
         icon: message.role === 'assistant' ? '🤖' : '👤',
         kind: eventKind,
+        metadata: event.message.metadata,
+        isHistory,
       });
     }
   }

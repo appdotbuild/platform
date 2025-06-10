@@ -1,3 +1,5 @@
+import type { MessageKind } from '../agent-message';
+
 export type UserMessageLimit = {
   isUserLimitReached: boolean;
   dailyMessageLimit: number;
@@ -46,6 +48,8 @@ export type AppPrompts = {
   prompt: string;
   response: string;
   kind: PromptKind;
+  messageKind?: MessageKind;
+  metadata?: any;
   createdAt: Date;
   updatedAt: Date;
 };
