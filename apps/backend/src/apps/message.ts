@@ -252,6 +252,16 @@ export async function postMessage(
       requestBody.message,
     );
 
+    // Save user message to database immediately for permanent apps
+    if (isPermanentApp) {
+      await saveMessageToDB(
+        applicationId,
+        requestBody.message,
+        'user',
+        MessageKind.USER_MESSAGE,
+      );
+    }
+
     const tempDirPath = path.join(
       os.tmpdir(),
       `appdotbuild-template-${Date.now()}`,
@@ -402,6 +412,10 @@ export async function postMessage(
               completeParsedMessage,
             );
 
+            // save agent messages to database immediately
+            if (isPermanentApp)
+              await saveAgentMessages(applicationId, completeParsedMessage);
+
             const parsedMessageWithFullMessagesHistory: AgentSseEvent = {
               ...completeParsedMessage,
               message: {
@@ -533,7 +547,9 @@ export async function postMessage(
                 githubAccessToken,
               });
 
-              session.push(
+              await pushAndSavePlatformMessage(
+                session,
+                applicationId,
                 new PlatformMessage(
                   AgentStatus.IDLE,
                   traceId as TraceId,
@@ -570,13 +586,7 @@ export async function postMessage(
       }
     }
 
-    if (isPermanentApp) {
-      await saveAgentMessage(
-        conversationManager.getConversationHistory(applicationId),
-        applicationId,
-      );
-      conversationManager.removeConversation(applicationId);
-    }
+    if (isPermanentApp) conversationManager.removeConversation(applicationId);
     streamLog(`[appId: ${applicationId}] stream finished`, 'info');
     session.push({ done: true, traceId: traceId }, 'done');
     session.removeAllListeners();
@@ -673,7 +683,9 @@ async function appCreation({
   });
   streamLog(`app created: ${applicationId}`, 'info');
 
-  session.push(
+  await pushAndSavePlatformMessage(
+    session,
+    applicationId,
     new PlatformMessage(
       AgentStatus.IDLE,
       traceId as TraceId,
@@ -723,7 +735,9 @@ async function appIteration({
     .where(eq(apps.id, applicationId));
 
   const commitUrl = `https://github.com/${githubUsername}/${appName}/commit/${commitSha}`;
-  session.push(
+  await pushAndSavePlatformMessage(
+    session,
+    applicationId,
     new PlatformMessage(
       AgentStatus.IDLE,
       traceId as TraceId,
@@ -858,40 +872,59 @@ async function getMessagesFromDB(
   });
 }
 
-async function saveAgentMessage(
-  messagesHistory: ConversationMessage[],
-  applicationId: string,
+async function saveMessageToDB(
+  appId: string,
+  message: string,
+  role: 'user' | 'assistant',
+  messageKind: MessageKind,
+  metadata?: any,
 ) {
   try {
-    if (messagesHistory.length === 0) {
-      return;
-    }
-
-    if (isDev) {
-      fs.writeFileSync(
-        `${logsFolder}/messages-history-${applicationId}.json`,
-        JSON.stringify(messagesHistory, null, 2),
-      );
-    }
-
-    // TODO: we might not need to delete all existing prompts for the app, since we can add 1 by 1 now
-    // delete all existing prompts for the app ONCE
-    await db.delete(appPrompts).where(eq(appPrompts.appId, applicationId));
-
-    // collect all prompts from all messages
-    const appPromptsToStore = messagesHistory.map((message) => {
-      return {
-        id: uuidv4(),
-        prompt: message.content,
-        appId: applicationId,
-        kind: message.role,
-      };
+    await db.insert(appPrompts).values({
+      id: uuidv4(),
+      prompt: message,
+      appId: appId,
+      kind: role,
+      messageKind: messageKind,
+      metadata,
     });
-
-    // store all prompts at once
-    await db.insert(appPrompts).values(appPromptsToStore);
   } catch (error) {
-    app.log.error(`Error saving agent message: ${error}`);
+    app.log.error(`Error saving message to DB: ${error}`);
+    throw error;
+  }
+}
+
+async function pushAndSavePlatformMessage(
+  session: Session,
+  applicationId: string,
+  message: PlatformMessage,
+) {
+  session.push(message);
+
+  const messageContent = message.message.messages[0]?.content || '';
+  await saveMessageToDB(
+    applicationId,
+    messageContent,
+    'assistant',
+    MessageKind.PLATFORM_MESSAGE,
+    message.metadata,
+  );
+}
+
+async function saveAgentMessages(
+  applicationId: string,
+  agentEvent: AgentSseEvent,
+) {
+  // save each message from the agent event
+  for (const message of agentEvent.message.messages) {
+    const messageKind = agentEvent.message.kind;
+
+    await saveMessageToDB(
+      applicationId,
+      message.content,
+      message.role,
+      messageKind,
+    );
   }
 }
 
