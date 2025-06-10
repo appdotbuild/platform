@@ -857,20 +857,25 @@ async function getMessagesFromDB(
     return [];
   }
 
-  return history.map((prompt) => {
-    if (prompt.kind === 'user') {
+  return history
+    .filter((prompt) => {
+      // platform messages should not go to agent
+      return prompt.messageKind !== MessageKind.PLATFORM_MESSAGE;
+    })
+    .map((prompt) => {
+      if (prompt.kind === 'user') {
+        return {
+          role: 'user' as const,
+          content: prompt.prompt,
+        };
+      }
       return {
-        role: 'user' as const,
+        role: 'assistant' as const,
         content: prompt.prompt,
+        kind: prompt.messageKind || MessageKind.STAGE_RESULT,
+        metadata: prompt.metadata,
       };
-    }
-    return {
-      role: 'assistant' as const,
-      content: prompt.prompt,
-      kind: prompt.messageKind || MessageKind.STAGE_RESULT,
-      metadata: prompt.metadata,
-    };
-  });
+    });
 }
 
 async function saveMessageToDB(
