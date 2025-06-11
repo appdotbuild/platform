@@ -7,11 +7,11 @@ import {
   useFetchMessageLimit,
   useUserMessageLimitCheck,
 } from '../../hooks/use-message-limit';
-import { useTerminalChat } from '../../hooks/use-terminal-chat';
 import {
-  type Message,
-  convertEventToMessages,
-} from '../../utils/convert-events-to-message';
+  type MessageDetail,
+  useTerminalChat,
+} from '../../hooks/use-terminal-chat';
+import { convertEventToMessages } from '../../utils/convert-events-to-message';
 import { LoadingMessage } from '../shared/display/loading-message';
 import { TerminalInput } from './terminal-input';
 import { TerminalLoading } from './terminal-loading';
@@ -27,7 +27,7 @@ export function TerminalChat({
   traceId?: string;
 }) {
   const [userInput, setUserInput] = useState<string[]>([]);
-  const [staticMessages, setStaticMessages] = useState<Message[]>([]);
+  const [staticMessages, setStaticMessages] = useState<MessageDetail[]>([]);
   const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
   const [processedEventCount, setProcessedEventCount] = useState(0);
 
@@ -53,7 +53,10 @@ export function TerminalChat({
   useEffect(() => {
     if (!historyMessages?.length || hasLoadedHistory) return;
 
-    const messages = convertEventToMessages(historyMessages, true);
+    const messages = convertEventToMessages({
+      events: historyMessages,
+      isHistory: true,
+    });
     if (messages.length === 0) return;
 
     setStaticMessages(messages);
@@ -67,9 +70,9 @@ export function TerminalChat({
     const lastMessage = userInput[0];
     if (!lastMessage) return;
 
-    const userInputMessage: Message = {
+    const userInputMessage: MessageDetail = {
       role: 'user',
-      content: lastMessage,
+      text: lastMessage,
       icon: '👤',
       kind: MessageKind.USER_MESSAGE,
     };
@@ -87,7 +90,7 @@ export function TerminalChat({
 
     if (newEvents.length === 0) return;
 
-    const messages = convertEventToMessages(newEvents);
+    const messages = convertEventToMessages({ events: newEvents });
     if (messages.length === 0) return;
 
     setStaticMessages((prev) => [...prev, ...messages]);
@@ -129,7 +132,7 @@ export function TerminalChat({
         {(message, index) => (
           <Box key={index} flexDirection="column" width="100%">
             <TerminalMessage
-              message={{ ...message, text: message.content }}
+              message={{ ...message, text: message.text }}
               metadata={message.metadata}
             />
           </Box>

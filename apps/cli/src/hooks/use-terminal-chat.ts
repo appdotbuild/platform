@@ -28,6 +28,8 @@ export type MessageDetail = {
   text: string;
   icon: string;
   kind?: MessageKind;
+  isHistory?: boolean;
+  metadata?: Record<string, any>;
 };
 
 interface UseTerminalChatProps {
