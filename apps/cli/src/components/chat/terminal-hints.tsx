@@ -32,7 +32,7 @@ export function TerminalHints({
           <Text dimColor>|</Text>
           <Text color={!userMessageLimit.isUserLimitReached ? 'gray' : 'red'}>
             {userMessageLimit.remainingMessages} /{' '}
-            {userMessageLimit.dailyMessageLimit} messages remaining
+            {userMessageLimit.dailyMessageLimit} messages remaining today
           </Text>
         </Box>
       )}
