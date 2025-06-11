@@ -16,7 +16,6 @@ import { LoadingMessage } from '../shared/display/loading-message';
 import { TerminalInput } from './terminal-input';
 import { TerminalLoading } from './terminal-loading';
 import { TerminalMessage } from './terminal-message';
-import console from 'console';
 
 export function TerminalChat({
   initialPrompt,
@@ -125,10 +124,10 @@ export function TerminalChat({
   }
 
   return (
-    <Box flexDirection="column" width="100%" height="100%" paddingX={1}>
+    <Box flexDirection="column" width="100%" height="100%">
       <Static items={staticMessages}>
         {(message, index) => (
-          <Box key={index} flexDirection="column" width="100%" marginBottom={1}>
+          <Box key={index} flexDirection="column" width="100%">
             <TerminalMessage message={{ ...message, text: message.content }} />
           </Box>
         )}
