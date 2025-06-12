@@ -128,3 +128,12 @@ export class StreamingError {
     this.traceId = traceId;
   }
 }
+
+export interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  icon: string;
+  kind: MessageKind;
+  metadata?: Record<string, any>;
+  isHistory?: boolean;
+}

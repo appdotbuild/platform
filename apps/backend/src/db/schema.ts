@@ -55,6 +55,8 @@ export const appPrompts = pgTable(
       .notNull()
       .defaultNow(),
     kind: text(), // "user" or "agent"
+    messageKind: text('message_kind'),
+    metadata: jsonb('metadata'),
   },
   (table) => [
     index('idx_app_prompts_appid_createdat').on(table.appId, table.createdAt),

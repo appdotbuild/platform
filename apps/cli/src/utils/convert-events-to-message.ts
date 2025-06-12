@@ -1,14 +1,14 @@
-import type { AgentSseEvent, MessageKind } from '@appdotbuild/core';
+import type { AgentSseEvent } from '@appdotbuild/core';
+import type { MessageDetail } from '../hooks/use-terminal-chat';
 
-export interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  icon: string;
-  kind: MessageKind;
-}
-
-export function convertEventToMessages(events: AgentSseEvent[]): Message[] {
-  const result: Message[] = [];
+export function convertEventToMessages({
+  events,
+  isHistory = false,
+}: {
+  events: AgentSseEvent[];
+  isHistory?: boolean;
+}): MessageDetail[] {
+  const result: MessageDetail[] = [];
 
   for (const event of events) {
     const eventKind = event.message.kind;
@@ -17,9 +17,11 @@ export function convertEventToMessages(events: AgentSseEvent[]): Message[] {
     for (const message of event.message.messages) {
       result.push({
         role: message.role,
-        content: message.content,
+        text: message.content,
         icon: message.role === 'assistant' ? '🤖' : '👤',
         kind: eventKind,
+        metadata: event.message.metadata,
+        isHistory,
       });
     }
   }
