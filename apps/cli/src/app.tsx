@@ -21,8 +21,8 @@ export const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthWrapper>
-        <Box display="flex" gap={1} width="100%">
-          <Box flexGrow={1} flexDirection="column" gap={1}>
+        <Box display="flex" width="100%">
+          <Box flexGrow={1} flexDirection="column">
             <AppRouter />
           </Box>
           <DebugPanel />
