@@ -7,6 +7,8 @@ export async function sendAnalyticsEvent(
   reply: FastifyReply,
 ) {
   try {
+    if (process.env.NODE_ENV !== 'production') return;
+
     const segmentAdapter = new Analytics({
       writeKey: process.env.SEGMENT_WRITE_KEY || '',
     });
@@ -35,7 +37,6 @@ export async function sendAnalyticsEvent(
       message: 'Invalid event type or missing event name',
     });
   } catch (error) {
-    console.error('Error sending analytics event:', error);
     return reply.status(500).send({
       status: 'error',
       message: 'Internal server error while sending analytics event',
