@@ -402,12 +402,15 @@ export async function postMessage(
               completeParsedMessage,
             );
 
-            const parsedMessageWithFullMessagesHistory: AgentSseEvent = {
+            const { unifiedDiff, ...messageWithoutDiff } =
+              completeParsedMessage.message;
+
+            const parsedMessageWithFullMessagesHistory: Omit<
+              AgentSseEvent,
+              'unifiedDiff'
+            > = {
               ...completeParsedMessage,
-              message: {
-                ...completeParsedMessage.message,
-                messages: completeParsedMessage.message.messages,
-              },
+              message: messageWithoutDiff,
             };
 
             streamLog(

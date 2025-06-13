@@ -62,7 +62,7 @@ export async function fetchAccessToken(refreshToken: string): Promise<{
   };
 }
 
-export async function authenticate(onAuthOpened?: () => void): Promise<string> {
+export async function authenticate(): Promise<string> {
   // Check if we already have a valid access token
   const accessToken = tokenStorage.getAccessToken();
   if (accessToken) {
@@ -98,10 +98,15 @@ export async function authenticate(onAuthOpened?: () => void): Promise<string> {
     appUrl: getAuthHost(),
     expiresInMillis: 300_000, // 5 minutes
     // @ts-expect-error - method exists, but types don't reflect it.
-    promptLink: (url: string) => {
-      logger.link('💻 🔗 Opening auth link in your default browser:', url);
-      onAuthOpened?.();
-      open(url);
+    promptLink: async (url: string) => {
+      try {
+        logger.link('💻 🔗 Opening auth link in your default browser:', url);
+        await open(url);
+      } catch {
+        logger.warn(
+          '⚠️ Unable to open the browser automatically. Please open the link above manually.',
+        );
+      }
     },
   });
 
