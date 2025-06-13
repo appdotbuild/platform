@@ -60,7 +60,16 @@ app.get('/apps/:id', authHandler, appById);
 app.get('/apps/:id/history', authHandler, appHistory);
 app.get('/apps/:id/read-url', authHandler, appByIdUrl);
 
-app.post('/message', authHandler, postMessage);
+app.post(
+  '/message',
+  {
+    ...authHandler,
+    compress: {
+      encodings: ['br', 'gzip', 'deflate'],
+    },
+  },
+  postMessage,
+);
 app.get('/message-limit', authHandler, getUserMessageLimit);
 
 app.post('/analytics/event', authHandler, sendAnalyticsEvent);
