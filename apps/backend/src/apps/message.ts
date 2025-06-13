@@ -156,7 +156,7 @@ export async function postMessage(
           content: requestBody.message,
         },
       ],
-      settings: requestBody.settings || { 'max-iterations': 3 },
+      settings: requestBody.settings || {},
     };
 
     let appName: string | null = null;
@@ -802,7 +802,7 @@ function getExistingConversationBody({
     agentState: existingConversation.agentState,
     traceId: existingTraceId,
     applicationId,
-    settings: settings || { 'max-iterations': 3 },
+    settings: settings || {},
   };
 }
 
