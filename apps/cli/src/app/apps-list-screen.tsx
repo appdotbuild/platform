@@ -1,10 +1,11 @@
-import type { App } from '@appdotbuild/core';
+import { AnalyticsEvents, type App } from '@appdotbuild/core';
 import { Box, Text } from 'ink';
 import { LoadingMessage } from '../components/shared/display/loading-message.js';
 import { Select } from '../components/shared/input/select.js';
 import type { SelectItem } from '../components/shared/input/types.js';
 import { useListApps } from '../hooks/use-application.js';
 import { useSafeNavigate } from '../routes.js';
+import { useAnalytics } from '../hooks/use-analytics.js';
 
 export const getStatusEmoji = (status?: string | null): string => {
   switch (status) {
@@ -43,6 +44,7 @@ export const AppsListScreen = () => {
   const { safeNavigate } = useSafeNavigate();
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetching } =
     useListApps();
+  const { trackEvent } = useAnalytics();
 
   const apps = data?.pages.flatMap((page) => page.data);
 
@@ -87,6 +89,10 @@ export const AppsListScreen = () => {
         question="Select an application to iterate on:"
         options={items}
         onSubmit={(item) => {
+          trackEvent({
+            eventType: 'track',
+            eventName: AnalyticsEvents.APP_SELECTED,
+          });
           safeNavigate({
             path: '/apps/:appId',
             params: { appId: item },

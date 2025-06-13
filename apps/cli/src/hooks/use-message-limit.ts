@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import type { UserMessageLimit } from '@appdotbuild/core';
+import { AnalyticsEvents, type UserMessageLimit } from '@appdotbuild/core';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/api-client';
+import { useAnalytics } from './use-analytics';
 
 export const MESSAGE_LIMIT_ERROR_TYPE = 'MESSAGE_LIMIT_ERROR';
 

@@ -111,7 +111,7 @@ export async function authenticate(): Promise<string> {
   });
 
   if (newRefreshTokenResponse.status === 'error') {
-    throw new Error('Authentication failed: ' + newRefreshTokenResponse.error);
+    throw new Error(`Authentication failed: ${newRefreshTokenResponse.error}`);
   }
 
   const newAccessToken = await fetchAccessToken(newRefreshTokenResponse.data);

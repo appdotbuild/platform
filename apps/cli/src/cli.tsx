@@ -6,6 +6,7 @@ import {
   type Environment,
   useEnvironmentStore,
 } from './store/environment-store.js';
+import { useAnalyticsStore } from './store/analytics-store.js';
 
 // in the CLI, node_env is only production or development
 const defaultEnv = process.env.NODE_ENV ?? 'development';
@@ -31,6 +32,11 @@ const cli = meow(
         default: defaultEnv,
         choices: ['staging', 'production', 'development'],
       },
+      analytics: {
+        type: 'boolean',
+        default: true,
+        description: 'Manage analytics. Example: --analytics false',
+      },
     },
   },
 );
@@ -40,5 +46,8 @@ clearTerminal();
 
 // Set the environment for the agent
 useEnvironmentStore.getState().setEnvironment(cli.flags.env as Environment);
+
+// Set analytics preference
+useAnalyticsStore.getState().setAnalyticsEnabled(cli.flags.analytics);
 
 render(<App />);

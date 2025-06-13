@@ -8,7 +8,9 @@ import {
   listApps,
   postMessage,
 } from './apps';
+import { sendAnalyticsEvent } from './apps/analytics-events';
 import { appHistory } from './apps/app-history';
+import { dockerLoginIfNeeded } from './docker';
 import { isDev, validateEnv } from './env';
 import {
   createOrgInitialCommitEndpoint,
@@ -19,7 +21,6 @@ import {
   userCommitChangesEndpoint,
 } from './github';
 import { logger } from './logger';
-import { dockerLoginIfNeeded } from './docker';
 
 config({ path: '.env' });
 validateEnv();
@@ -61,6 +62,8 @@ app.get('/apps/:id/read-url', authHandler, appByIdUrl);
 
 app.post('/message', authHandler, postMessage);
 app.get('/message-limit', authHandler, getUserMessageLimit);
+
+app.post('/analytics/event', authHandler, sendAnalyticsEvent);
 
 export const start = async () => {
   try {
