@@ -99,8 +99,10 @@ export async function sendMessage({
     {
       headers: {
         Accept: 'text/event-stream',
+        'Accept-Encoding': 'br, gzip, deflate',
       },
       responseType: 'stream',
+      decompress: true,
     },
   );
 

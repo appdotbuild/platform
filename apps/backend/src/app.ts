@@ -22,6 +22,10 @@ export const app = fastify({
   genReqId: () => uuidv4(),
 });
 
+await app.register(import('@fastify/compress'), {
+  global: false,
+});
+
 app.decorate(
   'authenticate',
   async (req: FastifyRequest, reply: FastifyReply) => {
