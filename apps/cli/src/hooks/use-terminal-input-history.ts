@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { APP_USER_HISTORY_DIR } from '../constants';
 
 export interface InputHistoryEntry {
   timestamp: number;
@@ -16,7 +16,7 @@ interface HistoryConfig {
 
 const DEFAULT_CONFIG: Required<HistoryConfig> = {
   maxEntries: 10000,
-  filePath: join(homedir(), '.appdotbuild', 'input-history.json'),
+  filePath: APP_USER_HISTORY_DIR,
   sensitivePatterns: [
     /password\s*=\s*['"][^'"]+['"]/i,
     /token\s*=\s*['"][^'"]+['"]/i,
