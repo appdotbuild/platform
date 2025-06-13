@@ -11,6 +11,7 @@ import { usePromptHistory } from '../../hooks/use-prompt-history';
 import { useInputHistory } from '../../hooks/use-terminal-input-history';
 import { ErrorMessage } from '../shared/display/error-message';
 import { TextInput } from '../shared/input/text-input';
+import { TerminalHints } from './terminal-hints';
 
 export interface InputHistoryItem {
   prompt: string;
@@ -95,7 +96,7 @@ export function TerminalInput({
   }
 
   return (
-    <Box flexDirection="column" gap={1} width="100%">
+    <Box flexDirection="column" width="100%">
       <TextInput
         showPrompt={showPrompt}
         question={question}
@@ -109,6 +110,7 @@ export function TerminalInput({
         history={historyItems}
         {...infiniteInputProps}
       />
+      <TerminalHints userMessageLimit={userMessageLimit} />
     </Box>
   );
 }
