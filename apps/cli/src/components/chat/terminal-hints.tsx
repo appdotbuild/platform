@@ -1,18 +1,21 @@
+import type { UserMessageLimit } from '@appdotbuild/core';
+import type { MutationStatus } from '@tanstack/react-query';
 import { Box, Text, useInput } from 'ink';
 import { useTerminalState } from '../../hooks/use-terminal-state';
 import { useSafeNavigate } from '../../routes';
-import type { UserMessageLimit } from '@appdotbuild/core';
 
 export function TerminalHints({
   userMessageLimit,
+  status,
 }: {
   userMessageLimit?: UserMessageLimit;
+  status?: MutationStatus;
 }) {
   const { clearTerminal } = useTerminalState();
   const { goBack } = useSafeNavigate();
 
   useInput((_, key) => {
-    if (key.escape) {
+    if (key.escape && status !== 'pending') {
       clearTerminal();
       goBack();
     }
@@ -26,7 +29,9 @@ export function TerminalHints({
       justifyContent="flex-start"
       gap={1}
     >
-      <Text dimColor>esc to return | enter to send</Text>
+      <Text dimColor>
+        esc to return | enter to send | ↑/↓ to previous inputs{' '}
+      </Text>
       {userMessageLimit && (
         <Box gap={1}>
           <Text dimColor>|</Text>

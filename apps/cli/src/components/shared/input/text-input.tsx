@@ -1,50 +1,44 @@
-import type { UserMessageLimit } from '@appdotbuild/core';
-import { TextInput as InkTextInput, Spinner } from '@inkjs/ui';
+import { Spinner } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box, Text } from 'ink';
-import { useEffect, useState } from 'react';
+import { useTerminalInput } from '../../../hooks/use-terminal-input';
+import type { InputHistoryEntry } from '../../../hooks/use-terminal-input-history';
 import { Panel } from '../display/panel.js';
 
 export interface TextInputProps {
   question?: string;
-  submittedValue?: string;
   placeholder?: string;
   showPrompt?: boolean;
   status: MutationStatus;
   loadingText: string;
-  userMessageLimit?: UserMessageLimit;
+  history?: InputHistoryEntry[];
 
   onSubmitSuccess?: (value: string) => void;
   onSubmitError?: (value: string) => void;
+  onAbort?: () => void;
   onSubmit: (value: string) => void;
 }
 
 export function TextInput({
   question,
   placeholder,
-  onSubmitSuccess,
   status,
   loadingText,
+  onSubmitSuccess,
   onSubmitError,
+  onAbort,
   onSubmit,
-  userMessageLimit,
   showPrompt,
-  ...textInputProps
+  history = [],
 }: TextInputProps) {
-  const [submittedValue, setSubmittedValue] = useState<string>('');
-
-  useEffect(() => {
-    if (!submittedValue) return;
-
-    if (status === 'success') {
-      onSubmitSuccess?.(submittedValue);
-      setSubmittedValue('');
-    }
-    if (status === 'error') {
-      onSubmitError?.(submittedValue);
-      setSubmittedValue('');
-    }
-  }, [status, submittedValue, onSubmitSuccess, onSubmitError]);
+  const { currentInput, submittedValue } = useTerminalInput({
+    history,
+    status,
+    onSubmit,
+    onSubmitSuccess,
+    onSubmitError,
+    onAbort,
+  });
 
   if (!showPrompt) return null;
 
@@ -57,17 +51,14 @@ export function TextInput({
             {submittedValue ? (
               <Text color="gray">{submittedValue}</Text>
             ) : (
-              <InkTextInput
-                placeholder={placeholder}
-                onSubmit={(value) => {
-                  setSubmittedValue(value);
-                  onSubmit(value);
-                }}
-                isDisabled={
-                  userMessageLimit?.isUserLimitReached || status === 'pending'
-                }
-                {...textInputProps}
-              />
+              <Box>
+                {currentInput ? (
+                  <Text>{currentInput}</Text>
+                ) : (
+                  <Text color="gray">{placeholder}</Text>
+                )}
+                <Text color="gray">█</Text>
+              </Box>
             )}
           </Box>
           {status === 'pending' && (

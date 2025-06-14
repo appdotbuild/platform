@@ -1,8 +1,8 @@
 import { Box, Text, useInput } from 'ink';
+import { useLocation } from 'react-router';
 import { useAuthStore } from '../../auth/auth-store.js';
 import { useTerminalState } from '../../hooks/use-terminal-state.js';
 import { useSafeNavigate } from '../../routes.js';
-import { useLocation } from 'react-router';
 
 export const ShortcutHints = () => {
   const { goBack } = useSafeNavigate();

@@ -17,6 +17,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
     isSuccess: sendMessageSuccess,
     status: sendMessageStatus,
     reset: sendMessageReset,
+    abortSignal,
   } = useSendMessage();
 
   // reset the mutation when it succeeds or fails
@@ -49,6 +50,7 @@ export const useBuildApp = (existingApplicationId?: string) => {
     createApplicationPending: sendMessagePending,
     createApplicationSuccess: sendMessageSuccess,
     createApplicationStatus: sendMessageStatus,
+    createApplicationAbort: abortSignal,
 
     streamingMessagesData: messageQuery.data,
     isStreamingMessages:
