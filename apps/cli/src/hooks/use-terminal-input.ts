@@ -9,6 +9,7 @@ interface UseTerminalInputProps {
   onSubmit: (value: string) => void;
   onSubmitSuccess?: (value: string) => void;
   onSubmitError?: (value: string) => void;
+  onAbort?: () => void;
 }
 
 interface UseTerminalInputReturn {
@@ -28,6 +29,7 @@ export function useTerminalInput({
   onSubmit,
   onSubmitSuccess,
   onSubmitError,
+  onAbort,
 }: UseTerminalInputProps): UseTerminalInputReturn {
   const [currentInput, setCurrentInput] = useState<string>('');
   const [submittedValue, setSubmittedValue] = useState<string>('');
@@ -62,6 +64,12 @@ export function useTerminalInput({
       onSubmit(currentInput);
     }
   }, [currentInput, onSubmit]);
+
+  const handleAbort = useCallback(() => {
+    if (onAbort) {
+      onAbort();
+    }
+  }, [onAbort]);
 
   const navigateHistoryUp = useCallback(() => {
     if (history.length === 0) return;
@@ -101,6 +109,11 @@ export function useTerminalInput({
 
   // keyboard input handlers
   useInput((input, key) => {
+    if (key.escape && status === 'pending') {
+      handleAbort();
+      return;
+    }
+
     if (status === 'pending') return;
 
     // submit when enter is pressed

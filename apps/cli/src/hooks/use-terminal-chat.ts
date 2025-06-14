@@ -85,7 +85,7 @@ export const useTerminalChat = ({
       question: initialPrompt,
       placeholder: 'e.g., Describe the app you want to build',
       successMessage: 'Message sent to Agent...',
-      loadingText: 'Waiting for Agent response...',
+      loadingText: 'Waiting for Agent response... (press ESC to abort)',
     },
     building: {
       question: 'Building your application...',

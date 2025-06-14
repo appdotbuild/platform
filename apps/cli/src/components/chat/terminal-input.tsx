@@ -3,10 +3,7 @@ import type { TextInputProps } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box } from 'ink';
 import { useRef } from 'react';
-import {
-  createMessageLimitError,
-  useUserMessageLimitCheck,
-} from '../../hooks/use-message-limit';
+import { createMessageLimitError } from '../../hooks/use-message-limit';
 import { usePromptHistory } from '../../hooks/use-prompt-history';
 import { useInputHistory } from '../../hooks/use-terminal-input-history';
 import { ErrorMessage } from '../shared/display/error-message';
@@ -46,6 +43,7 @@ export type TerminalInputProps = {
   successMessage?: string;
   onSubmitSuccess?: (args: SuccessProps) => void;
   onSubmitError?: (args: ErrorProps) => void;
+  onAbort?: () => void;
   showPrompt?: boolean;
   userMessageLimit?: UserMessageLimit;
 } & TextInputProps;
@@ -58,18 +56,15 @@ export function TerminalInput({
   loadingText = 'Loading...',
   onSubmit,
   successMessage = '',
-  onSubmitSuccess,
   errorMessage = '',
   retryMessage = '',
+  onSubmitSuccess,
   onSubmitError,
+  onAbort,
   userMessageLimit,
   ...infiniteInputProps
 }: TerminalInputProps) {
   const { historyItems, addInputHistory } = useInputHistory();
-
-  const { userMessageLimit: userMessageLimitCheck } =
-    useUserMessageLimitCheck(errorMessage);
-
   const { addSuccessItem, addErrorItem } = usePromptHistory();
 
   const previousStatus = useRef(status);
@@ -106,11 +101,14 @@ export function TerminalInput({
         onSubmit={onSubmit}
         onSubmitSuccess={handleSubmitSuccess}
         onSubmitError={handleSubmitError}
-        userMessageLimit={userMessageLimitCheck}
+        onAbort={onAbort}
         history={historyItems}
         {...infiniteInputProps}
       />
-      <TerminalHints userMessageLimit={userMessageLimit} />
+      <TerminalHints
+        userMessageLimit={userMessageLimit}
+        status={displayStatus}
+      />
     </Box>
   );
 }

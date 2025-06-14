@@ -2,10 +2,10 @@ import type { Readable } from 'node:stream';
 import type { AgentSseEvent, App, AppPrompts } from '@appdotbuild/core';
 import { config } from 'dotenv';
 import { useEnvironmentStore } from '../store/environment-store.js';
-import { apiClient } from './api-client.js';
-import { parseSSE } from './sse.js';
 import { convertPromptsToEvents } from '../utils/convert-prompts-to-events.js';
 import { logger } from '../utils/logger.js';
+import { apiClient } from './api-client.js';
+import { parseSSE } from './sse.js';
 
 // Load environment variables from .env file
 config();
@@ -72,6 +72,7 @@ export type SendMessageParams = {
   applicationId?: string;
   traceId?: string;
   onMessage?: (data: AgentSseEvent) => void;
+  signal?: AbortSignal;
 };
 
 export type SendMessageResult = {
@@ -84,6 +85,7 @@ export async function sendMessage({
   applicationId,
   traceId,
   onMessage,
+  signal,
 }: SendMessageParams): Promise<SendMessageResult> {
   const agentEnvironment = useEnvironmentStore.getState().agentEnvironment();
 
@@ -101,6 +103,7 @@ export async function sendMessage({
         Accept: 'text/event-stream',
       },
       responseType: 'stream',
+      signal,
     },
   );
 

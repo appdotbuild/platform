@@ -37,6 +37,7 @@ export function TerminalChat({
   const {
     streamingMessagesData,
     isStreamingMessages,
+    createApplicationAbort,
     createApplicationPending,
     createApplication,
     createApplicationData,
@@ -139,6 +140,7 @@ export function TerminalChat({
         successMessage={config.successMessage}
         loadingText={config.loadingText}
         onSubmit={handleSubmit}
+        onAbort={createApplicationAbort}
         status={createApplicationStatus}
         errorMessage={createApplicationError?.message}
         retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}

@@ -1,4 +1,3 @@
-import type { UserMessageLimit } from '@appdotbuild/core';
 import { Spinner } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box, Text } from 'ink';
@@ -12,23 +11,23 @@ export interface TextInputProps {
   showPrompt?: boolean;
   status: MutationStatus;
   loadingText: string;
-  userMessageLimit?: UserMessageLimit;
   history?: InputHistoryEntry[];
 
   onSubmitSuccess?: (value: string) => void;
   onSubmitError?: (value: string) => void;
+  onAbort?: () => void;
   onSubmit: (value: string) => void;
 }
 
 export function TextInput({
   question,
   placeholder,
-  onSubmitSuccess,
   status,
   loadingText,
+  onSubmitSuccess,
   onSubmitError,
+  onAbort,
   onSubmit,
-  userMessageLimit,
   showPrompt,
   history = [],
 }: TextInputProps) {
@@ -38,6 +37,7 @@ export function TextInput({
     onSubmit,
     onSubmitSuccess,
     onSubmitError,
+    onAbort,
   });
 
   if (!showPrompt) return null;
