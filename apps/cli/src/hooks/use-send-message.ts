@@ -1,6 +1,6 @@
 import type { AgentSseEvent, TraceId } from '@appdotbuild/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { type SendMessageParams, sendMessage } from '../api/application.js';
 import { applicationQueryKeys } from './use-application.js';
 import { queryKeys } from './use-build-app.js';
@@ -44,8 +44,7 @@ export const useSendMessage = () => {
     traceId: string;
   } | null>(null);
 
-  const [abortController, setAbortController] =
-    useState<AbortController | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const result = useMutation({
     mutationFn: async ({
@@ -54,7 +53,7 @@ export const useSendMessage = () => {
       traceId: passedTraceId,
     }: SendMessageParams) => {
       const controller = new AbortController();
-      setAbortController(controller);
+      abortControllerRef.current = controller;
       return sendMessage({
         message,
         applicationId: passedAppId || metadata?.applicationId,
@@ -117,12 +116,12 @@ export const useSendMessage = () => {
     },
   });
 
-  const abortSignal = () => {
-    if (abortController) {
-      abortController.abort();
-      setAbortController(null);
+  const abortSignal = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
-  };
+  }, []);
 
   // we need this to keep the previous application id
   return { ...result, data: metadata, abortSignal };
