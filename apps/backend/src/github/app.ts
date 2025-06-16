@@ -1,6 +1,6 @@
 import { App } from '@octokit/app';
+import type { Options } from '@octokit/app/dist-types/types';
 import { Octokit } from '@octokit/rest';
-import { type Options } from '@octokit/app/dist-types/types';
 
 const APP_ID = Number(process.env.GITHUB_APP_ID);
 const PRIVATE_KEY = process.env.GITHUB_APP_PRIVATE_KEY;

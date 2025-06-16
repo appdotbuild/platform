@@ -1,6 +1,8 @@
 import { Box, Text } from 'ink';
 import { Select } from '../components/shared/input/select.js';
 import { type RoutePath, useSafeNavigate } from '../routes.js';
+import { useAnalytics } from '../hooks/use-analytics.js';
+import { AnalyticsEvents } from '@appdotbuild/core';
 
 const items = [
   { label: '🆕 Create new app', value: '/app/build' as const },
@@ -18,6 +20,7 @@ const items = [
 }>;
 
 export function AppHomeScreen() {
+  const { trackEvent } = useAnalytics();
   const { safeNavigate } = useSafeNavigate();
 
   return (
@@ -29,6 +32,16 @@ export function AppHomeScreen() {
         question="What would you like to do?"
         options={items}
         onSubmit={(value) => {
+          trackEvent({
+            eventType: 'track',
+            eventName:
+              value === '/app/build'
+                ? AnalyticsEvents.NEW_APP_SELECTED
+                : value === '/apps'
+                ? AnalyticsEvents.APPS_LISTED
+                : undefined,
+          });
+
           safeNavigate({ path: value });
         }}
       />

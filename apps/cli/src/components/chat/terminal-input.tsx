@@ -65,6 +65,7 @@ export function TerminalInput({
   ...infiniteInputProps
 }: TerminalInputProps) {
   const { historyItems, addInputHistory } = useInputHistory();
+
   const { addSuccessItem, addErrorItem } = usePromptHistory();
 
   const previousStatus = useRef(status);

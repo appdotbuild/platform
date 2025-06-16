@@ -1,5 +1,10 @@
 import type { Readable } from 'node:stream';
-import type { AgentSseEvent, App, AppPrompts } from '@appdotbuild/core';
+import type {
+  AgentSseEvent,
+  AnalyticsEventBody,
+  App,
+  AppPrompts,
+} from '@appdotbuild/core';
 import { config } from 'dotenv';
 import { useEnvironmentStore } from '../store/environment-store.js';
 import { convertPromptsToEvents } from '../utils/convert-prompts-to-events.js';
@@ -124,4 +129,14 @@ export async function sendMessage({
     applicationId: applicationId || '',
     traceId: '',
   };
+}
+
+export async function sendEvent({
+  eventType,
+  eventName,
+}: AnalyticsEventBody): Promise<void> {
+  await apiClient.post('/analytics/event', {
+    eventType,
+    eventName,
+  });
 }

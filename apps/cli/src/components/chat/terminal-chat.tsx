@@ -1,4 +1,4 @@
-import { MessageKind } from '@appdotbuild/core';
+import { AnalyticsEvents, MessageKind } from '@appdotbuild/core';
 import { Box, Static } from 'ink';
 import { useEffect, useState } from 'react';
 import { useApplicationHistory } from '../../hooks/use-application';
@@ -7,15 +7,16 @@ import {
   useFetchMessageLimit,
   useUserMessageLimitCheck,
 } from '../../hooks/use-message-limit';
-import { useTerminalChat } from '../../hooks/use-terminal-chat';
 import {
-  type Message,
-  convertEventToMessages,
-} from '../../utils/convert-events-to-message';
+  type MessageDetail,
+  useTerminalChat,
+} from '../../hooks/use-terminal-chat';
+import { convertEventToMessages } from '../../utils/convert-events-to-message';
 import { LoadingMessage } from '../shared/display/loading-message';
 import { TerminalInput } from './terminal-input';
 import { TerminalLoading } from './terminal-loading';
 import { TerminalMessage } from './terminal-message';
+import { useAnalytics } from '../../hooks/use-analytics';
 
 export function TerminalChat({
   initialPrompt,
@@ -27,9 +28,11 @@ export function TerminalChat({
   traceId?: string;
 }) {
   const [userInput, setUserInput] = useState<string[]>([]);
-  const [staticMessages, setStaticMessages] = useState<Message[]>([]);
+  const [staticMessages, setStaticMessages] = useState<MessageDetail[]>([]);
   const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
   const [processedEventCount, setProcessedEventCount] = useState(0);
+
+  const { trackEvent } = useAnalytics();
 
   const { isLoading: isLoadingHistory, data: historyMessages } =
     useApplicationHistory(appId);
@@ -48,13 +51,25 @@ export function TerminalChat({
   const { userMessageLimit, isUserReachedMessageLimit } =
     useUserMessageLimitCheck(createApplicationError);
 
+  useEffect(() => {
+    if (isUserReachedMessageLimit) {
+      trackEvent({
+        eventType: 'track',
+        eventName: AnalyticsEvents.DAILY_LIMIT_REACHED,
+      });
+    }
+  }, [trackEvent, isUserReachedMessageLimit]);
+
   const { isLoading: isLoadingMessageLimit } = useFetchMessageLimit();
 
   // load history messages
   useEffect(() => {
     if (!historyMessages?.length || hasLoadedHistory) return;
 
-    const messages = convertEventToMessages(historyMessages);
+    const messages = convertEventToMessages({
+      events: historyMessages,
+      isHistory: true,
+    });
     if (messages.length === 0) return;
 
     setStaticMessages(messages);
@@ -68,9 +83,9 @@ export function TerminalChat({
     const lastMessage = userInput[0];
     if (!lastMessage) return;
 
-    const userInputMessage: Message = {
+    const userInputMessage: MessageDetail = {
       role: 'user',
-      content: lastMessage,
+      text: lastMessage,
       icon: '👤',
       kind: MessageKind.USER_MESSAGE,
     };
@@ -88,7 +103,7 @@ export function TerminalChat({
 
     if (newEvents.length === 0) return;
 
-    const messages = convertEventToMessages(newEvents);
+    const messages = convertEventToMessages({ events: newEvents });
     if (messages.length === 0) return;
 
     setStaticMessages((prev) => [...prev, ...messages]);
@@ -129,7 +144,10 @@ export function TerminalChat({
       <Static items={staticMessages}>
         {(message, index) => (
           <Box key={index} flexDirection="column" width="100%">
-            <TerminalMessage message={{ ...message, text: message.content }} />
+            <TerminalMessage
+              message={{ ...message, text: message.text }}
+              metadata={message.metadata}
+            />
           </Box>
         )}
       </Static>
