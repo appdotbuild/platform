@@ -1,4 +1,4 @@
-import { MessageKind } from '@appdotbuild/core';
+import { AnalyticsEvents, MessageKind } from '@appdotbuild/core';
 import { Box, Static } from 'ink';
 import { useEffect, useState } from 'react';
 import { useApplicationHistory } from '../../hooks/use-application';
@@ -16,6 +16,7 @@ import { LoadingMessage } from '../shared/display/loading-message';
 import { TerminalInput } from './terminal-input';
 import { TerminalLoading } from './terminal-loading';
 import { TerminalMessage } from './terminal-message';
+import { useAnalytics } from '../../hooks/use-analytics';
 
 export function TerminalChat({
   initialPrompt,
@@ -30,6 +31,8 @@ export function TerminalChat({
   const [staticMessages, setStaticMessages] = useState<MessageDetail[]>([]);
   const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
   const [processedEventCount, setProcessedEventCount] = useState(0);
+
+  const { trackEvent } = useAnalytics();
 
   const { isLoading: isLoadingHistory, data: historyMessages } =
     useApplicationHistory(appId);
@@ -46,6 +49,15 @@ export function TerminalChat({
 
   const { userMessageLimit, isUserReachedMessageLimit } =
     useUserMessageLimitCheck(createApplicationError);
+
+  useEffect(() => {
+    if (isUserReachedMessageLimit) {
+      trackEvent({
+        eventType: 'track',
+        eventName: AnalyticsEvents.DAILY_LIMIT_REACHED,
+      });
+    }
+  }, [trackEvent, isUserReachedMessageLimit]);
 
   const { isLoading: isLoadingMessageLimit } = useFetchMessageLimit();
 

@@ -416,12 +416,15 @@ export async function postMessage(
             if (isPermanentApp)
               await saveAgentMessages(applicationId, completeParsedMessage);
 
-            const parsedMessageWithFullMessagesHistory: AgentSseEvent = {
+            const { unifiedDiff, ...messageWithoutDiff } =
+              completeParsedMessage.message;
+
+            const parsedMessageWithFullMessagesHistory: Omit<
+              AgentSseEvent,
+              'unifiedDiff'
+            > = {
               ...completeParsedMessage,
-              message: {
-                ...completeParsedMessage.message,
-                messages: completeParsedMessage.message.messages,
-              },
+              message: messageWithoutDiff,
             };
 
             streamLog(
