@@ -26,7 +26,9 @@ export function TerminalHints({
       justifyContent="flex-start"
       gap={1}
     >
-      <Text dimColor>esc to return | enter to send</Text>
+      <Text dimColor>
+        esc to return | enter to send | ↑/↓ to previous inputs{' '}
+      </Text>
       {userMessageLimit && (
         <Box gap={1}>
           <Text dimColor>|</Text>

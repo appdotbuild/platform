@@ -8,11 +8,7 @@ const currentVersion = parseInt(process.version.substring(1).split('.')[0], 10);
 
 if (currentVersion < requiredVersion) {
   console.error(
-    '\x1b[31mError: Node.js ' +
-      requiredVersion +
-      '+ is required. You are using' +
-      process.version +
-      '.\x1b[0m',
+    `\x1b[31mError: Node.js ${requiredVersion}+ is required. You are using${process.version}.\x1b[0m`,
   );
   console.error(
     '\x1b[31mPlease upgrade your Node.js version and try again.\x1b[0m',

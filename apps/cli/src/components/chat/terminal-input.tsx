@@ -8,6 +8,7 @@ import {
   useUserMessageLimitCheck,
 } from '../../hooks/use-message-limit';
 import { usePromptHistory } from '../../hooks/use-prompt-history';
+import { useInputHistory } from '../../hooks/use-terminal-input-history';
 import { ErrorMessage } from '../shared/display/error-message';
 import { TextInput } from '../shared/input/text-input';
 import { TerminalHints } from './terminal-hints';
@@ -64,6 +65,8 @@ export function TerminalInput({
   userMessageLimit,
   ...infiniteInputProps
 }: TerminalInputProps) {
+  const { historyItems, addInputHistory } = useInputHistory();
+
   const { userMessageLimit: userMessageLimitCheck } =
     useUserMessageLimitCheck(errorMessage);
 
@@ -74,6 +77,7 @@ export function TerminalInput({
   previousStatus.current = displayStatus;
 
   const handleSubmitSuccess = (prompt: string) => {
+    addInputHistory(prompt);
     addSuccessItem({ prompt, question, successMessage });
     onSubmitSuccess?.({ prompt, question, successMessage });
   };
@@ -103,6 +107,7 @@ export function TerminalInput({
         onSubmitSuccess={handleSubmitSuccess}
         onSubmitError={handleSubmitError}
         userMessageLimit={userMessageLimitCheck}
+        history={historyItems}
         {...infiniteInputProps}
       />
       <TerminalHints userMessageLimit={userMessageLimit} />
