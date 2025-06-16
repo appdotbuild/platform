@@ -23,7 +23,8 @@ export function convertPromptsToEvents(appPrompts?: AppPrompts[]) {
         kind:
           prompt.kind === PromptKind.USER
             ? MessageKind.USER_MESSAGE
-            : MessageKind.AGENT_MESSAGE,
+            : prompt.messageKind || MessageKind.AGENT_MESSAGE,
+        metadata: prompt.metadata,
         agentState: {},
       },
     } as AgentSseEvent & { createdAt: Date };
