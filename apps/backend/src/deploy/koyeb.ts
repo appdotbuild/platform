@@ -1,7 +1,7 @@
 import type { FastifyReply } from 'fastify';
 import type { FastifyRequest } from 'fastify';
 import { logger } from '../logger';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { deployments } from '../db/schema';
 import { db } from '../db';
 
@@ -296,32 +296,44 @@ export const getKoyebDeploymentEndpoint = async (
   }>,
   reply: FastifyReply,
 ) => {
-  const { id } = request.params;
-  const deploymentData = await db
-    .select({
-      koyebOrgId: deployments.koyebOrgId,
-    })
-    .from(deployments)
-    .where(eq(deployments.ownerId, request.user.id!));
+  try {
+    const { id } = request.params;
 
-  const koyebOrgId = deploymentData[0]?.koyebOrgId;
+    if (!id) {
+      return reply.status(400).send({ message: 'Deployment ID is required' });
+    }
 
-  if (!koyebOrgId) {
-    return reply
-      .status(404)
-      .send({ message: 'Organization for user not found' });
+    const deploymentData = await db
+      .select({
+        koyebOrgId: deployments.koyebOrgId,
+      })
+      .from(deployments)
+      .where(eq(deployments.ownerId, request.user.id!))
+      .orderBy(desc(deployments.createdAt))
+      .limit(1);
+
+    const koyebOrgId = deploymentData[0]?.koyebOrgId;
+
+    if (!koyebOrgId) {
+      return reply
+        .status(404)
+        .send({ message: 'Organization for user not found' });
+    }
+
+    const userToken = await getOrganizationToken(koyebOrgId);
+
+    const deploymentChecker = getDeploymentChecker({
+      deploymentId: id,
+      token: userToken,
+    });
+
+    const response = await deploymentChecker();
+
+    return reply.send(response);
+  } catch (error) {
+    logger.error('Error getting deployment endpoint', { error });
+    return reply.status(500).send({ message: 'Internal server error' });
   }
-
-  const userToken = await getOrganizationToken(koyebOrgId);
-
-  const deploymentChecker = getDeploymentChecker({
-    deploymentId: id,
-    token: userToken,
-  });
-
-  const response = await deploymentChecker();
-
-  return reply.send(response);
 };
 
 function getOrgName(githubUsername: string) {
