@@ -23,6 +23,8 @@
     "@aws-sdk/s3-request-presigner": "3.735.0",
     "@fastify/compress": "8.0.3",
     "@fastify/schedule": "6.0.0",
+    "@llm-eaf/node-event-source": "^1.0.1",
+    "@microsoft/fetch-event-source": "^2.0.1",
     "@neondatabase/api-client": "1.11.5",
     "@neondatabase/serverless": "0.10.4",
     "@octokit/app": "14.0.0",
