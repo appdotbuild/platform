@@ -45,6 +45,7 @@ import {
   conversationManager,
   type ConversationData,
 } from './conversation-manager';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 type Body = {
   applicationId?: string;
@@ -321,6 +322,42 @@ export async function postMessage(
       },
     );
 
+    const agentResponse1 = await fetchEventSource(
+      `${getAgentHost(requestBody.environment)}/message`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'text/event-stream',
+          'Accept-Encoding': 'br, gzip, deflate',
+          Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH}`,
+          Connection: 'keep-alive',
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+        body: JSON.stringify(body),
+        signal: abortController.signal,
+        onopen(response) {
+          streamLog(`{NEW-FETCH}[appId: ${applicationId}] open`, 'info');
+          return Promise.resolve();
+        },
+        onmessage(ev) {
+          // @ts-ignore
+          streamLog(
+            `{NEW-FETCH}[appId: ${applicationId}] message: ${ev.data}`,
+            'info',
+          );
+        },
+        onerror(err) {
+          streamLog(
+            `{NEW-FETCH}[appId: ${applicationId}] error: ${JSON.stringify(
+              err,
+            )}`,
+            'error',
+          );
+        },
+      },
+    );
+
     if (!agentResponse.ok) {
       const errorData = await agentResponse.json();
       streamLog(
@@ -334,6 +371,13 @@ export async function postMessage(
         status: 'error',
       });
     }
+
+    streamLog(
+      `[appId: ${applicationId}] agent response headers: ${JSON.stringify(
+        agentResponse.headers,
+      )}`,
+      'info',
+    );
 
     const reader = agentResponse.body?.getReader();
 
@@ -577,7 +621,10 @@ export async function postMessage(
             error instanceof Error &&
             error.message.includes('Unterminated string')
           ) {
-            streamLog(`[appId: ${applicationId}] incomplete message`, 'error');
+            streamLog(
+              `[appId: ${applicationId}] incomplete message: ${message}`,
+              'error',
+            );
             continue;
           }
 
