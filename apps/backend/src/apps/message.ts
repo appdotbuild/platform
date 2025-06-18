@@ -1,20 +1,20 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import type { AgentSseEventMessage, Optional } from '@appdotbuild/core';
 import {
   type AgentSseEvent,
   AgentStatus,
+  agentSseEventSchema,
+  type ConversationMessage,
   MessageKind,
   type MessageLimitHeaders,
   PlatformMessage,
   PlatformMessageType,
   StreamingError,
   type TraceId,
-  type ConversationMessage,
-  agentSseEventSchema,
 } from '@appdotbuild/core';
-import type { AgentSseEventMessage, Optional } from '@appdotbuild/core';
-import { type Session, createSession } from 'better-sse';
+import { createSession, type Session } from 'better-sse';
 import { and, eq, sql } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
@@ -24,27 +24,27 @@ import { appPrompts, apps, db } from '../db';
 import { deployApp } from '../deploy';
 import { isDev } from '../env';
 import {
+  addAppURL,
   checkIfRepoExists,
   cloneRepository,
   createUserCommit,
   createUserInitialCommit,
   createUserRepository,
-  addAppURL,
 } from '../github';
 import {
-  type FileData,
   copyDirToMemfs,
   createMemoryFileSystem,
+  type FileData,
   readDirectoryRecursive,
   writeMemfsToTempDir,
 } from '../utils';
 import { getAppPromptHistory } from './app-history';
+import {
+  type ConversationData,
+  conversationManager,
+} from './conversation-manager';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
-import {
-  conversationManager,
-  type ConversationData,
-} from './conversation-manager';
 
 type Body = {
   applicationId?: string;
@@ -63,6 +63,18 @@ type RequestBody = {
   applicationId?: string;
   traceId?: TraceId;
 };
+
+type StructuredLog = {
+  message: string;
+  applicationId?: string;
+  traceId?: string;
+  [key: string]: any;
+};
+
+type StreamLogFunction = (
+  logData: StructuredLog,
+  level?: 'info' | 'error',
+) => void;
 
 const logsFolder = path.join(__dirname, '..', '..', 'logs');
 
@@ -105,7 +117,10 @@ export async function postMessage(
   } = await checkMessageUsageLimit(userId);
 
   if (isUserLimitReached) {
-    app.log.error(`Daily message limit reached for user ${userId}`);
+    app.log.error({
+      message: 'Daily message limit reached',
+      userId,
+    });
     return reply.status(429).send();
   }
 
@@ -133,19 +148,33 @@ export async function postMessage(
   let traceId = requestBody.traceId;
 
   request.socket.on('close', () => {
-    streamLog(`Client disconnected for applicationId: ${applicationId}`);
+    streamLog({
+      message: 'Client disconnected',
+      applicationId,
+      traceId,
+      userId,
+    });
     abortController.abort();
   });
 
-  streamLog('created SSE session');
+  streamLog({
+    message: 'Created SSE session',
+    applicationId,
+    traceId,
+    userId,
+  });
 
   if (isDev) {
     fs.mkdirSync(logsFolder, { recursive: true });
   }
 
-  streamLog(
-    `Received message request: ${JSON.stringify({ body: request.body })}`,
-  );
+  streamLog({
+    message: 'Received message request',
+    applicationId,
+    traceId,
+    userId,
+    requestBody: request.body,
+  });
 
   try {
     let body: Optional<Body, 'traceId'> = {
@@ -162,7 +191,11 @@ export async function postMessage(
     let appName: string | null = null;
     let isPermanentApp = await appExistsInDb(applicationId);
     if (applicationId) {
-      app.log.info(`existing applicationId ${applicationId}`);
+      app.log.info({
+        message: 'Processing existing applicationId',
+        applicationId,
+        userId,
+      });
 
       if (isPermanentApp) {
         const application = await db
@@ -171,7 +204,14 @@ export async function postMessage(
           .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
 
         if (application.length === 0) {
-          streamLog('application not found', 'error');
+          streamLog(
+            {
+              message: 'Application not found',
+              applicationId,
+              userId,
+            },
+            'error',
+          );
           return reply.status(404).send({
             error: 'Application not found',
             status: 'error',
@@ -179,7 +219,11 @@ export async function postMessage(
         }
 
         streamLog(
-          `application found: ${JSON.stringify(application[0]?.id)}`,
+          {
+            message: 'Application found',
+            applicationId: application[0]?.id,
+            userId,
+          },
           'info',
         );
         appName = application[0]!.appName;
@@ -208,15 +252,26 @@ export async function postMessage(
           ],
         };
 
-        streamLog(
-          `Loaded ${messagesFromHistory.length} messages from history for application ${applicationId}`,
-        );
+        streamLog({
+          message: 'Loaded messages from history',
+          applicationId,
+          traceId,
+          userId,
+          messageCount: messagesFromHistory.length,
+        });
       } else {
         // for temporary apps, we need to get the previous request from the memory
         const existingConversation =
           conversationManager.getConversation(applicationId);
         if (!existingConversation) {
-          streamLog('previous request not found', 'error');
+          streamLog(
+            {
+              message: 'Previous request not found',
+              applicationId,
+              userId,
+            },
+            'error',
+          );
           terminateStreamWithError(
             session,
             'Previous request not found',
@@ -275,7 +330,16 @@ export async function postMessage(
         })
           .then(copyDirToMemfs)
           .catch((error) => {
-            streamLog(`Error cloning repository: ${error}`, 'error');
+            streamLog(
+              {
+                message: 'Error cloning repository',
+                error: error instanceof Error ? error.message : String(error),
+                applicationId,
+                traceId,
+                userId,
+              },
+              'error',
+            );
             terminateStreamWithError(
               session,
               'There was an error cloning your repository, try again with a different prompt.',
@@ -300,9 +364,14 @@ export async function postMessage(
     }
 
     streamLog(
-      `sending request to ${getAgentHost(
-        requestBody.environment,
-      )} agent, body: ${JSON.stringify(body)}`,
+      {
+        message: 'Sending request to agent',
+        applicationId,
+        traceId,
+        userId,
+        agentHost: getAgentHost(requestBody.environment),
+        body: JSON.stringify(body),
+      },
       'info',
     );
     const agentResponse = await fetch(
@@ -324,9 +393,14 @@ export async function postMessage(
     if (!agentResponse.ok) {
       const errorData = await agentResponse.json();
       streamLog(
-        `Agent returned error: ${
-          agentResponse.status
-        }, errorData: ${JSON.stringify(errorData)}`,
+        {
+          message: 'Agent returned error',
+          applicationId,
+          traceId,
+          userId,
+          status: agentResponse.status,
+          errorData,
+        },
         'error',
       );
       return reply.status(agentResponse.status).send({
@@ -349,7 +423,11 @@ export async function postMessage(
     const textDecoder = new TextDecoder();
 
     while (!abortController.signal.aborted) {
-      streamLog('reading the stream');
+      streamLog({
+        message: 'Reading stream',
+        applicationId,
+        traceId,
+      });
 
       const { done, value } = await reader.read();
 
@@ -385,9 +463,14 @@ export async function postMessage(
               completeParsedMessage = agentSseEventSchema.parse(parsedEvent);
             } catch (error) {
               streamLog(
-                `[appId: ${applicationId}] Error validating schema for message: ${JSON.stringify(
-                  parsedEvent,
-                )}. Error: ${JSON.stringify(error)}`,
+                {
+                  message: 'Error validating schema for message',
+                  applicationId,
+                  traceId,
+                  userId,
+                  parsedEvent: JSON.stringify(parsedEvent),
+                  error: JSON.stringify(error),
+                },
                 'error',
               );
               terminateStreamWithError(
@@ -400,7 +483,12 @@ export async function postMessage(
 
             if (parsedEvent.message.kind === 'KeepAlive') {
               streamLog(
-                `[appId: ${applicationId}] keep alive message received`,
+                {
+                  message: 'Keep alive message received',
+                  applicationId,
+                  traceId,
+                  userId,
+                },
                 'info',
               );
               continue;
@@ -427,11 +515,15 @@ export async function postMessage(
               message: messageWithoutDiff,
             };
 
-            streamLog(
-              `[appId: ${applicationId}] message sent to CLI: ${JSON.stringify(
+            streamLog({
+              message: 'Message sent to CLI',
+              applicationId,
+              traceId,
+              userId,
+              parsedMessageWithFullMessagesHistory: JSON.stringify(
                 parsedMessageWithFullMessagesHistory,
-              )}`,
-            );
+              ),
+            });
             session.push(parsedMessageWithFullMessagesHistory);
 
             if (
@@ -458,7 +550,12 @@ export async function postMessage(
 
             if (canDeploy) {
               streamLog(
-                `[appId: ${applicationId}] starting to deploy app`,
+                {
+                  message: 'Starting to deploy app',
+                  applicationId,
+                  traceId,
+                  userId,
+                },
                 'info',
               );
               const { volume, virtualDir, memfsVolume } = await volumePromise;
@@ -468,7 +565,14 @@ export async function postMessage(
               );
 
               streamLog(
-                `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${completeParsedMessage.message.unifiedDiff}`,
+                {
+                  message: 'Writing unified diff to file',
+                  applicationId,
+                  traceId,
+                  userId,
+                  virtualDir: unifiedDiffPath,
+                  unifiedDiff: completeParsedMessage.message.unifiedDiff,
+                },
                 'info',
               );
               volume.writeFileSync(
@@ -494,7 +598,15 @@ export async function postMessage(
               }
 
               if (isPermanentApp && appName) {
-                streamLog(`[appId: ${applicationId}] app iteration`, 'info');
+                streamLog(
+                  {
+                    message: 'App iteration',
+                    applicationId,
+                    traceId,
+                    userId,
+                  },
+                  'info',
+                );
                 await appIteration({
                   appName: appName,
                   githubUsername,
@@ -512,7 +624,15 @@ export async function postMessage(
                 completeParsedMessage.message.kind !==
                 MessageKind.REFINEMENT_REQUEST
               ) {
-                streamLog(`[appId: ${applicationId}] creating new app`, 'info');
+                streamLog(
+                  {
+                    message: 'Creating new app',
+                    applicationId,
+                    traceId,
+                    userId,
+                  },
+                  'info',
+                );
                 appName =
                   completeParsedMessage.message.app_name ||
                   `app.build-${uuidv4().slice(0, 4)}`;
@@ -580,12 +700,27 @@ export async function postMessage(
             error instanceof Error &&
             error.message.includes('Unterminated string')
           ) {
-            streamLog(`[appId: ${applicationId}] incomplete message`, 'error');
+            streamLog(
+              {
+                message: 'Incomplete message',
+                applicationId,
+                traceId,
+                userId,
+              },
+              'error',
+            );
             continue;
           }
 
           streamLog(
-            `[appId: ${applicationId}] Error handling SSE message: ${error}, for message: ${message}`,
+            {
+              message: 'Error handling SSE message',
+              applicationId,
+              traceId,
+              userId,
+              error: String(error),
+              sseMessage: message,
+            },
             'error',
           );
         }
@@ -593,13 +728,30 @@ export async function postMessage(
     }
 
     if (isPermanentApp) conversationManager.removeConversation(applicationId);
-    streamLog(`[appId: ${applicationId}] stream finished`, 'info');
+    streamLog(
+      {
+        message: 'Stream finished',
+        applicationId,
+        traceId,
+        userId,
+      },
+      'info',
+    );
     session.push({ done: true, traceId: traceId }, 'done');
     session.removeAllListeners();
 
     reply.raw.end();
   } catch (error) {
-    streamLog(`[appId: ${applicationId}] Unhandled error: ${error}`, 'error');
+    streamLog(
+      {
+        message: 'Unhandled error',
+        applicationId,
+        traceId,
+        userId,
+        error: String(error),
+      },
+      'error',
+    );
     session.push(
       new StreamingError((error as Error).message ?? 'Unknown error'),
       'error',
@@ -655,7 +807,7 @@ async function appCreation({
   session: Session;
   requestBody: RequestBody;
   files: ReturnType<typeof readDirectoryRecursive>;
-  streamLog: (log: string, level?: 'info' | 'error') => void;
+  streamLog: StreamLogFunction;
 }) {
   if (isDev) {
     fs.writeFileSync(
@@ -664,7 +816,12 @@ async function appCreation({
     );
   }
 
-  app.log.info(`appName - ${appName}`);
+  app.log.info({
+    message: 'Creating app with name',
+    appName,
+    applicationId,
+    traceId,
+  });
   const { repositoryUrl, appName: newAppName } = await createUserUpstreamApp({
     appName,
     githubUsername,
@@ -687,7 +844,14 @@ async function appCreation({
     appName: newAppName,
     githubUsername,
   });
-  streamLog(`app created: ${applicationId}`, 'info');
+  streamLog(
+    {
+      message: 'App created',
+      applicationId,
+      traceId,
+    },
+    'info',
+  );
 
   await pushAndSavePlatformMessage(
     session,
@@ -772,7 +936,10 @@ async function createUserUpstreamApp({
 
   if (repoExists) {
     appName = `${appName}-${uuidv4().slice(0, 4)}`;
-    app.log.info(`repo exists, new appName - ${appName}`);
+    app.log.info({
+      message: 'Repository exists, generated new app name',
+      appName,
+    });
   }
 
   const { repositoryUrl } = await createUserRepository({
@@ -780,7 +947,11 @@ async function createUserUpstreamApp({
     githubAccessToken,
   });
 
-  app.log.info(`repository created: ${repositoryUrl}`);
+  app.log.info({
+    message: 'Repository created',
+    repositoryUrl,
+    appName,
+  });
 
   const { commitSha: initialCommitSha } = await createUserInitialCommit({
     repo: appName,
@@ -823,13 +994,19 @@ function getExistingConversationBody({
   };
 }
 
-function createStreamLogger(session: Session, isNeonEmployee: boolean) {
-  return function streamLog(log: string, level: 'info' | 'error' = 'info') {
-    app.log[level](log);
+function createStreamLogger(
+  session: Session,
+  isNeonEmployee: boolean,
+): StreamLogFunction {
+  return function streamLog(
+    logData: StructuredLog,
+    level: 'info' | 'error' = 'info',
+  ) {
+    app.log[level](logData);
 
     // only push if is neon employee
     if (isNeonEmployee) {
-      session.push({ log, level }, 'debug');
+      session.push({ log: logData.message, level }, 'debug');
     }
   };
 }
@@ -901,7 +1078,13 @@ async function saveMessageToDB(
       metadata,
     });
   } catch (error) {
-    app.log.error(`Error saving message to DB: ${error}`);
+    app.log.error({
+      message: 'Error saving message to DB',
+      error: error instanceof Error ? error.message : String(error),
+      appId,
+      role,
+      messageKind,
+    });
     throw error;
   }
 }
