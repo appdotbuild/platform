@@ -554,7 +554,7 @@ export async function postMessage(
                 session,
                 applicationId,
                 new PlatformMessage(
-                  AgentStatus.RUNNING,
+                  AgentStatus.IDLE,
                   traceId as TraceId,
                   `Your application is being deployed to ${appURL}`,
                   {

@@ -14,6 +14,15 @@ const getPhaseTitle = (
       if (metadata?.type === PlatformMessageType.DEPLOYMENT_COMPLETE) {
         return 'Your application 1st draft is ready';
       }
+      if (metadata?.type === PlatformMessageType.DEPLOYMENT_FAILED) {
+        return 'Your application failed to deploy';
+      }
+      if (metadata?.type === PlatformMessageType.DEPLOYMENT_IN_PROGRESS) {
+        return 'Your application is being deployed';
+      }
+      if (metadata?.type === PlatformMessageType.DEPLOYMENT_STOPPING) {
+        return 'Your application is being stopped, a new deployment will start soon';
+      }
       if (metadata?.type === PlatformMessageType.REPO_CREATED) {
         return 'Repository created';
       }
