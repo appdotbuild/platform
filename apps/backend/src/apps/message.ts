@@ -678,7 +678,7 @@ async function appCreation({
 
   await db.insert(apps).values({
     id: applicationId,
-    name: requestBody.message,
+    name: appName,
     clientSource: requestBody.clientSource,
     ownerId,
     traceId,
