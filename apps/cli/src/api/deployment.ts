@@ -6,9 +6,15 @@ type DeploymentStatus = {
   isDeployed: boolean;
 };
 
-export async function getDeploymentStatus(deploymentId: string) {
+export async function getDeploymentStatus(
+  deploymentId: string,
+  signal?: AbortSignal,
+) {
   const response = await apiClient.get<DeploymentStatus>(
     `/deployment-status/${deploymentId}`,
+    {
+      signal,
+    },
   );
 
   return response.data;

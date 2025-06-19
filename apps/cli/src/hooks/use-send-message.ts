@@ -56,6 +56,7 @@ export const useSendMessage = () => {
 
   const { data: deploymentStatus } = useDeploymentStatus(
     metadata?.deploymentId,
+    abortControllerRef.current?.signal,
   );
 
   useEffect(() => {
