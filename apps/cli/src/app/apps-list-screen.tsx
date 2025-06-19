@@ -37,7 +37,7 @@ const formatAppLabel = (app: App) => {
   const status = app.recompileInProgress ? 'recompiling' : app.deployStatus;
   const statusEmoji = getStatusEmoji(status);
 
-  return `${statusEmoji} ${app.name}`;
+  return `${statusEmoji} ${app.appName ?? app.name}`;
 };
 
 export const AppsListScreen = () => {
