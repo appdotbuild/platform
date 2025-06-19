@@ -26,10 +26,12 @@ import { isDev } from '../env';
 import {
   checkIfRepoExists,
   cloneRepository,
-  createUserCommit,
-  createUserInitialCommit,
-  createUserRepository,
+  createRepository,
   addAppURL,
+  commitChanges,
+  createInitialCommit,
+  GithubEntity,
+  type GithubEntityInitialized,
 } from '../github';
 import {
   type FileData,
@@ -132,6 +134,11 @@ export async function postMessage(
   let applicationId = requestBody.applicationId;
   let traceId = requestBody.traceId;
 
+  const githubEntity = await new GithubEntity(
+    githubUsername,
+    githubAccessToken,
+  ).init();
+
   request.socket.on('close', () => {
     streamLog(`Client disconnected for applicationId: ${applicationId}`);
     abortController.abort();
@@ -183,6 +190,7 @@ export async function postMessage(
           'info',
         );
         appName = application[0]!.appName;
+
         const messagesFromHistory = await getMessagesFromHistory(
           applicationId,
           userId,
@@ -269,8 +277,8 @@ export async function postMessage(
 
     const volumePromise = isPermanentApp
       ? cloneRepository({
-          repo: `${githubUsername}/${appName}`,
-          githubAccessToken,
+          repo: `${githubEntity.owner}/${appName}`,
+          githubAccessToken: githubEntity.githubAccessToken,
           tempDirPath,
         })
           .then(copyDirToMemfs)
@@ -495,10 +503,10 @@ export async function postMessage(
 
               if (isPermanentApp && appName) {
                 streamLog(`[appId: ${applicationId}] app iteration`, 'info');
+                githubEntity.repo = appName;
                 await appIteration({
                   appName: appName,
-                  githubUsername,
-                  githubAccessToken,
+                  githubEntity,
                   files,
                   agentState: completeParsedMessage.message.agentState,
                   applicationId,
@@ -516,12 +524,12 @@ export async function postMessage(
                 appName =
                   completeParsedMessage.message.app_name ||
                   `app.build-${uuidv4().slice(0, 4)}`;
+
                 const { newAppName } = await appCreation({
                   applicationId,
                   appName,
                   agentState: completeParsedMessage.message.agentState,
-                  githubAccessToken,
-                  githubUsername,
+                  githubEntity,
                   ownerId: request.user.id,
                   traceId: traceId as TraceId,
                   session,
@@ -529,6 +537,7 @@ export async function postMessage(
                   files,
                   streamLog,
                 });
+
                 appName = newAppName;
                 isPermanentApp = true;
               }
@@ -544,10 +553,8 @@ export async function postMessage(
               );
 
               await addAppURL({
-                repo: appName as string,
-                owner: githubUsername,
-                appURL: appURL,
-                githubAccessToken,
+                githubEntity,
+                appURL,
               });
 
               await pushAndSavePlatformMessage(
@@ -637,8 +644,7 @@ async function appCreation({
   appName,
   traceId,
   agentState,
-  githubUsername,
-  githubAccessToken,
+  githubEntity,
   ownerId,
   session,
   requestBody,
@@ -649,8 +655,7 @@ async function appCreation({
   appName: string;
   traceId: TraceId;
   agentState: AgentSseEvent['message']['agentState'];
-  githubUsername: string;
-  githubAccessToken: string;
+  githubEntity: GithubEntityInitialized;
   ownerId: string;
   session: Session;
   requestBody: RequestBody;
@@ -665,10 +670,10 @@ async function appCreation({
   }
 
   app.log.info(`appName - ${appName}`);
+
   const { repositoryUrl, appName: newAppName } = await createUserUpstreamApp({
     appName,
-    githubUsername,
-    githubAccessToken,
+    githubEntity,
     files,
   });
 
@@ -685,7 +690,7 @@ async function appCreation({
     agentState,
     repositoryUrl,
     appName: newAppName,
-    githubUsername,
+    githubUsername: githubEntity.githubUsername,
   });
   streamLog(`app created: ${applicationId}`, 'info');
 
@@ -705,8 +710,7 @@ async function appCreation({
 
 async function appIteration({
   appName,
-  githubUsername,
-  githubAccessToken,
+  githubEntity,
   files,
   agentState,
   applicationId,
@@ -715,8 +719,7 @@ async function appIteration({
   commitMessage,
 }: {
   appName: string;
-  githubUsername: string;
-  githubAccessToken: string;
+  githubEntity: GithubEntityInitialized;
   files: ReturnType<typeof readDirectoryRecursive>;
   applicationId: string;
   traceId: string;
@@ -724,13 +727,11 @@ async function appIteration({
   agentState: AgentSseEvent['message']['agentState'];
   commitMessage: string;
 }) {
-  const { commitSha } = await createUserCommit({
-    repo: appName,
-    owner: githubUsername,
+  const { commitSha } = await commitChanges({
+    githubEntity,
     paths: files,
     message: commitMessage,
     branch: 'main',
-    githubAccessToken,
   });
 
   await db
@@ -740,7 +741,8 @@ async function appIteration({
     })
     .where(eq(apps.id, applicationId));
 
-  const commitUrl = `https://github.com/${githubUsername}/${appName}/commit/${commitSha}`;
+  const commitUrl = `https://github.com/${githubEntity.owner}/${appName}/commit/${commitSha}`;
+
   await pushAndSavePlatformMessage(
     session,
     applicationId,
@@ -755,19 +757,16 @@ async function appIteration({
 
 async function createUserUpstreamApp({
   appName,
-  githubUsername,
-  githubAccessToken,
+  githubEntity,
   files,
 }: {
   appName: string;
-  githubUsername: string;
-  githubAccessToken: string;
+  githubEntity: GithubEntityInitialized;
   files: ReturnType<typeof readDirectoryRecursive>;
 }) {
   const repoExists = await checkIfRepoExists({
-    username: githubUsername, // or the org name
-    repoName: appName,
-    githubAccessToken,
+    appName,
+    githubEntity,
   });
 
   if (repoExists) {
@@ -775,21 +774,21 @@ async function createUserUpstreamApp({
     app.log.info(`repo exists, new appName - ${appName}`);
   }
 
-  const { repositoryUrl } = await createUserRepository({
-    repo: appName,
-    githubAccessToken,
+  githubEntity.repo = appName;
+
+  const { repositoryUrl } = await createRepository({
+    githubEntity,
   });
 
   app.log.info(`repository created: ${repositoryUrl}`);
 
-  const { commitSha: initialCommitSha } = await createUserInitialCommit({
-    repo: appName,
-    owner: githubUsername,
+  const { commitSha: initialCommitSha } = await createInitialCommit({
+    githubEntity,
     paths: files,
-    githubAccessToken,
   });
 
-  const initialCommitUrl = `https://github.com/${githubUsername}/${appName}/commit/${initialCommitSha}`;
+  const initialCommitUrl = `https://github.com/${githubEntity.owner}/${appName}/commit/${initialCommitSha}`;
+
   return { repositoryUrl, appName, initialCommitUrl };
 }
 

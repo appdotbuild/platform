@@ -1,19 +1,9 @@
-import { Octokit } from '@octokit/rest';
 import type { Endpoints } from '@octokit/types';
-import type { FastifyRequest, FastifyReply } from 'fastify';
 import { logger } from '../logger';
-import { githubApp } from './app';
-import { getOrgInstallationId, getUserInstallationId } from './utils';
-import type { WithGithubAccessToken } from './types';
+import { type GithubEntityInitialized } from './entity';
 
-type CreateOrgRepositoryRequest = {
-  repo: string;
-  owner: string;
-  appURL?: string;
-};
-
-type CreateUserRepositoryRequest = {
-  repo: string;
+type CreateRepositoryRequest = {
+  githubEntity: GithubEntityInitialized;
   appURL?: string;
 };
 
@@ -23,29 +13,28 @@ type PostCreateOrganizationRepositoryResponse =
 type PostCreateUserRepositoryResponse =
   Endpoints['POST /user/repos']['response'];
 
-export const createUserRepository = async ({
-  repo,
+export const createRepository = async ({
+  githubEntity,
   appURL,
-  githubAccessToken,
-}: WithGithubAccessToken<CreateUserRepositoryRequest>) => {
-  const installationId = await getUserInstallationId(githubAccessToken);
+}: CreateRepositoryRequest) => {
+  const method = githubEntity.isOrg
+    ? createOrgRepository
+    : createUserRepository;
 
-  if (!installationId) {
-    return {
-      statusCode: 400,
-      status: 'error',
-      message: `Failed to create repository: No installation found`,
-    };
-  }
+  return method({
+    githubEntity,
+    appURL,
+  });
+};
 
+const createUserRepository = async ({
+  githubEntity,
+  appURL,
+}: CreateRepositoryRequest) => {
   try {
-    const octokit = new Octokit({
-      auth: githubAccessToken,
-    });
-
     const response: PostCreateUserRepositoryResponse =
-      await octokit.rest.repos.createForAuthenticatedUser({
-        name: repo,
+      await githubEntity.octokit.rest.repos.createForAuthenticatedUser({
+        name: githubEntity.repo,
         ...(appURL && { homepage: appURL }),
         description: 'Created by App.build',
         private: false,
@@ -68,32 +57,17 @@ export const createUserRepository = async ({
   }
 };
 
-export const createOrgRepository = async ({
-  repo,
-  owner,
+const createOrgRepository = async ({
+  githubEntity,
   appURL,
-  githubAccessToken,
-}: WithGithubAccessToken<CreateOrgRepositoryRequest>) => {
-  const installationId = await getOrgInstallationId(owner, githubAccessToken);
-
-  if (!installationId) {
-    return {
-      statusCode: 400,
-      error: `Failed to create repository: No installation found for ${owner}`,
-    };
-  }
-
-  const octokit = await githubApp.getInstallationOctokit(
-    Number(installationId),
-  );
-
+}: CreateRepositoryRequest) => {
   try {
     const response: PostCreateOrganizationRepositoryResponse =
-      await octokit.rest.repos.createInOrg({
-        org: owner,
-        name: repo,
+      await githubEntity.octokit.rest.repos.createInOrg({
+        org: githubEntity.owner,
+        name: githubEntity.repo,
         ...(appURL && { homepage: appURL }),
-        description: 'Created by appdotbuild',
+        description: 'Created by App.build',
         private: false,
         auto_init: true,
       });
@@ -112,35 +86,4 @@ export const createOrgRepository = async ({
       error: `Failed to create repository: ${error.message}`,
     };
   }
-};
-
-export const createOrgRepositoryEndpoint = async (
-  request: FastifyRequest<{ Body: CreateOrgRepositoryRequest }>,
-  reply: FastifyReply,
-) => {
-  const { repo, owner, appURL } = request.body;
-
-  const response = await createOrgRepository({
-    repo,
-    owner,
-    appURL,
-    githubAccessToken: request.user.githubAccessToken,
-  });
-
-  return reply.status(response.statusCode).send(response);
-};
-
-export const createUserRepositoryEndpoint = async (
-  request: FastifyRequest<{ Body: CreateUserRepositoryRequest }>,
-  reply: FastifyReply,
-) => {
-  const { repo, appURL } = request.body;
-
-  const response = await createUserRepository({
-    repo,
-    appURL,
-    githubAccessToken: request.user.githubAccessToken,
-  });
-
-  return reply.status(response.statusCode).send(response);
 };
