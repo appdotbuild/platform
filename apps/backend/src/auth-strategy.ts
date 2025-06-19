@@ -89,6 +89,7 @@ export async function validateAuth(request: FastifyRequest): Promise<
     const userData = await getUserData(
       githubAccessToken?.accessToken as string,
     );
+
     const githubUsername = userData.data.login;
 
     const neonEmployee = await isNeonEmployee(

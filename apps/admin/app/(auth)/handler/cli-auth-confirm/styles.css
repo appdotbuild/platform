@@ -1,0 +1,56 @@
+:root {
+  --ease-in-quad: cubic-bezier(0.55, 0.085, 0.68, 0.53);
+}
+
+.successful svg {
+  animation: drawCheck 400ms var(--ease-in-quad);
+}
+
+.github-app-section {
+  transition: all 300ms var(--ease-in-quad);
+  overflow: hidden;
+}
+
+.close-window {
+  transition: all 300ms var(--ease-in-quad);
+  overflow: hidden;
+}
+
+.cli-confirm-card {
+  transform: translateY(0);
+  position: relative;
+  transition: transform 300ms ease;
+}
+
+.cli-confirm-card.no-app {
+  transform: translateY(50px);
+  top: -50px;
+}
+
+.close-window.hiding,
+.github-app-section.hiding {
+  max-height: 0;
+  height: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.close-window.showing,
+.github-app-section.showing {
+  opacity: 1;
+}
+
+@keyframes drawCheck {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0% 0 0);
+    opacity: 1;
+  }
+}

@@ -13,15 +13,7 @@ import { sendAnalyticsEvent } from './apps/analytics-events';
 import { appHistory } from './apps/app-history';
 import { getKoyebDeploymentEndpoint } from './deploy';
 import { dockerLoginIfNeeded } from './docker';
-import { isDev, validateEnv } from './env';
-import {
-  createOrgInitialCommitEndpoint,
-  createOrgRepositoryEndpoint,
-  createUserInitialCommitEndpoint,
-  createUserRepositoryEndpoint,
-  orgCommitChangesEndpoint,
-  userCommitChangesEndpoint,
-} from './github';
+import { validateEnv } from './env';
 import { logger } from './logger';
 import { requireNeonEmployee } from './middleware/neon-employee-auth';
 
@@ -32,32 +24,9 @@ const authHandler = { onRequest: [app.authenticate] };
 
 app.register(fastifySchedule);
 
-// these endpoints are only available locally, so we can test them easily
-if (isDev) {
-  app.post(
-    '/github/user/create-repo',
-    authHandler,
-    createUserRepositoryEndpoint,
-  );
-  app.post(
-    '/github/user/initial-commit',
-    authHandler,
-    createUserInitialCommitEndpoint,
-  );
-  app.post('/github/user/commit', authHandler, userCommitChangesEndpoint);
-  app.post('/github/org/create-repo', authHandler, createOrgRepositoryEndpoint);
-  app.post(
-    '/github/org/initial-commit',
-    authHandler,
-    createOrgInitialCommitEndpoint,
-  );
-  app.post('/github/org/commit', authHandler, orgCommitChangesEndpoint);
-}
-
 app.get('/auth/is-neon-employee', authHandler, async (request, reply) => {
   return reply.send({ isNeonEmployee: request.user.isNeonEmployee });
 });
-
 app.get('/apps', authHandler, listApps);
 app.get('/apps/:id', authHandler, appById);
 app.get('/apps/:id/history', authHandler, appHistory);
