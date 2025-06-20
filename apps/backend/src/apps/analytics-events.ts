@@ -7,7 +7,7 @@ export async function sendAnalyticsEvent(
   reply: FastifyReply,
 ) {
   try {
-    if (process.env.NODE_ENV !== 'production') return;
+    if (process.env.NODE_ENV === 'development') return;
 
     const segmentAdapter = new Analytics({
       writeKey: process.env.SEGMENT_WRITE_KEY || '',
