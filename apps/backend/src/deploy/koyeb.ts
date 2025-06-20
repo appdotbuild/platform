@@ -338,10 +338,22 @@ export const getKoyebDeploymentEndpoint = async (
 
 function getOrgName(githubUsername: string) {
   if (process.env.NODE_ENV === 'production') {
-    return `appbuild-${githubUsername}`;
+    return getNormalizedOrgName(`appbuild-${githubUsername}`);
   }
 
-  return `appbuild-dev-${githubUsername}`;
+  return getNormalizedOrgName(`appbuild-dev-${githubUsername}`);
+}
+
+function getNormalizedOrgName(orgName: string) {
+  let normalized = orgName.replace(/[^a-zA-Z0-9-]/g, '-');
+
+  normalized = normalized.replace(/-+/g, '-');
+
+  if (normalized.length > 39) {
+    normalized = normalized.substring(0, 39);
+  }
+
+  return normalized;
 }
 
 function getDomainName(appId: string) {

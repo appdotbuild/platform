@@ -23,7 +23,6 @@ import {
   updateKoyebService,
   createKoyebDomain,
   getKoyebDomain,
-  getKoyebDeployment,
 } from './koyeb';
 
 const exec = promisify(execNative);

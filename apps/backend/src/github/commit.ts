@@ -1,25 +1,18 @@
-import type { FastifyReply } from 'fastify';
-
-import { githubApp } from './app';
-import type { FastifyRequest } from 'fastify';
 import type { Octokit } from '@octokit/rest';
-import { getOrgInstallationId, getUserInstallationId } from './utils';
-import type { WithGithubAccessToken, WithInstallationId } from './types';
+import { type GithubEntityInitialized } from './entity';
 
 type Paths = {
   path: string;
   content: string;
 };
 
-type InitialCommitRequest = {
-  repo: string;
-  owner: string;
+type CreateInitialCommitRequest = {
+  githubEntity: GithubEntityInitialized;
   paths: Paths[];
 };
 
-type CommitRequest = {
-  repo: string;
-  owner: string;
+type CreateCommitRequest = {
+  githubEntity: GithubEntityInitialized;
   paths: Paths[];
   message: string;
   branch: string;
@@ -34,53 +27,11 @@ type CommitResponse = {
 
 const BOT_USER_EMAIL = process.env.GITHUB_APP_BOT_EMAIL;
 
-export const createUserInitialCommit = async ({
-  repo,
-  owner,
+export const createInitialCommit = async ({
+  githubEntity,
   paths,
-  githubAccessToken,
-}: WithGithubAccessToken<InitialCommitRequest>): Promise<CommitResponse> => {
-  const installationId = await getUserInstallationId(githubAccessToken);
-
-  if (!installationId) {
-    return {
-      statusCode: 400,
-      status: 'error',
-      message: `Failed to create commit: No installation found for ${owner}`,
-    };
-  }
-
-  return createInitialCommit({ installationId, repo, owner, paths });
-};
-
-export const createOrgInitialCommit = async ({
-  repo,
-  owner,
-  paths,
-  githubAccessToken,
-}: WithGithubAccessToken<InitialCommitRequest>): Promise<CommitResponse> => {
-  const installationId = await getOrgInstallationId(owner, githubAccessToken);
-
-  if (!installationId) {
-    return {
-      statusCode: 400,
-      status: 'error',
-      message: `Failed to create commit: No installation found for ${owner}`,
-    };
-  }
-
-  return createInitialCommit({ installationId, repo, owner, paths });
-};
-
-const createInitialCommit = async ({
-  repo,
-  owner,
-  paths,
-  installationId,
-}: WithInstallationId<InitialCommitRequest>): Promise<CommitResponse> => {
-  const octokit = await githubApp.getInstallationOctokit(
-    Number(installationId),
-  );
+}: CreateInitialCommitRequest): Promise<CommitResponse> => {
+  const { octokit, owner, repo } = githubEntity;
 
   const { data: refData } = await octokit.git.getRef({
     owner,
@@ -123,59 +74,13 @@ const createInitialCommit = async ({
   };
 };
 
-export const createUserCommit = async ({
-  repo,
-  owner,
+export const commitChanges = async ({
+  githubEntity,
   paths,
   message,
   branch = 'main',
-  githubAccessToken,
-}: WithGithubAccessToken<CommitRequest>): Promise<CommitResponse> => {
-  const installationId = await getUserInstallationId(githubAccessToken);
-
-  if (!installationId) {
-    return {
-      statusCode: 400,
-      status: 'error',
-      message: `Failed to create commit: No installation found for ${owner}`,
-    };
-  }
-
-  return commitChanges({ installationId, repo, owner, paths, message, branch });
-};
-
-export const createOrgCommit = async ({
-  repo,
-  owner,
-  paths,
-  message,
-  branch = 'main',
-  githubAccessToken,
-}: WithGithubAccessToken<CommitRequest>): Promise<CommitResponse> => {
-  const installationId = await getOrgInstallationId(owner, githubAccessToken);
-
-  if (!installationId) {
-    return {
-      statusCode: 400,
-      status: 'error',
-      message: `Failed to create commit: No installation found for ${owner}`,
-    };
-  }
-
-  return commitChanges({ installationId, repo, owner, paths, message, branch });
-};
-
-const commitChanges = async ({
-  repo,
-  owner,
-  paths,
-  message,
-  branch = 'main',
-  installationId,
-}: WithInstallationId<CommitRequest>): Promise<CommitResponse> => {
-  const octokit = await githubApp.getInstallationOctokit(
-    Number(installationId),
-  );
+}: CreateCommitRequest) => {
+  const { octokit, owner, repo } = githubEntity;
 
   const { data: refData } = await octokit.git.getRef({
     owner,
@@ -327,111 +232,3 @@ async function createOrUpdateCommit(
     forceUpdate,
   });
 }
-
-export const createUserInitialCommitEndpoint = async (
-  request: FastifyRequest<{ Body: InitialCommitRequest }>,
-  reply: FastifyReply,
-) => {
-  const { repo, owner, paths } = request.body;
-
-  if (!repo || !paths) {
-    return reply.status(400).send({
-      error: 'Missing required fields',
-    });
-  }
-
-  const response = await createUserInitialCommit({
-    repo,
-    owner,
-    paths,
-    githubAccessToken: request.user.githubAccessToken,
-  });
-
-  return reply.status(response.statusCode).send({
-    message: response.message,
-    status: response.status,
-  });
-};
-
-export const createOrgInitialCommitEndpoint = async (
-  request: FastifyRequest<{ Body: InitialCommitRequest }>,
-  reply: FastifyReply,
-) => {
-  const { repo, owner, paths } = request.body;
-
-  if (!repo || !paths) {
-    return reply.status(400).send({
-      error: 'Missing required fields',
-    });
-  }
-
-  const response = await createOrgInitialCommit({
-    repo,
-    owner,
-    paths,
-    githubAccessToken: request.user.githubAccessToken,
-  });
-
-  return reply.status(response.statusCode).send({
-    message: response.message,
-    status: response.status,
-  });
-};
-
-export const userCommitChangesEndpoint = async (
-  request: FastifyRequest<{
-    Body: CommitRequest;
-  }>,
-  reply: FastifyReply,
-) => {
-  const { repo, owner, paths, message, branch = 'main' } = request.body;
-
-  if (!repo || !owner || !paths || !message) {
-    return reply.status(400).send({
-      error: 'Missing required fields',
-    });
-  }
-
-  const response = await createUserCommit({
-    repo,
-    owner,
-    paths,
-    message,
-    branch,
-    githubAccessToken: request.user.githubAccessToken,
-  });
-
-  return reply.status(response.statusCode).send({
-    message: response.message,
-    status: response.status,
-  });
-};
-
-export const orgCommitChangesEndpoint = async (
-  request: FastifyRequest<{
-    Body: CommitRequest;
-  }>,
-  reply: FastifyReply,
-) => {
-  const { repo, owner, paths, message, branch = 'main' } = request.body;
-
-  if (!repo || !owner || !paths || !message) {
-    return reply.status(400).send({
-      error: 'Missing required fields',
-    });
-  }
-
-  const response = await createOrgCommit({
-    repo,
-    owner,
-    paths,
-    message,
-    branch,
-    githubAccessToken: request.user.githubAccessToken,
-  });
-
-  return reply.status(response.statusCode).send({
-    message: response.message,
-    status: response.status,
-  });
-};

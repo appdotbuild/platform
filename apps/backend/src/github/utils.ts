@@ -1,7 +1,13 @@
 import { Octokit } from '@octokit/rest';
 import { githubApp } from './app';
+import type { GithubEntityInitialized } from './entity';
 
 const userInstallations = new Map<string, Set<number>>();
+
+const DEFAULT_INSTALLATION = {
+  installationId: Number(process.env.DEFAULT_APPDOTBUILDER_ORG_INSTALLATION_ID),
+  isDefaultInstallation: true,
+};
 
 export async function getUserData(githubAccessToken: string): Promise<{
   data: { login: string };
@@ -39,22 +45,31 @@ export async function getUserDataWithInstallations(
   return { user, userInstallations };
 }
 
-export async function getUserInstallationId(githubAccessToken: string) {
-  const { user, userInstallations } = await getUserDataWithInstallations(
-    githubAccessToken,
-  );
+export async function getUserInstallationId(
+  githubAccessToken: string,
+): Promise<{
+  installationId: number;
+  isDefaultInstallation: boolean;
+}> {
+  try {
+    const { user, userInstallations } = await getUserDataWithInstallations(
+      githubAccessToken,
+    );
 
-  const res = await githubApp.octokit.rest.apps.getUserInstallation({
-    username: user.data.login,
-  });
-  const installationId = res.data.id;
+    const res = await githubApp.octokit.rest.apps.getUserInstallation({
+      username: user.data.login,
+    });
+    const installationId = res.data.id;
 
-  // TODO: we might not need this check
-  if (!userInstallations.get(user.data.login)?.has(installationId)) {
-    return null;
+    // TODO: we might not need this check
+    if (!userInstallations.get(user.data.login)?.has(installationId)) {
+      return DEFAULT_INSTALLATION;
+    }
+
+    return { installationId, isDefaultInstallation: false };
+  } catch (error) {
+    return DEFAULT_INSTALLATION;
   }
-
-  return installationId;
 }
 
 // TODO: Add caching to this function
@@ -110,28 +125,18 @@ export async function isNeonEmployee(
 }
 
 export async function checkIfRepoExists({
-  username,
-  repoName,
-  githubAccessToken,
+  githubEntity,
+  appName,
 }: {
-  username: string;
-  repoName: string;
-  githubAccessToken: string;
+  githubEntity: GithubEntityInitialized;
+  appName: string;
 }): Promise<boolean> {
-  const installationId = await getUserInstallationId(githubAccessToken);
-
-  if (!installationId) {
-    throw new Error(`Failed to check for repository: No installation found`);
-  }
-
-  const octokit = await githubApp.getInstallationOctokit(
-    Number(installationId),
-  );
-
   try {
+    const { octokit, owner } = githubEntity;
+
     await octokit.rest.repos.get({
-      owner: username,
-      repo: repoName,
+      owner,
+      repo: appName,
     });
     return true;
   } catch (error: any) {
@@ -143,9 +148,11 @@ export async function checkIfRepoExists({
 }
 
 export async function getInstallationToken(githubAccessToken: string) {
-  const installationId = await getUserInstallationId(githubAccessToken);
+  const { installationId, isDefaultInstallation } = await getUserInstallationId(
+    githubAccessToken,
+  );
 
-  if (!installationId) {
+  if (!installationId && !isDefaultInstallation) {
     throw new Error('Installation ID not found');
   }
 
