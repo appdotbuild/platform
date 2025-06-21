@@ -12,7 +12,16 @@ const getPhaseTitle = (
       return 'Processing your application...';
     case MessageKind.PLATFORM_MESSAGE:
       if (metadata?.type === PlatformMessageType.DEPLOYMENT_COMPLETE) {
-        return 'Your application 1st draft is ready';
+        return 'Your application is ready';
+      }
+      if (metadata?.type === PlatformMessageType.DEPLOYMENT_FAILED) {
+        return 'Your application failed to deploy';
+      }
+      if (metadata?.type === PlatformMessageType.DEPLOYMENT_IN_PROGRESS) {
+        return 'Your application is being deployed';
+      }
+      if (metadata?.type === PlatformMessageType.DEPLOYMENT_STOPPING) {
+        return 'Your application is being stopped';
       }
       if (metadata?.type === PlatformMessageType.REPO_CREATED) {
         return 'Repository created';
@@ -30,6 +39,58 @@ const getPhaseTitle = (
       return 'Processing request...';
     default:
       return phase;
+  }
+};
+
+const getStatusProperties = (
+  metadata?: { type?: PlatformMessageType },
+  isHistory?: boolean,
+) => {
+  if (isHistory) {
+    return {
+      textColor: 'green',
+      icon: '✓',
+      headerColor: 'green',
+      bold: false,
+    };
+  }
+
+  switch (metadata?.type) {
+    case PlatformMessageType.DEPLOYMENT_COMPLETE:
+      return {
+        textColor: 'green',
+        icon: '✓',
+        headerColor: 'green',
+        bold: false,
+      };
+    case PlatformMessageType.DEPLOYMENT_FAILED:
+      return {
+        textColor: 'red',
+        icon: '✗',
+        headerColor: 'red',
+        bold: false,
+      };
+    case PlatformMessageType.DEPLOYMENT_IN_PROGRESS:
+      return {
+        textColor: 'yellow',
+        icon: '⏳',
+        headerColor: 'yellow',
+        bold: false,
+      };
+    case PlatformMessageType.DEPLOYMENT_STOPPING:
+      return {
+        textColor: 'yellow',
+        icon: '⏳',
+        headerColor: 'yellow',
+        bold: false,
+      };
+    default:
+      return {
+        textColor: 'white',
+        icon: '🤖',
+        headerColor: 'white',
+        bold: true,
+      };
   }
 };
 
@@ -58,16 +119,10 @@ const AgentHeader = ({
     );
   }
 
-  let textColor = 'white';
-  let icon = '🤖';
-  let headerColor = 'white';
-  let bold = true;
-  if (isHistoryMessage) {
-    textColor = 'green';
-    icon = '✓';
-    headerColor = 'green';
-    bold = false;
-  }
+  const { textColor, icon, headerColor, bold } = getStatusProperties(
+    metadata,
+    isHistoryMessage,
+  );
 
   return (
     <Box>

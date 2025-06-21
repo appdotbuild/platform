@@ -398,9 +398,9 @@ function getDeploymentChecker({
   deploymentId: string;
   token: string;
 }) {
-  const MAX_RETRIES = 15;
-  const INITIAL_DELAY = 5000;
-  const MAX_DELAY = 30000;
+  const MAX_RETRIES = 20;
+  const INITIAL_DELAY = 2500;
+  const MAX_DELAY = 50000;
 
   async function checkDeployment(retryCount = 0): Promise<{
     message: string;

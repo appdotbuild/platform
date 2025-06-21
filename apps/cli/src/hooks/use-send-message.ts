@@ -1,9 +1,16 @@
-import type { AgentSseEvent, TraceId } from '@appdotbuild/core';
+import {
+  AgentStatus,
+  MessageKind,
+  PlatformMessageType,
+  type AgentSseEvent,
+  type TraceId,
+} from '@appdotbuild/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useRef, useState } from 'react';
-import { type SendMessageParams, sendMessage } from '../api/application.js';
-import { applicationQueryKeys } from './use-application.js';
-import { queryKeys } from './use-build-app.js';
+import { useCallback, useRef, useState, useEffect } from 'react';
+import { type SendMessageParams, sendMessage } from '../api/application';
+import { applicationQueryKeys } from './use-application';
+import { queryKeys } from './use-build-app';
+import { useDeploymentStatus } from './use-deployment-status';
 
 export type ChoiceElement = {
   type: 'choice';
@@ -42,9 +49,62 @@ export const useSendMessage = () => {
     githubRepository?: string;
     applicationId: string;
     traceId: string;
+    deploymentId?: string;
   } | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const { data: deploymentStatus } = useDeploymentStatus(
+    metadata?.deploymentId,
+    abortControllerRef.current?.signal,
+  );
+
+  useEffect(() => {
+    if (deploymentStatus) {
+      queryClient.setQueryData(
+        queryKeys.applicationMessages(metadata?.applicationId as string),
+        (oldData: { events: AgentSseEvent[] } | undefined) => {
+          const type = deploymentStatus.type;
+
+          const messageType = {
+            STOPPING: PlatformMessageType.DEPLOYMENT_STOPPING,
+            ERROR: PlatformMessageType.DEPLOYMENT_FAILED,
+            HEALTHY: PlatformMessageType.DEPLOYMENT_COMPLETE,
+          }[type];
+
+          setMetadata({
+            ...metadata!,
+            deploymentId: undefined,
+          });
+
+          return {
+            ...oldData,
+            events: [
+              ...(oldData?.events ?? []),
+              {
+                status: AgentStatus.IDLE,
+                traceId: metadata?.traceId,
+                message: {
+                  kind: MessageKind.PLATFORM_MESSAGE,
+                  messages: [
+                    {
+                      role: 'assistant',
+                      content: deploymentStatus.message,
+                    },
+                  ],
+                  agentState: {},
+                  metadata: {
+                    type: messageType,
+                  },
+                },
+                createdAt: new Date(),
+              },
+            ],
+          };
+        },
+      );
+    }
+  }, [deploymentStatus]);
 
   const result = useMutation({
     mutationFn: async ({
@@ -75,6 +135,7 @@ export const useSendMessage = () => {
             ...metadata,
             applicationId,
             traceId: newEvent.traceId,
+            deploymentId: newEvent.metadata?.deploymentId,
           });
 
           queryClient.setQueryData(
