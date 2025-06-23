@@ -15,7 +15,7 @@ import {
   type TraceId,
 } from '@appdotbuild/core';
 import { createSession, type Session } from 'better-sse';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { app } from '../app';
@@ -31,6 +31,7 @@ import {
   createUserInitialCommit,
   createUserRepository,
 } from '../github';
+import { SentryMetrics } from '../sentry';
 import {
   copyDirToMemfs,
   createMemoryFileSystem,
@@ -81,19 +82,12 @@ const logsFolder = path.join(__dirname, '..', '..', 'logs');
 const appExistsInDb = async (
   applicationId: string | undefined,
 ): Promise<boolean> => {
-  if (!applicationId) {
-    return false;
-  }
-
-  const exists = await db
-    .select({ exists: sql`1` })
+  if (!applicationId) return false;
+  const result = await db
+    .select({ id: apps.id })
     .from(apps)
-    .where(eq(apps.id, applicationId))
-    .limit(1);
-
-  const appExists = exists.length > 0;
-
-  return appExists;
+    .where(eq(apps.id, applicationId));
+  return result.length > 0;
 };
 
 const generateTraceId = (
@@ -105,6 +99,8 @@ export async function postMessage(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
+  let agentStartTime: number | undefined;
+
   const userId = request.user.id;
   const isNeonEmployee = request.user.isNeonEmployee;
 
@@ -374,6 +370,12 @@ export async function postMessage(
       },
       'info',
     );
+
+    agentStartTime = SentryMetrics.trackAgentStart(
+      traceId || '',
+      applicationId,
+    );
+
     const agentResponse = await fetch(
       `${getAgentHost(requestBody.environment)}/message`,
       {
@@ -403,6 +405,11 @@ export async function postMessage(
         },
         'error',
       );
+
+      if (agentStartTime) {
+        SentryMetrics.trackAgentEnd(agentStartTime, 'error');
+      }
+
       return reply.status(agentResponse.status).send({
         error: errorData,
         status: 'error',
@@ -412,6 +419,10 @@ export async function postMessage(
     const reader = agentResponse.body?.getReader();
 
     if (!reader) {
+      if (agentStartTime) {
+        SentryMetrics.trackAgentEnd(agentStartTime, 'error');
+      }
+
       return reply.status(500).send({
         error: 'No response stream available',
         status: 'error',
@@ -524,6 +535,12 @@ export async function postMessage(
                 parsedMessageWithFullMessagesHistory,
               ),
             });
+
+            SentryMetrics.trackSseEvent('sse_message_sent', {
+              messageKind: messageWithoutDiff.kind,
+              status: completeParsedMessage.status,
+            });
+
             session.push(parsedMessageWithFullMessagesHistory);
 
             if (
@@ -633,6 +650,10 @@ export async function postMessage(
                   },
                   'info',
                 );
+
+                const appCreationStartTime =
+                  SentryMetrics.trackAppCreationStart();
+
                 appName =
                   completeParsedMessage.message.app_name ||
                   `app.build-${uuidv4().slice(0, 4)}`;
@@ -651,7 +672,13 @@ export async function postMessage(
                 });
                 appName = newAppName;
                 isPermanentApp = true;
+
+                SentryMetrics.trackAppCreationEnd(appCreationStartTime);
               }
+
+              const deployStartTime = SentryMetrics.trackDeploymentStart(
+                applicationId!,
+              );
 
               const { appURL, deploymentId } = await writeMemfsToTempDir(
                 memfsVolume,
@@ -662,6 +689,8 @@ export async function postMessage(
                   appDirectory: tempDirPath,
                 }),
               );
+
+              SentryMetrics.trackDeploymentEnd(deployStartTime, 'complete');
 
               await addAppURL({
                 repo: appName as string,
@@ -742,6 +771,14 @@ export async function postMessage(
 
     reply.raw.end();
   } catch (error) {
+    if (agentStartTime) {
+      SentryMetrics.trackAgentEnd(agentStartTime, 'error');
+    }
+    SentryMetrics.trackSseEvent('sse_connection_error', {
+      error: String(error),
+      applicationId,
+    });
+
     streamLog(
       {
         message: 'Unhandled error',
@@ -822,12 +859,17 @@ async function appCreation({
     applicationId,
     traceId,
   });
+
+  const repoCreationStartTime = SentryMetrics.trackGitHubRepoCreation();
+
   const { repositoryUrl, appName: newAppName } = await createUserUpstreamApp({
     appName,
     githubUsername,
     githubAccessToken,
     files,
   });
+
+  SentryMetrics.trackGitHubRepoCreationEnd(repoCreationStartTime);
 
   if (!repositoryUrl) {
     throw new Error('Repository URL not found');
@@ -888,6 +930,8 @@ async function appIteration({
   agentState: AgentSseEvent['message']['agentState'];
   commitMessage: string;
 }) {
+  const commitStartTime = SentryMetrics.trackGitHubCommit();
+
   const { commitSha } = await createUserCommit({
     repo: appName,
     owner: githubUsername,
@@ -896,6 +940,8 @@ async function appIteration({
     branch: 'main',
     githubAccessToken,
   });
+
+  SentryMetrics.trackGitHubCommitEnd(commitStartTime);
 
   await db
     .update(apps)
@@ -1094,6 +1140,10 @@ async function pushAndSavePlatformMessage(
   applicationId: string,
   message: PlatformMessage,
 ) {
+  if (message.metadata?.type) {
+    SentryMetrics.trackPlatformMessage(message.metadata.type);
+  }
+
   session.push(message);
 
   const messageContent = message.message.messages[0]?.content || '';
