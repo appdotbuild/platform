@@ -6,10 +6,12 @@ import {
   appByIdUrl,
   getUserMessageLimit,
   listApps,
+  listAllAppsForAdmin,
   postMessage,
 } from './apps';
 import { sendAnalyticsEvent } from './apps/analytics-events';
 import { appHistory } from './apps/app-history';
+import { getKoyebDeploymentEndpoint } from './deploy';
 import { dockerLoginIfNeeded } from './docker';
 import { isDev, validateEnv } from './env';
 import {
@@ -21,7 +23,7 @@ import {
   userCommitChangesEndpoint,
 } from './github';
 import { logger } from './logger';
-import { getKoyebDeploymentEndpoint } from './deploy';
+import { requireNeonEmployee } from './middleware/neon-employee-auth';
 
 config({ path: '.env' });
 validateEnv();
@@ -60,6 +62,12 @@ app.get('/apps', authHandler, listApps);
 app.get('/apps/:id', authHandler, appById);
 app.get('/apps/:id/history', authHandler, appHistory);
 app.get('/apps/:id/read-url', authHandler, appByIdUrl);
+
+app.get(
+  '/admin/apps',
+  { onRequest: [app.authenticate, requireNeonEmployee] },
+  listAllAppsForAdmin,
+);
 
 app.post(
   '/message',
