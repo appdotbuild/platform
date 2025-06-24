@@ -15,7 +15,7 @@ import {
   type TraceId,
 } from '@appdotbuild/core';
 import { createSession, type Session } from 'better-sse';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { app } from '../app';
@@ -82,12 +82,19 @@ const logsFolder = path.join(__dirname, '..', '..', 'logs');
 const appExistsInDb = async (
   applicationId: string | undefined,
 ): Promise<boolean> => {
-  if (!applicationId) return false;
-  const result = await db
-    .select({ id: apps.id })
+  if (!applicationId) {
+    return false;
+  }
+
+  const exists = await db
+    .select({ exists: sql`1` })
     .from(apps)
-    .where(eq(apps.id, applicationId));
-  return result.length > 0;
+    .where(eq(apps.id, applicationId))
+    .limit(1);
+
+  const appExists = exists.length > 0;
+
+  return appExists;
 };
 
 const generateTraceId = (
@@ -99,8 +106,6 @@ export async function postMessage(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  let agentStartTime: number | undefined;
-
   const userId = request.user.id;
   const isNeonEmployee = request.user.isNeonEmployee;
 
@@ -160,6 +165,17 @@ export async function postMessage(
     userId,
   });
 
+  SentryMetrics.addTags({
+    'request.type': 'sse',
+    'request.has_application_id': !!applicationId,
+    'request.environment': requestBody.environment || 'production',
+  });
+
+  SentryMetrics.trackSseEvent('sse_connection_started', {
+    applicationId,
+    userId,
+  });
+
   if (isDev) {
     fs.mkdirSync(logsFolder, { recursive: true });
   }
@@ -171,6 +187,8 @@ export async function postMessage(
     userId,
     requestBody: request.body,
   });
+
+  SentryMetrics.trackUserMessage(requestBody.message);
 
   try {
     let body: Optional<Body, 'traceId'> = {
@@ -371,10 +389,7 @@ export async function postMessage(
       'info',
     );
 
-    agentStartTime = SentryMetrics.trackAgentStart(
-      traceId || '',
-      applicationId,
-    );
+    SentryMetrics.trackAiAgentStart(traceId!, applicationId);
 
     const agentResponse = await fetch(
       `${getAgentHost(requestBody.environment)}/message`,
@@ -405,11 +420,6 @@ export async function postMessage(
         },
         'error',
       );
-
-      if (agentStartTime) {
-        SentryMetrics.trackAgentEnd(agentStartTime, 'error');
-      }
-
       return reply.status(agentResponse.status).send({
         error: errorData,
         status: 'error',
@@ -419,10 +429,6 @@ export async function postMessage(
     const reader = agentResponse.body?.getReader();
 
     if (!reader) {
-      if (agentStartTime) {
-        SentryMetrics.trackAgentEnd(agentStartTime, 'error');
-      }
-
       return reply.status(500).send({
         error: 'No response stream available',
         status: 'error',
@@ -657,14 +663,15 @@ export async function postMessage(
                 appName =
                   completeParsedMessage.message.app_name ||
                   `app.build-${uuidv4().slice(0, 4)}`;
+
                 const { newAppName } = await appCreation({
-                  applicationId,
+                  applicationId: applicationId!,
                   appName,
-                  agentState: completeParsedMessage.message.agentState,
-                  githubAccessToken,
-                  githubUsername,
-                  ownerId: request.user.id,
                   traceId: traceId as TraceId,
+                  agentState: completeParsedMessage.message.agentState,
+                  githubUsername,
+                  githubAccessToken,
+                  ownerId: request.user.id,
                   session,
                   requestBody,
                   files,
@@ -741,6 +748,13 @@ export async function postMessage(
             continue;
           }
 
+          SentryMetrics.captureError(error as Error, {
+            applicationId: applicationId || 'unknown',
+            traceId: traceId || 'unknown',
+            userId,
+            context: 'sse_message_handling',
+          });
+
           streamLog(
             {
               message: 'Error handling SSE message',
@@ -757,6 +771,9 @@ export async function postMessage(
     }
 
     if (isPermanentApp) conversationManager.removeConversation(applicationId);
+    SentryMetrics.trackAiAgentEnd('success');
+    SentryMetrics.trackSseEvent('sse_connection_ended', { applicationId });
+
     streamLog(
       {
         message: 'Stream finished',
@@ -771,12 +788,17 @@ export async function postMessage(
 
     reply.raw.end();
   } catch (error) {
-    if (agentStartTime) {
-      SentryMetrics.trackAgentEnd(agentStartTime, 'error');
-    }
+    SentryMetrics.trackAiAgentEnd('error');
     SentryMetrics.trackSseEvent('sse_connection_error', {
       error: String(error),
       applicationId,
+    });
+
+    SentryMetrics.captureError(error as Error, {
+      applicationId: applicationId || 'unknown',
+      traceId: traceId || 'unknown',
+      userId,
+      context: 'post_message_main',
     });
 
     streamLog(
@@ -1141,7 +1163,8 @@ async function pushAndSavePlatformMessage(
   message: PlatformMessage,
 ) {
   if (message.metadata?.type) {
-    SentryMetrics.trackPlatformMessage(message.metadata.type);
+    const messageType = message.metadata.type;
+    SentryMetrics.trackPlatformMessage(messageType);
   }
 
   session.push(message);
