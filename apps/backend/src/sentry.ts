@@ -5,12 +5,21 @@ interface SentryRequest extends FastifyRequest {
   sentryStartTime?: number;
 }
 
-export function initializeSentry() {
+type SseEventType =
+  | 'sse_connection_started'
+  | 'sse_message_sent'
+  | 'sse_connection_ended'
+  | 'sse_connection_error';
+
+type SentryTagValue = string | number | boolean;
+type SentryTags = Record<string, SentryTagValue>;
+
+export function initializeSentry(app?: FastifyInstance) {
   Sentry.init({
     dsn: 'https://30c51d264305db0af58cba176d3fb6c2@o1373725.ingest.us.sentry.io/4509434420264960',
     environment: process.env.NODE_ENV || 'development',
-    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-    profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0.01,
+    profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0.01,
     sendDefaultPii: true,
     integrations: (integrations) => {
       return integrations.filter((integration) => {
@@ -18,11 +27,11 @@ export function initializeSentry() {
       });
     },
   });
+
+  if (app) Sentry.setupFastifyErrorHandler(app);
 }
 
 export function setupSentryPerformanceMonitoring(app: FastifyInstance) {
-  Sentry.setupFastifyErrorHandler(app);
-
   app.addHook('onRequest', (request: SentryRequest, _: FastifyReply, done) => {
     const scope = Sentry.getCurrentScope();
     const transactionName = `${request.method} ${request.url}`;
@@ -78,31 +87,31 @@ export const SentryMetrics = {
     }
   },
 
-  addTags: (tags: Record<string, string | number | boolean>) => {
+  addTags: (tags: SentryTags) => {
     const scope = Sentry.getCurrentScope();
     Object.entries(tags).forEach(([key, value]) => {
       scope.setTag(key, value);
     });
   },
 
-  aiAgentStartTime: 0,
-  activeTransaction: null as any,
+  _requestData: new Map<string, { startTime: number; transaction: any }>(),
 
   trackAiAgentStart: (traceId: string, applicationId: string) => {
-    SentryMetrics.aiAgentStartTime = Date.now();
-
-    SentryMetrics.activeTransaction = Sentry.startInactiveSpan({
+    const startTime = Date.now();
+    const transaction = Sentry.startInactiveSpan({
       op: 'ai.agent.process',
       name: 'AI Agent Processing',
     });
 
-    if (SentryMetrics.activeTransaction) {
-      SentryMetrics.activeTransaction.setAttributes({
+    if (transaction) {
+      transaction.setAttributes({
         'ai.agent.trace_id': traceId,
         'ai.agent.application_id': applicationId,
         'ai.agent.started': 'true',
       });
     }
+
+    SentryMetrics._requestData.set(traceId, { startTime, transaction });
 
     SentryMetrics.addTags({
       'ai.agent.trace_id': traceId,
@@ -118,16 +127,20 @@ export const SentryMetrics = {
     });
   },
 
-  trackAiAgentEnd: (status: 'success' | 'error') => {
-    let duration = 0;
-    if (SentryMetrics.aiAgentStartTime > 0) {
-      duration = Date.now() - SentryMetrics.aiAgentStartTime;
-      SentryMetrics.addMeasurement('ai.agent.duration', duration);
-      SentryMetrics.aiAgentStartTime = 0;
+  trackAiAgentEnd: (traceId: string, status: 'success' | 'error') => {
+    const requestData = SentryMetrics._requestData.get(traceId);
+    if (!requestData) {
+      console.warn(`No request data found for traceId: ${traceId}`);
+      return;
     }
 
-    if (SentryMetrics.activeTransaction) {
-      SentryMetrics.activeTransaction.setAttributes({
+    const { startTime, transaction } = requestData;
+    const duration = Date.now() - startTime;
+
+    SentryMetrics.addMeasurement('ai.agent.duration', duration);
+
+    if (transaction) {
+      transaction.setAttributes({
         'ai.agent.status': status,
         'ai.agent.completed': 'true',
         'ai.agent.duration_ms': duration,
@@ -143,12 +156,8 @@ export const SentryMetrics = {
             : '>10s',
       });
 
-      SentryMetrics.activeTransaction.setStatus(
-        status === 'success' ? 'ok' : 'internal_error',
-      );
-
-      SentryMetrics.activeTransaction.end();
-      SentryMetrics.activeTransaction = null;
+      transaction.setStatus(status === 'success' ? 'ok' : 'internal_error');
+      transaction.end();
     }
 
     SentryMetrics.addTags({
@@ -172,53 +181,15 @@ export const SentryMetrics = {
       message: `AI Agent request ${status}`,
       level: status === 'error' ? 'error' : 'info',
     });
-  },
 
-  trackAgentStart: (traceId: string, applicationId: string): number => {
-    const startTime = Date.now();
-
-    Sentry.addBreadcrumb({
-      category: 'ai_agent',
-      message: 'AI Agent request started',
-      level: 'info',
-      data: { traceId, applicationId },
-    });
-
-    const scope = Sentry.getCurrentScope();
-    scope.setTag('ai_agent.trace_id', traceId);
-    scope.setTag('ai_agent.application_id', applicationId);
-    scope.setContext('ai_agent', {
-      startTime,
-      status: 'started',
-    });
-
-    return startTime;
-  },
-
-  trackAgentEnd: (startTime: number, status: 'success' | 'error'): void => {
-    const duration = Date.now() - startTime;
-
-    Sentry.addBreadcrumb({
-      category: 'ai_agent',
-      message: `AI Agent request ${status}`,
-      level: status === 'error' ? 'error' : 'info',
-      data: { duration: `${duration}ms` },
-    });
-
-    const scope = Sentry.getCurrentScope();
-    scope.setTag('ai_agent.status', status);
-    scope.setTag('ai_agent.duration_ms', duration);
-    scope.setContext('ai_agent', {
-      duration,
-      status,
-    });
+    SentryMetrics._requestData.delete(traceId);
   },
 
   sseEventCount: {} as Record<string, number>,
   sseStartTime: 0,
   firstEventTime: 0,
 
-  trackSseEvent: (eventType: string, data?: Record<string, any>) => {
+  trackSseEvent: (eventType: SseEventType, data?: Record<string, any>) => {
     if (eventType === 'sse_connection_started') {
       SentryMetrics.sseStartTime = Date.now();
       SentryMetrics.firstEventTime = 0;

@@ -771,7 +771,7 @@ export async function postMessage(
     }
 
     if (isPermanentApp) conversationManager.removeConversation(applicationId);
-    SentryMetrics.trackAiAgentEnd('success');
+    SentryMetrics.trackAiAgentEnd(traceId!, 'success');
     SentryMetrics.trackSseEvent('sse_connection_ended', { applicationId });
 
     streamLog(
@@ -788,7 +788,7 @@ export async function postMessage(
 
     reply.raw.end();
   } catch (error) {
-    SentryMetrics.trackAiAgentEnd('error');
+    SentryMetrics.trackAiAgentEnd(traceId!, 'error');
     SentryMetrics.trackSseEvent('sse_connection_error', {
       error: String(error),
       applicationId,
