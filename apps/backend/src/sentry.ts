@@ -18,8 +18,8 @@ export function initializeSentry(app?: FastifyInstance) {
   Sentry.init({
     dsn: 'https://30c51d264305db0af58cba176d3fb6c2@o1373725.ingest.us.sentry.io/4509434420264960',
     environment: process.env.NODE_ENV || 'development',
-    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0.01,
-    profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0.01,
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 1.0 : 0.1,
+    profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.3 : 0.01,
     sendDefaultPii: true,
     integrations: (integrations) => {
       return integrations.filter((integration) => {
