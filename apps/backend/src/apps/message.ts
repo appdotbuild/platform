@@ -635,7 +635,7 @@ export async function postMessage(
                 isPermanentApp = true;
               }
 
-              const { appURL } = await writeMemfsToTempDir(
+              const { appURL, deploymentId } = await writeMemfsToTempDir(
                 memfsVolume,
                 virtualDir,
               ).then((tempDirPath) =>
@@ -658,8 +658,11 @@ export async function postMessage(
                 new PlatformMessage(
                   AgentStatus.IDLE,
                   traceId!,
-                  `Your application has been deployed to ${appURL}`,
-                  { type: PlatformMessageType.DEPLOYMENT_COMPLETE },
+                  `Your application is being deployed to ${appURL}`,
+                  {
+                    type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
+                    deploymentId,
+                  },
                 ),
               );
             }
