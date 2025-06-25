@@ -777,6 +777,7 @@ export async function postMessage(
       },
     });
 
+    await messageHandlerQueue.waitForCompletion(streamLog);
     if (isPermanentApp) conversationManager.removeConversation(applicationId);
     streamLog(
       {
@@ -787,7 +788,6 @@ export async function postMessage(
       },
       'info',
     );
-    await messageHandlerQueue.waitForCompletion(streamLog);
     session.push({ done: true, traceId: traceId }, 'done');
     session.removeAllListeners();
 

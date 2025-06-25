@@ -50,34 +50,22 @@ export class MessageHandlerQueue {
     const queuedFunction = this.queue[0];
     if (!queuedFunction) {
       this.processing = false;
-      this.logger({
-        message: `[MessageHandlerQueue] Queue empty, stopping processing`,
-      });
       return;
     }
 
     try {
-      this.logger({
-        message: `[MessageHandlerQueue] Executing function`,
-        functionId: queuedFunction.id,
-        description: queuedFunction.description,
-      });
-
       // Execute the async function and wait for completion
       await queuedFunction.fn();
-
-      this.logger({
-        message: `[MessageHandlerQueue] Function completed successfully`,
-        functionId: queuedFunction.id,
-        description: queuedFunction.description,
-      });
     } catch (error) {
-      this.logger({
-        message: `[MessageHandlerQueue] Function execution failed`,
-        functionId: queuedFunction.id,
-        description: queuedFunction.description,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      this.logger(
+        {
+          message: `[MessageHandlerQueue] Function execution failed`,
+          functionId: queuedFunction.id,
+          description: queuedFunction.description,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'error',
+      );
     } finally {
       // Remove from queue only after successful completion
       this.queue.shift();
@@ -103,7 +91,7 @@ export class MessageHandlerQueue {
     const startTime = Date.now();
 
     streamLog({
-      message: `[MessageHandlerQueue] Wait for completion started with ${this.queue.length} functions`,
+      message: `[MessageHandlerQueue] Wait for completion, handlers in queue: ${this.queue.length}`,
     });
 
     while (this.queue.length > 0 && Date.now() - startTime < timeoutMs) {
