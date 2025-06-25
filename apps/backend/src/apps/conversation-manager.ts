@@ -19,20 +19,23 @@ export class ConversationManager {
    */
   addConversation(applicationId: string, event: AgentSseEvent): void {
     const existingConversation = this.conversationMap.get(applicationId);
-    let allMessages: ConversationMessage[] = [];
+    let allMessages: ConversationData['allMessages'] = [];
+    let agentState: ConversationData['agentState'] = null;
 
     if (existingConversation) {
       // If conversation exists, append new messages to existing ones
       allMessages = [...existingConversation.allMessages];
       const eventMessages = this.extractMessagesFromEvent(event);
       allMessages.push(...eventMessages);
+      agentState = event.message.agentState ?? existingConversation.agentState;
     } else {
       // If no conversation exists, extract messages from the event
       allMessages = this.extractMessagesFromEvent(event);
+      agentState = event.message.agentState ?? null;
     }
 
     this.conversationMap.set(applicationId, {
-      agentState: event.message.agentState,
+      agentState,
       allMessages,
     });
   }

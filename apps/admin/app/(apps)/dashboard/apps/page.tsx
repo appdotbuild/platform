@@ -1,6 +1,6 @@
-import { Metadata } from 'next';
-import AppsTable from './components/apps-table';
+import type { Metadata } from 'next';
 import { getAllApps } from './actions';
+import AppsTable from './components/apps-table';
 
 export const metadata: Metadata = {
   title: 'Apps',
@@ -19,7 +19,7 @@ export default async function AppsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Apps</h2>
           <p className="text-muted-foreground">
-            Manage your organization&apos;s apps
+            Manage all organization apps (admin view)
           </p>
         </div>
         <div className="flex items-center space-x-2"></div>

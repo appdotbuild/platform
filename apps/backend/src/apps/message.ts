@@ -14,6 +14,7 @@ import {
   StreamingError,
   type TraceId,
 } from '@appdotbuild/core';
+import { nodeEventSource } from '@llm-eaf/node-event-source';
 import { createSession, type Session } from 'better-sse';
 import { and, eq, sql } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -46,6 +47,7 @@ import {
 } from './conversation-manager';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
+import { MessageHandlerQueue } from './message-queue';
 
 type Body = {
   applicationId?: string;
@@ -72,7 +74,7 @@ type StructuredLog = {
   [key: string]: any;
 };
 
-type StreamLogFunction = (
+export type StreamLogFunction = (
   logData: StructuredLog,
   level?: 'info' | 'error',
 ) => void;
@@ -388,105 +390,88 @@ export async function postMessage(
       },
       'info',
     );
-
     SentryMetrics.trackAiAgentStart(traceId!, applicationId);
 
-    const agentResponse = await fetch(
-      `${getAgentHost(requestBody.environment)}/message`,
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'text/event-stream',
-          'Accept-Encoding': 'br, gzip, deflate',
-          Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH}`,
-          Connection: 'keep-alive',
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-        body: JSON.stringify(body),
-      },
-    );
-
-    if (!agentResponse.ok) {
-      const errorData = await agentResponse.json();
-      streamLog(
-        {
-          message: 'Agent returned error',
-          applicationId,
-          traceId,
-          userId,
-          status: agentResponse.status,
-          errorData,
-        },
-        'error',
-      );
-      return reply.status(agentResponse.status).send({
-        error: errorData,
-        status: 'error',
-      });
-    }
-
-    const reader = agentResponse.body?.getReader();
-
-    if (!reader) {
-      return reply.status(500).send({
-        error: 'No response stream available',
-        status: 'error',
-      });
-    }
-
-    let buffer = '';
     let canDeploy = false;
-    const textDecoder = new TextDecoder();
-
-    while (!abortController.signal.aborted) {
-      streamLog({
-        message: 'Reading stream',
-        applicationId,
-        traceId,
-      });
-
-      const { done, value } = await reader.read();
-
-      // there can be an idle message from the agent, there we know it finished the task
-      if (done) break;
-
-      const text = textDecoder.decode(value, { stream: true });
-
-      if (isDev) {
-        fs.appendFileSync(
-          `${logsFolder}/sse_messages-${applicationId}.log`,
-          text,
+    const requestStartTime = Date.now();
+    const agentUrl = `${getAgentHost(requestBody.environment)}/message`;
+    const messageHandlerQueue = new MessageHandlerQueue(streamLog);
+    await nodeEventSource(agentUrl, {
+      method: 'POST',
+      headers: {
+        Accept: 'text/event-stream',
+        'Accept-Encoding': 'br, gzip, deflate',
+        Authorization: `Bearer ${process.env.AGENT_API_SECRET_AUTH}`,
+        Connection: 'keep-alive',
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+      },
+      data: body,
+      signal: abortController.signal,
+      onOpen(response) {
+        const connectionTime = Date.now() - requestStartTime;
+        streamLog(
+          {
+            message: `[${new Date().toISOString()}] [appId: ${applicationId}] Connection established after ${connectionTime}ms - Status: ${
+              response.status
+            }, StatusText: ${response.statusText}`,
+            applicationId,
+            traceId,
+            userId,
+          },
+          'info',
         );
-      }
 
-      buffer += text;
+        // Check if the response is actually successful
+        if (response.status !== 200) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      },
+      async onMessage(ev) {
+        const messageHandler = async () => {
+          try {
+            // Early exit if session is disconnected
+            if (!session.isConnected) {
+              app.log.debug(
+                `[appId: ${applicationId}] Session disconnected, skipping message processing`,
+              );
+              return;
+            }
 
-      const messages = buffer
-        .split('\n\n')
-        .filter(Boolean)
-        .map((m) => (m.startsWith('data: ') ? m.replace('data: ', '') : m));
+            if (!applicationId) {
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] Application ID is not set, skipping message`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'error',
+              );
+              return;
+            }
 
-      for (const message of messages) {
-        try {
-          if (session.isConnected) {
+            const message = ev.data;
+            if (isDev) {
+              fs.appendFileSync(
+                `${logsFolder}/sse_messages-${applicationId}.log`,
+                `data: ${message}\n\n`,
+              );
+            }
+
             const parsedEvent = JSON.parse(message);
-            buffer = buffer.slice(
-              'data: '.length + message.length + '\n\n'.length,
-            );
-
             let completeParsedMessage: AgentSseEvent;
             try {
               completeParsedMessage = agentSseEventSchema.parse(parsedEvent);
             } catch (error) {
               streamLog(
                 {
-                  message: 'Error validating schema for message',
+                  message: `[appId: ${applicationId}] Error validating schema for message: ${JSON.stringify(
+                    parsedEvent,
+                  )}. Error: ${JSON.stringify(error)}`,
                   applicationId,
                   traceId,
                   userId,
-                  parsedEvent: JSON.stringify(parsedEvent),
-                  error: JSON.stringify(error),
                 },
                 'error',
               );
@@ -501,14 +486,14 @@ export async function postMessage(
             if (parsedEvent.message.kind === 'KeepAlive') {
               streamLog(
                 {
-                  message: 'Keep alive message received',
+                  message: `[appId: ${applicationId}] keep alive message received`,
                   applicationId,
                   traceId,
                   userId,
                 },
                 'info',
               );
-              continue;
+              return;
             }
 
             storeDevLogs(completeParsedMessage, message);
@@ -518,37 +503,34 @@ export async function postMessage(
             );
 
             // save agent messages to database immediately
-            if (isPermanentApp)
+            if (isPermanentApp) {
               await saveAgentMessages(applicationId, completeParsedMessage);
+            }
 
-            const { unifiedDiff, ...messageWithoutDiff } =
+            // unifiedDiff and agentState are not needed by the CLI
+            const { unifiedDiff, agentState, ...minimalMessage } =
               completeParsedMessage.message;
 
-            const parsedMessageWithFullMessagesHistory: Omit<
-              AgentSseEvent,
-              'unifiedDiff'
-            > = {
+            const parsedCLIMessage = {
               ...completeParsedMessage,
-              message: messageWithoutDiff,
+              message: minimalMessage,
             };
 
             streamLog({
-              message: 'Message sent to CLI',
+              message: `[appId: ${applicationId}] message sent to CLI: ${JSON.stringify(
+                parsedCLIMessage,
+              )}`,
               applicationId,
               traceId,
               userId,
-              parsedMessageWithFullMessagesHistory: JSON.stringify(
-                parsedMessageWithFullMessagesHistory,
-              ),
             });
 
             SentryMetrics.trackSseEvent('sse_message_sent', {
-              messageKind: messageWithoutDiff.kind,
+              messageKind: minimalMessage.kind,
               status: completeParsedMessage.status,
             });
 
-            session.push(parsedMessageWithFullMessagesHistory);
-
+            session.push(parsedCLIMessage);
             if (
               completeParsedMessage.message.unifiedDiff ===
               '# Note: This is a valid empty diff (means no changes from template)'
@@ -574,7 +556,7 @@ export async function postMessage(
             if (canDeploy) {
               streamLog(
                 {
-                  message: 'Starting to deploy app',
+                  message: `[appId: ${applicationId}] starting to deploy app`,
                   applicationId,
                   traceId,
                   userId,
@@ -589,12 +571,10 @@ export async function postMessage(
 
               streamLog(
                 {
-                  message: 'Writing unified diff to file',
+                  message: `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${completeParsedMessage.message.unifiedDiff}`,
                   applicationId,
                   traceId,
                   userId,
-                  virtualDir: unifiedDiffPath,
-                  unifiedDiff: completeParsedMessage.message.unifiedDiff,
                 },
                 'info',
               );
@@ -602,13 +582,13 @@ export async function postMessage(
                 unifiedDiffPath,
                 `${completeParsedMessage.message.unifiedDiff}\n\n`,
               );
-              const respositoryPath = await applyDiff(
+              const repositoryPath = await applyDiff(
                 unifiedDiffPath,
                 virtualDir,
                 volume,
               );
               const files = readDirectoryRecursive(
-                respositoryPath,
+                repositoryPath,
                 virtualDir,
                 volume,
               );
@@ -623,7 +603,7 @@ export async function postMessage(
               if (isPermanentApp && appName) {
                 streamLog(
                   {
-                    message: 'App iteration',
+                    message: `[appId: ${applicationId}] app iteration`,
                     applicationId,
                     traceId,
                     userId,
@@ -637,7 +617,7 @@ export async function postMessage(
                   files,
                   agentState: completeParsedMessage.message.agentState,
                   applicationId,
-                  traceId: traceId as TraceId,
+                  traceId: traceId!,
                   session,
                   commitMessage:
                     completeParsedMessage.message.commit_message ||
@@ -649,7 +629,7 @@ export async function postMessage(
               ) {
                 streamLog(
                   {
-                    message: 'Creating new app',
+                    message: `[appId: ${applicationId}] creating new app`,
                     applicationId,
                     traceId,
                     userId,
@@ -667,7 +647,7 @@ export async function postMessage(
                 const { newAppName } = await appCreation({
                   applicationId: applicationId!,
                   appName,
-                  traceId: traceId as TraceId,
+                  traceId: traceId!,
                   agentState: completeParsedMessage.message.agentState,
                   githubUsername,
                   githubAccessToken,
@@ -711,7 +691,7 @@ export async function postMessage(
                 applicationId,
                 new PlatformMessage(
                   AgentStatus.IDLE,
-                  traceId as TraceId,
+                  traceId!,
                   `Your application is being deployed to ${appURL}`,
                   {
                     type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
@@ -726,50 +706,119 @@ export async function postMessage(
               completeParsedMessage.message.kind !==
                 MessageKind.REFINEMENT_REQUEST;
             if (canBreakStream) {
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] stream can break, aborting`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'info',
+              );
               abortController.abort();
-              break;
             }
-          }
-        } catch (error) {
-          // this is a special case for incomplete messages
-          if (
-            error instanceof Error &&
-            error.message.includes('Unterminated string')
-          ) {
+          } catch (error) {
+            // this is a special case for incomplete messages
+            if (
+              error instanceof Error &&
+              error.message.includes('Unterminated string')
+            ) {
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] incomplete message: ${ev.data}`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'error',
+              );
+              return;
+            }
+
             streamLog(
               {
-                message: 'Incomplete message',
+                message: `[appId: ${applicationId}] Error handling SSE message: ${error}, for message: ${ev.data}`,
                 applicationId,
                 traceId,
                 userId,
               },
               'error',
             );
-            continue;
           }
+        };
 
-          SentryMetrics.captureError(error as Error, {
-            applicationId: applicationId || 'unknown',
-            traceId: traceId || 'unknown',
+        messageHandlerQueue.enqueue(messageHandler, 'messageHandler');
+      },
+      onError(err) {
+        SentryMetrics.captureError(err.origin as Error, {
+          applicationId: applicationId || 'unknown',
+          traceId: traceId || 'unknown',
+          userId,
+          context: 'sse_error',
+        });
+
+        streamLog(
+          {
+            message: `[appId: ${applicationId}] SSE error: ${JSON.stringify(
+              err,
+            )}`,
+            applicationId,
+            traceId,
             userId,
-            context: 'sse_message_handling',
-          });
+          },
+          'error',
+        );
+        streamLog(
+          {
+            message: `[appId: ${applicationId}] Error details - type: ${
+              err.type
+            }, origin: ${JSON.stringify(
+              err.origin,
+            )}, origin keys: ${Object.keys(err.origin || {})}`,
+            applicationId,
+            traceId,
+            userId,
+          },
+          'error',
+        );
 
-          streamLog(
-            {
-              message: 'Error handling SSE message',
-              applicationId,
-              traceId,
-              userId,
-              error: String(error),
-              sseMessage: message,
-            },
-            'error',
+        const errorMessage =
+          err.origin?.message ||
+          err.origin?.code ||
+          err.origin?.toString() ||
+          `${err.type} error`;
+
+        // Only try to terminate if session is still connected
+        if (session.isConnected) {
+          terminateStreamWithError(
+            session,
+            `There was an error with the stream: ${errorMessage}`,
+            abortController,
           );
+        } else {
+          app.log.error(
+            `[appId: ${applicationId}] Stream error but session already disconnected: ${errorMessage}`,
+          );
+          abortController.abort();
         }
-      }
-    }
 
+        // Return false to not retry
+        return false;
+      },
+      onClose() {
+        streamLog(
+          {
+            message: `[appId: ${applicationId}] stream closed by agent`,
+            applicationId,
+            traceId,
+            userId,
+          },
+          'info',
+        );
+      },
+    });
+
+    await messageHandlerQueue.waitForCompletion(streamLog);
     if (isPermanentApp) conversationManager.removeConversation(applicationId);
     SentryMetrics.trackAiAgentEnd(traceId!, 'success');
     SentryMetrics.trackSseEvent('sse_connection_ended', { applicationId });
@@ -965,12 +1014,14 @@ async function appIteration({
 
   SentryMetrics.trackGitHubCommitEnd(commitStartTime);
 
-  await db
-    .update(apps)
-    .set({
-      agentState: agentState,
-    })
-    .where(eq(apps.id, applicationId));
+  if (agentState) {
+    await db
+      .update(apps)
+      .set({
+        agentState: agentState,
+      })
+      .where(eq(apps.id, applicationId));
+  }
 
   const commitUrl = `https://github.com/${githubUsername}/${appName}/commit/${commitSha}`;
   await pushAndSavePlatformMessage(

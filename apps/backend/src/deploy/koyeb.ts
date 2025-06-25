@@ -39,6 +39,16 @@ export async function createKoyebOrganization(githubUsername: string) {
     }),
   });
 
+  if (!response.ok) {
+    const error = await response.text();
+    logger.error('Failed to create Koyeb organization', {
+      status: response.status,
+      statusText: response.statusText,
+      error,
+    });
+    throw new Error('Failed to create Koyeb organization');
+  }
+
   const data = (await response.json()) as CreateKoyebOrganizationResponse;
 
   return {

@@ -1,8 +1,8 @@
 'use server';
 
-import { App, Paginated, ReadUrl } from '@appdotbuild/core/types/api';
-import JSZip from 'jszip';
 import { stackServerApp } from '@appdotbuild/auth';
+import type { App, Paginated, ReadUrl } from '@appdotbuild/core/types/api';
+import JSZip from 'jszip';
 
 const PLATFORM_API_URL = process.env.PLATFORM_API_URL;
 
@@ -22,11 +22,14 @@ export async function getAllApps({
     limit: pageSize.toString(),
   });
 
-  const response = await fetch(`${PLATFORM_API_URL}/apps?${queryParams}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
+  const response = await fetch(
+    `${PLATFORM_API_URL}/admin/apps?${queryParams}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  });
+  );
   if (!response.ok) {
     const responseText = await response.text();
 
