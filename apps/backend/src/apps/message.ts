@@ -1,3 +1,4 @@
+import { MessageHandlerQueue } from './message-queue';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -72,7 +73,7 @@ type StructuredLog = {
   [key: string]: any;
 };
 
-type StreamLogFunction = (
+export type StreamLogFunction = (
   logData: StructuredLog,
   level?: 'info' | 'error',
 ) => void;
@@ -379,6 +380,7 @@ export async function postMessage(
     let canDeploy = false;
     const requestStartTime = Date.now();
     const agentUrl = `${getAgentHost(requestBody.environment)}/message`;
+    const messageHandlerQueue = new MessageHandlerQueue(streamLog);
     await nodeEventSource(agentUrl, {
       method: 'POST',
       headers: {
@@ -411,303 +413,304 @@ export async function postMessage(
         }
       },
       async onMessage(ev) {
-        try {
-          // Early exit if session is disconnected
-          if (!session.isConnected) {
-            app.log.debug(
-              `[appId: ${applicationId}] Session disconnected, skipping message processing`,
-            );
-            return;
-          }
-
-          if (!applicationId) {
-            streamLog(
-              {
-                message: `[appId: ${applicationId}] Application ID is not set, skipping message`,
-                applicationId,
-                traceId,
-                userId,
-              },
-              'error',
-            );
-            return;
-          }
-
-          const message = ev.data;
-          if (isDev) {
-            fs.appendFileSync(
-              `${logsFolder}/sse_messages-${applicationId}.log`,
-              `data: ${message}\n\n`,
-            );
-          }
-
-          const parsedEvent = JSON.parse(message);
-          let completeParsedMessage: AgentSseEvent;
+        const messageHandler = async () => {
           try {
-            completeParsedMessage = agentSseEventSchema.parse(parsedEvent);
-          } catch (error) {
-            streamLog(
-              {
-                message: `[appId: ${applicationId}] Error validating schema for message: ${JSON.stringify(
-                  parsedEvent,
-                )}. Error: ${JSON.stringify(error)}`,
-                applicationId,
-                traceId,
-                userId,
-              },
-              'error',
-            );
-            terminateStreamWithError(
-              session,
-              'There was an error validating the message schema, try again with a different prompt.',
-              abortController,
-            );
-            return;
-          }
+            // Early exit if session is disconnected
+            if (!session.isConnected) {
+              app.log.debug(
+                `[appId: ${applicationId}] Session disconnected, skipping message processing`,
+              );
+              return;
+            }
 
-          if (parsedEvent.message.kind === 'KeepAlive') {
-            streamLog(
-              {
-                message: `[appId: ${applicationId}] keep alive message received`,
-                applicationId,
-                traceId,
-                userId,
-              },
-              'info',
-            );
-            return;
-          }
+            if (!applicationId) {
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] Application ID is not set, skipping message`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'error',
+              );
+              return;
+            }
 
-          storeDevLogs(completeParsedMessage, message);
-          conversationManager.addConversation(
-            applicationId,
-            completeParsedMessage,
-          );
-
-          // save agent messages to database immediately
-          if (isPermanentApp) {
-            await saveAgentMessages(applicationId, completeParsedMessage);
-          }
-
-          const { unifiedDiff, ...messageWithoutDiff } =
-            completeParsedMessage.message;
-
-          const parsedMessageWithFullMessagesHistory: Omit<
-            AgentSseEvent,
-            'unifiedDiff'
-          > = {
-            ...completeParsedMessage,
-            message: messageWithoutDiff,
-          };
-
-          streamLog({
-            message: `[appId: ${applicationId}] message sent to CLI: ${JSON.stringify(
-              parsedMessageWithFullMessagesHistory,
-            )}`,
-            applicationId,
-            traceId,
-            userId,
-          });
-          session.push(parsedMessageWithFullMessagesHistory);
-
-          if (
-            completeParsedMessage.message.unifiedDiff ===
-            '# Note: This is a valid empty diff (means no changes from template)'
-          ) {
-            completeParsedMessage.message.unifiedDiff = null;
-          }
-
-          if (
-            completeParsedMessage.message.unifiedDiff?.startsWith(
-              '# ERROR GENERATING DIFF',
-            )
-          ) {
-            terminateStreamWithError(
-              session,
-              'There was an error generating your application diff, try again with a different prompt.',
-              abortController,
-            );
-            return;
-          }
-
-          canDeploy = !!completeParsedMessage.message.unifiedDiff;
-
-          if (canDeploy) {
-            streamLog(
-              {
-                message: `[appId: ${applicationId}] starting to deploy app`,
-                applicationId,
-                traceId,
-                userId,
-              },
-              'info',
-            );
-            const { volume, virtualDir, memfsVolume } = await volumePromise;
-            const unifiedDiffPath = path.join(
-              virtualDir,
-              `unified_diff-${Date.now()}.patch`,
-            );
-
-            streamLog(
-              {
-                message: `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${completeParsedMessage.message.unifiedDiff}`,
-                applicationId,
-                traceId,
-                userId,
-              },
-              'info',
-            );
-            volume.writeFileSync(
-              unifiedDiffPath,
-              `${completeParsedMessage.message.unifiedDiff}\n\n`,
-            );
-            const repositoryPath = await applyDiff(
-              unifiedDiffPath,
-              virtualDir,
-              volume,
-            );
-            const files = readDirectoryRecursive(
-              repositoryPath,
-              virtualDir,
-              volume,
-            );
-
+            const message = ev.data;
             if (isDev) {
-              fs.writeFileSync(
-                `${logsFolder}/${applicationId}-files.json`,
-                JSON.stringify(files, null, 2),
+              fs.appendFileSync(
+                `${logsFolder}/sse_messages-${applicationId}.log`,
+                `data: ${message}\n\n`,
               );
             }
 
-            if (isPermanentApp && appName) {
+            const parsedEvent = JSON.parse(message);
+            let completeParsedMessage: AgentSseEvent;
+            try {
+              completeParsedMessage = agentSseEventSchema.parse(parsedEvent);
+            } catch (error) {
               streamLog(
                 {
-                  message: `[appId: ${applicationId}] app iteration`,
+                  message: `[appId: ${applicationId}] Error validating schema for message: ${JSON.stringify(
+                    parsedEvent,
+                  )}. Error: ${JSON.stringify(error)}`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'error',
+              );
+              terminateStreamWithError(
+                session,
+                'There was an error validating the message schema, try again with a different prompt.',
+                abortController,
+              );
+              return;
+            }
+
+            if (parsedEvent.message.kind === 'KeepAlive') {
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] keep alive message received`,
                   applicationId,
                   traceId,
                   userId,
                 },
                 'info',
               );
-              await appIteration({
-                appName: appName,
-                githubUsername,
-                githubAccessToken,
-                files,
-                agentState: completeParsedMessage.message.agentState,
-                applicationId,
-                traceId: traceId!,
-                session,
-                commitMessage:
-                  completeParsedMessage.message.commit_message ||
-                  'feat: update',
-              });
-            } else if (
-              completeParsedMessage.message.kind !==
-              MessageKind.REFINEMENT_REQUEST
-            ) {
-              streamLog(
-                {
-                  message: `[appId: ${applicationId}] creating new app`,
-                  applicationId,
-                  traceId,
-                  userId,
-                },
-                'info',
-              );
-              appName =
-                completeParsedMessage.message.app_name ||
-                `app.build-${uuidv4().slice(0, 4)}`;
-              const { newAppName } = await appCreation({
-                applicationId,
-                appName,
-                agentState: completeParsedMessage.message.agentState,
-                githubAccessToken,
-                githubUsername,
-                ownerId: request.user.id,
-                traceId: traceId!,
-                session,
-                requestBody,
-                files,
-                streamLog,
-              });
-              appName = newAppName;
-              isPermanentApp = true;
+              return;
             }
 
-            const { appURL } = await writeMemfsToTempDir(
-              memfsVolume,
-              virtualDir,
-            ).then((tempDirPath) =>
-              deployApp({
-                appId: applicationId!,
-                appDirectory: tempDirPath,
-              }),
-            );
-
-            await addAppURL({
-              repo: appName as string,
-              owner: githubUsername,
-              appURL: appURL,
-              githubAccessToken,
-            });
-
-            await pushAndSavePlatformMessage(
-              session,
+            storeDevLogs(completeParsedMessage, message);
+            conversationManager.addConversation(
               applicationId,
-              new PlatformMessage(
-                AgentStatus.IDLE,
-                traceId!,
-                `Your application has been deployed to ${appURL}`,
-                { type: PlatformMessageType.DEPLOYMENT_COMPLETE },
-              ),
+              completeParsedMessage,
             );
-          }
 
-          const canBreakStream =
-            completeParsedMessage.status === AgentStatus.IDLE &&
-            completeParsedMessage.message.kind !==
-              MessageKind.REFINEMENT_REQUEST;
-          if (canBreakStream) {
-            streamLog(
-              {
-                message: `[appId: ${applicationId}] stream can break, aborting`,
-                applicationId,
-                traceId,
-                userId,
-              },
-              'info',
-            );
-            abortController.abort();
-          }
-        } catch (error) {
-          // this is a special case for incomplete messages
-          if (
-            error instanceof Error &&
-            error.message.includes('Unterminated string')
-          ) {
-            streamLog(
-              {
-                message: `[appId: ${applicationId}] incomplete message: ${ev.data}`,
-                applicationId,
-                traceId,
-                userId,
-              },
-              'error',
-            );
-            return;
-          }
+            // save agent messages to database immediately
+            if (isPermanentApp) {
+              await saveAgentMessages(applicationId, completeParsedMessage);
+            }
 
-          streamLog(
-            {
-              message: `[appId: ${applicationId}] Error handling SSE message: ${error}, for message: ${ev.data}`,
+            // unifiedDiff and agentState are not needed by the CLI
+            const { unifiedDiff, agentState, ...minimalMessage } =
+              completeParsedMessage.message;
+
+            const parsedCLIMessage = {
+              ...completeParsedMessage,
+              message: minimalMessage,
+            };
+
+            streamLog({
+              message: `[appId: ${applicationId}] message sent to CLI: ${JSON.stringify(
+                parsedCLIMessage,
+              )}`,
               applicationId,
               traceId,
               userId,
-            },
-            'error',
-          );
-        }
+            });
+            session.push(parsedCLIMessage);
+            if (
+              completeParsedMessage.message.unifiedDiff ===
+              '# Note: This is a valid empty diff (means no changes from template)'
+            ) {
+              completeParsedMessage.message.unifiedDiff = null;
+            }
+
+            if (
+              completeParsedMessage.message.unifiedDiff?.startsWith(
+                '# ERROR GENERATING DIFF',
+              )
+            ) {
+              terminateStreamWithError(
+                session,
+                'There was an error generating your application diff, try again with a different prompt.',
+                abortController,
+              );
+              return;
+            }
+
+            canDeploy = !!completeParsedMessage.message.unifiedDiff;
+
+            if (canDeploy) {
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] starting to deploy app`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'info',
+              );
+              const { volume, virtualDir, memfsVolume } = await volumePromise;
+              const unifiedDiffPath = path.join(
+                virtualDir,
+                `unified_diff-${Date.now()}.patch`,
+              );
+
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${completeParsedMessage.message.unifiedDiff}`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'info',
+              );
+              volume.writeFileSync(
+                unifiedDiffPath,
+                `${completeParsedMessage.message.unifiedDiff}\n\n`,
+              );
+              const repositoryPath = await applyDiff(
+                unifiedDiffPath,
+                virtualDir,
+                volume,
+              );
+              const files = readDirectoryRecursive(
+                repositoryPath,
+                virtualDir,
+                volume,
+              );
+
+              if (isDev) {
+                fs.writeFileSync(
+                  `${logsFolder}/${applicationId}-files.json`,
+                  JSON.stringify(files, null, 2),
+                );
+              }
+
+              if (isPermanentApp && appName) {
+                streamLog(
+                  {
+                    message: `[appId: ${applicationId}] app iteration`,
+                    applicationId,
+                    traceId,
+                    userId,
+                  },
+                  'info',
+                );
+                await appIteration({
+                  appName: appName,
+                  githubUsername,
+                  githubAccessToken,
+                  files,
+                  agentState: completeParsedMessage.message.agentState,
+                  applicationId,
+                  traceId: traceId!,
+                  session,
+                  commitMessage:
+                    completeParsedMessage.message.commit_message ||
+                    'feat: update',
+                });
+              } else if (
+                completeParsedMessage.message.kind !==
+                MessageKind.REFINEMENT_REQUEST
+              ) {
+                streamLog(
+                  {
+                    message: `[appId: ${applicationId}] creating new app`,
+                    applicationId,
+                    traceId,
+                    userId,
+                  },
+                  'info',
+                );
+                appName =
+                  completeParsedMessage.message.app_name ||
+                  `app.build-${uuidv4().slice(0, 4)}`;
+                const { newAppName } = await appCreation({
+                  applicationId,
+                  appName,
+                  agentState: completeParsedMessage.message.agentState,
+                  githubAccessToken,
+                  githubUsername,
+                  ownerId: request.user.id,
+                  traceId: traceId!,
+                  session,
+                  requestBody,
+                  files,
+                  streamLog,
+                });
+                appName = newAppName;
+                isPermanentApp = true;
+              }
+
+              const { appURL } = await writeMemfsToTempDir(
+                memfsVolume,
+                virtualDir,
+              ).then((tempDirPath) =>
+                deployApp({
+                  appId: applicationId!,
+                  appDirectory: tempDirPath,
+                }),
+              );
+
+              await addAppURL({
+                repo: appName as string,
+                owner: githubUsername,
+                appURL: appURL,
+                githubAccessToken,
+              });
+
+              await pushAndSavePlatformMessage(
+                session,
+                applicationId,
+                new PlatformMessage(
+                  AgentStatus.IDLE,
+                  traceId!,
+                  `Your application has been deployed to ${appURL}`,
+                  { type: PlatformMessageType.DEPLOYMENT_COMPLETE },
+                ),
+              );
+            }
+
+            const canBreakStream =
+              completeParsedMessage.status === AgentStatus.IDLE &&
+              completeParsedMessage.message.kind !==
+                MessageKind.REFINEMENT_REQUEST;
+            if (canBreakStream) {
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] stream can break, aborting`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'info',
+              );
+              abortController.abort();
+            }
+          } catch (error) {
+            // this is a special case for incomplete messages
+            if (
+              error instanceof Error &&
+              error.message.includes('Unterminated string')
+            ) {
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] incomplete message: ${ev.data}`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'error',
+              );
+              return;
+            }
+
+            streamLog(
+              {
+                message: `[appId: ${applicationId}] Error handling SSE message: ${error}, for message: ${ev.data}`,
+                applicationId,
+                traceId,
+                userId,
+              },
+              'error',
+            );
+          }
+        };
+
+        messageHandlerQueue.enqueue(messageHandler, 'messageHandler');
       },
       onError(err) {
         streamLog(
@@ -781,6 +784,7 @@ export async function postMessage(
       },
       'info',
     );
+    await messageHandlerQueue.waitForCompletion(streamLog);
     session.push({ done: true, traceId: traceId }, 'done');
     session.removeAllListeners();
 
@@ -941,12 +945,14 @@ async function appIteration({
     githubAccessToken,
   });
 
-  await db
-    .update(apps)
-    .set({
-      agentState: agentState,
-    })
-    .where(eq(apps.id, applicationId));
+  if (agentState) {
+    await db
+      .update(apps)
+      .set({
+        agentState: agentState,
+      })
+      .where(eq(apps.id, applicationId));
+  }
 
   const commitUrl = `https://github.com/${githubUsername}/${appName}/commit/${commitSha}`;
   await pushAndSavePlatformMessage(
