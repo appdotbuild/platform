@@ -6,6 +6,7 @@ import { AnalyticsEvents } from '@appdotbuild/core';
 
 const items = [
   { label: '🆕 Create new app', value: '/app/build' as const },
+  { label: '🧱 Create Databricks app', value: '/app/databricks' as const },
   {
     label: '📋 List and iterate existing applications',
     value: '/apps' as const,
@@ -36,6 +37,8 @@ export function AppHomeScreen() {
             eventType: 'track',
             eventName:
               value === '/app/build'
+                ? AnalyticsEvents.NEW_APP_SELECTED
+                : value === '/app/databricks'
                 ? AnalyticsEvents.NEW_APP_SELECTED
                 : value === '/apps'
                 ? AnalyticsEvents.APPS_LISTED

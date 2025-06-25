@@ -16,6 +16,7 @@ import { z, ZodObject, ZodType } from 'zod';
 import { useCallback, useMemo } from 'react';
 import { ShortcutHints } from './components/ui/shortcut-hints.js';
 import { AppBuildScreen } from './app/app-build-screen.js';
+import { AppDatabricksScreen } from './app/app-databricks-screen.js';
 import { AppLogoutScreen } from './app/app-logout-screen.js';
 
 export type RoutePath = RouterDefinition[number]['path'];
@@ -67,7 +68,12 @@ const ROUTES_DEFINITIONS = [
     element: <AppBuildScreen />,
     searchParams: {
       appId: z.string().optional(),
+      databricksApiKey: z.string().optional(),
     },
+  },
+  {
+    path: '/app/databricks' as const,
+    element: <AppDatabricksScreen />,
   },
   {
     path: '/apps' as const,
