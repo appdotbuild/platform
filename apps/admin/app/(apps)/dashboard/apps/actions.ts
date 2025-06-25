@@ -1,46 +1,10 @@
 'use server';
 
-import { App, Paginated, ReadUrl } from '@appdotbuild/core/types/api';
-import JSZip from 'jszip';
 import { stackServerApp } from '@appdotbuild/auth';
+import type { App, Paginated, ReadUrl } from '@appdotbuild/core/types/api';
+import JSZip from 'jszip';
 
 const PLATFORM_API_URL = process.env.PLATFORM_API_URL;
-
-let neonEmployeeCache: { isNeon: boolean; timestamp: number } | null = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-export async function isNeonEmployee(): Promise<boolean> {
-  if (
-    neonEmployeeCache &&
-    Date.now() - neonEmployeeCache.timestamp < CACHE_DURATION
-  ) {
-    return neonEmployeeCache.isNeon;
-  }
-
-  try {
-    const user = await stackServerApp.getUser();
-    const { accessToken } = await user.getAuthJson();
-
-    const response = await fetch(`${PLATFORM_API_URL}/auth/is-neon-employee`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      neonEmployeeCache = { isNeon: false, timestamp: Date.now() };
-      return false;
-    }
-
-    const data = await response.json();
-    neonEmployeeCache = { isNeon: data.isNeonEmployee, timestamp: Date.now() };
-    return data.isNeonEmployee;
-  } catch (error) {
-    console.error('Error checking neon employee status:', error);
-    neonEmployeeCache = { isNeon: false, timestamp: Date.now() };
-    return false;
-  }
-}
 
 export async function getAllApps({
   page = 1,
@@ -58,11 +22,8 @@ export async function getAllApps({
     limit: pageSize.toString(),
   });
 
-  const isNeon = await isNeonEmployee();
-  const endpoint = isNeon ? '/admin/apps' : '/apps';
-
   const response = await fetch(
-    `${PLATFORM_API_URL}${endpoint}?${queryParams}`,
+    `${PLATFORM_API_URL}/admin/apps?${queryParams}`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
