@@ -44,6 +44,8 @@ import {
   conversationManager,
 } from './conversation-manager';
 import { nodeEventSource } from '@llm-eaf/node-event-source';
+import { checkMessageUsageLimit } from './message-limit';
+import { applyDiff } from './diff';
 
 type Body = {
   applicationId?: string;
@@ -375,8 +377,9 @@ export async function postMessage(
     );
 
     let canDeploy = false;
-
-    await nodeEventSource(`${getAgentHost(requestBody.environment)}/message`, {
+    const requestStartTime = Date.now();
+    const agentUrl = `${getAgentHost(requestBody.environment)}/message`;
+    await nodeEventSource(agentUrl, {
       method: 'POST',
       headers: {
         Accept: 'text/event-stream',
@@ -389,23 +392,46 @@ export async function postMessage(
       data: body,
       signal: abortController.signal,
       onOpen(response) {
+        const connectionTime = Date.now() - requestStartTime;
         streamLog(
-          `[appId: ${applicationId}] Connection established, response: ${JSON.stringify(
-            response,
-          )}`,
+          {
+            message: `[${new Date().toISOString()}] [appId: ${applicationId}] Connection established after ${connectionTime}ms - Status: ${
+              response.status
+            }, StatusText: ${response.statusText}`,
+            applicationId,
+            traceId,
+            userId,
+          },
           'info',
         );
+
+        // Check if the response is actually successful
+        if (response.status !== 200) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
       },
       async onMessage(ev) {
         try {
+          // Early exit if session is disconnected
+          if (!session.isConnected) {
+            app.log.debug(
+              `[appId: ${applicationId}] Session disconnected, skipping message processing`,
+            );
+            return;
+          }
+
           if (!applicationId) {
             streamLog(
-              `[appId: ${applicationId}] Application ID is not set, skipping message`,
+              {
+                message: `[appId: ${applicationId}] Application ID is not set, skipping message`,
+                applicationId,
+                traceId,
+                userId,
+              },
               'error',
             );
             return;
           }
-          if (!session.isConnected) return;
 
           const message = ev.data;
           if (isDev) {
@@ -421,9 +447,14 @@ export async function postMessage(
             completeParsedMessage = agentSseEventSchema.parse(parsedEvent);
           } catch (error) {
             streamLog(
-              `[appId: ${applicationId}] Error validating schema for message: ${JSON.stringify(
-                parsedEvent,
-              )}. Error: ${JSON.stringify(error)}`,
+              {
+                message: `[appId: ${applicationId}] Error validating schema for message: ${JSON.stringify(
+                  parsedEvent,
+                )}. Error: ${JSON.stringify(error)}`,
+                applicationId,
+                traceId,
+                userId,
+              },
               'error',
             );
             terminateStreamWithError(
@@ -436,7 +467,12 @@ export async function postMessage(
 
           if (parsedEvent.message.kind === 'KeepAlive') {
             streamLog(
-              `[appId: ${applicationId}] keep alive message received`,
+              {
+                message: `[appId: ${applicationId}] keep alive message received`,
+                applicationId,
+                traceId,
+                userId,
+              },
               'info',
             );
             return;
@@ -464,11 +500,14 @@ export async function postMessage(
             message: messageWithoutDiff,
           };
 
-          streamLog(
-            `[appId: ${applicationId}] message sent to CLI: ${JSON.stringify(
+          streamLog({
+            message: `[appId: ${applicationId}] message sent to CLI: ${JSON.stringify(
               parsedMessageWithFullMessagesHistory,
             )}`,
-          );
+            applicationId,
+            traceId,
+            userId,
+          });
           session.push(parsedMessageWithFullMessagesHistory);
 
           if (
@@ -495,7 +534,12 @@ export async function postMessage(
 
           if (canDeploy) {
             streamLog(
-              `[appId: ${applicationId}] starting to deploy app`,
+              {
+                message: `[appId: ${applicationId}] starting to deploy app`,
+                applicationId,
+                traceId,
+                userId,
+              },
               'info',
             );
             const { volume, virtualDir, memfsVolume } = await volumePromise;
@@ -505,7 +549,12 @@ export async function postMessage(
             );
 
             streamLog(
-              `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${completeParsedMessage.message.unifiedDiff}`,
+              {
+                message: `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${completeParsedMessage.message.unifiedDiff}`,
+                applicationId,
+                traceId,
+                userId,
+              },
               'info',
             );
             volume.writeFileSync(
@@ -531,7 +580,15 @@ export async function postMessage(
             }
 
             if (isPermanentApp && appName) {
-              streamLog(`[appId: ${applicationId}] app iteration`, 'info');
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] app iteration`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'info',
+              );
               await appIteration({
                 appName: appName,
                 githubUsername,
@@ -549,7 +606,15 @@ export async function postMessage(
               completeParsedMessage.message.kind !==
               MessageKind.REFINEMENT_REQUEST
             ) {
-              streamLog(`[appId: ${applicationId}] creating new app`, 'info');
+              streamLog(
+                {
+                  message: `[appId: ${applicationId}] creating new app`,
+                  applicationId,
+                  traceId,
+                  userId,
+                },
+                'info',
+              );
               appName =
                 completeParsedMessage.message.app_name ||
                 `app.build-${uuidv4().slice(0, 4)}`;
@@ -604,6 +669,15 @@ export async function postMessage(
             completeParsedMessage.message.kind !==
               MessageKind.REFINEMENT_REQUEST;
           if (canBreakStream) {
+            streamLog(
+              {
+                message: `[appId: ${applicationId}] stream can break, aborting`,
+                applicationId,
+                traceId,
+                userId,
+              },
+              'info',
+            );
             abortController.abort();
           }
         } catch (error) {
@@ -613,29 +687,86 @@ export async function postMessage(
             error.message.includes('Unterminated string')
           ) {
             streamLog(
-              `[appId: ${applicationId}] incomplete message: ${ev.data}`,
+              {
+                message: `[appId: ${applicationId}] incomplete message: ${ev.data}`,
+                applicationId,
+                traceId,
+                userId,
+              },
               'error',
             );
             return;
           }
 
           streamLog(
-            `[appId: ${applicationId}] Error handling SSE message: ${error}, for message: ${ev.data}`,
+            {
+              message: `[appId: ${applicationId}] Error handling SSE message: ${error}, for message: ${ev.data}`,
+              applicationId,
+              traceId,
+              userId,
+            },
             'error',
           );
         }
       },
       onError(err) {
         streamLog(
-          `[appId: ${applicationId}] SSE error: ${JSON.stringify(err)}`,
+          {
+            message: `[appId: ${applicationId}] SSE error: ${JSON.stringify(
+              err,
+            )}`,
+            applicationId,
+            traceId,
+            userId,
+          },
           'error',
         );
+        streamLog(
+          {
+            message: `[appId: ${applicationId}] Error details - type: ${
+              err.type
+            }, origin: ${JSON.stringify(
+              err.origin,
+            )}, origin keys: ${Object.keys(err.origin || {})}`,
+            applicationId,
+            traceId,
+            userId,
+          },
+          'error',
+        );
+
         const errorMessage =
-          err.origin?.message || err.origin?.toString() || 'Unknown error';
-        terminateStreamWithError(
-          session,
-          `There was an error with the stream: ${errorMessage}`,
-          abortController,
+          err.origin?.message ||
+          err.origin?.code ||
+          err.origin?.toString() ||
+          `${err.type} error`;
+
+        // Only try to terminate if session is still connected
+        if (session.isConnected) {
+          terminateStreamWithError(
+            session,
+            `There was an error with the stream: ${errorMessage}`,
+            abortController,
+          );
+        } else {
+          app.log.error(
+            `[appId: ${applicationId}] Stream error but session already disconnected: ${errorMessage}`,
+          );
+          abortController.abort();
+        }
+
+        // Return false to not retry
+        return false;
+      },
+      onClose() {
+        streamLog(
+          {
+            message: `[appId: ${applicationId}] stream closed by agent`,
+            applicationId,
+            traceId,
+            userId,
+          },
+          'info',
         );
       },
     });

@@ -182,3 +182,6 @@ dist
 
 ## Diff
 unified_diff.patch
+
+# Serena
+.serena/
