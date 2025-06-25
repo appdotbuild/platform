@@ -94,7 +94,10 @@ export const SentryMetrics = {
     });
   },
 
-  _requestData: new Map<string, { startTime: number; transaction: any }>(),
+  _requestData: new Map<
+    string,
+    { startTime: number; transaction: any; timeoutId: NodeJS.Timeout }
+  >(),
 
   trackAiAgentStart: (traceId: string, applicationId: string) => {
     const startTime = Date.now();
@@ -111,7 +114,22 @@ export const SentryMetrics = {
       });
     }
 
-    SentryMetrics._requestData.set(traceId, { startTime, transaction });
+    const timeoutId = setTimeout(() => {
+      const data = SentryMetrics._requestData.get(traceId);
+      if (data) {
+        if (data.transaction) {
+          data.transaction.setStatus('deadline_exceeded');
+          data.transaction.end();
+        }
+        SentryMetrics._requestData.delete(traceId);
+      }
+    }, 2 * 60 * 60 * 1000); // 2 hours
+
+    SentryMetrics._requestData.set(traceId, {
+      startTime,
+      transaction,
+      timeoutId,
+    });
 
     SentryMetrics.addTags({
       'ai.agent.trace_id': traceId,
@@ -134,7 +152,9 @@ export const SentryMetrics = {
       return;
     }
 
-    const { startTime, transaction } = requestData;
+    const { startTime, transaction, timeoutId } = requestData;
+
+    clearTimeout(timeoutId);
     const duration = Date.now() - startTime;
 
     SentryMetrics.addMeasurement('ai.agent.duration', duration);
