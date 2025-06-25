@@ -1,11 +1,10 @@
-// Import this first!
-import './instrument';
-
 import fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import type { ServerUser } from '@stackframe/stack';
 import { v4 as uuidv4 } from 'uuid';
 import { validateAuth } from './auth-strategy';
+import { initializeSentry } from './instrument';
 import * as Sentry from '@sentry/node';
+import { isDev } from './env';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -30,7 +29,17 @@ await app.register(import('@fastify/compress'), {
   global: false,
 });
 
-Sentry.setupFastifyErrorHandler(app);
+if (!isDev) {
+  const sentryEnabled = initializeSentry();
+  if (sentryEnabled) {
+    try {
+      Sentry.setupFastifyErrorHandler(app);
+      console.log('✅ Sentry error handler registered with Fastify');
+    } catch (error) {
+      console.error('❌ Failed to setup Sentry error handler:', error);
+    }
+  }
+}
 
 app.decorate(
   'authenticate',
