@@ -119,11 +119,9 @@ export async function sendMessage({
   }
 
   await parseSSE(response.data as Readable, {
+    // we parse everything under onMessage
     onMessage: (message: AgentSseEvent) => {
       onMessage?.(message);
-    },
-    onEvent: (event) => {
-      console.log('event', event);
     },
   });
 
