@@ -111,6 +111,8 @@ export const useSendMessage = () => {
       message,
       applicationId: passedAppId,
       traceId: passedTraceId,
+      databricksApiKey,
+      databricksHost,
     }: SendMessageParams) => {
       const controller = new AbortController();
       abortControllerRef.current = controller;
@@ -118,6 +120,8 @@ export const useSendMessage = () => {
         message,
         applicationId: passedAppId || metadata?.applicationId,
         traceId: passedTraceId || metadata?.traceId,
+        databricksApiKey,
+        databricksHost,
         signal: controller.signal,
         onMessage: (newEvent) => {
           if (!newEvent.traceId) {

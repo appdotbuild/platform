@@ -3,25 +3,35 @@ import { Select } from '../components/shared/input/select.js';
 import { type RoutePath, useSafeNavigate } from '../routes.js';
 import { useAnalytics } from '../hooks/use-analytics.js';
 import { AnalyticsEvents } from '@appdotbuild/core';
-
-const items = [
-  { label: '🆕 Create new app', value: '/app/build' as const },
-  {
-    label: '📋 List and iterate existing applications',
-    value: '/apps' as const,
-  },
-  {
-    label: '🔒 Logout',
-    value: '/app/logout' as const,
-  },
-] satisfies Array<{
-  label: string;
-  value: RoutePath;
-}>;
+import { useFlagsStore } from '../store/flags-store.js';
 
 export function AppHomeScreen() {
   const { trackEvent } = useAnalytics();
   const { safeNavigate } = useSafeNavigate();
+  const databricksMode = useFlagsStore((state) => state.databricksMode);
+
+  const items = [
+    { label: '🆕 Create new app', value: '/app/build' as const },
+    ...(databricksMode
+      ? [
+          {
+            label: '🧱 Create Databricks app',
+            value: '/app/databricks' as const,
+          },
+        ]
+      : []),
+    {
+      label: '📋 List and iterate existing applications',
+      value: '/apps' as const,
+    },
+    {
+      label: '🔒 Logout',
+      value: '/app/logout' as const,
+    },
+  ] satisfies Array<{
+    label: string;
+    value: RoutePath;
+  }>;
 
   return (
     <Box flexDirection="column">
@@ -36,6 +46,8 @@ export function AppHomeScreen() {
             eventType: 'track',
             eventName:
               value === '/app/build'
+                ? AnalyticsEvents.NEW_APP_SELECTED
+                : value === '/app/databricks'
                 ? AnalyticsEvents.NEW_APP_SELECTED
                 : value === '/apps'
                 ? AnalyticsEvents.APPS_LISTED
