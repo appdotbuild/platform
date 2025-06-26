@@ -28,11 +28,9 @@ export const useBuildApp = (existingApplicationId?: string) => {
   }, [sendMessageSuccess, sendMessageError, sendMessageReset]);
 
   const appId = existingApplicationId ?? sendMessageData?.applicationId;
-  const applicationEventsData = appId
-    ? queryClient.getQueryData<{
-        events: AgentSseEvent[];
-      }>(queryKeys.applicationMessages(appId))
-    : undefined;
+  const applicationEventsData = queryClient.getQueryData<{
+    events: AgentSseEvent[];
+  }>(queryKeys.applicationMessages(appId!));
 
   return {
     createApplication: sendMessage,

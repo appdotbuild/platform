@@ -175,6 +175,27 @@ export const useSendMessage = () => {
         queryKey: applicationQueryKeys.app(result.applicationId),
       });
     },
+    onError: (error) => {
+      queryClient.setQueryData(
+        queryKeys.applicationMessages(metadata?.applicationId as string),
+        (oldData: { events: AgentSseEvent[] } | undefined) => {
+          return {
+            ...oldData,
+            events: [
+              ...(oldData?.events ?? []),
+              {
+                status: AgentStatus.IDLE,
+                traceId: metadata?.traceId,
+                message: {
+                  kind: MessageKind.RUNTIME_ERROR,
+                  messages: [{ role: 'assistant', content: error.message }],
+                },
+              },
+            ],
+          };
+        },
+      );
+    },
   });
 
   const abortSignal = useCallback(() => {

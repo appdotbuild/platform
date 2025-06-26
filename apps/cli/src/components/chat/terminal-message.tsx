@@ -155,6 +155,14 @@ export const TerminalMessage = ({
 }) => {
   const isHistoryMessage = message.isHistory || false;
 
+  let borderColor = 'yellowBright';
+  if (message.role === 'user') {
+    borderColor = 'gray';
+  }
+  if (message.kind === MessageKind.RUNTIME_ERROR) {
+    borderColor = 'red';
+  }
+
   return (
     <Box
       flexDirection="column"
@@ -171,13 +179,7 @@ export const TerminalMessage = ({
         bottomRight: '',
         right: '',
       }}
-      borderColor={
-        message.role === 'user'
-          ? 'gray'
-          : message.kind === MessageKind.RUNTIME_ERROR
-          ? 'red'
-          : 'yellowBright'
-      }
+      borderColor={borderColor}
     >
       <Box flexDirection="row">
         <AgentHeader message={message} metadata={metadata} />
