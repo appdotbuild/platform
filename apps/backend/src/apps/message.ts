@@ -56,6 +56,7 @@ type Body = {
   settings: Record<string, any>;
   agentState?: any;
   allFiles?: FileData[];
+  templateId?: 'trpc_agent' | 'nicegui_agent';
 };
 
 type RequestBody = {
@@ -204,6 +205,8 @@ export async function postMessage(
         },
       ],
       settings: requestBody.settings || {},
+      // for now we only support python apps for databricks apps
+      templateId: requestBody.databricksHost ? 'nicegui_agent' : 'trpc_agent',
     };
 
     let appName: string | null = null;
