@@ -193,26 +193,12 @@ export function useRouteParams<T extends RoutePath>(_route: T) {
   return useParams<RouteParams<T>>();
 }
 
-export function AppRouter({
-  databricksMode = false,
-}: {
-  databricksMode?: boolean;
-}) {
+export function AppRouter() {
   return (
     <MemoryRouter>
       <Routes>
         {ROUTES_DEFINITIONS.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={
-              route.path === '/' ? (
-                <AppHomeScreen databricksMode={databricksMode} />
-              ) : (
-                route.element
-              )
-            }
-          />
+          <Route key={route.path} path={route.path} element={route.element} />
         ))}
       </Routes>
       <ShortcutHints />

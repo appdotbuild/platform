@@ -3,7 +3,7 @@ import { useSafeSearchParams } from '../routes.js';
 
 export const AppBuildScreen = () => {
   const [searchParams] = useSafeSearchParams('/app/build');
-  const isDatabricksApp = !!searchParams.databricksApiKey;
+  const isDatabricksApp = Boolean(searchParams.databricksApiKey);
 
   const initialPrompt = isDatabricksApp
     ? 'What Databricks application would you like to build?'

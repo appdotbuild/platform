@@ -2,11 +2,7 @@ import { prepareRelease } from './prepare-release';
 
 async function build() {
   await Bun.build({
-    entrypoints: [
-      './src/cli.tsx',
-      './src/cli-databricks.tsx',
-      './src/entrypoint.ts',
-    ],
+    entrypoints: ['./src/cli.tsx', './src/entrypoint.ts'],
     outdir: './tmp/dist',
     target: 'node',
     define: {

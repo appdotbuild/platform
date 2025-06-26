@@ -17,11 +17,7 @@ const useKeepAlive = () =>
     setInterval(() => {}, 100);
   }, []);
 
-export const App = ({
-  databricksMode = false,
-}: {
-  databricksMode?: boolean;
-}) => {
+export const App = () => {
   useKeepAlive();
 
   return (
@@ -29,7 +25,7 @@ export const App = ({
       <AuthWrapper>
         <Box display="flex" width="100%">
           <Box flexGrow={1} flexDirection="column">
-            <AppRouter databricksMode={databricksMode} />
+            <AppRouter />
           </Box>
           <DebugPanel />
         </Box>

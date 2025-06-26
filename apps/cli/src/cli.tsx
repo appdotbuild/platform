@@ -7,6 +7,7 @@ import {
   useEnvironmentStore,
 } from './store/environment-store.js';
 import { useAnalyticsStore } from './store/analytics-store.js';
+import { useFlagsStore } from './store/flags-store.js';
 
 // in the CLI, node_env is only production or development
 const defaultEnv = process.env.NODE_ENV ?? 'development';
@@ -57,4 +58,7 @@ useEnvironmentStore.getState().setEnvironment(cli.flags.env as Environment);
 // Set analytics preference
 useAnalyticsStore.getState().setAnalyticsEnabled(cli.flags.analytics);
 
-render(<App databricksMode={cli.flags.databricks} />);
+// set databricks mode
+useFlagsStore.getState().setDatabricksMode(cli.flags.databricks);
+
+render(<App />);

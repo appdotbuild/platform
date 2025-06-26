@@ -3,14 +3,12 @@ import { Select } from '../components/shared/input/select.js';
 import { type RoutePath, useSafeNavigate } from '../routes.js';
 import { useAnalytics } from '../hooks/use-analytics.js';
 import { AnalyticsEvents } from '@appdotbuild/core';
+import { useFlagsStore } from '../store/flags-store.js';
 
-export function AppHomeScreen({
-  databricksMode = false,
-}: {
-  databricksMode?: boolean;
-}) {
+export function AppHomeScreen() {
   const { trackEvent } = useAnalytics();
   const { safeNavigate } = useSafeNavigate();
+  const databricksMode = useFlagsStore((state) => state.databricksMode);
 
   const items = [
     { label: '🆕 Create new app', value: '/app/build' as const },
