@@ -104,7 +104,7 @@ export const useSendMessage = () => {
         },
       );
     }
-  }, [deploymentStatus, queryClient, metadata]);
+  }, [deploymentStatus, queryClient]);
 
   const result = useMutation({
     mutationFn: async ({

@@ -1,5 +1,5 @@
 import { type AgentSseEvent, AgentStatus } from '@appdotbuild/core';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useSendMessage } from './use-send-message.js';
 
