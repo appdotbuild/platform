@@ -65,6 +65,8 @@ type RequestBody = {
   settings?: Record<string, any>;
   applicationId?: string;
   traceId?: TraceId;
+  databricksApiKey?: string;
+  databricksHost?: string;
 };
 
 type StructuredLog = {
@@ -982,6 +984,8 @@ async function appCreation({
     repositoryUrl,
     appName: newAppName,
     githubUsername,
+    databricksApiKey: requestBody.databricksApiKey,
+    databricksHost: requestBody.databricksHost,
   });
   streamLog(
     {
