@@ -4,7 +4,8 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "app.build": "dist/entrypoint.js"
+    "app.build": "dist/entrypoint.js",
+    "app.build-databricks": "dist/cli-databricks.js"
   },
   "files": [
     "dist",

@@ -12,6 +12,7 @@
     "backend:start": "bun --filter './apps/backend' start",
     "clean": "bun --filter '*' clean",
     "cli": "bun --env-file=./apps/cli/.env ./apps/cli/dist/cli.js",
+    "cli-databricks": "bun --env-file=./apps/cli/.env ./apps/cli/dist/cli-databricks.js",
     "cli:release": "bun --filter './apps/cli' release",
     "cli:release:latest": "cd ./apps/cli && npm run release:latest",
     "cli:watch": "bun --env-file=./apps/cli/.env --watch --inspect='ws://localhost:6499/cli' ./apps/cli/src/cli.tsx",

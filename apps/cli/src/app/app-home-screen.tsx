@@ -4,25 +4,36 @@ import { type RoutePath, useSafeNavigate } from '../routes.js';
 import { useAnalytics } from '../hooks/use-analytics.js';
 import { AnalyticsEvents } from '@appdotbuild/core';
 
-const items = [
-  { label: '🆕 Create new app', value: '/app/build' as const },
-  { label: '🧱 Create Databricks app', value: '/app/databricks' as const },
-  {
-    label: '📋 List and iterate existing applications',
-    value: '/apps' as const,
-  },
-  {
-    label: '🔒 Logout',
-    value: '/app/logout' as const,
-  },
-] satisfies Array<{
-  label: string;
-  value: RoutePath;
-}>;
-
-export function AppHomeScreen() {
+export function AppHomeScreen({
+  databricksMode = false,
+}: {
+  databricksMode?: boolean;
+}) {
   const { trackEvent } = useAnalytics();
   const { safeNavigate } = useSafeNavigate();
+
+  const items = [
+    { label: '🆕 Create new app', value: '/app/build' as const },
+    ...(databricksMode
+      ? [
+          {
+            label: '🧱 Create Databricks app',
+            value: '/app/databricks' as const,
+          },
+        ]
+      : []),
+    {
+      label: '📋 List and iterate existing applications',
+      value: '/apps' as const,
+    },
+    {
+      label: '🔒 Logout',
+      value: '/app/logout' as const,
+    },
+  ] satisfies Array<{
+    label: string;
+    value: RoutePath;
+  }>;
 
   return (
     <Box flexDirection="column">
