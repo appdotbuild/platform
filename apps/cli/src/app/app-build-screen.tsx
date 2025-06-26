@@ -13,6 +13,7 @@ export const AppBuildScreen = () => {
     <TerminalChat
       initialPrompt={initialPrompt}
       databricksApiKey={searchParams.databricksApiKey}
+      databricksHost={searchParams.databricksHost}
     />
   );
 };

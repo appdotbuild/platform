@@ -77,6 +77,7 @@ export type SendMessageParams = {
   applicationId?: string;
   traceId?: string;
   databricksApiKey?: string;
+  databricksHost?: string;
   onMessage?: (data: AgentSseEvent) => void;
   signal?: AbortSignal;
 };
@@ -91,6 +92,7 @@ export async function sendMessage({
   applicationId,
   traceId,
   databricksApiKey,
+  databricksHost,
   onMessage,
   signal,
 }: SendMessageParams): Promise<SendMessageResult> {
@@ -105,6 +107,7 @@ export async function sendMessage({
       traceId,
       environment: agentEnvironment,
       databricksApiKey,
+      databricksHost,
     },
     {
       headers: {

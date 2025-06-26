@@ -69,6 +69,7 @@ const ROUTES_DEFINITIONS = [
     searchParams: {
       appId: z.string().optional(),
       databricksApiKey: z.string().optional(),
+      databricksHost: z.string().optional(),
     },
   },
   {

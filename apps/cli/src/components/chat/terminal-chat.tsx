@@ -23,11 +23,13 @@ export function TerminalChat({
   appId,
   traceId,
   databricksApiKey,
+  databricksHost,
 }: {
   initialPrompt: string;
   appId?: string;
   traceId?: string;
   databricksApiKey?: string;
+  databricksHost?: string;
 }) {
   const [userInput, setUserInput] = useState<string[]>([]);
   const [staticMessages, setStaticMessages] = useState<MessageDetail[]>([]);
@@ -131,6 +133,7 @@ export function TerminalChat({
       traceId,
       applicationId: appId || createApplicationData?.applicationId,
       databricksApiKey,
+      databricksHost,
     });
   };
 
