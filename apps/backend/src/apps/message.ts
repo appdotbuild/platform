@@ -32,7 +32,7 @@ import {
   createUserInitialCommit,
   createUserRepository,
 } from '../github';
-import { SentryMetrics } from '../sentry';
+import { Instrumentation } from '../instrumentation';
 import {
   copyDirToMemfs,
   createMemoryFileSystem,
@@ -167,13 +167,13 @@ export async function postMessage(
     userId,
   });
 
-  SentryMetrics.addTags({
+  Instrumentation.addTags({
     'request.type': 'sse',
     'request.has_application_id': !!applicationId,
     'request.environment': requestBody.environment || 'production',
   });
 
-  SentryMetrics.trackSseEvent('sse_connection_started', {
+  Instrumentation.trackSseEvent('sse_connection_started', {
     applicationId,
     userId,
   });
@@ -190,7 +190,7 @@ export async function postMessage(
     requestBody: request.body,
   });
 
-  SentryMetrics.trackUserMessage(requestBody.message);
+  Instrumentation.trackUserMessage(requestBody.message);
 
   try {
     let body: Optional<Body, 'traceId'> = {
@@ -390,7 +390,7 @@ export async function postMessage(
       },
       'info',
     );
-    SentryMetrics.trackAiAgentStart(traceId!, applicationId);
+    Instrumentation.trackAiAgentStart(traceId!, applicationId);
 
     let canDeploy = false;
     const requestStartTime = Date.now();
@@ -525,7 +525,7 @@ export async function postMessage(
               userId,
             });
 
-            SentryMetrics.trackSseEvent('sse_message_sent', {
+            Instrumentation.trackSseEvent('sse_message_sent', {
               messageKind: minimalMessage.kind,
               status: completeParsedMessage.status,
             });
@@ -638,7 +638,7 @@ export async function postMessage(
                 );
 
                 const appCreationStartTime =
-                  SentryMetrics.trackAppCreationStart();
+                  Instrumentation.trackAppCreationStart();
 
                 appName =
                   completeParsedMessage.message.app_name ||
@@ -660,10 +660,10 @@ export async function postMessage(
                 appName = newAppName;
                 isPermanentApp = true;
 
-                SentryMetrics.trackAppCreationEnd(appCreationStartTime);
+                Instrumentation.trackAppCreationEnd(appCreationStartTime);
               }
 
-              const deployStartTime = SentryMetrics.trackDeploymentStart(
+              const deployStartTime = Instrumentation.trackDeploymentStart(
                 applicationId!,
               );
 
@@ -677,7 +677,7 @@ export async function postMessage(
                 }),
               );
 
-              SentryMetrics.trackDeploymentEnd(deployStartTime, 'complete');
+              Instrumentation.trackDeploymentEnd(deployStartTime, 'complete');
 
               await addAppURL({
                 repo: appName as string,
@@ -750,7 +750,7 @@ export async function postMessage(
         messageHandlerQueue.enqueue(messageHandler, 'messageHandler');
       },
       onError(err) {
-        SentryMetrics.captureError(err.origin as Error, {
+        Instrumentation.captureError(err.origin as Error, {
           applicationId: applicationId || 'unknown',
           traceId: traceId || 'unknown',
           userId,
@@ -820,8 +820,8 @@ export async function postMessage(
 
     await messageHandlerQueue.waitForCompletion(streamLog);
     if (isPermanentApp) conversationManager.removeConversation(applicationId);
-    SentryMetrics.trackAiAgentEnd(traceId!, 'success');
-    SentryMetrics.trackSseEvent('sse_connection_ended', { applicationId });
+    Instrumentation.trackAiAgentEnd(traceId!, 'success');
+    Instrumentation.trackSseEvent('sse_connection_ended', { applicationId });
 
     streamLog(
       {
@@ -837,13 +837,13 @@ export async function postMessage(
 
     reply.raw.end();
   } catch (error) {
-    SentryMetrics.trackAiAgentEnd(traceId!, 'error');
-    SentryMetrics.trackSseEvent('sse_connection_error', {
+    Instrumentation.trackAiAgentEnd(traceId!, 'error');
+    Instrumentation.trackSseEvent('sse_connection_error', {
       error: String(error),
       applicationId,
     });
 
-    SentryMetrics.captureError(error as Error, {
+    Instrumentation.captureError(error as Error, {
       applicationId: applicationId || 'unknown',
       traceId: traceId || 'unknown',
       userId,
@@ -931,7 +931,7 @@ async function appCreation({
     traceId,
   });
 
-  const repoCreationStartTime = SentryMetrics.trackGitHubRepoCreation();
+  const repoCreationStartTime = Instrumentation.trackGitHubRepoCreation();
 
   const { repositoryUrl, appName: newAppName } = await createUserUpstreamApp({
     appName,
@@ -940,7 +940,7 @@ async function appCreation({
     files,
   });
 
-  SentryMetrics.trackGitHubRepoCreationEnd(repoCreationStartTime);
+  Instrumentation.trackGitHubRepoCreationEnd(repoCreationStartTime);
 
   if (!repositoryUrl) {
     throw new Error('Repository URL not found');
@@ -1001,7 +1001,7 @@ async function appIteration({
   agentState: AgentSseEvent['message']['agentState'];
   commitMessage: string;
 }) {
-  const commitStartTime = SentryMetrics.trackGitHubCommit();
+  const commitStartTime = Instrumentation.trackGitHubCommit();
 
   const { commitSha } = await createUserCommit({
     repo: appName,
@@ -1012,7 +1012,7 @@ async function appIteration({
     githubAccessToken,
   });
 
-  SentryMetrics.trackGitHubCommitEnd(commitStartTime);
+  Instrumentation.trackGitHubCommitEnd(commitStartTime);
 
   if (agentState) {
     await db
@@ -1215,7 +1215,7 @@ async function pushAndSavePlatformMessage(
 ) {
   if (message.metadata?.type) {
     const messageType = message.metadata.type;
-    SentryMetrics.trackPlatformMessage(messageType);
+    Instrumentation.trackPlatformMessage(messageType);
   }
 
   session.push(message);

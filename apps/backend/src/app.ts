@@ -2,9 +2,10 @@ import type { ServerUser } from '@stackframe/stack';
 import fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { validateAuth } from './auth-strategy';
-import { initializeSentry, setupSentryPerformanceMonitoring } from './sentry';
+import { Instrumentation } from './instrumentation';
 
-initializeSentry();
+// must be called before app creation
+Instrumentation.initialize();
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -25,7 +26,7 @@ export const app = fastify({
   genReqId: () => uuidv4(),
 });
 
-setupSentryPerformanceMonitoring(app);
+Instrumentation.setupPerformanceMonitoring(app);
 
 await app.register(import('@fastify/compress'), {
   global: false,

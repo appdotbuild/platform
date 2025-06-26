@@ -1,6 +1,6 @@
 import type { AnalyticsEventBody } from '@appdotbuild/core';
-import type { FastifyReply, FastifyRequest } from 'fastify';
 import Analytics from '@segment/analytics-node';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 export async function sendAnalyticsEvent(
   request: FastifyRequest<{ Body: AnalyticsEventBody }>,
