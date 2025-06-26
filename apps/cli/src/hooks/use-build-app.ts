@@ -28,20 +28,11 @@ export const useBuildApp = (existingApplicationId?: string) => {
   }, [sendMessageSuccess, sendMessageError, sendMessageReset]);
 
   const appId = existingApplicationId ?? sendMessageData?.applicationId;
-
-  const messageQuery = useQuery({
-    queryKey: queryKeys.applicationMessages(appId!),
-    queryFn: () => {
-      if (!appId) return { events: [] };
-
-      const events = queryClient.getQueryData<{ events: AgentSseEvent[] }>(
-        queryKeys.applicationMessages(appId),
-      );
-
-      return events ?? { events: [] };
-    },
-    enabled: !!appId,
-  });
+  const applicationEventsData = appId
+    ? queryClient.getQueryData<{
+        events: AgentSseEvent[];
+      }>(queryKeys.applicationMessages(appId))
+    : undefined;
 
   return {
     createApplication: sendMessage,
@@ -52,8 +43,8 @@ export const useBuildApp = (existingApplicationId?: string) => {
     createApplicationStatus: sendMessageStatus,
     createApplicationAbort: abortSignal,
 
-    streamingMessagesData: messageQuery.data,
+    streamingMessagesData: applicationEventsData,
     isStreamingMessages:
-      messageQuery.data?.events?.at(-1)?.status === AgentStatus.RUNNING,
+      applicationEventsData?.events?.at(-1)?.status === AgentStatus.RUNNING,
   };
 };

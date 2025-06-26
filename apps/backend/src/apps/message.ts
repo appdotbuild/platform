@@ -431,13 +431,6 @@ export async function postMessage(
       },
       async onMessage(ev) {
         const messageHandler = async () => {
-          terminateStreamWithError(
-            session,
-            `There was an error with the stream: 213`,
-            abortController,
-            traceId as TraceId,
-          );
-
           try {
             // Early exit if session is disconnected
             if (!session.isConnected) {
