@@ -1,32 +1,11 @@
 import { MessageKind, PlatformMessageType } from '@appdotbuild/core';
 import { Box, Text } from 'ink';
-import { useState } from 'react';
 import type { MessageDetail } from '../../hooks/use-terminal-chat';
 import { MarkdownBlock } from '../shared/input/markdown-block';
-
-type ErrorType =
-  | 'network'
-  | 'stream'
-  | 'server'
-  | 'timeout'
-  | 'auth'
-  | 'generic';
-
-interface StructuredError {
-  type: ErrorType;
-  originalMessage: string;
-  userMessage: string;
-  actions: Array<{
-    id: string;
-    label: string;
-    type: 'primary' | 'secondary';
-  }>;
-}
 
 const getPhaseTitle = (
   phase: MessageKind,
   metadata?: { type?: PlatformMessageType },
-  errorType?: ErrorType,
 ) => {
   switch (phase) {
     case MessageKind.STAGE_RESULT:
@@ -49,20 +28,7 @@ const getPhaseTitle = (
       }
       return 'Platform message';
     case MessageKind.RUNTIME_ERROR:
-      switch (errorType) {
-        case 'network':
-          return 'Connection Problem';
-        case 'stream':
-          return 'Connection Lost';
-        case 'timeout':
-          return 'Request Timeout';
-        case 'auth':
-          return 'Authentication Required';
-        case 'server':
-          return 'Server Error';
-        default:
-          return 'Something Went Wrong';
-      }
+      return 'There was an error generating your application';
     case MessageKind.REFINEMENT_REQUEST:
       return 'Expecting user input';
     case MessageKind.USER_MESSAGE:
@@ -139,93 +105,6 @@ const getStatusProperties = (
   }
 };
 
-const EnhancedErrorDisplay = ({ message }: { message: MessageDetail }) => {
-  const [showDetails, setShowDetails] = useState(false);
-
-  let errorData: StructuredError;
-  try {
-    errorData = JSON.parse(message.text);
-  } catch {
-    // Fallback for non-structured errors
-    errorData = {
-      type: 'generic',
-      originalMessage: message.text,
-      userMessage: message.text,
-      actions: [
-        { id: 'retry', label: 'Try Again', type: 'primary' },
-        { id: 'details', label: 'View Details', type: 'secondary' },
-      ],
-    };
-  }
-
-  const handleAction = (actionId: string) => {
-    switch (actionId) {
-      case 'retry':
-        // TODO: Implement retry functionality
-        console.log('Retry action triggered');
-        break;
-      case 'details':
-        setShowDetails(!showDetails);
-        break;
-      case 'signin':
-        // TODO: Implement sign-in functionality
-        console.log('Sign-in action triggered');
-        break;
-      case 'check_status':
-        // TODO: Open status page
-        console.log('Check status action triggered');
-        break;
-      default:
-        console.log(`Unknown action: ${actionId}`);
-    }
-  };
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      {/* User-friendly error message */}
-      <Box>
-        <Text color="white">{errorData.userMessage}</Text>
-      </Box>
-
-      {/* Action buttons */}
-      <Box flexDirection="row" gap={2}>
-        {errorData.actions.map((action, index) => (
-          <Box key={action.id}>
-            <Text
-              color={action.type === 'primary' ? 'cyan' : 'gray'}
-              bold={action.type === 'primary'}
-            >
-              [{index + 1}] {action.label}
-            </Text>
-          </Box>
-        ))}
-      </Box>
-
-      {/* Technical details (expandable) */}
-      {showDetails && (
-        <Box flexDirection="column" paddingTop={1} borderTop borderColor="gray">
-          <Text color="gray" dimColor>
-            Technical Details:
-          </Text>
-          <Text color="gray" dimColor>
-            {errorData.originalMessage}
-          </Text>
-          <Text color="gray" dimColor>
-            Error Type: {errorData.type}
-          </Text>
-        </Box>
-      )}
-
-      {/* Instructions */}
-      <Box paddingTop={1}>
-        <Text color="gray" dimColor>
-          Press the corresponding number key to select an action
-        </Text>
-      </Box>
-    </Box>
-  );
-};
-
 const AgentHeader = ({
   message,
   metadata,
@@ -235,22 +114,9 @@ const AgentHeader = ({
 }) => {
   const isHistoryMessage = message.isHistory || false;
 
-  // Parse error data for runtime errors to get the error type
-  let errorType: ErrorType | undefined;
-  if (message.kind === MessageKind.RUNTIME_ERROR) {
-    try {
-      const errorData: StructuredError = JSON.parse(message.text);
-      errorType = errorData.type;
-    } catch {
-      // Fallback for non-structured errors
-      errorType = 'generic';
-    }
-  }
-
   const phaseTitle = getPhaseTitle(
     message.kind || MessageKind.STAGE_RESULT,
     metadata,
-    errorType,
   );
 
   if (message.role === 'user') {
@@ -305,7 +171,13 @@ export const TerminalMessage = ({
         bottomRight: '',
         right: '',
       }}
-      borderColor={message.role === 'user' ? 'gray' : 'yellowBright'}
+      borderColor={
+        message.role === 'user'
+          ? 'gray'
+          : message.kind === MessageKind.RUNTIME_ERROR
+          ? 'red'
+          : 'yellowBright'
+      }
     >
       <Box flexDirection="row">
         <AgentHeader message={message} metadata={metadata} />
@@ -320,7 +192,9 @@ export const TerminalMessage = ({
         {message.role === 'user' ? (
           <Text color={'gray'}>{message.text}</Text>
         ) : message.kind === MessageKind.RUNTIME_ERROR ? (
-          <EnhancedErrorDisplay message={message} />
+          <Text color="red" bold>
+            {message.text}
+          </Text>
         ) : (
           <MarkdownBlock
             mode={isHistoryMessage ? 'history' : 'chat'}
