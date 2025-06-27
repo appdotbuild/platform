@@ -36,9 +36,11 @@ const neonClient = createApiClient({
 export async function deployApp({
   appId,
   appDirectory,
+  databricksMode,
 }: {
   appId: string;
   appDirectory: string;
+  databricksMode: boolean;
 }) {
   const app = await db
     .select({
@@ -49,6 +51,8 @@ export async function deployApp({
       koyebAppId: apps.koyebAppId,
       koyebServiceId: apps.koyebServiceId,
       koyebDomainId: apps.koyebDomainId,
+      databricksApiKey: apps.databricksApiKey,
+      databricksHost: apps.databricksHost,
     })
     .from(apps)
     .where(eq(apps.id, appId));
@@ -62,6 +66,91 @@ export async function deployApp({
   // deployed is okay, but deploying is not
   if (currentApp.deployStatus === 'deploying') {
     throw new Error(`App ${appId} is already being deployed`);
+  }
+
+  // If we are deploying to databricks, we need to import the code into the databricks workspace
+  // and then deploy the app from there. We use the databricks CLI to do this.
+  if (databricksMode) {
+    if (!currentApp.databricksApiKey || !currentApp.databricksHost) {
+      throw new Error(
+        'Databricks API key and host are required for Databricks deployment',
+      );
+    }
+
+    // Set Databricks CLI environment variables
+    process.env.DATABRICKS_HOST = currentApp.databricksHost;
+    process.env.DATABRICKS_TOKEN = currentApp.databricksApiKey;
+
+    // Generate a unique workspace path for this app
+    const workspacePath = `/Users/david.gomes@databricks.com/nice_gui_example`;
+
+    logger.info('Starting Databricks deployment', {
+      appId,
+      workspacePath,
+      databricksHost: currentApp.databricksHost,
+    });
+
+    try {
+      // 1. Import the code into the databricks workspace
+      logger.info('Importing code to Databricks workspace');
+      await exec(
+        `databricks workspace import-dir --overwrite "${appDirectory}" "${workspacePath}"`,
+        {
+          cwd: appDirectory,
+        },
+      );
+
+      // 2. Deploy the app from there
+      logger.info('Deploying app to Databricks');
+      const deployResult = await exec(
+        `databricks apps deploy my-name --source-code-path "/Workspace${workspacePath}"`,
+        {
+          cwd: appDirectory,
+        },
+      );
+
+      logger.info('Databricks deployment completed', {
+        appId,
+        deployOutput: deployResult.stdout,
+      });
+
+      const appUrl = (
+        await exec(`databricks apps get my-name | jq -r '.url'`)
+      ).stdout.trim();
+
+      // Update app status to deployed
+      await db
+        .update(apps)
+        .set({
+          deployStatus: 'deployed',
+          appUrl,
+        })
+        .where(eq(apps.id, appId));
+
+      return {
+        appURL: appUrl,
+        deploymentId: `databricks-${appId}`,
+      };
+    } catch (error) {
+      logger.error('Databricks deployment failed', {
+        appId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      // Update app status to failed
+      await db
+        .update(apps)
+        .set({
+          deployStatus: 'failed',
+        })
+        .where(eq(apps.id, appId));
+
+      throw new Error(
+        `Databricks deployment failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
   }
 
   let connectionString: string | undefined;
