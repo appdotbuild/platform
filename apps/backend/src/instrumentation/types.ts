@@ -7,23 +7,38 @@ export type SseEventType =
   | 'sse_connection_ended'
   | 'sse_connection_error';
 
+export interface OperationMetadata {
+  traceId?: string;
+  applicationId?: string;
+  userId?: string;
+  [key: string]: string | number | boolean | undefined;
+}
+
 export interface TimedOperation {
   startTime: number;
-  metadata?: Record<string, any>;
+  metadata?: OperationMetadata;
+}
+
+export interface InstrumentationConfig {
+  app?: any;
+}
+
+export interface EventProperties {
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 export interface EventContext {
   applicationId?: string;
   traceId?: string;
   userId?: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 export interface BreadcrumbData {
   category: string;
   message: string;
   level: 'debug' | 'info' | 'warning' | 'error';
-  data?: Record<string, any>;
+  data?: EventProperties;
   timestamp?: number;
 }
 
@@ -36,8 +51,8 @@ export interface ErrorContext {
 }
 
 export interface EventInstrumentation {
-  initialize(config?: any): void;
-  setupPerformanceMonitoring?(app: any): void;
+  initialize(config?: InstrumentationConfig): void;
+  setupPerformanceMonitoring?(app: InstrumentationConfig['app']): void;
   addTags(tags: InstrumentationTags): void;
   addMeasurement(name: string, value: number, unit?: string): void;
   setContext(key: string, data: Record<string, unknown>): void;
@@ -45,7 +60,7 @@ export interface EventInstrumentation {
 
   startTimedOperation(
     operationName: string,
-    metadata?: Record<string, any>,
+    metadata?: OperationMetadata,
   ): TimedOperation;
   endTimedOperation(
     operationName: string,
@@ -54,8 +69,8 @@ export interface EventInstrumentation {
   ): void;
 
   // event tracking methods
-  trackEvent(eventName: string, properties?: Record<string, any>): void;
-  trackSseEvent(eventType: SseEventType, data?: Record<string, any>): void;
+  trackEvent(eventName: string, properties?: EventProperties): void;
+  trackSseEvent(eventType: SseEventType, data?: EventProperties): void;
   trackUserMessage(message: string): void;
   trackPlatformMessage(messageType: string): void;
   captureError(error: Error, context?: ErrorContext): void;

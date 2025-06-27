@@ -2,12 +2,19 @@ import type { FastifyInstance } from 'fastify';
 import { CompositeInstrumentation } from './composite-instrumentation';
 import { SegmentAdapter } from './segment-adapter';
 import { SentryAdapter } from './sentry-adapter';
-import type { EventInstrumentation, TimedOperation } from './types';
+import type {
+  EventInstrumentation,
+  OperationMetadata,
+  TimedOperation,
+} from './types';
 
 export * from './types';
 
 let instrumentationInstance: EventInstrumentation | null = null;
-const timedOperations = new Map<string, TimedOperation>();
+const timedOperations = new Map<
+  string,
+  { operation: TimedOperation; timeoutId: NodeJS.Timeout }
+>();
 
 export function initializeInstrumentation(
   app?: FastifyInstance,
@@ -16,17 +23,26 @@ export function initializeInstrumentation(
     return instrumentationInstance;
   }
 
-  const sentryAdapter = new SentryAdapter();
-  const segmentAdapter = new SegmentAdapter();
+  try {
+    const sentryAdapter = new SentryAdapter();
+    const segmentAdapter = new SegmentAdapter();
 
-  instrumentationInstance = new CompositeInstrumentation([
-    sentryAdapter,
-    segmentAdapter,
-  ]);
+    instrumentationInstance = new CompositeInstrumentation([
+      sentryAdapter,
+      segmentAdapter,
+    ]);
 
-  instrumentationInstance.initialize(app);
+    instrumentationInstance.initialize({ app });
 
-  return instrumentationInstance;
+    return instrumentationInstance;
+  } catch (error) {
+    console.error('Failed to initialize instrumentation:', error);
+
+    // create a empty instrumentation to prevent crashing.
+    instrumentationInstance = createNoOpInstrumentation();
+
+    return instrumentationInstance;
+  }
 }
 
 export function getInstrumentation(): EventInstrumentation {
@@ -96,16 +112,31 @@ export const Instrumentation = {
         applicationId,
       },
     );
-    timedOperations.set(traceId, operation);
+
+    // timeout to cleanup if trackAiAgentEnd is never called
+    const timeoutId = setTimeout(() => {
+      const data = timedOperations.get(traceId);
+      if (data) {
+        getInstrumentation().endTimedOperation(
+          'ai.agent.process',
+          data.operation,
+          'deadline_exceeded',
+        );
+        timedOperations.delete(traceId);
+      }
+    }, 2 * 60 * 60 * 1000); // 2 hours
+
+    timedOperations.set(traceId, { operation, timeoutId });
     return operation.startTime;
   },
 
   trackAiAgentEnd: (traceId: string, status: 'success' | 'error') => {
-    const operation = timedOperations.get(traceId);
-    if (operation) {
+    const data = timedOperations.get(traceId);
+    if (data) {
+      clearTimeout(data.timeoutId);
       getInstrumentation().endTimedOperation(
         'ai.agent.process',
-        operation,
+        data.operation,
         status,
       );
       timedOperations.delete(traceId);
@@ -168,3 +199,26 @@ export const Instrumentation = {
     );
   },
 };
+
+function createNoOpInstrumentation(): EventInstrumentation {
+  return {
+    initialize: () => {},
+    setupPerformanceMonitoring: () => {},
+    addTags: () => {},
+    addMeasurement: () => {},
+    setContext: () => {},
+    addBreadcrumb: () => {},
+    startTimedOperation: (_: string, metadata?: OperationMetadata) => ({
+      startTime: Date.now(),
+      metadata,
+    }),
+    endTimedOperation: () => {},
+    trackEvent: () => {},
+    trackSseEvent: () => {},
+    trackUserMessage: () => {},
+    trackPlatformMessage: () => {},
+    captureError: (error: Error) => {
+      console.error('Instrumentation error (no-op mode):', error);
+    },
+  };
+}

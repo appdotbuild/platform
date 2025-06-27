@@ -2,7 +2,10 @@ import type {
   BreadcrumbData,
   ErrorContext,
   EventInstrumentation,
+  EventProperties,
+  InstrumentationConfig,
   InstrumentationTags,
+  OperationMetadata,
   SseEventType,
   TimedOperation,
 } from './types';
@@ -14,11 +17,11 @@ export class CompositeInstrumentation implements EventInstrumentation {
     this.providers = providers;
   }
 
-  initialize(config?: any): void {
+  initialize(config?: InstrumentationConfig): void {
     this.providers.forEach((provider) => provider.initialize(config));
   }
 
-  setupPerformanceMonitoring(app: any): void {
+  setupPerformanceMonitoring(app: InstrumentationConfig['app']): void {
     this.providers.forEach((provider) => {
       if (provider.setupPerformanceMonitoring) {
         provider.setupPerformanceMonitoring(app);
@@ -50,7 +53,7 @@ export class CompositeInstrumentation implements EventInstrumentation {
 
   startTimedOperation(
     operationName: string,
-    metadata?: Record<string, any>,
+    metadata?: OperationMetadata,
   ): TimedOperation {
     let operation: TimedOperation | null = null;
 
@@ -72,13 +75,13 @@ export class CompositeInstrumentation implements EventInstrumentation {
     );
   }
 
-  trackEvent(eventName: string, properties?: Record<string, any>): void {
+  trackEvent(eventName: string, properties?: EventProperties): void {
     this.providers.forEach((provider) =>
       provider.trackEvent(eventName, properties),
     );
   }
 
-  trackSseEvent(eventType: SseEventType, data?: Record<string, any>): void {
+  trackSseEvent(eventType: SseEventType, data?: EventProperties): void {
     this.providers.forEach((provider) =>
       provider.trackSseEvent(eventType, data),
     );

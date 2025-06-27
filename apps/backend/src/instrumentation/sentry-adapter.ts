@@ -242,6 +242,12 @@ export class SentryAdapter implements EventInstrumentation {
     switch (operationName) {
       case 'ai.agent.process': {
         const traceId = operation.metadata?.traceId;
+
+        if (!traceId) {
+          console.warn('No traceId found in operation metadata');
+          return;
+        }
+
         const requestData = this._requestData.get(traceId);
 
         if (!requestData) {
