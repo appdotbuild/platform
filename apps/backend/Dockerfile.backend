@@ -58,6 +58,13 @@ RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh /usr/local/bin/docker-entrypoi
 
 VOLUME /var/lib/docker
 
+# Install Databricks CLI
+RUN curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+# Install jq
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y jq
+
 COPY --from=build /appdotbuild /appdotbuild
 COPY --from=build /root /root
 
