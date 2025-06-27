@@ -746,6 +746,9 @@ export async function postMessage(
                     {
                       type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
                       deploymentId: deployResult.deploymentId,
+                      deploymentType: requestBody.databricksHost
+                        ? 'databricks'
+                        : 'koyeb',
                     },
                   ),
                 );
