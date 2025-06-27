@@ -328,6 +328,7 @@ export async function postMessage(
         ...body,
         applicationId,
         traceId,
+        templateId: 'nicegui_agent',
       };
     }
 
@@ -692,6 +693,7 @@ export async function postMessage(
                   deployApp({
                     appId: applicationId!,
                     appDirectory: tempDirPath,
+                    databricksMode: Boolean(requestBody.databricksHost),
                   }),
                 )
                 .catch(async (error) => {
