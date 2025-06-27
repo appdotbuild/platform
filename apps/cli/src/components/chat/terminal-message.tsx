@@ -28,7 +28,7 @@ const getPhaseTitle = (
       }
       return 'Platform message';
     case MessageKind.RUNTIME_ERROR:
-      return 'There was an error generating your application';
+      return 'Unexpected error';
     case MessageKind.REFINEMENT_REQUEST:
       return 'Expecting user input';
     case MessageKind.USER_MESSAGE:
@@ -45,12 +45,23 @@ const getPhaseTitle = (
 const getStatusProperties = (
   metadata?: { type?: PlatformMessageType },
   isHistory?: boolean,
+  messageKind?: MessageKind,
 ) => {
   if (isHistory) {
     return {
       textColor: 'green',
       icon: '✓',
       headerColor: 'green',
+      bold: false,
+    };
+  }
+
+  // Handle runtime errors with red styling
+  if (messageKind === MessageKind.RUNTIME_ERROR) {
+    return {
+      textColor: 'red',
+      icon: '✗',
+      headerColor: 'red',
       bold: false,
     };
   }
@@ -122,6 +133,7 @@ const AgentHeader = ({
   const { textColor, icon, headerColor, bold } = getStatusProperties(
     metadata,
     isHistoryMessage,
+    message.kind,
   );
 
   return (
@@ -143,6 +155,14 @@ export const TerminalMessage = ({
 }) => {
   const isHistoryMessage = message.isHistory || false;
 
+  let borderColor = 'yellowBright';
+  if (message.role === 'user') {
+    borderColor = 'gray';
+  }
+  if (message.kind === MessageKind.RUNTIME_ERROR) {
+    borderColor = 'red';
+  }
+
   return (
     <Box
       flexDirection="column"
@@ -159,7 +179,7 @@ export const TerminalMessage = ({
         bottomRight: '',
         right: '',
       }}
-      borderColor={message.role === 'user' ? 'gray' : 'yellowBright'}
+      borderColor={borderColor}
     >
       <Box flexDirection="row">
         <AgentHeader message={message} metadata={metadata} />
@@ -173,6 +193,10 @@ export const TerminalMessage = ({
         </Text>
         {message.role === 'user' ? (
           <Text color={'gray'}>{message.text}</Text>
+        ) : message.kind === MessageKind.RUNTIME_ERROR ? (
+          <Text color="red" bold>
+            {message.text}
+          </Text>
         ) : (
           <MarkdownBlock
             mode={isHistoryMessage ? 'history' : 'chat'}

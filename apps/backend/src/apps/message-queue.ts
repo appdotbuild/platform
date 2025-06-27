@@ -86,7 +86,7 @@ export class MessageHandlerQueue {
   // Wait for queue to be empty
   async waitForCompletion(
     streamLog: StreamLogFunction,
-    timeoutMs = 30000,
+    timeoutMs = 60_000,
   ): Promise<void> {
     const startTime = Date.now();
 

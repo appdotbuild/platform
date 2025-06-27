@@ -131,10 +131,15 @@ export class PlatformMessage {
 export class StreamingError {
   error: string;
   traceId?: TraceId;
+  message: AgentSseEventMessage;
 
   constructor(error: string, traceId?: TraceId) {
     this.error = error;
     this.traceId = traceId;
+    this.message = {
+      kind: MessageKind.RUNTIME_ERROR,
+      messages: [{ role: 'assistant', content: error }],
+    };
   }
 }
 

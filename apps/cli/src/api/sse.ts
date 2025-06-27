@@ -54,12 +54,6 @@ export function parseSSE(
               return;
             }
 
-            if (event.event === 'error') {
-              onError?.(new Error(parsedData.error));
-              reject(new Error(parsedData.error));
-              return;
-            }
-
             if (event.event === 'debug') {
               useDebugStore.getState().addLog(parsedData.log, parsedData.level);
               buffer = '';

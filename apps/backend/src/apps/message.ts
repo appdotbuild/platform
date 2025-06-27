@@ -292,6 +292,7 @@ export async function postMessage(
             session,
             'Previous request not found',
             abortController,
+            traceId as TraceId,
           );
           return;
         }
@@ -360,6 +361,7 @@ export async function postMessage(
               session,
               'There was an error cloning your repository, try again with a different prompt.',
               abortController,
+              traceId as TraceId,
             );
             return reply.status(500);
           })
@@ -479,6 +481,7 @@ export async function postMessage(
                 session,
                 'There was an error validating the message schema, try again with a different prompt.',
                 abortController,
+                traceId as TraceId,
               );
               return;
             }
@@ -547,6 +550,7 @@ export async function postMessage(
                 session,
                 'There was an error generating your application diff, try again with a different prompt.',
                 abortController,
+                traceId as TraceId,
               );
               return;
             }
@@ -667,38 +671,72 @@ export async function postMessage(
                 applicationId!,
               );
 
-              const { appURL, deploymentId } = await writeMemfsToTempDir(
+              const deployResult = await writeMemfsToTempDir(
                 memfsVolume,
                 virtualDir,
-              ).then((tempDirPath) =>
-                deployApp({
-                  appId: applicationId!,
-                  appDirectory: tempDirPath,
-                }),
-              );
+              )
+                .then((tempDirPath) =>
+                  deployApp({
+                    appId: applicationId!,
+                    appDirectory: tempDirPath,
+                  }),
+                )
+                .catch(async (error) => {
+                  streamLog(
+                    {
+                      message: `[appId: ${applicationId}] Error deploying app: ${error}`,
+                      applicationId,
+                      traceId,
+                      userId,
+                      error:
+                        error instanceof Error ? error.message : String(error),
+                    },
+                    'error',
+                  );
+                  pushAndSaveStreamingErrorMessage(
+                    session,
+                    applicationId!,
+                    new StreamingError(
+                      `There was an error deploying your application, check the code in the Github repository.`,
+                      traceId!,
+                    ),
+                  );
+                });
 
               Instrumentation.trackDeploymentEnd(deployStartTime, 'complete');
 
-              await addAppURL({
-                repo: appName as string,
-                owner: githubUsername,
-                appURL: appURL,
-                githubAccessToken,
-              });
-
-              await pushAndSavePlatformMessage(
-                session,
-                applicationId,
-                new PlatformMessage(
-                  AgentStatus.IDLE,
-                  traceId!,
-                  `Your application is being deployed to ${appURL}`,
+              if (deployResult) {
+                streamLog(
                   {
-                    type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
-                    deploymentId,
+                    message: `[appId: ${applicationId}] adding app URL to github, appURL: ${deployResult.appURL}`,
+                    applicationId,
+                    traceId,
+                    userId,
                   },
-                ),
-              );
+                  'info',
+                );
+
+                await addAppURL({
+                  repo: appName as string,
+                  owner: githubUsername,
+                  appURL: deployResult.appURL,
+                  githubAccessToken,
+                });
+
+                await pushAndSavePlatformMessage(
+                  session,
+                  applicationId,
+                  new PlatformMessage(
+                    AgentStatus.IDLE,
+                    traceId!,
+                    `Your application is being deployed to ${deployResult.appURL}`,
+                    {
+                      type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
+                      deploymentId: deployResult.deploymentId,
+                    },
+                  ),
+                );
+              }
             }
 
             const canBreakStream =
@@ -768,19 +806,6 @@ export async function postMessage(
           },
           'error',
         );
-        streamLog(
-          {
-            message: `[appId: ${applicationId}] Error details - type: ${
-              err.type
-            }, origin: ${JSON.stringify(
-              err.origin,
-            )}, origin keys: ${Object.keys(err.origin || {})}`,
-            applicationId,
-            traceId,
-            userId,
-          },
-          'error',
-        );
 
         const errorMessage =
           err.origin?.message ||
@@ -794,6 +819,7 @@ export async function postMessage(
             session,
             `There was an error with the stream: ${errorMessage}`,
             abortController,
+            traceId as TraceId,
           );
         } else {
           app.log.error(
@@ -1230,6 +1256,22 @@ async function pushAndSavePlatformMessage(
   );
 }
 
+async function pushAndSaveStreamingErrorMessage(
+  session: Session,
+  applicationId: string,
+  message: StreamingError,
+) {
+  session.push(message);
+
+  const messageContent = message.message.messages[0]?.content || '';
+  await saveMessageToDB(
+    applicationId,
+    messageContent,
+    'assistant',
+    MessageKind.RUNTIME_ERROR,
+  );
+}
+
 async function saveAgentMessages(
   applicationId: string,
   agentEvent: AgentSseEvent,
@@ -1251,8 +1293,9 @@ function terminateStreamWithError(
   session: Session,
   error: string,
   abortController: AbortController,
+  traceId: TraceId,
 ) {
-  session.push(new StreamingError(error), 'error');
+  session.push(new StreamingError(error, traceId), 'error');
   abortController.abort();
   session.removeAllListeners();
 }
