@@ -48,6 +48,7 @@ export const conversationMessageSchema = z.object({
 export type PlatformMessageMetadata = {
   type?: PlatformMessageType;
   deploymentId?: string;
+  deploymentType?: 'databricks' | 'koyeb';
 };
 
 // Agent SSE Event message object
@@ -77,6 +78,7 @@ export const agentSseEventSchema = z.object({
     .object({
       type: z.nativeEnum(PlatformMessageType).optional(),
       deploymentId: z.string().optional(),
+      deploymentType: z.enum(['databricks', 'koyeb']).optional(),
     })
     .optional(),
 });
