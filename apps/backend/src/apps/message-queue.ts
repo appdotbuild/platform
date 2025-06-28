@@ -86,7 +86,8 @@ export class MessageHandlerQueue {
   // Wait for queue to be empty
   async waitForCompletion(
     streamLog: StreamLogFunction,
-    timeoutMs = 60_000 * 3,
+    // This is a large timeout to allow for long-running deployments to databricks.
+    timeoutMs = 1_000_000,
   ): Promise<void> {
     const startTime = Date.now();
 
