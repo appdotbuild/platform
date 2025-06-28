@@ -68,6 +68,13 @@ export async function deployApp({
     throw new Error(`App ${appId} is already being deployed`);
   }
 
+  await db
+    .update(apps)
+    .set({
+      deployStatus: 'deploying',
+    })
+    .where(eq(apps.id, appId));
+
   // If we are deploying to databricks, we need to import the code into the databricks workspace
   // and then deploy the app from there. We use the databricks CLI to do this.
   if (databricksMode) {
@@ -82,11 +89,14 @@ export async function deployApp({
     process.env.DATABRICKS_TOKEN = currentApp.databricksApiKey;
 
     // Generate a unique workspace path for this app
-    const workspacePath = `/Users/david.gomes@databricks.com/nice_gui_example`;
+    const shortAppId = appId.slice(0, 8);
+    const appName = `app-${shortAppId}`;
+
+    const workspaceSourceCodePath = `/${appName}`;
 
     logger.info('Starting Databricks deployment', {
       appId,
-      workspacePath,
+      workspaceSourceCodePath,
       databricksHost: currentApp.databricksHost,
     });
 
@@ -94,16 +104,25 @@ export async function deployApp({
       // 1. Import the code into the databricks workspace
       logger.info('Importing code to Databricks workspace');
       await exec(
-        `databricks workspace import-dir --overwrite "${appDirectory}" "${workspacePath}"`,
+        `databricks workspace import-dir --overwrite "${appDirectory}" "${workspaceSourceCodePath}"`,
         {
           cwd: appDirectory,
         },
       );
 
-      // 2. Deploy the app from there
+      // 2. Create a databricks app IF it doesn't exist
+      const appExists = await exec(
+        `databricks apps list | grep -q "${appName}"`,
+      );
+      if (!appExists) {
+        logger.info('Creating Databricks app');
+        await exec(`databricks apps create ${appName}`);
+      }
+
+      // 3. Deploy the app from there
       logger.info('Deploying app to Databricks');
       const deployResult = await exec(
-        `databricks apps deploy my-name --source-code-path "/Workspace${workspacePath}"`,
+        `databricks apps deploy ${appName} --source-code-path "/Workspace${workspaceSourceCodePath}"`,
         {
           cwd: appDirectory,
         },
@@ -115,7 +134,7 @@ export async function deployApp({
       });
 
       const appUrl = (
-        await exec(`databricks apps get my-name | jq -r '.url'`)
+        await exec(`databricks apps get ${appName} | jq -r '.url'`)
       ).stdout.trim();
 
       // Update app status to deployed
@@ -208,7 +227,6 @@ export async function deployApp({
   await db
     .update(apps)
     .set({
-      deployStatus: 'deploying',
       neonProjectId,
     })
     .where(eq(apps.id, appId));
