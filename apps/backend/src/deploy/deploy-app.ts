@@ -23,7 +23,6 @@ import {
   updateKoyebService,
   createKoyebDomain,
   getKoyebDomain,
-  getKoyebDeployment,
 } from './koyeb';
 import type { App } from '../db/schema';
 
@@ -49,9 +48,12 @@ async function deployToDatabricks({
     );
   }
 
-  // Set Databricks CLI environment variables
-  process.env.DATABRICKS_HOST = currentApp.databricksHost;
-  process.env.DATABRICKS_TOKEN = currentApp.databricksApiKey;
+  // Create isolated environment variables for this deployment
+  const databricksEnv = {
+    ...process.env,
+    DATABRICKS_HOST: currentApp.databricksHost,
+    DATABRICKS_TOKEN: currentApp.databricksApiKey,
+  };
 
   // Update app status to deploying for databricks deployments
   await db
@@ -85,22 +87,32 @@ async function deployToDatabricks({
       `databricks workspace import-dir --overwrite "${appDirectory}" "${workspaceSourceCodePath}"`,
       {
         cwd: appDirectory,
+        env: databricksEnv,
       },
     );
 
-    // 2. Create a databricks app IF it doesn't exist
-    const appExists = await exec(`databricks apps list | grep -q "${appName}"`);
+    // 2. Check if the app exists
+    const appExists = await checkDatabricksAppExists({
+      appName,
+      databricksHost: currentApp.databricksHost,
+      databricksApiKey: currentApp.databricksApiKey,
+    });
+
+    // 3. Create a databricks app IF it doesn't exist
     if (!appExists) {
-      logger.info('Creating Databricks app');
-      await exec(`databricks apps create ${appName}`);
+      logger.info(`Creating Databricks app ${appName}`);
+      await exec(`databricks apps create ${appName}`, {
+        env: databricksEnv,
+      });
     }
 
-    // 3. Deploy the app from there
+    // 4. Deploy the app from there
     logger.info('Deploying app to Databricks');
     const deployResult = await exec(
       `databricks apps deploy ${appName} --source-code-path "/Workspace${workspaceSourceCodePath}"`,
       {
         cwd: appDirectory,
+        env: databricksEnv,
       },
     );
 
@@ -110,7 +122,9 @@ async function deployToDatabricks({
     });
 
     const appUrl = (
-      await exec(`databricks apps get ${appName} | jq -r '.url'`)
+      await exec(`databricks apps get ${appName} | jq -r '.url'`, {
+        env: databricksEnv,
+      })
     ).stdout.trim();
 
     // Update app status to deployed
@@ -448,4 +462,48 @@ async function getNeonProjectConnectionString({
   });
 
   return connectionString.data.uri;
+}
+
+async function checkDatabricksAppExists({
+  appName,
+  databricksHost,
+  databricksApiKey,
+}: {
+  appName: string;
+  databricksHost: string;
+  databricksApiKey: string;
+}) {
+  try {
+    const result = await exec(
+      `databricks apps list | grep '${appName}' || true`,
+      {
+        env: {
+          ...process.env,
+          DATABRICKS_HOST: databricksHost,
+          DATABRICKS_TOKEN: databricksApiKey,
+        },
+      },
+    );
+
+    if (result.stderr) {
+      logger.warn('Databricks app check stderr output', {
+        appName,
+        stderr: result.stderr,
+      });
+    }
+
+    const appExists = result.stdout.trim().length > 0;
+    logger.info('Checked Databricks app existence', {
+      appName,
+      appExists,
+    });
+
+    return appExists;
+  } catch (error) {
+    logger.error('Failed to check Databricks app existence', {
+      appName,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  }
 }
