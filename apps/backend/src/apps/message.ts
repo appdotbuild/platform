@@ -684,6 +684,7 @@ export async function postMessage(
                   deployApp({
                     appId: applicationId!,
                     appDirectory: tempDirPath,
+                    databricksMode: Boolean(requestBody.databricksHost),
                   }),
                 )
                 .catch(async (error) => {
@@ -738,6 +739,9 @@ export async function postMessage(
                     {
                       type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
                       deploymentId: deployResult.deploymentId,
+                      deploymentType: requestBody.databricksHost
+                        ? 'databricks'
+                        : 'koyeb',
                     },
                   ),
                 );
