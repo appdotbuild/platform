@@ -1,0 +1,55 @@
+@import 'tailwindcss';
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: rgb(245, 244, 245);
+}
+
+#root {
+  height: 100%;
+}
+
+/* View Transitions - apenas o que você está usando */
+::view-transition-group(logo) {
+  animation-duration: 1.2s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-group(header) {
+  animation-duration: 1.2s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(main-content) {
+  animation: 0.5s ease-out both fade-slide-out;
+}
+
+::view-transition-new(main-content) {
+  animation: 0.5s ease-out both fade-slide-in;
+}
+
+::view-transition-old(chat-container) {
+  animation: 0.5s ease-out both fade-slide-out;
+}
+
+::view-transition-new(chat-container) {
+  animation: 0.5s ease-out both fade-slide-in;
+}
+
+@keyframes fade-slide-out {
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
