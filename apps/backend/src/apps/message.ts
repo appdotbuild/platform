@@ -320,7 +320,6 @@ export async function postMessage(
         ...body,
         applicationId,
         traceId,
-        templateId: requestBody.databricksHost ? 'nicegui_agent' : 'trpc_agent',
       };
     }
 
