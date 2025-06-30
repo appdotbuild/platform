@@ -33,6 +33,34 @@ const neonClient = createApiClient({
   apiKey: process.env.NEON_API_KEY!,
 });
 
+/**
+ * Validates appId to prevent shell injection attacks
+ * Only allows alphanumeric characters, hyphens, and underscores
+ */
+function validateAppId(appId: string): void {
+  if (!appId || typeof appId !== 'string') {
+    throw new Error('App ID is required and must be a string');
+  }
+
+  if (!/^[a-zA-Z0-9_-]+$/.test(appId)) {
+    throw new Error(
+      'Invalid app ID: only alphanumeric characters, hyphens, and underscores are allowed',
+    );
+  }
+
+  if (appId.length > 50) {
+    throw new Error('App ID must be 50 characters or less');
+  }
+}
+
+/**
+ * Safely quotes a string for shell execution
+ */
+function shellQuote(str: string): string {
+  // Replace single quotes with '\'' and wrap in single quotes
+  return `'${str.replace(/'/g, "'\\''")}'`;
+}
+
 async function deployToDatabricks({
   appId,
   appDirectory,
@@ -42,6 +70,9 @@ async function deployToDatabricks({
   appDirectory: string;
   currentApp: Partial<App>;
 }) {
+  // Validate appId to prevent shell injection
+  validateAppId(appId);
+
   if (!currentApp.databricksApiKey || !currentApp.databricksHost) {
     throw new Error(
       'Databricks API key and host are required for Databricks deployment',
@@ -101,7 +132,7 @@ async function deployToDatabricks({
     // 3. Create a databricks app IF it doesn't exist
     if (!appExists) {
       logger.info(`Creating Databricks app ${appName}`);
-      await exec(`databricks apps create ${appName}`, {
+      await exec(`databricks apps create ${shellQuote(appName)}`, {
         env: databricksEnv,
       });
     }
@@ -109,7 +140,11 @@ async function deployToDatabricks({
     // 4. Deploy the app from there
     logger.info('Deploying app to Databricks');
     const deployResult = await exec(
-      `databricks apps deploy ${appName} --source-code-path "/Workspace${workspaceSourceCodePath}"`,
+      `databricks apps deploy ${shellQuote(
+        appName,
+      )} --source-code-path ${shellQuote(
+        `/Workspace${workspaceSourceCodePath}`,
+      )}`,
       {
         cwd: appDirectory,
         env: databricksEnv,
@@ -122,7 +157,7 @@ async function deployToDatabricks({
     });
 
     const appUrl = (
-      await exec(`databricks apps get ${appName} | jq -r '.url'`, {
+      await exec(`databricks apps get ${shellQuote(appName)} | jq -r '.url'`, {
         env: databricksEnv,
       })
     ).stdout.trim();
@@ -171,6 +206,9 @@ async function deployToKoyeb({
   appDirectory: string;
   currentApp: Partial<App>;
 }) {
+  // Validate appId to prevent shell injection
+  validateAppId(appId);
+
   let connectionString: string | undefined;
   let neonProjectId = currentApp.neonProjectId;
 
@@ -473,9 +511,12 @@ async function checkDatabricksAppExists({
   databricksHost: string;
   databricksApiKey: string;
 }) {
+  // Validate appName to prevent shell injection
+  validateAppId(appName);
+
   try {
     const result = await exec(
-      `databricks apps list | grep '${appName}' || true`,
+      `databricks apps list | grep ${shellQuote(appName)} || true`,
       {
         env: {
           ...process.env,
