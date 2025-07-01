@@ -9,6 +9,7 @@ export function ChatInput() {
   const handleSubmit = async () => {
     navigate({
       to: '/chat/123',
+      viewTransition: true,
     });
   };
 

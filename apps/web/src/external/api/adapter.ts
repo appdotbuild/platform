@@ -1,13 +1,35 @@
-const API_BASE_URL = import.meta.env.PLATFORM_API_URL;
+import { stackClientApp } from '~/lib/auth';
 
-const getToken = () => localStorage.getItem('auth_token') || '';
+const API_BASE_URL = import.meta.env.VITE_PLATFORM_API_URL;
+
+const getToken = async (): Promise<string | null> => {
+  try {
+    const user = await stackClientApp.getUser();
+    if (!user) return null;
+
+    const { accessToken } = await user.getAuthJson();
+    return accessToken || null;
+  } catch (error) {
+    console.error('Failed to get auth token:', error);
+    return null;
+  }
+};
 
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const token = await getToken();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
+      ...headers,
       ...options?.headers,
     },
   });

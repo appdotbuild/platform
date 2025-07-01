@@ -14,7 +14,7 @@ export function HomePage() {
         </h1>
         <div
           className="flex flex-col gap-2"
-          style={{ viewTransitionName: 'chat-input' } as React.CSSProperties}
+          style={{ viewTransitionName: 'chat-input' }}
         >
           <ChatInput />
           <ChatList />

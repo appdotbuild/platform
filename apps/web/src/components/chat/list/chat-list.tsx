@@ -1,52 +1,82 @@
-import { Suspense, useState } from 'react';
+import type { App } from '@appdotbuild/core';
+import { ChevronDown, LayoutGrid } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useApps } from '~/hooks/useApps';
+import { ChatItem } from './chat-item';
 
 export function ChatList() {
   const [isOpen, setIsOpen] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { apps } = useApps();
+  const {
+    apps,
+    isLoadingApps,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useApps();
+
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+
+      if (isNearBottom && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
+  useEffect(() => {
+    if (!isLoadingApps && !hasLoadedOnce) {
+      setHasLoadedOnce(true);
+    }
+  }, [isLoadingApps, hasLoadedOnce]);
+
+  const renderContent = () => {
+    if (isLoadingApps) {
+      return (
+        <div key="loading" className="animate-fade-in">
+          <div className="p-4 text-gray-500 text-center">
+            Loading your apps...
+          </div>
+        </div>
+      );
+    }
+
+    if (!apps || apps.length === 0) {
+      return (
+        <div key="empty" className="animate-slide-fade-in">
+          <div className="p-4 text-gray-500 text-center">
+            You have no apps yet. Start building your first app!
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div key="apps" className={hasLoadedOnce ? 'animate-slide-fade-in' : ''}>
+        <AppsList apps={apps} />
+        {isFetchingNextPage && (
+          <div className="p-4 text-gray-500 text-center">
+            Loading more apps...
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full h-16 border border-gray-300 rounded-lg bg-white text-black flex justify-between items-center px-6 hover:bg-gray-50 transition-colors duration-200 shadow-sm group"
-      >
-        <div className="flex items-center gap-3">
-          <svg
-            className="w-6 h-6 text-gray-600 group-hover:text-gray-800 transition-colors"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <title>apps</title>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-            />
-          </svg>
-          <span className="text-medium font-medium">My Apps</span>
-        </div>
-        <svg
-          className={`w-5 h-5 transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <title>arrow down</title>
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
-      </button>
+      <ToggleButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
 
       <div
         className={`mt-2 rounded-lg bg-white shadow-sm overflow-hidden transition-all duration-300 ease-in-out border ${
@@ -55,24 +85,49 @@ export function ChatList() {
             : 'max-h-0 opacity-0 border-transparent'
         }`}
       >
-        <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300">
-          <Suspense
-            fallback={
-              <div className="p-4 text-gray-500 text-center">
-                Loading your apps...
-              </div>
-            }
-          >
-            {apps && apps.length === 0 && (
-              <ul>
-                <li className="p-4 text-gray-500 text-center">
-                  You have no apps yet. Start building your first app!
-                </li>
-              </ul>
-            )}
-          </Suspense>
+        <div
+          ref={scrollRef}
+          className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300"
+        >
+          {renderContent()}
         </div>
       </div>
     </div>
+  );
+}
+
+function ToggleButton({
+  isOpen,
+  onClick,
+}: {
+  isOpen: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full h-16 border border-gray-300 rounded-lg bg-white text-black flex justify-between items-center px-6 hover:bg-gray-50 transition-colors duration-200 shadow-sm group"
+    >
+      <div className="flex items-center gap-3">
+        <LayoutGrid className="w-6 h-6 text-gray-600 group-hover:text-gray-800 transition-colors" />
+        <span className="text-medium font-medium">My Apps</span>
+      </div>
+      <ChevronDown
+        className={`w-5 h-5 transition-transform duration-200 ${
+          isOpen ? 'rotate-180' : ''
+        }`}
+      />
+    </button>
+  );
+}
+
+function AppsList({ apps }: { apps: App[] }) {
+  return (
+    <ul>
+      {apps.map((app) => (
+        <ChatItem key={app.id} app={app} index={() => apps.indexOf(app)} />
+      ))}
+    </ul>
   );
 }

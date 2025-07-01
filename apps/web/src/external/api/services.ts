@@ -5,7 +5,18 @@ export type CreateAppInput = {
   name: string;
 };
 
+export type PaginatedResponse<T> = {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
 export const appsService = {
-  fetchApps: () => apiClient.get<App[]>('/apps'),
+  fetchApps: (page = 1, limit = 10) =>
+    apiClient.get<PaginatedResponse<App>>(`/apps?page=${page}&limit=${limit}`),
   createApp: (data: CreateAppInput) => apiClient.post<App>('/apps', data),
 };
