@@ -9,7 +9,8 @@
     "dev": "vite",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "types:check": "tsc --noEmit"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",

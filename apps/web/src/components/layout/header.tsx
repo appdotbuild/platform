@@ -1,9 +1,7 @@
-import { Link, useLocation } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
+import { isHomePage } from '~/utils/router-checker';
 
 export function Header() {
-  const { pathname } = useLocation();
-  const isHome = pathname === '/';
-
   return (
     <header
       className="flex w-full items-center py-10 px-40"
@@ -11,7 +9,7 @@ export function Header() {
     >
       <nav
         className={`flex w-full items-center ${
-          isHome ? 'justify-center' : 'justify-start'
+          isHomePage() ? 'justify-center' : 'justify-start'
         }`}
       >
         <Link to="/" viewTransition={{ types: ['header-move'] }}>
