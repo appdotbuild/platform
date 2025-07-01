@@ -23,7 +23,7 @@ export function ChatInput() {
         }
         value={inputValue}
         onInput={(e) => setInputValue(e.currentTarget.value)}
-        onKeyPress={(e) => {
+        onKeyDown={(e) => {
           if (e.key === 'Enter' && inputValue.trim() !== '') {
             e.preventDefault();
             handleSubmit();

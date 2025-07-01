@@ -13,43 +13,55 @@ body {
   height: 100%;
 }
 
-/* View Transitions - apenas o que você está usando */
+/* View Transitions - animações mais suaves */
 ::view-transition-group(logo) {
   animation-duration: 1.2s;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 ::view-transition-group(header) {
-  animation-duration: 1.2s;
-  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-duration: 0.6s;
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-::view-transition-old(main-content) {
-  animation: 0.5s ease-out both fade-slide-out;
+::view-transition-group(footer) {
+  animation-duration: 0.4s;
 }
 
-::view-transition-new(main-content) {
-  animation: 0.5s ease-out both fade-slide-in;
+::view-transition-old(footer) {
+  animation: 0.4s ease-out both fade-out;
+}
+
+::view-transition-new(footer) {
+  animation: 0.4s ease-out both fade-in;
 }
 
 ::view-transition-old(chat-container) {
-  animation: 0.5s ease-out both fade-slide-out;
+  animation: 0.4s ease-out both fade-out;
 }
 
 ::view-transition-new(chat-container) {
-  animation: 0.5s ease-out both fade-slide-in;
+  animation: 0.4s ease-out both fade-in;
 }
 
-@keyframes fade-slide-out {
+/* Fade suave para elementos que somem/aparecem */
+@keyframes fade-out {
   to {
     opacity: 0;
-    transform: translateY(20px);
   }
 }
 
-@keyframes fade-slide-in {
+@keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(20px);
   }
+}
+
+/* Adiciona fade para todos os elementos sem view-transition-name específico */
+::view-transition-old(root) {
+  animation: 0.3s ease-out both fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 0.3s ease-out both fade-in;
 }

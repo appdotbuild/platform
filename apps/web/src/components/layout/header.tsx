@@ -4,16 +4,13 @@ import { isHomePage } from '~/utils/router-checker';
 
 export function Header() {
   return (
-    <header
-      className="flex w-full items-center py-10 px-40"
-      style={{ viewTransitionName: 'header' }}
-    >
+    <header className="flex w-full items-center py-10 px-40">
       <nav
         className={`flex w-full items-center ${
           isHomePage() ? 'justify-center' : 'justify-start'
         }`}
       >
-        <Link to="/" viewTransition={{ types: ['header-move'] }}>
+        <Link to="/">
           <img
             src="https://www.app.build/_next/static/media/ca7edce715379528b2fbeb326c96cf7b.svg"
             width="112"
