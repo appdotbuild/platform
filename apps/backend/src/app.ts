@@ -32,6 +32,11 @@ await app.register(import('@fastify/compress'), {
   global: false,
 });
 
+await app.register(import('@fastify/cors'), {
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
+});
+
 app.decorate(
   'authenticate',
   async (req: FastifyRequest, reply: FastifyReply) => {

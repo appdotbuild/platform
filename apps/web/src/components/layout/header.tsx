@@ -1,3 +1,4 @@
+import { UserButton } from '@stackframe/react';
 import { Link } from '@tanstack/react-router';
 import { isHomePage } from '~/utils/router-checker';
 
@@ -23,6 +24,7 @@ export function Header() {
           />
         </Link>
       </nav>
+      <UserButton />
     </header>
   );
 }

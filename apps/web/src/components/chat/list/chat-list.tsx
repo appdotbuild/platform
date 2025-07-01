@@ -1,9 +1,10 @@
 import { Suspense, useState } from 'react';
-
-const apps: [] = [];
+import { useApps } from '~/hooks/useApps';
 
 export function ChatList() {
   const [isOpen, setIsOpen] = useState(false);
+
+  const { apps } = useApps();
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -30,7 +31,9 @@ export function ChatList() {
           <span className="text-medium font-medium">My Apps</span>
         </div>
         <svg
-          className={`w-5 h-5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 transition-transform duration-200 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

@@ -13,6 +13,9 @@
     "types:check": "tsc --noEmit"
   },
   "dependencies": {
+    "@appdotbuild/auth": "workspace:*",
+    "@appdotbuild/core": "workspace:*",
+    "@stackframe/react": "^2.8.16",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-query": "^5.81.5",
     "@tanstack/react-query-devtools": "^5.81.5",
