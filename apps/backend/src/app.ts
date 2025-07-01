@@ -3,9 +3,13 @@ import fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { validateAuth } from './auth-strategy';
 import { Instrumentation } from './instrumentation';
+import { isDev } from './env';
 
-// must be called before app creation
-Instrumentation.initialize();
+// we only want to initialize instrumentation in production/staging
+if (!isDev) {
+  // must be called before app creation
+  Instrumentation.initialize();
+}
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -26,7 +30,10 @@ export const app = fastify({
   genReqId: () => uuidv4(),
 });
 
-Instrumentation.setupPerformanceMonitoring(app);
+// we only want to setup performance monitoring in production/staging
+if (!isDev) {
+  Instrumentation.setupPerformanceMonitoring(app);
+}
 
 await app.register(import('@fastify/compress'), {
   global: false,
