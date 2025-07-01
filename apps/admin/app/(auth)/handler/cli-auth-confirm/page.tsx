@@ -127,7 +127,9 @@ export default function CliAuthConfirmPage() {
           </div>
         )}
 
-        {!hideGithubAppInstall && <Separator className="bg-gray-100 mb-4" />}
+        {canInstallApps && !hideGithubAppInstall && (
+          <Separator className="bg-gray-100 mb-4" />
+        )}
 
         {canInstallApps && (
           <div
