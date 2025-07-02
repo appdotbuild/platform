@@ -1,15 +1,25 @@
-import { useLocation } from '@tanstack/react-router';
+import { useUser } from '@stackframe/react';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useChat } from '~/hooks/useChat';
 import { isChatPage, isHomePage } from '~/utils/router-checker';
 
 export function ChatInput() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const user = useUser();
   const { createNewApp, sendMessage } = useChat();
   const [inputValue, setInputValue] = useState('');
 
   const handleSubmit = async () => {
     if (inputValue.trim()) {
+      // if not logged, store the message and use it later to continue
+      if (isHomePage(pathname) && !user) {
+        localStorage.setItem('pendingMessage', inputValue);
+        navigate({ to: '/handler/sign-in' });
+        return;
+      }
+
       isHomePage(pathname)
         ? createNewApp(inputValue)
         : await sendMessage(inputValue);
