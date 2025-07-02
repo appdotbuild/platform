@@ -19,7 +19,7 @@ export async function applyDiff(
         const patchFileName = patch.newFileName || patch.oldFileName;
 
         if (!patchFileName) {
-          logger.info('[loading] No file name: %s', patch);
+          logger.info(`[loading] No file name: ${patch}`);
           callback(undefined, '');
           return;
         }
@@ -44,7 +44,7 @@ export async function applyDiff(
         const patchFileName = patch.newFileName || patch.oldFileName;
 
         if (!patchFileName) {
-          logger.info('[patched] No file name: %s', patch);
+          logger.info(`[patched] No file name: ${patch}`);
           callback(undefined);
           return;
         }

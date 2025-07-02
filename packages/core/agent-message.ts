@@ -15,6 +15,14 @@ export const AgentStatus = {
   HISTORY: 'history',
 } as const;
 
+export const DeployStatus = {
+  DEPLOYING: 'deploying',
+  DEPLOYED: 'deployed',
+  FAILED: 'failed',
+  STOPPING: 'stopping',
+  PENDING: 'pending',
+} as const;
+
 export const MessageKind = {
   KEEP_ALIVE: 'KeepAlive',
   STAGE_RESULT: 'StageResult',
@@ -38,6 +46,7 @@ export type ApplicationId = string;
 export type TraceId = `app-${ApplicationId}.req-${RequestId}`;
 export type AgentStatus = (typeof AgentStatus)[keyof typeof AgentStatus];
 export type MessageKind = (typeof MessageKind)[keyof typeof MessageKind];
+export type DeployStatusType = (typeof DeployStatus)[keyof typeof DeployStatus];
 export type PromptKindType = (typeof PromptKind)[keyof typeof PromptKind];
 export type PlatformMessageType =
   (typeof PlatformMessageType)[keyof typeof PlatformMessageType];
@@ -55,7 +64,10 @@ export const conversationMessageSchema = z.object({
 export type PlatformMessageMetadata = {
   type?: PlatformMessageType;
   deploymentId?: string;
+  deploymentUrl?: string;
   deploymentType?: 'databricks' | 'koyeb';
+  githubUrl?: string;
+  deployStatus?: DeployStatusType;
 };
 
 // Agent SSE Event message object
@@ -86,6 +98,9 @@ export const agentSseEventSchema = z.object({
       type: z.nativeEnum(PlatformMessageType).optional(),
       deploymentId: z.string().optional(),
       deploymentType: z.enum(['databricks', 'koyeb']).optional(),
+      deployStatus: z.nativeEnum(DeployStatus).optional(),
+      githubUrl: z.string().optional(),
+      deploymentUrl: z.string().optional(),
     })
     .optional(),
 });

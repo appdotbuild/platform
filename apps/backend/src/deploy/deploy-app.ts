@@ -25,6 +25,7 @@ import {
   getKoyebDomain,
 } from './koyeb';
 import type { App } from '../db/schema';
+import { DeployStatus } from '@appdotbuild/core';
 import { deployToDatabricks } from './databricks';
 
 const exec = promisify(execNative);
@@ -224,7 +225,7 @@ async function deployToKoyeb({
       koyebAppId,
       koyebServiceId,
       koyebDomainId,
-      deployStatus: 'deployed',
+      deployStatus: DeployStatus.DEPLOYED,
     })
     .where(eq(apps.id, appId));
 
@@ -287,7 +288,7 @@ export async function deployApp({
   }
 
   // deployed is okay, but deploying is not
-  if (currentApp.deployStatus === 'deploying') {
+  if (currentApp.deployStatus === DeployStatus.DEPLOYING) {
     throw new Error(`App ${appId} is already being deployed`);
   }
 

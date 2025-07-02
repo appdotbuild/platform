@@ -9,6 +9,7 @@ import {
   jsonb,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+import { DeployStatus } from '@appdotbuild/core';
 
 export const apps = pgTable(
   'apps',
@@ -24,7 +25,7 @@ export const apps = pgTable(
     ownerId: text('userId').notNull(),
     flyAppId: text(),
     s3Checksum: text(),
-    deployStatus: text().default('pending'), // pending, deploying, deployed, failed
+    deployStatus: text().default(DeployStatus.PENDING), // pending, deploying, deployed, failed
     traceId: text(),
     // TODO: this should be set per deployment, and not per app, so we can rollback to a previous state
     agentState: jsonb('agentState'),

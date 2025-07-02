@@ -33,6 +33,9 @@ export function AppDetails() {
         initialPrompt="How would you like to modify your application?"
         appId={app?.id}
         traceId={app?.traceId}
+        repositoryUrl={app?.repositoryUrl}
+        deploymentUrl={app?.appUrl}
+        deployStatus={app?.deployStatus}
       />
     </Box>
   );

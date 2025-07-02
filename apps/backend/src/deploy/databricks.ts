@@ -4,6 +4,7 @@ import { apps, db } from '../db';
 import { logger } from '../logger';
 import { promisify } from 'node:util';
 import type { App } from '../db/schema';
+import { DeployStatus } from '@appdotbuild/core';
 
 const exec = promisify(execNative);
 
@@ -36,7 +37,7 @@ export async function deployToDatabricks({
   await db
     .update(apps)
     .set({
-      deployStatus: 'deploying',
+      deployStatus: DeployStatus.DEPLOYING,
     })
     .where(eq(apps.id, appId));
 
@@ -112,7 +113,7 @@ export async function deployToDatabricks({
     await db
       .update(apps)
       .set({
-        deployStatus: 'deployed',
+        deployStatus: DeployStatus.DEPLOYED,
         appUrl,
       })
       .where(eq(apps.id, appId));
@@ -131,7 +132,7 @@ export async function deployToDatabricks({
     await db
       .update(apps)
       .set({
-        deployStatus: 'failed',
+        deployStatus: DeployStatus.FAILED,
       })
       .where(eq(apps.id, appId));
 

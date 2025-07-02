@@ -1,4 +1,8 @@
-import type { MessageKind, PromptKindType } from '../agent-message';
+import type {
+  DeployStatusType,
+  MessageKind,
+  PromptKindType,
+} from '../agent-message';
 
 export type UserMessageLimit = {
   isUserLimitReached: boolean;
@@ -58,7 +62,7 @@ export type App = {
   ownerId: string;
   flyAppId?: string | null;
   s3Checksum?: string | null;
-  deployStatus?: string | null;
+  deployStatus?: DeployStatusType;
   typespecSchema?: string | null;
   receivedSuccess: boolean;
   recompileInProgress: boolean;
