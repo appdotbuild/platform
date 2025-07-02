@@ -1,7 +1,10 @@
+import { useUser } from '@stackframe/react';
 import { ChatInput } from '~/components/chat/chat-input';
 import { ChatList } from '~/components/chat/list/chat-list';
 
 export function HomePage() {
+  const user = useUser();
+
   return (
     <div className="flex flex-col items-center h-full px-40">
       <div className="flex flex-col items-center gap-20 h-full justify-center">
@@ -17,7 +20,7 @@ export function HomePage() {
           style={{ viewTransitionName: 'chat-input' }}
         >
           <ChatInput />
-          <ChatList />
+          {user && <ChatList />}
         </div>
       </div>
     </div>
