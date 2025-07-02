@@ -50,14 +50,16 @@ export const useSendMessage = () => {
     applicationId: string;
     traceId: string;
     deploymentId?: string;
+    deploymentType?: 'databricks' | 'koyeb';
   } | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const { data: deploymentStatus } = useDeploymentStatus(
-    metadata?.deploymentId,
-    abortControllerRef.current?.signal,
-  );
+  const { data: deploymentStatus } = useDeploymentStatus({
+    deploymentId: metadata?.deploymentId,
+    deploymentType: metadata?.deploymentType,
+    signal: abortControllerRef.current?.signal,
+  });
 
   useEffect(() => {
     if (deploymentStatus) {
@@ -111,6 +113,8 @@ export const useSendMessage = () => {
       message,
       applicationId: passedAppId,
       traceId: passedTraceId,
+      databricksApiKey,
+      databricksHost,
     }: SendMessageParams) => {
       const controller = new AbortController();
       abortControllerRef.current = controller;
@@ -118,6 +122,8 @@ export const useSendMessage = () => {
         message,
         applicationId: passedAppId || metadata?.applicationId,
         traceId: passedTraceId || metadata?.traceId,
+        databricksApiKey,
+        databricksHost,
         signal: controller.signal,
         onMessage: (newEvent) => {
           if (!newEvent.traceId) {
@@ -136,6 +142,7 @@ export const useSendMessage = () => {
             applicationId,
             traceId: newEvent.traceId,
             deploymentId: newEvent.metadata?.deploymentId,
+            deploymentType: newEvent.metadata?.deploymentType,
           });
 
           queryClient.setQueryData(

@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 
+const ENDPOINTS = [
+  'https://api.github.com/user',
+  'https://api.github.com/user/installations',
+] as const;
+
 export async function POST(request: Request) {
   try {
-    const { login_code, refresh_token } = await request.json();
+    const { login_code, refresh_token, access_token } = await request.json();
 
-    if (!login_code || !refresh_token) {
+    if (!login_code || !refresh_token || !access_token) {
       return NextResponse.json(
         { error: 'Missing required parameters' },
         { status: 400 },
@@ -42,8 +47,34 @@ export async function POST(request: Request) {
       );
     }
 
+    const [user, appInstallations] = await Promise.all(
+      ENDPOINTS.map(async (endpoint) => {
+        const response = await fetch(endpoint, {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
+        return await response.json();
+      }),
+    );
+
+    /**
+     * EMU users can't install github apps, so we check if there's any app installed for them.
+     * We do also check if the user is not a data user, so in case a user doesn't have any app installed, we can install the app.
+     *
+     * This will only work for databricks EMU users properly.
+     */
+    const isDataUser = user.login.includes('_data');
+    const canInstallApps =
+      !isDataUser &&
+      (appInstallations.installations.some(
+        (installation: any) => installation.target_type === 'User',
+      ) ||
+        appInstallations.installations.length === 0);
+
     const data = await response.json();
-    return NextResponse.json(data);
+
+    return NextResponse.json({ ...data, canInstallApps });
   } catch (error) {
     console.error('CLI auth completion error:', {
       error,

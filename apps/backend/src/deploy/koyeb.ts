@@ -348,10 +348,29 @@ export const getKoyebDeploymentEndpoint = async (
 
 function getOrgName(githubUsername: string) {
   if (process.env.NODE_ENV === 'production') {
-    return `appbuild-${githubUsername}`;
+    return getNormalizedOrgName(`appbuild-${githubUsername}`);
   }
 
-  return `appbuild-dev-${githubUsername}`;
+  return getNormalizedOrgName(`appbuild-dev-${githubUsername}`);
+}
+
+/**
+ * Koyeb validation for org names is this
+ * "Use 1 to 39 letters, digits and dash only"
+ * So this function is used to normalize the org name to meet the requirements.
+ */
+function getNormalizedOrgName(orgName: string) {
+  // This will replace all non-alphanumeric characters with a dash
+  let normalized = orgName.replace(/[^a-zA-Z0-9-]/g, '-');
+
+  // If there's multiple dashes, they get replaced with one.
+  normalized = normalized.replace(/-+/g, '-');
+
+  if (normalized.length > 39) {
+    normalized = normalized.substring(0, 39);
+  }
+
+  return normalized;
 }
 
 function getDomainName(appId: string) {

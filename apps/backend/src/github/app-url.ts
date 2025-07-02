@@ -1,10 +1,8 @@
-import { Octokit } from '@octokit/rest';
-import type { WithGithubAccessToken } from './types';
 import { logger } from '../logger';
+import type { GithubEntityInitialized } from './entity';
 
 type AddAppURLRequest = {
-  repo: string;
-  owner: string;
+  githubEntity: GithubEntityInitialized;
   appURL: string;
 };
 
@@ -15,16 +13,12 @@ type AddAppURLResponse = {
 };
 
 export const addAppURL = async ({
-  repo,
-  owner,
+  githubEntity,
   appURL,
-  githubAccessToken,
-}: WithGithubAccessToken<AddAppURLRequest>): Promise<AddAppURLResponse> => {
-  try {
-    const octokit = new Octokit({
-      auth: githubAccessToken,
-    });
+}: AddAppURLRequest): Promise<AddAppURLResponse> => {
+  const { owner, repo, octokit } = githubEntity;
 
+  try {
     await octokit.rest.repos.update({
       owner,
       repo,

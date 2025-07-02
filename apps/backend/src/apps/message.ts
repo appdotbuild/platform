@@ -25,12 +25,14 @@ import { appPrompts, apps, db } from '../db';
 import { deployApp } from '../deploy';
 import { isDev } from '../env';
 import {
-  addAppURL,
   checkIfRepoExists,
   cloneRepository,
-  createUserCommit,
-  createUserInitialCommit,
-  createUserRepository,
+  createRepository,
+  addAppURL,
+  commitChanges,
+  createInitialCommit,
+  GithubEntity,
+  type GithubEntityInitialized,
 } from '../github';
 import { Instrumentation } from '../instrumentation';
 import {
@@ -56,6 +58,7 @@ type Body = {
   settings: Record<string, any>;
   agentState?: any;
   allFiles?: FileData[];
+  templateId?: 'trpc_agent' | 'nicegui_agent';
 };
 
 type RequestBody = {
@@ -65,6 +68,8 @@ type RequestBody = {
   settings?: Record<string, any>;
   applicationId?: string;
   traceId?: TraceId;
+  databricksApiKey?: string;
+  databricksHost?: string;
 };
 
 type StructuredLog = {
@@ -193,6 +198,11 @@ export async function postMessage(
   Instrumentation.trackUserMessage(requestBody.message);
 
   try {
+    const githubEntity = await new GithubEntity(
+      githubUsername,
+      githubAccessToken,
+    ).init();
+
     let body: Optional<Body, 'traceId'> = {
       applicationId,
       allMessages: [
@@ -202,6 +212,8 @@ export async function postMessage(
         },
       ],
       settings: requestBody.settings || {},
+      // for now we only support python apps for databricks apps
+      templateId: requestBody.databricksHost ? 'nicegui_agent' : 'trpc_agent',
     };
 
     let appName: string | null = null;
@@ -243,6 +255,7 @@ export async function postMessage(
           'info',
         );
         appName = application[0]!.appName;
+
         const messagesFromHistory = await getMessagesFromHistory(
           applicationId,
           userId,
@@ -341,8 +354,8 @@ export async function postMessage(
 
     const volumePromise = isPermanentApp
       ? cloneRepository({
-          repo: `${githubUsername}/${appName}`,
-          githubAccessToken,
+          repo: `${githubEntity.owner}/${appName}`,
+          githubAccessToken: githubEntity.githubAccessToken,
           tempDirPath,
         })
           .then(copyDirToMemfs)
@@ -614,10 +627,10 @@ export async function postMessage(
                   },
                   'info',
                 );
+                githubEntity.repo = appName;
                 await appIteration({
                   appName: appName,
-                  githubUsername,
-                  githubAccessToken,
+                  githubEntity,
                   files,
                   agentState: completeParsedMessage.message.agentState,
                   applicationId,
@@ -653,14 +666,14 @@ export async function postMessage(
                   appName,
                   traceId: traceId!,
                   agentState: completeParsedMessage.message.agentState,
-                  githubUsername,
-                  githubAccessToken,
+                  githubEntity,
                   ownerId: request.user.id,
                   session,
                   requestBody,
                   files,
                   streamLog,
                 });
+
                 appName = newAppName;
                 isPermanentApp = true;
 
@@ -679,6 +692,7 @@ export async function postMessage(
                   deployApp({
                     appId: applicationId!,
                     appDirectory: tempDirPath,
+                    databricksMode: Boolean(requestBody.databricksHost),
                   }),
                 )
                 .catch(async (error) => {
@@ -717,10 +731,8 @@ export async function postMessage(
                 );
 
                 await addAppURL({
-                  repo: appName as string,
-                  owner: githubUsername,
+                  githubEntity,
                   appURL: deployResult.appURL,
-                  githubAccessToken,
                 });
 
                 await pushAndSavePlatformMessage(
@@ -733,6 +745,9 @@ export async function postMessage(
                     {
                       type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
                       deploymentId: deployResult.deploymentId,
+                      deploymentType: requestBody.databricksHost
+                        ? 'databricks'
+                        : 'koyeb',
                     },
                   ),
                 );
@@ -923,8 +938,7 @@ async function appCreation({
   appName,
   traceId,
   agentState,
-  githubUsername,
-  githubAccessToken,
+  githubEntity,
   ownerId,
   session,
   requestBody,
@@ -935,8 +949,7 @@ async function appCreation({
   appName: string;
   traceId: TraceId;
   agentState: AgentSseEvent['message']['agentState'];
-  githubUsername: string;
-  githubAccessToken: string;
+  githubEntity: GithubEntityInitialized;
   ownerId: string;
   session: Session;
   requestBody: RequestBody;
@@ -961,8 +974,7 @@ async function appCreation({
 
   const { repositoryUrl, appName: newAppName } = await createUserUpstreamApp({
     appName,
-    githubUsername,
-    githubAccessToken,
+    githubEntity,
     files,
   });
 
@@ -981,7 +993,9 @@ async function appCreation({
     agentState,
     repositoryUrl,
     appName: newAppName,
-    githubUsername,
+    githubUsername: githubEntity.githubUsername,
+    databricksApiKey: requestBody.databricksApiKey,
+    databricksHost: requestBody.databricksHost,
   });
   streamLog(
     {
@@ -1008,8 +1022,7 @@ async function appCreation({
 
 async function appIteration({
   appName,
-  githubUsername,
-  githubAccessToken,
+  githubEntity,
   files,
   agentState,
   applicationId,
@@ -1018,8 +1031,7 @@ async function appIteration({
   commitMessage,
 }: {
   appName: string;
-  githubUsername: string;
-  githubAccessToken: string;
+  githubEntity: GithubEntityInitialized;
   files: ReturnType<typeof readDirectoryRecursive>;
   applicationId: string;
   traceId: string;
@@ -1029,13 +1041,11 @@ async function appIteration({
 }) {
   const commitStartTime = Instrumentation.trackGitHubCommit();
 
-  const { commitSha } = await createUserCommit({
-    repo: appName,
-    owner: githubUsername,
+  const { commitSha } = await commitChanges({
+    githubEntity,
     paths: files,
     message: commitMessage,
     branch: 'main',
-    githubAccessToken,
   });
 
   Instrumentation.trackGitHubCommitEnd(commitStartTime);
@@ -1049,7 +1059,8 @@ async function appIteration({
       .where(eq(apps.id, applicationId));
   }
 
-  const commitUrl = `https://github.com/${githubUsername}/${appName}/commit/${commitSha}`;
+  const commitUrl = `https://github.com/${githubEntity.owner}/${appName}/commit/${commitSha}`;
+
   await pushAndSavePlatformMessage(
     session,
     applicationId,
@@ -1064,19 +1075,16 @@ async function appIteration({
 
 async function createUserUpstreamApp({
   appName,
-  githubUsername,
-  githubAccessToken,
+  githubEntity,
   files,
 }: {
   appName: string;
-  githubUsername: string;
-  githubAccessToken: string;
+  githubEntity: GithubEntityInitialized;
   files: ReturnType<typeof readDirectoryRecursive>;
 }) {
   const repoExists = await checkIfRepoExists({
-    username: githubUsername, // or the org name
-    repoName: appName,
-    githubAccessToken,
+    appName,
+    githubEntity,
   });
 
   if (repoExists) {
@@ -1087,9 +1095,10 @@ async function createUserUpstreamApp({
     });
   }
 
-  const { repositoryUrl } = await createUserRepository({
-    repo: appName,
-    githubAccessToken,
+  githubEntity.repo = appName;
+
+  const { repositoryUrl } = await createRepository({
+    githubEntity,
   });
 
   app.log.info({
@@ -1098,14 +1107,13 @@ async function createUserUpstreamApp({
     appName,
   });
 
-  const { commitSha: initialCommitSha } = await createUserInitialCommit({
-    repo: appName,
-    owner: githubUsername,
+  const { commitSha: initialCommitSha } = await createInitialCommit({
+    githubEntity,
     paths: files,
-    githubAccessToken,
   });
 
-  const initialCommitUrl = `https://github.com/${githubUsername}/${appName}/commit/${initialCommitSha}`;
+  const initialCommitUrl = `https://github.com/${githubEntity.owner}/${appName}/commit/${initialCommitSha}`;
+
   return { repositoryUrl, appName, initialCommitUrl };
 }
 
