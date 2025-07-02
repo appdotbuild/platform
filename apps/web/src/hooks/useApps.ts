@@ -1,11 +1,6 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { appsService } from '~/external/api/services';
-
-const APPS_QUERY_KEY = ['apps'] as const;
+import { APPS_QUERY_KEY } from './queryKeys';
 
 export function useApps() {
   const {
@@ -27,7 +22,7 @@ export function useApps() {
     initialPageParam: 1,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const apps = data?.pages.flatMap((page) => page.data) ?? [];
@@ -40,15 +35,4 @@ export function useApps() {
     isLoadingApps: isLoading,
     appsError: error,
   };
-}
-
-export function useCreateApp() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: appsService.createApp,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: APPS_QUERY_KEY });
-    },
-  });
 }

@@ -1,11 +1,7 @@
-import { useLocation } from '@tanstack/react-router';
-
-export function isHomePage(): boolean {
-  const { pathname } = useLocation();
+export function isHomePage(pathname: string): boolean {
   return pathname === '/';
 }
 
-export function isChatPage(): boolean {
-  const { pathname } = useLocation();
+export function isChatPage(pathname: string): boolean {
   return pathname.startsWith('/chat/');
 }

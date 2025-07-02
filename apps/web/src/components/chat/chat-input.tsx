@@ -1,16 +1,20 @@
-import { useNavigate } from '@tanstack/react-router';
+import { useLocation } from '@tanstack/react-router';
 import { useState } from 'react';
-import { isChatPage } from '~/utils/router-checker';
+import { useChat } from '~/hooks/useChat';
+import { isChatPage, isHomePage } from '~/utils/router-checker';
 
 export function ChatInput() {
-  const navigate = useNavigate({ from: '/' });
+  const { pathname } = useLocation();
+  const { createNewApp, sendMessage } = useChat();
   const [inputValue, setInputValue] = useState('');
 
   const handleSubmit = async () => {
-    navigate({
-      to: '/chat/123',
-      viewTransition: true,
-    });
+    if (inputValue.trim()) {
+      isHomePage(pathname)
+        ? createNewApp(inputValue)
+        : await sendMessage(inputValue);
+      setInputValue('');
+    }
   };
 
   return (
@@ -18,29 +22,28 @@ export function ChatInput() {
       <input
         className="w-full h-full p-4 bg-transparent border-none outline-none text-black"
         placeholder={
-          isChatPage()
+          isChatPage(pathname)
             ? 'Type your message...'
             : 'Describe the app you want to build...'
         }
         value={inputValue}
-        onInput={(e) => setInputValue(e.currentTarget.value)}
+        onChange={(e) => setInputValue(e.currentTarget.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && inputValue.trim() !== '') {
+          if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSubmit();
           }
         }}
-        ref={(el) => {
-          setTimeout(() => el?.focus(), 100);
-        }}
+        autoFocus
       />
 
       <button
-        type="submit"
+        type="button"
         className="bg-black w-32 h-12 text-white hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={handleSubmit}
+        disabled={!inputValue.trim()}
       >
-        {isChatPage() ? 'Send' : "Let's start!"}
+        {isChatPage(pathname) ? 'Send' : "Let's start!"}
       </button>
     </div>
   );
