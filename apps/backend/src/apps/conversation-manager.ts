@@ -44,6 +44,7 @@ export class ConversationManager {
     const userMessage: ConversationMessage = {
       role: 'user' as const,
       content: message,
+      kind: MessageKind.USER_MESSAGE,
     };
 
     const existingData = this.conversationMap.get(applicationId);
@@ -119,6 +120,7 @@ export class ConversationManager {
           return {
             role: 'user' as const,
             content: messageRaw.content,
+            kind: MessageKind.USER_MESSAGE,
           };
         } else {
           return {

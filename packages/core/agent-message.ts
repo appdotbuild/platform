@@ -43,6 +43,7 @@ export const messageKindSchema = z.nativeEnum(MessageKind);
 export const conversationMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
   content: z.string(),
+  kind: messageKindSchema.optional(),
 });
 
 export type PlatformMessageMetadata = {

@@ -1006,6 +1006,23 @@ async function appCreation({
     'info',
   );
 
+  const inMemoryMessages =
+    conversationManager.getConversationHistory(applicationId);
+
+  await Promise.all(
+    inMemoryMessages.map(async (message) =>
+      saveMessageToDB(
+        applicationId,
+        message.content,
+        message.role,
+        message.kind ||
+          (message.role === 'user'
+            ? MessageKind.USER_MESSAGE
+            : MessageKind.STAGE_RESULT),
+      ),
+    ),
+  );
+
   await pushAndSavePlatformMessage(
     session,
     applicationId,
@@ -1203,12 +1220,13 @@ async function getMessagesFromDB(
         return {
           role: 'user' as const,
           content: prompt.prompt,
+          kind: MessageKind.USER_MESSAGE,
         };
       }
       return {
         role: 'assistant' as const,
         content: prompt.prompt,
-        kind: prompt.messageKind || MessageKind.STAGE_RESULT,
+        kind: (prompt.messageKind || MessageKind.STAGE_RESULT) as MessageKind,
         metadata: prompt.metadata,
       };
     });
