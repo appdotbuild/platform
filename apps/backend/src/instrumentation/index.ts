@@ -7,6 +7,7 @@ import type {
   OperationMetadata,
   TimedOperation,
 } from './types';
+import { isDev } from '../env';
 
 export * from './types';
 
@@ -54,7 +55,7 @@ export function getInstrumentation(): EventInstrumentation {
   return instrumentationInstance;
 }
 
-export const Instrumentation = {
+const _instrumentation = {
   initialize: (app?: FastifyInstance) => initializeInstrumentation(app),
 
   setupPerformanceMonitoring: (app: FastifyInstance) => {
@@ -199,6 +200,20 @@ export const Instrumentation = {
     );
   },
 };
+
+/**
+ * We proxy the instrumentation object to prevent it from being used in development.
+ * This is to prevent accidental instrumentation of development code.
+ */
+export const Instrumentation = new Proxy(_instrumentation, {
+  apply: (target, thisArg, argumentsList) => {
+    if (isDev) {
+      return function () {};
+    }
+
+    return Reflect.apply(target as any, thisArg, argumentsList);
+  },
+});
 
 function createNoOpInstrumentation(): EventInstrumentation {
   return {

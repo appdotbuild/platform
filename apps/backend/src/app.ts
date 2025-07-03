@@ -5,11 +5,8 @@ import { validateAuth } from './auth-strategy';
 import { Instrumentation } from './instrumentation';
 import { isDev } from './env';
 
-// we only want to initialize instrumentation in production/staging
-if (!isDev) {
-  // must be called before app creation
-  Instrumentation.initialize();
-}
+// must be called before app creation
+Instrumentation.initialize();
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -30,10 +27,7 @@ export const app = fastify({
   genReqId: () => uuidv4(),
 });
 
-// we only want to setup performance monitoring in production/staging
-if (!isDev) {
-  Instrumentation.setupPerformanceMonitoring(app);
-}
+Instrumentation.setupPerformanceMonitoring(app);
 
 await app.register(import('@fastify/compress'), {
   global: false,
