@@ -1,8 +1,13 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import type { AgentSseEventMessage, Optional } from '@appdotbuild/core';
+import type {
+  AgentSseEventMessage,
+  Optional,
+  PromptKindType,
+} from '@appdotbuild/core';
 import {
+  PromptKind,
   type AgentSseEvent,
   AgentStatus,
   agentSseEventSchema,
@@ -82,7 +87,7 @@ type StructuredLog = {
 type DBMessage = {
   appId: string;
   message: string;
-  role: 'user' | 'assistant';
+  role: PromptKindType;
   messageKind: MessageKind;
   metadata?: any;
 };
@@ -215,7 +220,7 @@ export async function postMessage(
       applicationId,
       allMessages: [
         {
-          role: 'user',
+          role: PromptKind.USER,
           content: requestBody.message,
         },
       ],
@@ -283,7 +288,7 @@ export async function postMessage(
           allMessages: [
             ...messagesFromHistory,
             {
-              role: 'user' as const,
+              role: PromptKind.USER,
               content: requestBody.message,
             },
           ],
@@ -350,7 +355,7 @@ export async function postMessage(
       await saveMessageToDB({
         appId: applicationId,
         message: requestBody.message,
-        role: 'user',
+        role: PromptKind.USER,
         messageKind: MessageKind.USER_MESSAGE,
       });
     }
@@ -1024,7 +1029,7 @@ async function appCreation({
       role: message.role,
       messageKind:
         message.kind ||
-        (message.role === 'user'
+        (message.role === PromptKind.USER
           ? MessageKind.USER_MESSAGE
           : MessageKind.STAGE_RESULT),
     })),
@@ -1160,7 +1165,7 @@ function getExistingConversationBody({
     allMessages: [
       ...messages,
       {
-        role: 'user' as const,
+        role: PromptKind.USER,
         content: userMessage,
       },
     ],
@@ -1223,15 +1228,15 @@ async function getMessagesFromDB(
       return prompt.messageKind !== MessageKind.PLATFORM_MESSAGE;
     })
     .map((prompt) => {
-      if (prompt.kind === 'user') {
+      if (prompt.kind === PromptKind.USER) {
         return {
-          role: 'user' as const,
+          role: PromptKind.USER,
           content: prompt.prompt,
           kind: MessageKind.USER_MESSAGE,
         };
       }
       return {
-        role: 'assistant' as const,
+        role: PromptKind.ASSISTANT,
         content: prompt.prompt,
         kind: (prompt.messageKind || MessageKind.STAGE_RESULT) as MessageKind,
         metadata: prompt.metadata,
@@ -1284,7 +1289,7 @@ async function pushAndSavePlatformMessage(
   await saveMessageToDB({
     appId: applicationId,
     message: messageContent,
-    role: 'assistant',
+    role: PromptKind.ASSISTANT,
     messageKind: MessageKind.PLATFORM_MESSAGE,
     metadata: message.metadata,
   });
@@ -1302,7 +1307,7 @@ async function pushAndSaveStreamingErrorMessage(
   await saveMessageToDB({
     appId: applicationId,
     message: messageContent,
-    role: 'assistant',
+    role: PromptKind.ASSISTANT,
     messageKind: MessageKind.RUNTIME_ERROR,
   });
 }

@@ -28,11 +28,17 @@ export const MessageKind = {
   AGENT_MESSAGE: 'AgentMessage',
 } as const;
 
+export const PromptKind = {
+  USER: 'user',
+  ASSISTANT: 'assistant',
+} as const;
+
 type RequestId = string;
 export type ApplicationId = string;
 export type TraceId = `app-${ApplicationId}.req-${RequestId}`;
 export type AgentStatus = (typeof AgentStatus)[keyof typeof AgentStatus];
 export type MessageKind = (typeof MessageKind)[keyof typeof MessageKind];
+export type PromptKindType = (typeof PromptKind)[keyof typeof PromptKind];
 export type PlatformMessageType =
   (typeof PlatformMessageType)[keyof typeof PlatformMessageType];
 
@@ -41,7 +47,7 @@ export const messageKindSchema = z.nativeEnum(MessageKind);
 
 // Conversation message
 export const conversationMessageSchema = z.object({
-  role: z.enum(['user', 'assistant']),
+  role: z.nativeEnum(PromptKind),
   content: z.string(),
   kind: messageKindSchema.optional(),
 });
@@ -125,7 +131,7 @@ export class PlatformMessage {
     this.traceId = traceId;
     this.message = {
       kind: MessageKind.PLATFORM_MESSAGE,
-      messages: [{ role: 'assistant', content: message }],
+      messages: [{ role: PromptKind.ASSISTANT, content: message }],
     };
     this.metadata = metadata;
   }
@@ -141,13 +147,13 @@ export class StreamingError {
     this.traceId = traceId;
     this.message = {
       kind: MessageKind.RUNTIME_ERROR,
-      messages: [{ role: 'assistant', content: error }],
+      messages: [{ role: PromptKind.ASSISTANT, content: error }],
     };
   }
 }
 
 export interface Message {
-  role: 'user' | 'assistant';
+  role: PromptKindType;
   content: string;
   icon: string;
   kind: MessageKind;

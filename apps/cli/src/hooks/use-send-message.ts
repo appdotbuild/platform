@@ -2,6 +2,7 @@ import {
   AgentStatus,
   MessageKind,
   PlatformMessageType,
+  PromptKind,
   type AgentSseEvent,
   type TraceId,
 } from '@appdotbuild/core';
@@ -90,7 +91,7 @@ export const useSendMessage = () => {
                   kind: MessageKind.PLATFORM_MESSAGE,
                   messages: [
                     {
-                      role: 'assistant',
+                      role: PromptKind.ASSISTANT,
                       content: deploymentStatus.message,
                     },
                   ],
@@ -195,7 +196,9 @@ export const useSendMessage = () => {
                 traceId: metadata?.traceId,
                 message: {
                   kind: MessageKind.RUNTIME_ERROR,
-                  messages: [{ role: 'assistant', content: error.message }],
+                  messages: [
+                    { role: PromptKind.ASSISTANT, content: error.message },
+                  ],
                 },
               },
             ],

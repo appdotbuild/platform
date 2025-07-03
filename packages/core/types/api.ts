@@ -1,4 +1,4 @@
-import type { MessageKind } from '../agent-message';
+import type { MessageKind, PromptKindType } from '../agent-message';
 
 export type UserMessageLimit = {
   isUserLimitReached: boolean;
@@ -37,17 +37,12 @@ export type ReadUrl = {
   readUrl: string;
 };
 
-export enum PromptKind {
-  USER = 'user',
-  AGENT = 'assistant',
-}
-
 export type AppPrompts = {
   id: string;
   appId: string;
   prompt: string;
   response: string;
-  kind: PromptKind;
+  kind: PromptKindType;
   messageKind?: MessageKind;
   metadata?: any;
   createdAt: Date;

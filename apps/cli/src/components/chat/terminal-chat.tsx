@@ -1,4 +1,4 @@
-import { AnalyticsEvents, MessageKind } from '@appdotbuild/core';
+import { AnalyticsEvents, MessageKind, PromptKind } from '@appdotbuild/core';
 import { Box, Static } from 'ink';
 import { useEffect, useState } from 'react';
 import { useApplicationHistory } from '../../hooks/use-application';
@@ -88,7 +88,7 @@ export function TerminalChat({
     if (!lastMessage) return;
 
     const userInputMessage: MessageDetail = {
-      role: 'user',
+      role: PromptKind.USER,
       text: lastMessage,
       icon: '👤',
       kind: MessageKind.USER_MESSAGE,

@@ -1,4 +1,4 @@
-import type { UserMessageLimit } from '@appdotbuild/core';
+import { PromptKind, type UserMessageLimit } from '@appdotbuild/core';
 import { and, count, eq, gt } from 'drizzle-orm';
 import { app } from '../app';
 import { appPrompts, apps, db } from '../db';
@@ -55,7 +55,7 @@ export async function checkMessageUsageLimit(
         and(
           eq(apps.ownerId, userId),
           gt(appPrompts.createdAt, startOfDay),
-          eq(appPrompts.kind, 'user'),
+          eq(appPrompts.kind, PromptKind.USER),
         ),
       );
 

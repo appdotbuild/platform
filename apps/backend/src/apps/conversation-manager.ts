@@ -1,5 +1,6 @@
 import {
   MessageKind,
+  PromptKind,
   type AgentSseEvent,
   type ApplicationId,
   type ConversationMessage,
@@ -42,7 +43,7 @@ export class ConversationManager {
 
   addUserMessageToConversation(applicationId: string, message: string): void {
     const userMessage: ConversationMessage = {
-      role: 'user' as const,
+      role: PromptKind.USER,
       content: message,
       kind: MessageKind.USER_MESSAGE,
     };
@@ -116,15 +117,15 @@ export class ConversationManager {
 
       return eventMessages.map((messageRaw) => {
         const role = messageRaw.role;
-        if (role === 'user') {
+        if (role === PromptKind.USER) {
           return {
-            role: 'user' as const,
+            role: PromptKind.USER,
             content: messageRaw.content,
             kind: MessageKind.USER_MESSAGE,
           };
         } else {
           return {
-            role: 'assistant' as const,
+            role: PromptKind.ASSISTANT,
             content: messageRaw.content,
             kind: MessageKind.STAGE_RESULT,
           };

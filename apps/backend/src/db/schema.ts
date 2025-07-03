@@ -56,7 +56,7 @@ export const appPrompts = pgTable(
     createdAt: timestamp('createdAt', { withTimezone: true })
       .notNull()
       .defaultNow(),
-    kind: text(), // "user" or "agent"
+    kind: text(), // "user" or "assistant"
     messageKind: text('message_kind'),
     metadata: jsonb('metadata'),
   },
