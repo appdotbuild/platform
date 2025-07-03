@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { isDev } from '../env';
 import { CompositeInstrumentation } from './composite-instrumentation';
 import { SegmentAdapter } from './segment-adapter';
 import { SentryAdapter } from './sentry-adapter';
@@ -46,6 +47,8 @@ export function initializeInstrumentation(
 }
 
 export function getInstrumentation(): EventInstrumentation {
+  if (isDev) return createNoOpInstrumentation();
+
   if (!instrumentationInstance) {
     throw new Error(
       'Instrumentation not initialized. Call initializeInstrumentation() first.',
