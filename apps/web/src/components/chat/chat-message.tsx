@@ -1,8 +1,10 @@
+import { MessageKind } from '@appdotbuild/core';
 import type { Message } from '~/stores/messages-store';
 import { AgentMessage } from './messages/agent-message';
 import { ErrorMessage } from './messages/error-message';
 import { LoadingMessage } from './messages/loading-message';
 import { NotificationMessage } from './messages/notification-message';
+import { PlatformMessage } from './messages/platform-message';
 import { RequestMessage } from './messages/request-message';
 import { UserMessage } from './messages/user-message';
 
@@ -34,13 +36,26 @@ export function ChatMessage({ message }: ChatMessageProps) {
         return <ErrorMessage message={message.message} />;
     }
 
-    if (message.role === 'assistant')
+    if (message.role === 'assistant') {
+      if (message.messageKind === MessageKind.PLATFORM_MESSAGE) {
+        return (
+          <PlatformMessage
+            message={message.message}
+            type={message.metadata?.type}
+          />
+        );
+      }
+      if (message.messageKind === MessageKind.RUNTIME_ERROR) {
+        return <ErrorMessage message={message.message} />;
+      }
+
       return (
         <AgentMessage
           message={message.message}
           messageKind={message.messageKind}
         />
       );
+    }
   };
 
   return <div className="mb-4">{renderMessage()}</div>;

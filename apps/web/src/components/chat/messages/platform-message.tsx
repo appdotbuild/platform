@@ -56,7 +56,7 @@ export function PlatformMessage({
       className={`group relative border ${getBorderColor()} rounded-lg overflow-hidden ${getBgColor()}`}
     >
       <div className="px-4 py-3">
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <span className="text-lg">{getIcon()}</span>
           <div className="flex-1">
             <p className="text-sm text-gray-700">{message}</p>
