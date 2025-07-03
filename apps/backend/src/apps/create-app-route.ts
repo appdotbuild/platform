@@ -1,11 +1,15 @@
+import { MessageKind } from '@appdotbuild/core';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { app } from '../app';
+import { appPrompts, db } from '../db';
 import { GithubEntity } from '../github';
 import { createApp } from './create-app';
 
 const createAppSchema = z.object({
   appName: z.string().min(1).max(100),
+  userMessage: z.string().optional(),
   clientSource: z.string().default('web'),
   databricksApiKey: z.string().optional(),
   databricksHost: z.string().optional(),
@@ -24,6 +28,7 @@ export async function postCreateApp(
 
     // Validate request body
     const body = createAppSchema.parse(request.body);
+    const userMessage = body.userMessage || '';
 
     app.log.info({
       message: 'Creating app via API',
@@ -38,7 +43,7 @@ export async function postCreateApp(
       githubAccessToken,
     ).init();
 
-    // Create the app
+    // create the app
     const result = await createApp({
       appName: body.appName,
       githubEntity,
@@ -54,6 +59,17 @@ export async function postCreateApp(
       appName: result.appName,
       repositoryUrl: result.repositoryUrl,
     });
+
+    // allow user first prompt to be stored
+    if (userMessage) {
+      await db.insert(appPrompts).values({
+        id: uuidv4(),
+        prompt: userMessage,
+        appId: result.applicationId,
+        kind: 'user',
+        messageKind: MessageKind.USER_MESSAGE,
+      });
+    }
 
     // Return in App format expected by frontend
     return reply.status(201).send({

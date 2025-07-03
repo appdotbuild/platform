@@ -1,17 +1,28 @@
-import type { App } from '@appdotbuild/core';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { appsService } from '~/external/api/services';
 import { appStateStore } from '~/stores/app-state-store';
 import { type Message, messagesStore } from '~/stores/messages-store';
 import { useAppCreation } from './useAppCreation';
+import { useAppsList } from './useAppsList';
+import { useSSEMessageHandler, useSSEQuery } from './useSSE';
 
+// main chat logic
 export function useChat() {
   const navigate = useNavigate();
   const params = useParams({ from: '/chat/$chatId', shouldThrow: false });
   const chatId = params?.chatId || undefined;
+  const { apps } = useAppsList();
 
-  // generate temp id, add user message to store, navigate to chat page
+  const { handleSSEMessage, handleSSEError, handleSSEDone } =
+    useSSEMessageHandler(chatId);
+
+  const { sendMessage: sendMessageAsync } = useSSEQuery({
+    onMessage: handleSSEMessage,
+    onError: handleSSEError,
+    onDone: handleSSEDone,
+  });
+
   const createNewApp = (firstInput: string) => {
     const message = firstInput.trim();
     if (!message) return;
@@ -33,26 +44,51 @@ export function useChat() {
     });
   };
 
-  const sendMessage = async (message: string) => {
-    if (!chatId || !message.trim()) return;
+  const sendMessage = async (message: string, newChatId?: string) => {
+    const sendChatId = newChatId || chatId;
+    if (!sendChatId || !message.trim()) return;
 
     const messageId = crypto.randomUUID();
 
-    messagesStore.addMessage(chatId, {
-      id: messageId,
-      message: message.trim(),
-      kind: 'user',
+    // if is a new app, avoid duplicate user message
+    if (!newChatId) {
+      messagesStore.addMessage(sendChatId, {
+        id: messageId,
+        message: message.trim(),
+        kind: 'user',
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    messagesStore.addMessage(sendChatId, {
+      id: 'loading-message',
+      message: 'Thinking...',
+      kind: 'system',
+      systemType: 'loading',
       createdAt: new Date().toISOString(),
+    });
+
+    const app = apps.find((a) => a.id === sendChatId);
+    const traceId = app?.traceId || `app-${sendChatId}.req-${Date.now()}`;
+
+    sendMessageAsync({
+      applicationId: sendChatId,
+      message: message.trim(),
+      clientSource: 'web',
+      traceId,
     });
   };
 
   return {
     createNewApp,
     sendMessage,
+    chatId,
   };
 }
 
+// setup new chat
 export function useChatSetup() {
+  const { sendMessage } = useChat();
   const navigate = useNavigate();
   const { chatId } = useParams({ from: '/chat/$chatId' });
   const { createApp } = useAppCreation();
@@ -72,7 +108,7 @@ export function useChatSetup() {
         try {
           const history = await appsService.fetchAppMessages(chatId);
           if (history && history.length > 0) {
-            const messages = history.map((prompt) => ({
+            const messages = history.map((prompt: any) => ({
               id: prompt.id,
               message: prompt.prompt,
               kind: prompt.kind,
@@ -99,93 +135,57 @@ export function useChatSetup() {
   }, [chatId, shouldSearchHistory]);
 
   useEffect(() => {
-    const initialMessage = isTempApp
-      ? appStateStore.getMessageBeforeCreation(chatId)
-      : undefined;
+    if (!isTempApp || !chatId) return;
+    const initialMessage = appStateStore.getMessageBeforeCreation(
+      chatId,
+    ) as string;
 
-    if (isTempApp && initialMessage) {
-      const messages = messagesStore.getMessages(chatId);
+    const handleAppNameSubmit = async (appName: string) => {
+      messagesStore.removeMessage(chatId, 'app-name-request');
+      messagesStore.addMessage(chatId, {
+        id: 'loading-create-app',
+        message: 'Creating your app...',
+        kind: 'system',
+        systemType: 'loading',
+        createdAt: new Date().toISOString(),
+      });
 
-      // check if app name request or loading message already exists to avoid duplicates
-      const isDuplicate = messages.some(
-        (msg) => msg.id === 'app-name-request' || msg.systemType === 'loading',
-      );
+      const newAppId = await createApp(appName, initialMessage);
+      if (newAppId) {
+        messagesStore.setMessages(newAppId, messagesStore.getMessages(chatId));
 
-      if (!isDuplicate) {
-        const action = (appName: string) =>
-          handleAppNameSubmit(
-            appName,
-            chatId,
-            initialMessage,
-            createApp,
-            navigate,
-          );
-
-        messagesStore.addMessage(chatId, {
-          id: 'app-name-request',
-          message: '',
-          kind: 'system',
-          createdAt: new Date().toISOString(),
-          systemType: 'app-name-request',
-          action,
+        await navigate({
+          to: '/chat/$chatId',
+          params: { chatId: newAppId },
+          replace: true,
         });
+
+        messagesStore.removeMessage(newAppId, 'loading-create-app');
+
+        const successMessage: Message = {
+          id: crypto.randomUUID(),
+          message: `App "${appName}" created successfully!`,
+          kind: 'system',
+          systemType: 'notification',
+          confirmationType: 'success',
+          createdAt: new Date().toISOString(),
+        };
+
+        messagesStore.addMessage(newAppId, successMessage);
+
+        sendMessage(initialMessage, newAppId);
       }
-    }
-  }, [isTempApp, chatId, createApp, navigate]);
+    };
+
+    messagesStore.addMessage(chatId, {
+      id: 'app-name-request',
+      message: '',
+      kind: 'system',
+      systemType: 'app-name-request',
+      createdAt: new Date().toISOString(),
+      action: handleAppNameSubmit,
+    });
+  }, []);
 
   return { chatId, isLoadingHistory };
 }
-const handleAppNameSubmit = async (
-  appName: string,
-  chatId: string,
-  initialMessage: string,
-  createApp: (initialMessage: string, appName: string) => Promise<App>,
-  navigate: (arg0: Record<string, any>) => void,
-) => {
-  try {
-    // remove request message and show loading state
-    messagesStore.removeMessage(chatId, 'app-name-request');
-    messagesStore.addMessage(chatId, {
-      id: 'loading-create-app',
-      message: 'Creating your app...',
-      kind: 'assistant',
-      systemType: 'loading',
-      createdAt: new Date().toISOString(),
-    });
-
-    const newApp = await createApp(initialMessage, appName);
-
-    if (!newApp) throw new Error('Failed to create app');
-
-    const successMessage: Message = {
-      id: 'system-confirmation',
-      message: `App "${appName}" created successfully!`,
-      kind: 'system',
-      createdAt: new Date().toISOString(),
-      systemType: 'notification',
-      confirmationType: 'success',
-    };
-
-    // copy temp app messages to new app, remove loading message, add success message
-    messagesStore.setMessages(newApp.id, messagesStore.getMessages(chatId));
-    messagesStore.removeMessage(newApp.id, 'loading-create-app');
-    messagesStore.addMessage(newApp.id, successMessage);
-
-    appStateStore.markAsJustCreated(newApp.id);
-
-    navigate({
-      to: '/chat/$chatId',
-      params: { chatId: newApp.id },
-      replace: true,
-    });
-  } catch (_) {
-    messagesStore.removeMessage(chatId, 'loading-create-app');
-    messagesStore.addMessage(chatId, {
-      id: 'system-error',
-      message: 'Failed to create app. Please try again.',
-      kind: 'system',
-      createdAt: new Date().toISOString(),
-      systemType: 'error',
-    });
-  }
-};

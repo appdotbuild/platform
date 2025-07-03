@@ -2,6 +2,13 @@ import { stackClientApp } from '~/lib/auth';
 
 const API_BASE_URL = import.meta.env.VITE_PLATFORM_API_URL;
 
+const AcceptType = {
+  JSON: 'application/json',
+  SSE: 'text/event-stream',
+} as const;
+
+type AcceptType = (typeof AcceptType)[keyof typeof AcceptType];
+
 const getToken = async (): Promise<string | null> => {
   try {
     const user = await stackClientApp.getUser();
@@ -15,11 +22,16 @@ const getToken = async (): Promise<string | null> => {
   }
 };
 
-async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+async function request<T>(
+  endpoint: string,
+  options?: RequestInit,
+  acceptType?: AcceptType,
+): Promise<T> {
   const token = await getToken();
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    Accept: acceptType ?? AcceptType.JSON,
   };
 
   if (token) {
@@ -37,6 +49,11 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   if (!response.ok) {
     const error = await response.text();
     throw new Error(`API Error: ${response.status} - ${error}`);
+  }
+
+  // Return Response directly for SSE, parse JSON for other types
+  if (acceptType === AcceptType.SSE) {
+    return response as T;
   }
 
   return response.json();
@@ -58,4 +75,15 @@ export const apiClient = {
     }),
 
   delete: <T>(endpoint: string) => request<T>(endpoint, { method: 'DELETE' }),
+
+  postSSE: async (endpoint: string, data?: unknown): Promise<Response> => {
+    return request<Response>(
+      endpoint,
+      {
+        method: 'POST',
+        body: data ? JSON.stringify(data) : undefined,
+      },
+      AcceptType.SSE,
+    );
+  },
 };

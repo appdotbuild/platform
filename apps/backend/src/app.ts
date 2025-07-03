@@ -39,10 +39,24 @@ await app.register(import('@fastify/compress'), {
   global: false,
 });
 
-await app.register(import('@fastify/cors'), {
-  origin: ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true,
-});
+// cors is only enabled in development mode
+if (isDev) {
+  await app.register(import('@fastify/cors'), {
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'Accept-Encoding',
+      'Connection',
+      'Cache-Control',
+    ],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  });
+}
 
 app.decorate(
   'authenticate',

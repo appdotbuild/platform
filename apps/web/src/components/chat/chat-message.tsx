@@ -27,14 +27,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
           />
         );
 
+      if (message.systemType === 'loading')
+        return <LoadingMessage message={message.message} />;
+
       if (message.systemType === 'error')
         return <ErrorMessage message={message.message} />;
     }
 
-    if (message.kind === 'assistant' && message.systemType === 'loading')
-      return <LoadingMessage message={message.message} />;
-
-    return <AgentMessage message={message.message} />;
+    if (message.kind === 'assistant') {
+      return <AgentMessage message={message.message} />;
+    }
   };
 
   return <div className="mb-4">{renderMessage()}</div>;

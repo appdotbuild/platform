@@ -137,11 +137,20 @@ export async function postMessage(
     'x-dailylimit-reset': nextResetTime.toISOString(),
   };
 
+  const sseCORS = {
+    'Access-Control-Allow-Origin': request.headers.origin,
+    'Access-Control-Allow-Methods': 'POST',
+    'Access-Control-Allow-Headers':
+      'Content-Type, Authorization, Accept, Accept-Encoding, Connection, Cache-Control',
+    'Access-Control-Allow-Credentials': 'true',
+  };
+
   reply.headers(userLimitHeader);
 
   const session = await createSession(request.raw, reply.raw, {
     headers: {
       ...userLimitHeader,
+      ...sseCORS,
     },
   });
 

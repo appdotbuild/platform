@@ -2,7 +2,8 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { appsService } from '~/external/api/services';
 import { APPS_QUERY_KEY } from './queryKeys';
 
-export function useApps() {
+// fetch all apps with pagination
+export function useAppsList() {
   const {
     data,
     fetchNextPage,

@@ -8,7 +8,12 @@ export interface Message {
   message: string;
   kind: MessageKind;
   createdAt: string;
-  systemType?: 'app-name-request' | 'notification' | 'loading' | 'error';
+  systemType?:
+    | 'app-name-request'
+    | 'notification'
+    | 'loading'
+    | 'error'
+    | 'success';
   confirmationType?: 'success' | 'info' | 'error' | 'warning';
   action?: (data: any) => void;
 }

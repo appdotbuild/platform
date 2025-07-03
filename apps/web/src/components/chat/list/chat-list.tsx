@@ -1,7 +1,7 @@
 import type { App } from '@appdotbuild/core';
 import { ChevronDown, LayoutGrid } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useApps } from '~/hooks/useApps';
+import { useAppsList } from '~/hooks/useAppsList';
 import { ChatItem } from './chat-item';
 
 export function ChatList() {
@@ -14,7 +14,7 @@ export function ChatList() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useApps();
+  } = useAppsList();
 
   useEffect(() => {
     const scrollContainer = scrollRef.current;
