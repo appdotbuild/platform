@@ -4,7 +4,8 @@ import { apps, db } from '../db';
 import { logger } from '../logger';
 import { promisify } from 'node:util';
 import type { App } from '../db/schema';
-import { DeployStatus } from '@appdotbuild/core';
+import { getOrCreateNeonProject } from './neon';
+import { fs } from 'memfs';
 
 const exec = promisify(execNative);
 
@@ -26,20 +27,25 @@ export async function deployToDatabricks({
     );
   }
 
+  const { connectionString, neonProjectId } = await getOrCreateNeonProject({
+    existingNeonProjectId: currentApp.neonProjectId ?? undefined,
+  });
+
+  // Update app status to deploying for databricks deployments
+  await db
+    .update(apps)
+    .set({
+      deployStatus: 'deploying',
+      neonProjectId,
+    })
+    .where(eq(apps.id, appId));
+
   // Create isolated environment variables for this deployment
   const databricksEnv = {
     ...process.env,
     DATABRICKS_HOST: currentApp.databricksHost,
     DATABRICKS_TOKEN: currentApp.databricksApiKey,
   };
-
-  // Update app status to deploying for databricks deployments
-  await db
-    .update(apps)
-    .set({
-      deployStatus: DeployStatus.DEPLOYING,
-    })
-    .where(eq(apps.id, appId));
 
   // Generate a unique workspace path for this app
   const shortAppId = appId.slice(0, 8);
@@ -84,7 +90,39 @@ export async function deployToDatabricks({
       });
     }
 
-    // 4. Deploy the app from there
+    // 4. setup secrets in databricks
+    await setupDatabricksAppSecrets({
+      appName,
+      databricksHost: currentApp.databricksHost,
+      databricksApiKey: currentApp.databricksApiKey,
+      secrets: {
+        APP_DATABASE_URL: connectionString,
+      },
+    });
+
+    // 5. Create a databricks config file, so the app can access Databricks secrets
+    const databricksConfigFile = createDatabricksConfigFile([
+      {
+        sectionName: 'APP_DATABASE_URL',
+        secretSection: {
+          scope: appName,
+          key: 'APP_DATABASE_URL',
+        },
+      },
+    ]);
+    fs.writeFileSync(`${appDirectory}/databricks.yml`, databricksConfigFile);
+
+    // 6. Create a databricks app file, to define the app's environment variables
+    const databricksAppFile = createDatabricksAppFile([
+      {
+        name: 'APP_DATABASE_URL',
+        value: 'APP_DATABASE_URL',
+        isSecret: true,
+      },
+    ]);
+    fs.writeFileSync(`${appDirectory}/app.yaml`, databricksAppFile);
+
+    // 7. Deploy the app from there
     logger.info('Deploying app to Databricks');
     const deployResult = await exec(
       `databricks apps deploy ${shellQuote(
@@ -217,4 +255,119 @@ function validateAppId(appId: string): void {
 function shellQuote(str: string): string {
   // Replace single quotes with '\'' and wrap in single quotes
   return `'${str.replace(/'/g, "'\\''")}'`;
+}
+
+async function setupDatabricksAppSecrets({
+  appName,
+  databricksHost,
+  databricksApiKey,
+  secrets,
+}: {
+  appName: string;
+  databricksHost: string;
+  databricksApiKey: string;
+  secrets: Record<string, string>;
+}) {
+  // 1. Create a secret scope
+  logger.info('Creating secret scope', {
+    appName,
+  });
+  const createSecretScopeResult = await exec(
+    `databricks secrets create-scope --scope ${shellQuote(appName)}`,
+    {
+      env: {
+        ...process.env,
+        DATABRICKS_HOST: databricksHost,
+        DATABRICKS_TOKEN: databricksApiKey,
+      },
+    },
+  );
+  if (createSecretScopeResult.stderr) {
+    logger.error('Failed to create secret scope', {
+      appName,
+      stderr: createSecretScopeResult.stderr,
+    });
+    throw new Error('Failed to create secret scope');
+  }
+
+  // 2. Add secrets to the scope
+  logger.info('Adding secrets to scope', {
+    appName,
+    secrets,
+  });
+  const addSecretsResult = await Promise.all(
+    Object.entries(secrets).map(async ([key, value]) => {
+      return await exec(
+        `databricks secrets put-secret --scope ${shellQuote(
+          appName,
+        )} --key ${shellQuote(key)} --string-value ${shellQuote(value)}`,
+        {
+          env: {
+            ...process.env,
+            DATABRICKS_HOST: databricksHost,
+            DATABRICKS_TOKEN: databricksApiKey,
+          },
+        },
+      );
+    }),
+  );
+  if (addSecretsResult.some((result) => result.stderr)) {
+    logger.error('Failed to add secrets to scope', {
+      appName,
+      stderr: addSecretsResult.map((result) => result.stderr).join('\n'),
+    });
+    throw new Error('Failed to add secrets to scope');
+  }
+}
+
+/**
+ * Creates a Databricks config file
+ * @param secrets - The secrets to be set in the config file
+ * @returns The Databricks config file string
+ */
+function createDatabricksConfigFile(
+  secrets: Array<{
+    sectionName: string;
+    secretSection: {
+      scope: string;
+      key: string;
+    };
+  }>,
+) {
+  let databricksConfigFile = `resources:
+  secrets:
+    ${secrets
+      .map(
+        (secret) => `${secret.sectionName}:
+      scope: ${secret.secretSection.scope}
+      key: ${secret.secretSection.key}`,
+      )
+      .join('\n')}
+    `;
+
+  return databricksConfigFile;
+}
+
+/**
+ * Creates a Databricks app file
+ * @param envVars - The environment variables to be set in the app
+ * @returns The Databricks app file string
+ */
+function createDatabricksAppFile(
+  envVars: Array<{
+    name: string;
+    value: string;
+    isSecret: boolean;
+  }>,
+) {
+  let databricksAppFile = `env:
+  ${envVars
+    .map(
+      (envVar) => `- name: ${envVar.name}
+    ${envVar.isSecret ? 'valueFrom:' : 'value:'} ${envVar.value}`,
+    )
+    .join('\n')}
+  `;
+
+  return databricksAppFile;
 }
