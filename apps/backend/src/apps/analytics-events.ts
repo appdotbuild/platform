@@ -13,7 +13,7 @@ export async function sendAnalyticsEvent(
       writeKey: process.env.SEGMENT_WRITE_KEY || '',
     });
 
-    const userId = request.user?.id || 'anonymous';
+    const userId = request.user?.id;
     const event = request.body;
 
     const { eventType, eventName } = event;

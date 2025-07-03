@@ -71,7 +71,7 @@ export interface EventInstrumentation {
   // event tracking methods
   trackEvent(eventName: string, properties?: EventProperties): void;
   trackSseEvent(eventType: SseEventType, data?: EventProperties): void;
-  trackUserMessage(message: string): void;
-  trackPlatformMessage(messageType: string): void;
+  trackUserMessage(message: string, userId?: string): void;
+  trackPlatformMessage(messageType: string, userId?: string): void;
   captureError(error: Error, context?: ErrorContext): void;
 }

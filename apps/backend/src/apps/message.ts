@@ -7,7 +7,6 @@ import type {
   PromptKindType,
 } from '@appdotbuild/core';
 import {
-  PromptKind,
   type AgentSseEvent,
   AgentStatus,
   agentSseEventSchema,
@@ -16,6 +15,7 @@ import {
   type MessageLimitHeaders,
   PlatformMessage,
   PlatformMessageType,
+  PromptKind,
   StreamingError,
   type TraceId,
 } from '@appdotbuild/core';
@@ -30,12 +30,12 @@ import { appPrompts, apps, db } from '../db';
 import { deployApp } from '../deploy';
 import { isDev } from '../env';
 import {
+  addAppURL,
   checkIfRepoExists,
   cloneRepository,
-  createRepository,
-  addAppURL,
   commitChanges,
   createInitialCommit,
+  createRepository,
   GithubEntity,
   type GithubEntityInitialized,
 } from '../github';
@@ -208,7 +208,7 @@ export async function postMessage(
     requestBody: request.body,
   });
 
-  Instrumentation.trackUserMessage(requestBody.message);
+  Instrumentation.trackUserMessage(requestBody.message, userId);
 
   try {
     const githubEntity = await new GithubEntity(
@@ -557,6 +557,7 @@ export async function postMessage(
             Instrumentation.trackSseEvent('sse_message_sent', {
               messageKind: minimalMessage.kind,
               status: completeParsedMessage.status,
+              userId,
             });
 
             session.push(parsedCLIMessage);
@@ -652,6 +653,7 @@ export async function postMessage(
                   commitMessage:
                     completeParsedMessage.message.commit_message ||
                     'feat: update',
+                  userId,
                 });
               } else if (
                 completeParsedMessage.message.kind !==
@@ -763,6 +765,7 @@ export async function postMessage(
                         : 'koyeb',
                     },
                   ),
+                  userId,
                 );
               }
             }
@@ -875,7 +878,10 @@ export async function postMessage(
     await messageHandlerQueue.waitForCompletion(streamLog);
     if (isPermanentApp) conversationManager.removeConversation(applicationId);
     Instrumentation.trackAiAgentEnd(traceId!, 'success');
-    Instrumentation.trackSseEvent('sse_connection_ended', { applicationId });
+    Instrumentation.trackSseEvent('sse_connection_ended', {
+      applicationId,
+      userId,
+    });
 
     streamLog(
       {
@@ -895,6 +901,7 @@ export async function postMessage(
     Instrumentation.trackSseEvent('sse_connection_error', {
       error: String(error),
       applicationId,
+      userId,
     });
 
     Instrumentation.captureError(error as Error, {
@@ -1044,6 +1051,7 @@ async function appCreation({
       `Your application has been uploaded to this github repository: ${repositoryUrl}`,
       { type: PlatformMessageType.REPO_CREATED },
     ),
+    ownerId,
   );
 
   return { newAppName };
@@ -1058,6 +1066,7 @@ async function appIteration({
   traceId,
   session,
   commitMessage,
+  userId,
 }: {
   appName: string;
   githubEntity: GithubEntityInitialized;
@@ -1067,6 +1076,7 @@ async function appIteration({
   session: Session;
   agentState: AgentSseEvent['message']['agentState'];
   commitMessage: string;
+  userId: string;
 }) {
   const commitStartTime = Instrumentation.trackGitHubCommit();
 
@@ -1099,6 +1109,7 @@ async function appIteration({
       `committed in existing app - commit url: ${commitUrl}`,
       { type: PlatformMessageType.COMMIT_CREATED },
     ),
+    userId,
   );
 }
 
@@ -1277,10 +1288,11 @@ async function pushAndSavePlatformMessage(
   session: Session,
   applicationId: string,
   message: PlatformMessage,
+  userId: string,
 ) {
   if (message.metadata?.type) {
     const messageType = message.metadata.type;
-    Instrumentation.trackPlatformMessage(messageType);
+    Instrumentation.trackPlatformMessage(messageType, userId);
   }
 
   session.push(message);

@@ -81,11 +81,11 @@ export const Instrumentation = {
   trackSseEvent: (...args: Parameters<EventInstrumentation['trackSseEvent']>) =>
     getInstrumentation().trackSseEvent(...args),
 
-  trackUserMessage: (message: string) =>
-    getInstrumentation().trackUserMessage(message),
+  trackUserMessage: (message: string, userId?: string) =>
+    getInstrumentation().trackUserMessage(message, userId),
 
-  trackPlatformMessage: (messageType: string) =>
-    getInstrumentation().trackPlatformMessage(messageType),
+  trackPlatformMessage: (messageType: string, userId?: string) =>
+    getInstrumentation().trackPlatformMessage(messageType, userId),
 
   captureError: (...args: Parameters<EventInstrumentation['captureError']>) =>
     getInstrumentation().captureError(...args),
