@@ -164,7 +164,7 @@ export function useSSEMessageHandler(chatId: string | undefined) {
               messagesStore.addMessage(chatId, {
                 id: crypto.randomUUID(),
                 message: msg.content,
-                kind: 'assistant',
+                role: 'assistant',
                 createdAt: new Date().toISOString(),
               });
             }
@@ -183,7 +183,7 @@ export function useSSEMessageHandler(chatId: string | undefined) {
           id: 'error-message',
           message:
             'An error occurred while processing your message. Please try again.',
-          kind: 'system',
+          role: 'system',
           systemType: 'error',
           createdAt: new Date().toISOString(),
         });

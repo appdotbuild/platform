@@ -32,7 +32,7 @@ export function useChat() {
     messagesStore.addMessage(tempId, {
       id: crypto.randomUUID(),
       message: message,
-      kind: 'user',
+      role: 'user',
       createdAt: new Date().toISOString(),
     });
 
@@ -55,7 +55,7 @@ export function useChat() {
       messagesStore.addMessage(sendChatId, {
         id: messageId,
         message: message.trim(),
-        kind: 'user',
+        role: 'user',
         createdAt: new Date().toISOString(),
       });
     }
@@ -63,7 +63,7 @@ export function useChat() {
     messagesStore.addMessage(sendChatId, {
       id: 'loading-message',
       message: 'Thinking...',
-      kind: 'system',
+      role: 'system',
       systemType: 'loading',
       createdAt: new Date().toISOString(),
     });
@@ -111,7 +111,9 @@ export function useChatSetup() {
             const messages = history.map((prompt: any) => ({
               id: prompt.id,
               message: prompt.prompt,
-              kind: prompt.kind,
+              messageKind: prompt.messageKind,
+              metadata: prompt.metadata,
+              role: prompt.kind,
               createdAt: new Date(prompt.createdAt).toISOString(),
             }));
             messagesStore.setMessages(chatId, messages);
@@ -121,7 +123,7 @@ export function useChatSetup() {
           messagesStore.addMessage(chatId, {
             id: 'error-loading-history',
             message: 'Failed to load chat history. Please try again.',
-            kind: 'system',
+            role: 'system',
             createdAt: new Date().toISOString(),
             systemType: 'error',
           });
@@ -145,7 +147,7 @@ export function useChatSetup() {
       messagesStore.addMessage(chatId, {
         id: 'loading-create-app',
         message: 'Creating your app...',
-        kind: 'system',
+        role: 'system',
         systemType: 'loading',
         createdAt: new Date().toISOString(),
       });
@@ -165,7 +167,7 @@ export function useChatSetup() {
         const successMessage: Message = {
           id: crypto.randomUUID(),
           message: `App "${appName}" created successfully!`,
-          kind: 'system',
+          role: 'system',
           systemType: 'notification',
           confirmationType: 'success',
           createdAt: new Date().toISOString(),
@@ -180,7 +182,7 @@ export function useChatSetup() {
     messagesStore.addMessage(chatId, {
       id: 'app-name-request',
       message: '',
-      kind: 'system',
+      role: 'system',
       systemType: 'app-name-request',
       createdAt: new Date().toISOString(),
       action: handleAppNameSubmit,

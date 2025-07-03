@@ -12,10 +12,10 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const renderMessage = () => {
-    if (message.kind === 'user')
+    if (message.role === 'user')
       return <UserMessage message={message.message} />;
 
-    if (message.kind === 'system') {
+    if (message.role === 'system') {
       if (message.systemType === 'app-name-request')
         return <RequestMessage onSubmit={message.action!} />;
 
@@ -34,9 +34,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
         return <ErrorMessage message={message.message} />;
     }
 
-    if (message.kind === 'assistant') {
-      return <AgentMessage message={message.message} />;
-    }
+    if (message.role === 'assistant')
+      return (
+        <AgentMessage
+          message={message.message}
+          messageKind={message.messageKind}
+        />
+      );
   };
 
   return <div className="mb-4">{renderMessage()}</div>;

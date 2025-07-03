@@ -1,12 +1,14 @@
+import type { MessageKind } from '@appdotbuild/core';
 import { MESSAGES_QUERY_KEY } from '~/hooks/queryKeys';
 import { queryClient } from '~/lib/queryClient';
 
-export type MessageKind = 'user' | 'assistant' | 'system';
+export type MessageRole = 'user' | 'assistant' | 'system';
 
 export interface Message {
   id: string;
   message: string;
-  kind: MessageKind;
+  role: MessageRole;
+  messageKind?: MessageKind;
   createdAt: string;
   systemType?:
     | 'app-name-request'
