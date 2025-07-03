@@ -2,7 +2,7 @@ import type { App, AppPrompts } from '@appdotbuild/core';
 import { apiClient } from '../api/adapter';
 
 export type CreateAppInput = {
-  name: string;
+  appName: string;
 };
 
 export type PaginatedResponse<T> = {

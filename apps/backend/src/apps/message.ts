@@ -25,12 +25,9 @@ import { appPrompts, apps, db } from '../db';
 import { deployApp } from '../deploy';
 import { isDev } from '../env';
 import {
-  checkIfRepoExists,
   cloneRepository,
-  createRepository,
   addAppURL,
   commitChanges,
-  createInitialCommit,
   GithubEntity,
   type GithubEntityInitialized,
 } from '../github';
@@ -50,6 +47,7 @@ import {
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
 import { MessageHandlerQueue } from './message-queue';
+import { createApp } from './create-app';
 
 type Body = {
   applicationId?: string;
@@ -970,33 +968,20 @@ async function appCreation({
     traceId,
   });
 
-  const repoCreationStartTime = Instrumentation.trackGitHubRepoCreation();
-
-  const { repositoryUrl, appName: newAppName } = await createUserUpstreamApp({
+  // Use the isolated createApp function with the existing applicationId
+  const result = await createApp({
+    applicationId, // Pass the existing applicationId
     appName,
     githubEntity,
+    ownerId,
+    clientSource: requestBody.clientSource,
+    traceId,
+    agentState,
+    databricksApiKey: requestBody.databricksApiKey,
+    databricksHost: requestBody.databricksHost,
     files,
   });
 
-  Instrumentation.trackGitHubRepoCreationEnd(repoCreationStartTime);
-
-  if (!repositoryUrl) {
-    throw new Error('Repository URL not found');
-  }
-
-  await db.insert(apps).values({
-    id: applicationId,
-    name: appName,
-    clientSource: requestBody.clientSource,
-    ownerId,
-    traceId,
-    agentState,
-    repositoryUrl,
-    appName: newAppName,
-    githubUsername: githubEntity.githubUsername,
-    databricksApiKey: requestBody.databricksApiKey,
-    databricksHost: requestBody.databricksHost,
-  });
   streamLog(
     {
       message: 'App created',
@@ -1012,12 +997,12 @@ async function appCreation({
     new PlatformMessage(
       AgentStatus.IDLE,
       traceId as TraceId,
-      `Your application has been uploaded to this github repository: ${repositoryUrl}`,
+      `Your application has been uploaded to this github repository: ${result.repositoryUrl}`,
       { type: PlatformMessageType.REPO_CREATED },
     ),
   );
 
-  return { newAppName };
+  return { newAppName: result.appName };
 }
 
 async function appIteration({
@@ -1071,50 +1056,6 @@ async function appIteration({
       { type: PlatformMessageType.COMMIT_CREATED },
     ),
   );
-}
-
-async function createUserUpstreamApp({
-  appName,
-  githubEntity,
-  files,
-}: {
-  appName: string;
-  githubEntity: GithubEntityInitialized;
-  files: ReturnType<typeof readDirectoryRecursive>;
-}) {
-  const repoExists = await checkIfRepoExists({
-    appName,
-    githubEntity,
-  });
-
-  if (repoExists) {
-    appName = `${appName}-${uuidv4().slice(0, 4)}`;
-    app.log.info({
-      message: 'Repository exists, generated new app name',
-      appName,
-    });
-  }
-
-  githubEntity.repo = appName;
-
-  const { repositoryUrl } = await createRepository({
-    githubEntity,
-  });
-
-  app.log.info({
-    message: 'Repository created',
-    repositoryUrl,
-    appName,
-  });
-
-  const { commitSha: initialCommitSha } = await createInitialCommit({
-    githubEntity,
-    paths: files,
-  });
-
-  const initialCommitUrl = `https://github.com/${githubEntity.owner}/${appName}/commit/${initialCommitSha}`;
-
-  return { repositoryUrl, appName, initialCommitUrl };
 }
 
 function getExistingConversationBody({
