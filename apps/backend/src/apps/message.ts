@@ -1255,13 +1255,7 @@ async function saveMessageToDB(
   }));
 
   try {
-    if (values.length > 1) {
-      await db.transaction(async (tx) => {
-        await tx.insert(appPrompts).values(values);
-      });
-    } else {
-      await db.insert(appPrompts).values(values);
-    }
+    await db.insert(appPrompts).values(values);
   } catch (error) {
     app.log.error({
       message: 'Error saving message to DB',
