@@ -53,7 +53,7 @@ export class SegmentAdapter implements EventInstrumentation {
     if (!this.analytics) return;
 
     this.analytics.track({
-      anonymousId: context?.userId || this.getAnonymousId(),
+      userId: context?.userId || this.getAnonymousId(),
       event: 'Error Captured',
       properties: {
         error_message: error.message,
@@ -106,7 +106,7 @@ export class SegmentAdapter implements EventInstrumentation {
     if (!this.analytics) return;
 
     this.analytics.track({
-      anonymousId: properties?.userId || this.getAnonymousId(),
+      userId: properties?.userId || this.getAnonymousId(),
       event: eventName,
       properties: {
         ...properties,
@@ -124,7 +124,7 @@ export class SegmentAdapter implements EventInstrumentation {
       this.conversationStartTime = Date.now();
       this.lastMessageTime = Date.now();
       this.analytics.track({
-        anonymousId: data?.userId || this.getAnonymousId(),
+        userId: data?.userId || this.getAnonymousId(),
         event: 'Conversation Started',
         properties: {
           application_id: data?.applicationId,
@@ -147,7 +147,7 @@ export class SegmentAdapter implements EventInstrumentation {
       this.lastMessageTime = now;
 
       this.analytics.track({
-        anonymousId: data?.userId || this.getAnonymousId(),
+        userId: data?.userId || this.getAnonymousId(),
         event: 'Agent Message',
         properties: {
           message_kind: data.messageKind,
@@ -170,7 +170,7 @@ export class SegmentAdapter implements EventInstrumentation {
         : 0;
 
       this.analytics.track({
-        anonymousId: data?.userId || this.getAnonymousId(),
+        userId: data?.userId || this.getAnonymousId(),
         event: 'Conversation Completed',
         properties: {
           application_id: data?.applicationId,
@@ -192,7 +192,7 @@ export class SegmentAdapter implements EventInstrumentation {
     // error event
     if (eventType === 'sse_connection_error') {
       this.analytics.track({
-        anonymousId: data?.userId || this.getAnonymousId(),
+        userId: data?.userId || this.getAnonymousId(),
         event: 'Conversation Error',
         properties: {
           error: data?.error,
@@ -205,14 +205,14 @@ export class SegmentAdapter implements EventInstrumentation {
   }
 
   // user message event
-  trackUserMessage(message: string): void {
+  trackUserMessage(message: string, userId: string): void {
     if (!this.analytics) return;
 
     const messageLength = message?.length || 0;
     this.lastMessageTime = Date.now();
 
     this.analytics.track({
-      anonymousId: this.getAnonymousId(),
+      userId: userId || this.getAnonymousId(),
       event: 'User Message Sent',
       properties: {
         message_length: messageLength,
@@ -224,7 +224,7 @@ export class SegmentAdapter implements EventInstrumentation {
   }
 
   // platform message event
-  trackPlatformMessage(messageType: string): void {
+  trackPlatformMessage(messageType: string, userId: string): void {
     if (!this.analytics) return;
 
     let duration = 0;
@@ -252,7 +252,7 @@ export class SegmentAdapter implements EventInstrumentation {
     }
 
     this.analytics.track({
-      anonymousId: this.getAnonymousId(),
+      userId: userId || this.getAnonymousId(),
       event: 'Platform Message',
       properties: {
         message_type: messageType,

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { isDev } from '../env';
 import { CompositeInstrumentation } from './composite-instrumentation';
 import { SegmentAdapter } from './segment-adapter';
 import { SentryAdapter } from './sentry-adapter';
@@ -47,6 +48,8 @@ export function initializeInstrumentation(
 }
 
 export function getInstrumentation(): EventInstrumentation {
+  if (isDev) return createNoOpInstrumentation();
+
   if (!instrumentationInstance) {
     throw new Error(
       'Instrumentation not initialized. Call initializeInstrumentation() first.',
@@ -82,11 +85,11 @@ const _instrumentation = {
   trackSseEvent: (...args: Parameters<EventInstrumentation['trackSseEvent']>) =>
     getInstrumentation().trackSseEvent(...args),
 
-  trackUserMessage: (message: string) =>
-    getInstrumentation().trackUserMessage(message),
+  trackUserMessage: (message: string, userId?: string) =>
+    getInstrumentation().trackUserMessage(message, userId),
 
-  trackPlatformMessage: (messageType: string) =>
-    getInstrumentation().trackPlatformMessage(messageType),
+  trackPlatformMessage: (messageType: string, userId?: string) =>
+    getInstrumentation().trackPlatformMessage(messageType, userId),
 
   captureError: (...args: Parameters<EventInstrumentation['captureError']>) =>
     getInstrumentation().captureError(...args),
