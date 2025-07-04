@@ -28,6 +28,7 @@ export async function getOrCreateNeonProject({
       project: {},
     });
     connectionString = data.connection_uris[0]?.connection_uri;
+    neonProjectId = data.project.id;
     logger.info('Created Neon database', { projectId: data.project.id });
   }
 

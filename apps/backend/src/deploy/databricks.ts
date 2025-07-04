@@ -5,9 +5,13 @@ import { logger } from '../logger';
 import { promisify } from 'node:util';
 import type { App } from '../db/schema';
 import { getOrCreateNeonProject } from './neon';
-import { fs } from 'memfs';
+import fs from 'node:fs';
+import { DeployStatus } from '@appdotbuild/core';
 
 const exec = promisify(execNative);
+
+const DATABASE_URL_ENV_KEY = 'APP_DATABASE_URL';
+const DATABASE_URL_RESOURCE_KEY = 'APP_DATABASE_URL';
 
 export async function deployToDatabricks({
   appId,
@@ -60,13 +64,92 @@ export async function deployToDatabricks({
   });
 
   try {
-    // 1. Import the code into the databricks workspace
+    // 1. Check if the app exists
+    const appExists = await checkDatabricksAppExists({
+      appName,
+      databricksHost: currentApp.databricksHost,
+      databricksApiKey: currentApp.databricksApiKey,
+    });
+
+    // 2. Create a databricks app IF it doesn't exist
+    if (appExists) {
+      logger.info(`Databricks app ${appName} already exists`);
+    } else {
+      logger.info(`Creating Databricks app ${appName}`);
+      await exec(`databricks apps create ${appName}`, {
+        env: databricksEnv,
+      });
+    }
+
+    // 3. Check if the scope exists
+    const scopeAlreadyExists = await checkIfScopeAlreadyExists({
+      scopeName: appName,
+      databricksHost: currentApp.databricksHost,
+      databricksApiKey: currentApp.databricksApiKey,
+      secretName: DATABASE_URL_ENV_KEY,
+    });
+
+    if (scopeAlreadyExists) {
+      logger.info(`Scope ${appName} already exists`);
+    } else {
+      logger.info(`Scope ${appName} does not exist, creating it`);
+      // 3. setup secrets in databricks
+      await setupDatabricksAppSecrets({
+        appName,
+        databricksHost: currentApp.databricksHost,
+        databricksApiKey: currentApp.databricksApiKey,
+        secrets: {
+          [DATABASE_URL_ENV_KEY]: connectionString,
+        },
+      });
+
+      // 4. Create a databricks config file, so the app can access Databricks secrets
+      const databricksConfigFile = createDatabricksConfigFile([
+        {
+          sectionName: DATABASE_URL_RESOURCE_KEY,
+          secretSection: {
+            scope: appName,
+            key: DATABASE_URL_ENV_KEY,
+          },
+        },
+      ]);
+      fs.writeFileSync(`${appDirectory}/databricks.yml`, databricksConfigFile);
+
+      // 5. Create a databricks app file, to define the app's environment variables
+      const databricksAppFile = createDatabricksAppFile([
+        {
+          name: DATABASE_URL_ENV_KEY,
+          value: DATABASE_URL_RESOURCE_KEY,
+          isSecret: true,
+        },
+      ]);
+      fs.writeFileSync(`${appDirectory}/app.yaml`, databricksAppFile);
+    }
+
+    // For debug, copy appDirectory to local file
+    const debugCopyPath = `/Users/pedro.figueiredo/Documents/git/neon/platform/apps/backend/dbx/debug-app-${shortAppId}`;
+    try {
+      await exec(`mkdir -p "$(dirname "${debugCopyPath}")"`, {});
+      await exec(`cp -r "${appDirectory}" "${debugCopyPath}"`, {});
+      logger.info('Debug: Copied app directory for debugging', {
+        appId,
+        originalPath: appDirectory,
+        debugPath: debugCopyPath,
+      });
+    } catch (debugError) {
+      logger.warn('Debug: Failed to copy app directory', {
+        appId,
+        error:
+          debugError instanceof Error ? debugError.message : String(debugError),
+      });
+    }
+
+    // 6. Import the code into the databricks workspace (after all files are created)
     logger.info('Importing code to Databricks workspace', {
       appId,
       workspaceSourceCodePath,
       databricksHost: currentApp.databricksHost,
     });
-
     await exec(
       `databricks workspace import-dir --overwrite "${appDirectory}" "${workspaceSourceCodePath}"`,
       {
@@ -75,61 +158,10 @@ export async function deployToDatabricks({
       },
     );
 
-    // 2. Check if the app exists
-    const appExists = await checkDatabricksAppExists({
-      appName,
-      databricksHost: currentApp.databricksHost,
-      databricksApiKey: currentApp.databricksApiKey,
-    });
-
-    // 3. Create a databricks app IF it doesn't exist
-    if (!appExists) {
-      logger.info(`Creating Databricks app ${appName}`);
-      await exec(`databricks apps create ${shellQuote(appName)}`, {
-        env: databricksEnv,
-      });
-    }
-
-    // 4. setup secrets in databricks
-    await setupDatabricksAppSecrets({
-      appName,
-      databricksHost: currentApp.databricksHost,
-      databricksApiKey: currentApp.databricksApiKey,
-      secrets: {
-        APP_DATABASE_URL: connectionString,
-      },
-    });
-
-    // 5. Create a databricks config file, so the app can access Databricks secrets
-    const databricksConfigFile = createDatabricksConfigFile([
-      {
-        sectionName: 'APP_DATABASE_URL',
-        secretSection: {
-          scope: appName,
-          key: 'APP_DATABASE_URL',
-        },
-      },
-    ]);
-    fs.writeFileSync(`${appDirectory}/databricks.yml`, databricksConfigFile);
-
-    // 6. Create a databricks app file, to define the app's environment variables
-    const databricksAppFile = createDatabricksAppFile([
-      {
-        name: 'APP_DATABASE_URL',
-        value: 'APP_DATABASE_URL',
-        isSecret: true,
-      },
-    ]);
-    fs.writeFileSync(`${appDirectory}/app.yaml`, databricksAppFile);
-
     // 7. Deploy the app from there
     logger.info('Deploying app to Databricks');
     const deployResult = await exec(
-      `databricks apps deploy ${shellQuote(
-        appName,
-      )} --source-code-path ${shellQuote(
-        `/Workspace${workspaceSourceCodePath}`,
-      )}`,
+      `databricks apps deploy ${appName} --source-code-path /Workspace${workspaceSourceCodePath}`,
       {
         cwd: appDirectory,
         env: databricksEnv,
@@ -142,7 +174,7 @@ export async function deployToDatabricks({
     });
 
     const appUrl = (
-      await exec(`databricks apps get ${shellQuote(appName)} | jq -r '.url'`, {
+      await exec(`databricks apps get ${appName} | jq -r '.url'`, {
         env: databricksEnv,
       })
     ).stdout.trim();
@@ -191,12 +223,9 @@ async function checkDatabricksAppExists({
   databricksHost: string;
   databricksApiKey: string;
 }) {
-  // Validate appName to prevent shell injection
-  validateAppId(appName);
-
   try {
     const result = await exec(
-      `databricks apps list | grep ${shellQuote(appName)} || true`,
+      `databricks apps list | grep ${appName} || true`,
       {
         env: {
           ...process.env,
@@ -229,6 +258,51 @@ async function checkDatabricksAppExists({
   }
 }
 
+async function checkIfScopeAlreadyExists({
+  scopeName,
+  databricksHost,
+  databricksApiKey,
+  secretName,
+}: {
+  scopeName: string;
+  databricksHost: string;
+  databricksApiKey: string;
+  secretName: string;
+}) {
+  try {
+    const result = await exec(
+      `databricks secrets get-secret ${scopeName} ${secretName}`,
+      {
+        env: {
+          ...process.env,
+          DATABRICKS_HOST: databricksHost,
+          DATABRICKS_TOKEN: databricksApiKey,
+        },
+      },
+    );
+
+    if (result.stderr) {
+      logger.warn('Databricks secret check stderr output', {
+        scopeName,
+        secretName,
+        stderr: result.stderr,
+      });
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    logger.error(
+      "Failed to check if scope already exists, or scope/secret doesn't exist",
+      {
+        scopeName,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
+    return false;
+  }
+}
+
 /**
  * Validates appId to prevent shell injection attacks
  * Only allows alphanumeric characters, hyphens, and underscores
@@ -249,14 +323,6 @@ function validateAppId(appId: string): void {
   }
 }
 
-/**
- * Safely quotes a string for shell execution
- */
-function shellQuote(str: string): string {
-  // Replace single quotes with '\'' and wrap in single quotes
-  return `'${str.replace(/'/g, "'\\''")}'`;
-}
-
 async function setupDatabricksAppSecrets({
   appName,
   databricksHost,
@@ -273,7 +339,7 @@ async function setupDatabricksAppSecrets({
     appName,
   });
   const createSecretScopeResult = await exec(
-    `databricks secrets create-scope --scope ${shellQuote(appName)}`,
+    `databricks secrets create-scope ${appName}`,
     {
       env: {
         ...process.env,
@@ -293,14 +359,15 @@ async function setupDatabricksAppSecrets({
   // 2. Add secrets to the scope
   logger.info('Adding secrets to scope', {
     appName,
-    secrets,
   });
   const addSecretsResult = await Promise.all(
     Object.entries(secrets).map(async ([key, value]) => {
       return await exec(
-        `databricks secrets put-secret --scope ${shellQuote(
-          appName,
-        )} --key ${shellQuote(key)} --string-value ${shellQuote(value)}`,
+        `databricks secrets put-secret --json '{
+          "scope": "${appName}",
+          "key": "${key}",
+          "string_value": "${value}"
+        }'`,
         {
           env: {
             ...process.env,

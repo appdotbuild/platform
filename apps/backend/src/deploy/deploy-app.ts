@@ -123,18 +123,6 @@ async function deployToKoyeb({
   );
 
   const koyebAppName = `app-${appId}`;
-  const envVars = {
-    APP_DATABASE_URL: connectionString,
-    SERVER_PORT: '2022',
-  };
-
-  let envVarsString = '';
-
-  for (const [key, value] of Object.entries(envVars)) {
-    if (value !== null) {
-      envVarsString += `--env ${key}='${value}' `;
-    }
-  }
 
   await Promise.all([
     dockerLoginIfNeeded(),
