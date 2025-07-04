@@ -19,6 +19,7 @@ export interface Message {
     | 'success';
   confirmationType?: 'success' | 'info' | 'error' | 'warning';
   action?: (data: any) => void;
+  options?: Record<string, any>;
 }
 
 export const messagesStore = {
@@ -32,7 +33,34 @@ export const messagesStore = {
 
   addMessage: (chatId: string, message: Message) => {
     const currentMessages = messagesStore.getMessages(chatId);
-    messagesStore.setMessages(chatId, [...currentMessages, message]);
+    const lastIndex = currentMessages.length - 1;
+    const hasLoadingMessage =
+      lastIndex >= 0 && currentMessages[lastIndex].id === 'loading-message';
+
+    if (hasLoadingMessage) {
+      // insert before loading message
+      const newMessages = [
+        ...currentMessages.slice(0, lastIndex),
+        message,
+        currentMessages[lastIndex],
+      ];
+      messagesStore.setMessages(chatId, newMessages);
+    } else {
+      messagesStore.setMessages(chatId, [...currentMessages, message]);
+    }
+  },
+
+  addLoadingMessage: (chatId: string, message: Message) => {
+    const currentMessages = messagesStore.getMessages(chatId);
+    const lastIndex = currentMessages.length - 1;
+
+    // if last message is a loading message, replace it
+    if (lastIndex >= 0 && currentMessages[lastIndex].id === 'loading-message') {
+      const newMessages = [...currentMessages.slice(0, lastIndex), message];
+      messagesStore.setMessages(chatId, newMessages);
+    } else {
+      messagesStore.setMessages(chatId, [...currentMessages, message]);
+    }
   },
 
   removeMessage: (chatId: string, messageId: string) => {
@@ -41,6 +69,18 @@ export const messagesStore = {
       chatId,
       currentMessages.filter((msg) => msg.id !== messageId),
     );
+  },
+
+  updateMessage: (
+    chatId: string,
+    messageId: string,
+    updates: Partial<Message>,
+  ) => {
+    const currentMessages = messagesStore.getMessages(chatId);
+    const updatedMessages = currentMessages.map((msg) =>
+      msg.id === messageId ? { ...msg, ...updates } : msg,
+    );
+    messagesStore.setMessages(chatId, updatedMessages);
   },
 
   clearMessages: (chatId: string) => {

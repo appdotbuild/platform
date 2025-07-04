@@ -60,7 +60,7 @@ export function useChat() {
       });
     }
 
-    messagesStore.addMessage(sendChatId, {
+    messagesStore.addLoadingMessage(sendChatId, {
       id: 'loading-message',
       message: 'Thinking...',
       role: 'system',
@@ -144,7 +144,7 @@ export function useChatSetup() {
 
     const handleAppNameSubmit = async (appName: string) => {
       messagesStore.removeMessage(chatId, 'app-name-request');
-      messagesStore.addMessage(chatId, {
+      messagesStore.addLoadingMessage(chatId, {
         id: 'loading-create-app',
         message: 'Creating your app...',
         role: 'system',

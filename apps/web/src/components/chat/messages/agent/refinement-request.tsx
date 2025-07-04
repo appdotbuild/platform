@@ -1,13 +1,16 @@
-import { useState } from "react";
-import Markdown from "react-markdown";
-import { MessageDetails } from "../message-details";
+import { useState } from 'react';
+import Markdown from 'react-markdown';
+import { MessageDetails } from '../message-details';
 
 interface RefinementRequestProps {
-    message: string;
-    rawData?: any;
+  message: string;
+  rawData?: any;
 }
 
-export function RefinementRequest({message, rawData}: RefinementRequestProps) {
+export function RefinementRequest({
+  message,
+  rawData,
+}: RefinementRequestProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const isLongMessage = message.length > 800;
   const displayMessage = () =>

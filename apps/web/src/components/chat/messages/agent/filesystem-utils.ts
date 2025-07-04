@@ -82,4 +82,4 @@ export const buildFileTree = (files: FileItem[]): Record<string, TreeNode> => {
 
 export const calculateTotalFiles = (files: FileItem[]): number => {
   return files.reduce((sum, file) => sum + 1 + (file.additionalCount || 0), 0);
-}; 
+};

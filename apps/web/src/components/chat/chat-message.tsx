@@ -30,10 +30,11 @@ export function ChatMessage({ message }: ChatMessageProps) {
         );
 
       if (message.systemType === 'loading')
-        return <LoadingMessage message={message.message} />;
+        return (
+          <LoadingMessage message={message.message} options={message.options} />
+        );
 
-      if (message.systemType === 'error')
-        return <ErrorMessage message={message.message} />;
+      if (message.systemType === 'error') return <ErrorMessage />;
     }
 
     if (message.role === 'assistant') {
@@ -46,7 +47,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         );
       }
       if (message.messageKind === MessageKind.RUNTIME_ERROR) {
-        return <ErrorMessage message={message.message} />;
+        return <ErrorMessage />;
       }
 
       return (

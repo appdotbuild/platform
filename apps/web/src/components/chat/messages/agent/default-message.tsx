@@ -1,5 +1,5 @@
-import { useState } from "react";
-import Markdown from "react-markdown";
+import { useState } from 'react';
+import Markdown from 'react-markdown';
 
 export function DefaultMessage({ message }: { message: string }) {
   const [isExpanded, setIsExpanded] = useState(false);

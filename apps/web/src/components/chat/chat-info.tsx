@@ -6,7 +6,7 @@ import { useApp } from '~/hooks/useApp';
 export function ChatInfo() {
   const { chatId } = useParams({ from: '/chat/$chatId' });
   const { app, isLoading } = useApp(chatId);
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const handleToggle = () => {
@@ -16,7 +16,7 @@ export function ChatInfo() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && isOpen) {
     return (
       <div className="w-full max-w-4xl mx-auto mb-2">
         <ToggleButton isOpen={isOpen} onClick={handleToggle} />

@@ -15,6 +15,8 @@ export function ChatContainer({
 }: ChatContainerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { messages } = useChatMessages(chatId);
+  const isTempApp = chatId.startsWith('temp-');
+
   useEffect(() => {
     if (containerRef.current && messages.length > 0) {
       setTimeout(() => {
@@ -28,7 +30,7 @@ export function ChatContainer({
 
   return (
     <>
-      <ChatInfo />
+      {!isTempApp && <ChatInfo />}
       <div
         ref={containerRef}
         className="w-full max-w-4xl h-[calc(100vh-200px)] bg-white rounded-lg shadow-lg p-8 border border-dashed border-gray-500 overflow-y-auto"

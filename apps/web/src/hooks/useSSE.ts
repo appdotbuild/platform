@@ -1,6 +1,6 @@
 import type { AgentSseEvent } from '@appdotbuild/core';
 import { useMutation } from '@tanstack/react-query';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { appsService, type SendMessageInput } from '~/external/api/services';
 import { messagesStore } from '~/stores/messages-store';
 
@@ -49,7 +49,10 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
       while (true) {
         const { done, value } = await reader.read();
 
-        if (done) break;
+        if (done) {
+          optionsRef.current.onDone?.();
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -151,6 +154,8 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
 
 // manage SSE Events for specific chat
 export function useSSEMessageHandler(chatId: string | undefined) {
+  const [hasReceivedFirstMessage, setHasReceivedFirstMessage] = useState(false);
+
   const handleSSEMessage = useCallback(
     (event: AgentSseEvent) => {
       if (!chatId) return;
@@ -159,12 +164,19 @@ export function useSSEMessageHandler(chatId: string | undefined) {
         event.message.messages.forEach(
           (msg: { role: string; content: string }) => {
             if (msg.role === 'assistant') {
-              messagesStore.removeMessage(chatId, 'loading-message');
+              // collapse the loading message if it exists and not finished the stream
+              if (!hasReceivedFirstMessage) {
+                setHasReceivedFirstMessage(true);
+                messagesStore.updateMessage(chatId, 'loading-message', {
+                  options: { collapsed: true },
+                });
+              }
 
               messagesStore.addMessage(chatId, {
                 id: crypto.randomUUID(),
                 message: msg.content,
                 role: 'assistant',
+                messageKind: event.message.kind,
                 createdAt: new Date().toISOString(),
               });
             }
@@ -172,7 +184,7 @@ export function useSSEMessageHandler(chatId: string | undefined) {
         );
       }
     },
-    [chatId],
+    [chatId, hasReceivedFirstMessage],
   );
 
   const handleSSEError = useCallback(
@@ -195,7 +207,9 @@ export function useSSEMessageHandler(chatId: string | undefined) {
   const handleSSEDone = useCallback(
     (_traceId?: string) => {
       if (chatId) {
+        // remove the loading message and reset the state
         messagesStore.removeMessage(chatId, 'loading-message');
+        setHasReceivedFirstMessage(false);
       }
     },
     [chatId],

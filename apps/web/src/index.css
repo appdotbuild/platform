@@ -13,6 +13,20 @@ body {
   height: 100%;
 }
 
+/* View Transitions for Loading Message */
+::view-transition-group(loading-message) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(loading-message) {
+  animation: 0.5s ease-out both fade-out;
+}
+
+::view-transition-new(loading-message) {
+  animation: 0.5s ease-out both fade-in;
+}
+
 ::view-transition-group(logo) {
   animation-duration: 1.2s;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -85,12 +99,57 @@ body {
   }
 }
 
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes content-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-fade-in {
   animation: fade-in-scale 0.3s ease-out forwards;
 }
 
 .animate-slide-fade-in {
   animation: slide-fade-in 0.4s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.4s ease-out forwards;
+}
+
+.animate-slide-in-top {
+  animation: slide-in-top 0.4s ease-out forwards;
+}
+
+.animate-content-fade-in {
+  animation: content-fade-in 0.3s ease-out forwards;
 }
 
 .animate-slide-fade-in ul li {
