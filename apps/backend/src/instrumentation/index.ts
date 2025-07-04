@@ -8,7 +8,6 @@ import type {
   OperationMetadata,
   TimedOperation,
 } from './types';
-import { isDev } from '../env';
 
 export * from './types';
 
