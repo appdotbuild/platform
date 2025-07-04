@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useChatMessages } from '~/hooks/useChatMessages';
+import { ChatInfo } from './chat-info';
 import { ChatLoading } from './chat-loading';
 import { ChatMessage } from './chat-message';
 
@@ -26,17 +27,20 @@ export function ChatContainer({
   }, [messages]);
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full max-w-4xl h-[calc(100vh-200px)] bg-white rounded-lg shadow-lg p-8 border border-dashed border-gray-500 overflow-y-auto"
-    >
-      {isLoadingHistory ? (
-        <ChatLoading />
-      ) : (
-        messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
-        ))
-      )}
-    </div>
+    <>
+      <ChatInfo />
+      <div
+        ref={containerRef}
+        className="w-full max-w-4xl h-[calc(100vh-200px)] bg-white rounded-lg shadow-lg p-8 border border-dashed border-gray-500 overflow-y-auto"
+      >
+        {isLoadingHistory ? (
+          <ChatLoading />
+        ) : (
+          messages.map((message) => (
+            <ChatMessage key={message.id} message={message} />
+          ))
+        )}
+      </div>
+    </>
   );
 }

@@ -1,9 +1,10 @@
-import { UserButton } from '@stackframe/react';
+import { UserButton, useUser } from '@stackframe/react';
 import { Link, useLocation } from '@tanstack/react-router';
 import { isHomePage } from '~/utils/router-checker';
 
 export function Header() {
   const { pathname } = useLocation();
+  const user = useUser();
   return (
     <header className="flex w-full items-center py-10 px-40">
       <nav
@@ -22,7 +23,7 @@ export function Header() {
           />
         </Link>
       </nav>
-      <UserButton />
+      {user && <UserButton />}
     </header>
   );
 }
