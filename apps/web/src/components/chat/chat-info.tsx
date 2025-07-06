@@ -1,7 +1,8 @@
 import { useParams } from '@tanstack/react-router';
-import { ChevronDown, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '~/hooks/useApp';
+import { ToggleButton } from '~/components/shared/toggle-button';
 
 export function ChatInfo() {
   const { chatId } = useParams({ from: '/chat/$chatId' });
@@ -19,7 +20,12 @@ export function ChatInfo() {
   if (isLoading && isOpen) {
     return (
       <div className="w-full max-w-4xl mx-auto mb-2">
-        <ToggleButton isOpen={isOpen} onClick={handleToggle} />
+        <ToggleButton
+          isOpen={isOpen}
+          onClick={handleToggle}
+          icon={Info}
+          title="App Info"
+        />
         <div className="mt-2 rounded-lg bg-white shadow-sm overflow-hidden border border-gray-300">
           <div className="p-6 text-center text-gray-500">
             Loading app status...
@@ -75,7 +81,12 @@ export function ChatInfo() {
 
   return (
     <div className="w-full max-w-4xl mx-auto mb-2">
-      <ToggleButton isOpen={isOpen} onClick={handleToggle} />
+      <ToggleButton
+        isOpen={isOpen}
+        onClick={handleToggle}
+        icon={Info}
+        title="App Info"
+      />
 
       <div
         className={`mt-2 rounded-lg bg-white shadow-sm overflow-hidden transition-all duration-300 ease-in-out border ${
@@ -87,31 +98,5 @@ export function ChatInfo() {
         {renderContent()}
       </div>
     </div>
-  );
-}
-
-function ToggleButton({
-  isOpen,
-  onClick,
-}: {
-  isOpen: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full h-16 border border-gray-300 rounded-lg bg-white text-black flex justify-between items-center px-6 hover:bg-gray-50 transition-colors duration-200 shadow-sm group"
-    >
-      <div className="flex items-center gap-3">
-        <Info className="w-6 h-6 text-gray-600 group-hover:text-gray-800 transition-colors" />
-        <span className="text-medium font-medium">App Info</span>
-      </div>
-      <ChevronDown
-        className={`w-5 h-5 transition-transform duration-200 ${
-          isOpen ? 'rotate-180' : ''
-        }`}
-      />
-    </button>
   );
 }

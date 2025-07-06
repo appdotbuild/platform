@@ -9,21 +9,21 @@ export function DefaultMessage({ message }: { message: string }) {
 
   return (
     <>
-      <div className="px-4 pt-3 pb-2 bg-gradient-to-r from-gray-50 to-white">
+      <div className="px-4 pt-3 pb-2 bg-gradient-to-r from-muted to-background">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-base">🤖</span>
-            <span className="font-semibold text-sm text-gray-700">
+            <span className="font-semibold text-sm text-foreground">
               Assistant
             </span>
           </div>
         </div>
       </div>
 
-      <div className="w-full border-t border-gray-100" />
+      <div className="w-full border-t border-border" />
 
       <div className="px-4 py-3">
-        <div className="prose prose-sm max-w-none text-gray-700">
+        <div className="prose prose-sm max-w-none text-foreground">
           <Markdown>{displayMessage()}</Markdown>
         </div>
 
@@ -32,7 +32,7 @@ export function DefaultMessage({ message }: { message: string }) {
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-xs text-gray-600 hover:text-gray-800 font-medium"
+              className="text-xs text-muted-foreground hover:text-foreground font-medium"
             >
               {isExpanded ? 'Show less' : 'Show more'}
             </button>

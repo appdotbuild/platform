@@ -34,7 +34,7 @@ export function PlatformMessage({
       case PlatformMessageType.DEPLOYMENT_IN_PROGRESS:
         return 'border-purple-200';
       default:
-        return 'border-gray-200';
+        return 'border-border';
     }
   };
 
@@ -47,7 +47,7 @@ export function PlatformMessage({
       case PlatformMessageType.DEPLOYMENT_IN_PROGRESS:
         return 'bg-purple-50/50';
       default:
-        return 'bg-gray-50/50';
+        return 'bg-muted/50';
     }
   };
 
@@ -59,7 +59,7 @@ export function PlatformMessage({
         <div className="flex items-center gap-3">
           <span className="text-lg">{getIcon()}</span>
           <div className="flex-1">
-            <p className="text-sm text-gray-700">{message}</p>
+            <p className="text-sm text-foreground">{message}</p>
             {rawData && (
               <MessageDetails
                 rawData={rawData}
