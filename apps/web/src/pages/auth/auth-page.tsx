@@ -39,7 +39,7 @@ export function AuthPage() {
   if (isProcessing) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-lg">Setting up your app...</div>
+        <div className="text-lg text-foreground">Setting up your app...</div>
       </div>
     );
   }

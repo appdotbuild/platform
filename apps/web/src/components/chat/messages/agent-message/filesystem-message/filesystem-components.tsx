@@ -1,6 +1,11 @@
 import { useState } from 'react';
-import type { TreeNode } from './filesystem-utils';
-import { getFileIcon } from './filesystem-utils';
+import { getFileIcon, type TreeNode } from './utils';
+
+export const ErrorState = () => (
+  <div className="mt-3 p-4 border border-red-200 rounded-lg bg-red-50">
+    <span className="text-sm text-red-600">No files found in message</span>
+  </div>
+);
 
 export const FileIcon = ({
   name,
@@ -11,9 +16,9 @@ export const FileIcon = ({
 }) => (
   <div className="flex items-center gap-1">
     <span className="text-sm">{getFileIcon(name)}</span>
-    <span className="text-sm font-medium text-gray-700">{name}</span>
+    <span className="text-sm font-medium text-foreground">{name}</span>
     {additionalCount && (
-      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-1">
+      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full ml-1">
         +{additionalCount} more
       </span>
     )}
@@ -23,12 +28,12 @@ export const FileIcon = ({
 export const DirectoryIcon = ({ name }: { name: string }) => (
   <div className="flex items-center gap-1">
     <span className="text-sm">📁</span>
-    <span className="text-sm font-medium text-gray-800">{name}</span>
+    <span className="text-sm font-medium text-foreground">{name}</span>
   </div>
 );
 
 export const ExpandIcon = ({ isExpanded }: { isExpanded: boolean }) => (
-  <span className="text-xs text-gray-500 w-3 flex justify-center">
+  <span className="text-xs text-muted-foreground w-3 flex justify-center">
     {isExpanded ? '▼' : '▶'}
   </span>
 );
@@ -54,8 +59,9 @@ export const TreeNodeComponent = ({
 
   return (
     <div className="select-none">
-      <div
-        className="flex items-center gap-2 py-1 px-2 rounded hover:bg-gray-50 cursor-pointer transition-colors"
+      <button
+        type="button"
+        className="flex items-center gap-2 py-1 px-2 rounded hover:bg-muted/50 cursor-pointer transition-colors"
         onClick={handleClick}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onKeyDown={handleClick}
@@ -68,7 +74,7 @@ export const TreeNodeComponent = ({
         ) : (
           <FileIcon name={name} additionalCount={node.additionalCount} />
         )}
-      </div>
+      </button>
 
       {isDirectory && hasChildren && isExpanded && (
         <div>
@@ -87,35 +93,9 @@ export const TreeNodeComponent = ({
 };
 
 export const FileTree = ({ tree }: { tree: Record<string, TreeNode> }) => (
-  <div className="bg-white rounded border border-gray-200 p-2">
+  <div className="bg-background rounded border border-border p-2">
     {Object.entries(tree).map(([name, node]) => (
       <TreeNodeComponent key={name} name={name} node={node} />
     ))}
-  </div>
-);
-
-export const CreationHeader = ({ totalFiles }: { totalFiles: number }) => (
-  <div className="px-3 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200">
-    <div className="flex items-center gap-2">
-      <span className="text-sm">✨</span>
-      <span className="text-sm font-semibold text-green-800">
-        Created {totalFiles} files
-      </span>
-    </div>
-  </div>
-);
-
-export const AssistantHeader = () => (
-  <div className="px-4 pt-3 pb-2 bg-gradient-to-r from-gray-50 to-white">
-    <div className="flex items-center gap-2">
-      <span className="text-base">🤖</span>
-      <span className="font-semibold text-sm text-gray-700">Assistant</span>
-    </div>
-  </div>
-);
-
-export const ErrorState = () => (
-  <div className="mt-3 p-4 border border-red-200 rounded-lg bg-red-50">
-    <span className="text-sm text-red-600">No files found in message</span>
   </div>
 );

@@ -1,9 +1,14 @@
 import type { App } from '@appdotbuild/core';
 import { LayoutGrid } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '~/components/shared/accordion/accordion';
 import { useAppsList } from '~/hooks/useAppsList';
 import { ChatItem } from './chat-item';
-import { ToggleButton } from '~/components/shared/toggle-button';
 
 export function ChatList() {
   const [isOpen, setIsOpen] = useState(false);
@@ -77,27 +82,31 @@ export function ChatList() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <ToggleButton
-        isOpen={isOpen}
-        onClick={() => setIsOpen(!isOpen)}
-        icon={LayoutGrid}
-        title="My Apps"
-      />
-
-      <div
-        className={`mt-2 rounded-lg bg-background shadow-sm overflow-hidden transition-all duration-300 ease-in-out border ${
-          isOpen
-            ? 'max-h-96 opacity-100 border-input'
-            : 'max-h-0 opacity-0 border-transparent'
-        }`}
+      <Accordion
+        type="single"
+        collapsible
+        value={isOpen ? 'apps' : undefined}
+        onValueChange={(value) => setIsOpen(value === 'apps')}
       >
-        <div
-          ref={scrollRef}
-          className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-muted scrollbar-thumb-muted-foreground/30"
-        >
-          {renderContent()}
-        </div>
-      </div>
+        <AccordionItem value="apps" className="border-0">
+          <AccordionTrigger className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-foreground bg-background border border-input rounded-lg hover:bg-muted/50 hover:no-underline transition-colors">
+            <div className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4" />
+              <span>My Apps</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-0 pb-0 pt-2">
+            <div className="rounded-lg bg-background shadow-sm overflow-hidden border border-input">
+              <div
+                ref={scrollRef}
+                className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-muted scrollbar-thumb-muted-foreground/30"
+              >
+                {renderContent()}
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

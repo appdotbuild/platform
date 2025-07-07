@@ -18,7 +18,7 @@ const buttonVariants = cva(
           'shadow-xs border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
         toggle:
-          'w-full h-16 border border-gray-300 rounded-lg bg-white text-black flex justify-between items-center px-6 hover:bg-gray-50 transition-colors duration-200 shadow-sm group',
+          'w-full h-16 border border-input rounded-lg bg-background text-foreground flex justify-between items-center px-6 hover:bg-muted/50 transition-colors duration-200 shadow-sm group',
         none: '',
       },
       size: {
@@ -57,11 +57,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     { className, variant, size, asChild = false, onClick, children, ...props },
     ref,
   ) => {
-    if (asChild) {
-      // Por enquanto, não suportamos asChild com React 19
-      console.warn('asChild prop is not supported yet with React 19');
-    }
-
     return (
       <button
         className={cn(buttonVariants({ variant, size, className }))}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Markdown from 'react-markdown';
+import { Card, CardContent, CardHeader } from '~/components/shared/card';
 
 export function DefaultMessage({ message }: { message: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -8,21 +9,9 @@ export function DefaultMessage({ message }: { message: string }) {
     isLongMessage && !isExpanded ? `${message.slice(0, 800)}...` : message;
 
   return (
-    <>
-      <div className="px-4 pt-3 pb-2 bg-gradient-to-r from-muted to-background">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-base">🤖</span>
-            <span className="font-semibold text-sm text-foreground">
-              Assistant
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="w-full border-t border-border" />
-
-      <div className="px-4 py-3">
+    <Card>
+      <CardHeader icon="🤖" title="Assistant" />
+      <CardContent>
         <div className="prose prose-sm max-w-none text-foreground">
           <Markdown>{displayMessage()}</Markdown>
         </div>
@@ -38,7 +27,7 @@ export function DefaultMessage({ message }: { message: string }) {
             </button>
           )}
         </div>
-      </div>
-    </>
+      </CardContent>
+    </Card>
   );
 }

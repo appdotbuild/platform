@@ -1,9 +1,7 @@
-'use client';
-
-import { ChevronDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { cn } from '~/lib/utils';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '~/components/shared/button';
+import { cn } from '~/lib/utils';
 
 interface ToggleButtonProps {
   isOpen: boolean;
@@ -29,7 +27,7 @@ export function ToggleButton({
       className={className}
     >
       <div className="flex items-center gap-3">
-        <Icon className="w-6 h-6 text-gray-600 group-hover:text-gray-800 transition-colors" />
+        <Icon className="w-6 h-6 text-muted-foreground group-hover:text-foreground transition-colors" />
         <span className="text-medium font-medium">{title}</span>
       </div>
       <ChevronDown
