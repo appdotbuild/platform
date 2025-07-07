@@ -34,6 +34,13 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
 
   const processSSEStream = useCallback(async (response: Response) => {
     if (!response.ok) {
+      if (response.status === 429) {
+        const rateLimitError = new Error(
+          'Daily message limit exceeded. Please try again tomorrow.',
+        );
+        (rateLimitError as any).status = 429;
+        throw rateLimitError;
+      }
       throw new Error(`Failed to connect: ${response.statusText}`);
     }
 
@@ -188,13 +195,19 @@ export function useSSEMessageHandler(chatId: string | undefined) {
   );
 
   const handleSSEError = useCallback(
-    (_error: Error) => {
+    (error: Error) => {
       if (chatId) {
         messagesStore.removeMessage(chatId, 'loading-message');
+
+        // Check if it's a rate limit error
+        const errorMessage =
+          (error as any).status === 429
+            ? 'Daily message limit exceeded. Please try again tomorrow.'
+            : 'An error occurred while processing your message. Please try again.';
+
         messagesStore.addMessage(chatId, {
           id: 'error-message',
-          message:
-            'An error occurred while processing your message. Please try again.',
+          message: errorMessage,
           role: 'system',
           systemType: 'error',
           createdAt: new Date().toISOString(),

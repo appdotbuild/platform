@@ -5,6 +5,7 @@ import { appStateStore } from '~/stores/app-state-store';
 import { type Message, messagesStore } from '~/stores/messages-store';
 import { useAppCreation } from './useAppCreation';
 import { useAppsList } from './useAppsList';
+import { useMessageLimit } from './userMessageLimit';
 import { useSSEMessageHandler, useSSEQuery } from './useSSE';
 
 // main chat logic
@@ -49,6 +50,9 @@ export function useChat() {
     if (!sendChatId || !message.trim()) return;
 
     const messageId = crypto.randomUUID();
+
+    // increment usage optimistically
+    useMessageLimit.getState().incrementUsage();
 
     // if is a new app, avoid duplicate user message
     if (!newChatId) {

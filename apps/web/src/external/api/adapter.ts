@@ -1,4 +1,4 @@
-import { stackClientApp } from '~/lib/auth';
+import { getToken, getUserMessageLimit } from './utils';
 
 const API_BASE_URL = import.meta.env.VITE_PLATFORM_API_URL;
 
@@ -8,19 +8,6 @@ const AcceptType = {
 } as const;
 
 type AcceptType = (typeof AcceptType)[keyof typeof AcceptType];
-
-const getToken = async (): Promise<string | null> => {
-  try {
-    const user = await stackClientApp.getUser();
-    if (!user) return null;
-
-    const { accessToken } = await user.getAuthJson();
-    return accessToken || null;
-  } catch (error) {
-    console.error('Failed to get auth token:', error);
-    return null;
-  }
-};
 
 async function request<T>(
   endpoint: string,
@@ -48,10 +35,22 @@ async function request<T>(
 
   if (!response.ok) {
     const error = await response.text();
+
+    // Handle rate limit error specifically
+    if (response.status === 429) {
+      const rateLimitError = new Error(
+        'Daily message limit exceeded. Please try again tomorrow.',
+      );
+      (rateLimitError as any).status = 429;
+      throw rateLimitError;
+    }
+
     throw new Error(`API Error: ${response.status} - ${error}`);
   }
 
-  // Return Response directly for SSE, parse JSON for other types
+  getUserMessageLimit(response.headers);
+
+  // return Response directly for SSE, parse JSON for other types
   if (acceptType === AcceptType.SSE) {
     return response as T;
   }

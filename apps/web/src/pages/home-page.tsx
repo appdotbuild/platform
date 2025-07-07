@@ -1,5 +1,6 @@
 import { useUser } from '@stackframe/react';
 import { ChatInput } from '~/components/chat/chat-input';
+import { ChatMessageLimit } from '~/components/chat/chat-message-limit';
 import { ChatList } from '~/components/chat/list/chat-list';
 
 export function HomePage() {
@@ -15,10 +16,12 @@ export function HomePage() {
           <br />
           full-stack apps
         </h1>
+
         <div
           className="flex flex-col gap-2"
           style={{ viewTransitionName: 'chat-input' }}
         >
+          <ChatMessageLimit />
           <ChatInput />
           {user && <ChatList />}
         </div>

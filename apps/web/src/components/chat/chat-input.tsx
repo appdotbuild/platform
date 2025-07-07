@@ -1,24 +1,19 @@
-import type { CurrentUser, CurrentInternalUser } from '@stackframe/react';
 import { useUser } from '@stackframe/react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useChat } from '~/hooks/useChat';
+import { useMessageLimit } from '~/hooks/userMessageLimit';
 import { isChatPage, isHomePage } from '~/utils/router-checker';
 import { Button } from '../shared/button';
 import { Input } from '../shared/input/input';
 
-interface ChatInputProps {
-  user?: CurrentUser | CurrentInternalUser | null;
-}
-
-export function ChatInput({ user: userProp }: ChatInputProps = {}) {
-  // Only call useUser if user is not provided as prop
-  const userFromHook = useUser();
-  const user = userProp !== undefined ? userProp : userFromHook;
+export function ChatInput() {
+  const user = useUser();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { createNewApp, sendMessage } = useChat();
   const [inputValue, setInputValue] = useState('');
+  const { isUserLimitReached } = useMessageLimit();
 
   const handleSubmit = useCallback(async () => {
     if (inputValue.trim()) {
@@ -56,6 +51,7 @@ export function ChatInput({ user: userProp }: ChatInputProps = {}) {
             handleSubmit();
           }
         }}
+        disabled={isUserLimitReached}
         autoFocus
       />
 
@@ -64,7 +60,7 @@ export function ChatInput({ user: userProp }: ChatInputProps = {}) {
         variant="secondary"
         size="lg"
         onClick={handleSubmit}
-        disabled={!inputValue.trim()}
+        disabled={!inputValue.trim() || isUserLimitReached}
       >
         {isChatPage(pathname) ? 'Send' : "Let's start!"}
       </Button>

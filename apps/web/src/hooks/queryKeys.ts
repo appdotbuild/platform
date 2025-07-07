@@ -7,3 +7,6 @@ export const APP_QUERY_KEY = (appId: string) => ['app', appId] as const;
 // app's messages
 export const MESSAGES_QUERY_KEY = (appId: string) =>
   ['apps', appId, 'messages'] as const;
+
+// user message limit
+export const USER_MESSAGE_LIMIT_QUERY_KEY = ['user', 'message-limit'] as const;

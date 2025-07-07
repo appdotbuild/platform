@@ -1,4 +1,4 @@
-import type { App, AppPrompts } from '@appdotbuild/core';
+import type { App, AppPrompts, UserMessageLimit } from '@appdotbuild/core';
 import { apiClient } from '../api/adapter';
 
 export type CreateAppInput = {
@@ -31,4 +31,6 @@ export const appsService = {
   fetchAppMessages: (appId: string) =>
     apiClient.get<AppPrompts[]>(`/apps/${appId}/history`),
   sendMessage: (data: SendMessageInput) => apiClient.postSSE('/message', data),
+  fetchUserMessageLimit: () =>
+    apiClient.get<UserMessageLimit>(`/message-limit`),
 };

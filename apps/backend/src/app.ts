@@ -2,8 +2,8 @@ import type { ServerUser } from '@stackframe/stack';
 import fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { validateAuth } from './auth-strategy';
-import { Instrumentation } from './instrumentation';
 import { isDev } from './env';
+import { Instrumentation } from './instrumentation';
 
 // we only want to initialize instrumentation in production/staging
 if (!isDev) {
@@ -52,6 +52,12 @@ if (isDev) {
       'Accept-Encoding',
       'Connection',
       'Cache-Control',
+    ],
+    exposedHeaders: [
+      'x-dailylimit-limit',
+      'x-dailylimit-remaining',
+      'x-dailylimit-usage',
+      'x-dailylimit-reset',
     ],
     preflightContinue: false,
     optionsSuccessStatus: 204,

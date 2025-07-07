@@ -1,5 +1,6 @@
 import { ChatContainer } from '~/components/chat/chat-container';
 import { ChatInput } from '~/components/chat/chat-input';
+import { ChatMessageLimit } from '~/components/chat/chat-message-limit';
 import { useChatSetup } from '~/hooks/useChat';
 
 export function ChatPage() {
@@ -14,7 +15,10 @@ export function ChatPage() {
         className="fixed bottom-5 left-1/2 transform -translate-x-1/2 w-4/5 max-w-4xl"
         style={{ viewTransitionName: 'chat-input' }}
       >
-        <ChatInput />
+        <div className="flex flex-col gap-2">
+          <ChatMessageLimit />
+          <ChatInput />
+        </div>
       </div>
     </div>
   );
