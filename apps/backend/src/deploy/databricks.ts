@@ -45,7 +45,7 @@ export async function deployToDatabricks({
   await db
     .update(apps)
     .set({
-      deployStatus: 'deploying',
+      deployStatus: DeployStatus.DEPLOYING,
       neonProjectId,
     })
     .where(eq(apps.id, appId));
@@ -127,29 +127,15 @@ export async function deployToDatabricks({
     const databricksAppFile = createDatabricksAppFile([
       {
         name: DATABASE_URL_ENV_KEY,
-        value: DATABASE_URL_RESOURCE_KEY,
-        isSecret: true,
+        value: connectionString,
+        isSecret: false,
+
+        // TODO: use this instead, when we figure out how to get the secret value from the scope
+        // value: DATABASE_URL_ENV_KEY,
+        // isSecret: true,
       },
     ]);
     fs.writeFileSync(`${appDirectory}/app.yaml`, databricksAppFile);
-
-    // For debug, copy appDirectory to local file
-    const debugCopyPath = `/Users/pedro.figueiredo/Documents/git/neon/platform/apps/backend/dbx/debug-app-${shortAppId}`;
-    try {
-      await exec(`mkdir -p "$(dirname "${debugCopyPath}")"`, {});
-      await exec(`cp -r "${appDirectory}" "${debugCopyPath}"`, {});
-      logger.info('Debug: Copied app directory for debugging', {
-        appId,
-        originalPath: appDirectory,
-        debugPath: debugCopyPath,
-      });
-    } catch (debugError) {
-      logger.warn('Debug: Failed to copy app directory', {
-        appId,
-        error:
-          debugError instanceof Error ? debugError.message : String(debugError),
-      });
-    }
 
     // 6. Import the code into the databricks workspace (after all files are created)
     logger.info('Importing code to Databricks workspace', {
@@ -174,7 +160,6 @@ export async function deployToDatabricks({
         env: databricksEnv,
       },
     );
-
     logger.info('Databricks deployment completed', {
       appId,
       deployOutput: deployResult.stdout,
@@ -288,25 +273,20 @@ async function checkIfScopeAlreadyExists({
       },
     );
 
-    if (result.stderr) {
-      logger.warn('Databricks secret check stderr output', {
-        scopeName,
-        secretName,
-        stderr: result.stderr,
-      });
-      throw new Error(result.stderr);
-    }
-
     const jsonResult = JSON.parse(result.stdout);
     return databricksScopeSchema.parse(jsonResult);
   } catch (error) {
-    logger.error(
-      "Failed to check if scope already exists, or scope/secret doesn't exist",
-      {
-        scopeName,
-        error: error instanceof Error ? error.message : String(error),
-      },
-    );
+    if (error instanceof Error && error.message.includes('does not exist')) {
+      return undefined;
+    }
+
+    logger.error('Failed to check if scope already exists', {
+      scopeName,
+      secretName,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return undefined;
   }
 }
 
@@ -369,20 +349,19 @@ async function setupDatabricksAppSecrets({
   });
   const addSecretsResult = await Promise.all(
     Object.entries(secrets).map(async ([key, value]) => {
-      return await exec(
-        `databricks secrets put-secret --json '{
-          "scope": "${scopeName}",
-          "key": "${key}",
-          "string_value": "${value}"
-        }'`,
-        {
-          env: {
-            ...process.env,
-            DATABRICKS_HOST: databricksHost,
-            DATABRICKS_TOKEN: databricksApiKey,
-          },
+      const payload = JSON.stringify({
+        scope: scopeName,
+        key: key,
+        string_value: value,
+      });
+
+      return await exec(`databricks secrets put-secret --json '${payload}'`, {
+        env: {
+          ...process.env,
+          DATABRICKS_HOST: databricksHost,
+          DATABRICKS_TOKEN: databricksApiKey,
         },
-      );
+      });
     }),
   );
   if (addSecretsResult.some((result) => result.stderr)) {
