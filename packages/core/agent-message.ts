@@ -29,6 +29,7 @@ export const MessageKind = {
   RUNTIME_ERROR: 'RuntimeError',
   REFINEMENT_REQUEST: 'RefinementRequest',
   REVIEW_RESULT: 'ReviewResult',
+  WIP_UPDATE: 'WipUpdate',
 
   // these are Platform only messages, don't exist in the agent
   PLATFORM_MESSAGE: 'PlatformMessage',
