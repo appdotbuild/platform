@@ -71,3 +71,23 @@ export type App = {
   appName?: string | null;
   appUrl?: string | null;
 };
+
+export type AppTemplate = 'typescript' | 'python';
+
+export const APP_TEMPLATES = {
+  TYPESCRIPT: 'typescript',
+  PYTHON: 'python',
+} as const;
+
+export const APP_TEMPLATE_INFO = {
+  typescript: {
+    label: 'Web Application',
+    description: 'Full-stack app with TypeScript, React, Fastify and Tailwind',
+    icon: '🌐',
+  },
+  python: {
+    label: 'Data Dashboard',
+    description: 'Analytics app with Python & NiceGUI',
+    icon: '📊',
+  },
+} as const;

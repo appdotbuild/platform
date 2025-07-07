@@ -37,7 +37,7 @@ export function ChatList() {
 
     scrollContainer.addEventListener('scroll', handleScroll);
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, isOpen]);
 
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 

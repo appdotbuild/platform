@@ -1,4 +1,4 @@
-import { MessageKind } from '@appdotbuild/core';
+import { type AppTemplate, MessageKind } from '@appdotbuild/core';
 import type { Message } from '~/stores/messages-store';
 import { AgentMessage } from './messages/agent-message';
 import { ErrorMessage } from './messages/error-message';
@@ -19,7 +19,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
     if (message.role === 'system') {
       if (message.systemType === 'app-name-request')
-        return <RequestMessage onSubmit={message.action!} />;
+        return (
+          <RequestMessage
+            onSubmit={
+              message.action as (name: string, template: AppTemplate) => void
+            }
+          />
+        );
 
       if (message.systemType === 'notification')
         return (
@@ -34,8 +40,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           <LoadingMessage message={message.message} options={message.options} />
         );
 
-      if (message.systemType === 'error')
-        return <ErrorMessage message={message.message} />;
+      if (message.systemType === 'error') return <ErrorMessage />;
     }
 
     if (message.role === 'assistant') {
@@ -47,9 +52,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
           />
         );
       }
-      if (message.messageKind === MessageKind.RUNTIME_ERROR) {
-        return <ErrorMessage message={message.message} />;
-      }
+      if (message.messageKind === MessageKind.RUNTIME_ERROR)
+        return <ErrorMessage />;
 
       return (
         <AgentMessage

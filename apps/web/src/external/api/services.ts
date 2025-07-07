@@ -1,9 +1,15 @@
-import type { App, AppPrompts, UserMessageLimit } from '@appdotbuild/core';
+import type {
+  App,
+  AppPrompts,
+  AppTemplate,
+  UserMessageLimit,
+} from '@appdotbuild/core';
 import { apiClient } from '../api/adapter';
 
 export type CreateAppInput = {
   appName: string;
   userMessage?: string;
+  template?: AppTemplate;
 };
 
 export type SendMessageInput = {

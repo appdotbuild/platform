@@ -1,4 +1,8 @@
-import type { MessageKind, PlatformMessageType } from '@appdotbuild/core';
+import type {
+  AppTemplate,
+  MessageKind,
+  PlatformMessageType,
+} from '@appdotbuild/core';
 import { MESSAGES_QUERY_KEY } from '~/hooks/queryKeys';
 import { queryClient } from '~/lib/queryClient';
 
@@ -18,7 +22,9 @@ export interface Message {
     | 'error'
     | 'success';
   confirmationType?: 'success' | 'info' | 'error' | 'warning';
-  action?: (data: any) => void;
+  action?:
+    | ((data: any) => void)
+    | ((name: string, template: AppTemplate) => void);
   options?: Record<string, any>;
 }
 

@@ -1,3 +1,4 @@
+import type { AppTemplate } from '@appdotbuild/core';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { appsService } from '~/external/api/services';
@@ -146,7 +147,10 @@ export function useChatSetup() {
       chatId,
     ) as string;
 
-    const handleAppNameSubmit = async (appName: string) => {
+    const handleAppNameSubmit = async (
+      appName: string,
+      template: AppTemplate,
+    ) => {
       messagesStore.removeMessage(chatId, 'app-name-request');
       messagesStore.addLoadingMessage(chatId, {
         id: 'loading-create-app',
@@ -156,7 +160,7 @@ export function useChatSetup() {
         createdAt: new Date().toISOString(),
       });
 
-      const newAppId = await createApp(appName, initialMessage);
+      const newAppId = await createApp(appName, initialMessage, template);
       if (newAppId) {
         messagesStore.setMessages(newAppId, messagesStore.getMessages(chatId));
 
