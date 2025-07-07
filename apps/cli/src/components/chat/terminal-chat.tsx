@@ -1,4 +1,9 @@
-import { AnalyticsEvents, MessageKind } from '@appdotbuild/core';
+import {
+  AnalyticsEvents,
+  MessageKind,
+  PromptKind,
+  type DeployStatusType,
+} from '@appdotbuild/core';
 import { Box, Static } from 'ink';
 import { useEffect, useState } from 'react';
 import { useApplicationHistory } from '../../hooks/use-application';
@@ -24,12 +29,18 @@ export function TerminalChat({
   traceId,
   databricksApiKey,
   databricksHost,
+  repositoryUrl,
+  deploymentUrl,
+  deployStatus,
 }: {
   initialPrompt: string;
   appId?: string;
   traceId?: string;
   databricksApiKey?: string;
   databricksHost?: string;
+  repositoryUrl?: string | null;
+  deploymentUrl?: string | null;
+  deployStatus?: DeployStatusType;
 }) {
   const [userInput, setUserInput] = useState<string[]>([]);
   const [staticMessages, setStaticMessages] = useState<MessageDetail[]>([]);
@@ -88,7 +99,7 @@ export function TerminalChat({
     if (!lastMessage) return;
 
     const userInputMessage: MessageDetail = {
-      role: 'user',
+      role: PromptKind.USER,
       text: lastMessage,
       icon: '👤',
       kind: MessageKind.USER_MESSAGE,
@@ -145,6 +156,10 @@ export function TerminalChat({
     return <TerminalLoading />;
   }
 
+  const repoUrl = repositoryUrl || createApplicationData?.githubUrl;
+  const deployUrl = deploymentUrl || createApplicationData?.deploymentUrl;
+  const status = deployStatus || createApplicationData?.deployStatus;
+
   return (
     <Box flexDirection="column" width="100%" height="100%">
       <Static items={staticMessages}>
@@ -169,6 +184,9 @@ export function TerminalChat({
         errorMessage={createApplicationError?.message}
         retryMessage={isUserReachedMessageLimit ? undefined : 'Please retry.'}
         userMessageLimit={userMessageLimit}
+        ghUrl={repoUrl}
+        deploymentUrl={deployUrl}
+        deployStatus={status}
       />
     </Box>
   );

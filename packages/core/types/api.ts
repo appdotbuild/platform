@@ -1,4 +1,8 @@
-import type { MessageKind } from '../agent-message';
+import type {
+  DeployStatusType,
+  MessageKind,
+  PromptKindType,
+} from '../agent-message';
 
 export type UserMessageLimit = {
   isUserLimitReached: boolean;
@@ -37,17 +41,12 @@ export type ReadUrl = {
   readUrl: string;
 };
 
-export enum PromptKind {
-  USER = 'user',
-  AGENT = 'assistant',
-}
-
 export type AppPrompts = {
   id: string;
   appId: string;
   prompt: string;
   response: string;
-  kind: PromptKind;
+  kind: PromptKindType;
   messageKind?: MessageKind;
   metadata?: any;
   createdAt: Date;
@@ -63,7 +62,7 @@ export type App = {
   ownerId: string;
   flyAppId?: string | null;
   s3Checksum?: string | null;
-  deployStatus?: string | null;
+  deployStatus?: DeployStatusType;
   typespecSchema?: string | null;
   receivedSuccess: boolean;
   recompileInProgress: boolean;

@@ -1,4 +1,8 @@
-import { MessageKind, PlatformMessageType } from '@appdotbuild/core';
+import {
+  MessageKind,
+  PlatformMessageType,
+  PromptKind,
+} from '@appdotbuild/core';
 import { Box, Text } from 'ink';
 import type { MessageDetail } from '../../hooks/use-terminal-chat';
 import { MarkdownBlock } from '../shared/input/markdown-block';
@@ -119,7 +123,7 @@ const AgentHeader = ({
     metadata,
   );
 
-  if (message.role === 'user') {
+  if (message.role === PromptKind.USER) {
     return (
       <Box>
         <Text color={isHistoryMessage ? 'green' : 'gray'}>👤 </Text>
@@ -156,7 +160,7 @@ export const TerminalMessage = ({
   const isHistoryMessage = message.isHistory || false;
 
   let borderColor = 'yellowBright';
-  if (message.role === 'user') {
+  if (message.role === PromptKind.USER) {
     borderColor = 'gray';
   }
   if (message.kind === MessageKind.RUNTIME_ERROR) {
@@ -187,11 +191,11 @@ export const TerminalMessage = ({
       <Box gap={1}>
         <Text
           key={message.text}
-          color={message.role === 'user' ? 'gray' : 'white'}
+          color={message.role === PromptKind.USER ? 'gray' : 'white'}
         >
-          {message.role === 'user' ? '>' : '⎿ '}
+          {message.role === PromptKind.USER ? '>' : '⎿ '}
         </Text>
-        {message.role === 'user' ? (
+        {message.role === PromptKind.USER ? (
           <Text color={'gray'}>{message.text}</Text>
         ) : message.kind === MessageKind.RUNTIME_ERROR ? (
           <Text color="red" bold>

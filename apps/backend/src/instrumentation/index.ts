@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { isDev } from '../env';
 import { CompositeInstrumentation } from './composite-instrumentation';
 import { SegmentAdapter } from './segment-adapter';
 import { SentryAdapter } from './sentry-adapter';
@@ -57,7 +58,7 @@ export function getInstrumentation(): EventInstrumentation {
   return instrumentationInstance;
 }
 
-export const Instrumentation = {
+const _instrumentation = {
   initialize: (app?: FastifyInstance) => initializeInstrumentation(app),
 
   setupPerformanceMonitoring: (app: FastifyInstance) => {
@@ -84,11 +85,11 @@ export const Instrumentation = {
   trackSseEvent: (...args: Parameters<EventInstrumentation['trackSseEvent']>) =>
     getInstrumentation().trackSseEvent(...args),
 
-  trackUserMessage: (message: string) =>
-    getInstrumentation().trackUserMessage(message),
+  trackUserMessage: (message: string, userId?: string) =>
+    getInstrumentation().trackUserMessage(message, userId),
 
-  trackPlatformMessage: (messageType: string) =>
-    getInstrumentation().trackPlatformMessage(messageType),
+  trackPlatformMessage: (messageType: string, userId?: string) =>
+    getInstrumentation().trackPlatformMessage(messageType, userId),
 
   captureError: (...args: Parameters<EventInstrumentation['captureError']>) =>
     getInstrumentation().captureError(...args),
@@ -202,6 +203,20 @@ export const Instrumentation = {
     );
   },
 };
+
+/**
+ * We proxy the instrumentation object to prevent it from being used in development.
+ * This is to prevent accidental instrumentation of development code.
+ */
+export const Instrumentation = new Proxy(_instrumentation, {
+  apply: (target, thisArg, argumentsList) => {
+    if (isDev) {
+      return function () {};
+    }
+
+    return Reflect.apply(target as any, thisArg, argumentsList);
+  },
+});
 
 function createNoOpInstrumentation(): EventInstrumentation {
   return {

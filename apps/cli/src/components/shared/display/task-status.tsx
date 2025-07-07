@@ -1,11 +1,12 @@
 import chalk from 'chalk';
 import { Box, Text } from 'ink';
 import Markdown from 'ink-markdown';
+import { PromptKind, PromptKindType } from '@appdotbuild/core';
 
 export type TaskStatus = 'running' | 'done' | 'error';
 
 export type TaskDetail = {
-  role: 'assistant' | 'user';
+  role: PromptKindType;
   text: string;
   highlight: boolean;
   icon: string;
@@ -43,7 +44,7 @@ export const TaskStatus = ({ title, status, details, duration }: TaskProps) => {
         <Box marginLeft={2} flexDirection="column" gap={1}>
           {details.map((detail, index) => {
             const text =
-              detail.role === 'assistant'
+              detail.role === PromptKind.ASSISTANT
                 ? `🤖 ${detail.text}`
                 : `👤 ${detail.text}`;
             return (

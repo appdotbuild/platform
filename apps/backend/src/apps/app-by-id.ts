@@ -35,5 +35,6 @@ export async function appById(
       error: 'App not found',
     });
   }
+
   return reply.send(app[0]);
 }

@@ -87,13 +87,15 @@ export class CompositeInstrumentation implements EventInstrumentation {
     );
   }
 
-  trackUserMessage(message: string): void {
-    this.providers.forEach((provider) => provider.trackUserMessage(message));
+  trackUserMessage(message: string, userId?: string): void {
+    this.providers.forEach((provider) =>
+      provider.trackUserMessage(message, userId),
+    );
   }
 
-  trackPlatformMessage(messageType: string): void {
+  trackPlatformMessage(messageType: string, userId?: string): void {
     this.providers.forEach((provider) =>
-      provider.trackPlatformMessage(messageType),
+      provider.trackPlatformMessage(messageType, userId),
     );
   }
 }

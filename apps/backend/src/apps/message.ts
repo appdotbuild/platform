@@ -1,7 +1,11 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import type { AgentSseEventMessage, Optional } from '@appdotbuild/core';
+import type {
+  AgentSseEventMessage,
+  Optional,
+  PromptKindType,
+} from '@appdotbuild/core';
 import {
   type AgentSseEvent,
   AgentStatus,
@@ -11,8 +15,10 @@ import {
   type MessageLimitHeaders,
   PlatformMessage,
   PlatformMessageType,
+  PromptKind,
   StreamingError,
   type TraceId,
+  DeployStatus,
 } from '@appdotbuild/core';
 import { nodeEventSource } from '@llm-eaf/node-event-source';
 import { createSession, type Session } from 'better-sse';
@@ -25,8 +31,8 @@ import { appPrompts, apps, db } from '../db';
 import { deployApp } from '../deploy';
 import { isDev } from '../env';
 import {
-  cloneRepository,
   addAppURL,
+  cloneRepository,
   commitChanges,
   GithubEntity,
   type GithubEntityInitialized,
@@ -75,6 +81,14 @@ type StructuredLog = {
   applicationId?: string;
   traceId?: string;
   [key: string]: any;
+};
+
+type DBMessage = {
+  appId: string;
+  message: string;
+  role: PromptKindType;
+  messageKind: MessageKind;
+  metadata?: any;
 };
 
 export type StreamLogFunction = (
@@ -202,7 +216,7 @@ export async function postMessage(
     requestBody: request.body,
   });
 
-  Instrumentation.trackUserMessage(requestBody.message);
+  Instrumentation.trackUserMessage(requestBody.message, userId);
 
   try {
     const githubEntity = await new GithubEntity(
@@ -214,7 +228,7 @@ export async function postMessage(
       applicationId,
       allMessages: [
         {
-          role: 'user',
+          role: PromptKind.USER,
           content: requestBody.message,
         },
       ],
@@ -263,6 +277,10 @@ export async function postMessage(
         );
         appName = application[0]!.appName;
 
+        if (application[0]!.repositoryUrl) {
+          githubEntity.repositoryUrl = application[0]!.repositoryUrl;
+        }
+
         const messagesFromHistory = await getMessagesFromHistory(
           applicationId,
           userId,
@@ -282,7 +300,7 @@ export async function postMessage(
           allMessages: [
             ...messagesFromHistory,
             {
-              role: 'user' as const,
+              role: PromptKind.USER,
               content: requestBody.message,
             },
           ],
@@ -346,12 +364,12 @@ export async function postMessage(
 
     // Save user message to database immediately for permanent apps
     if (isPermanentApp) {
-      await saveMessageToDB(
-        applicationId,
-        requestBody.message,
-        'user',
-        MessageKind.USER_MESSAGE,
-      );
+      await saveMessageToDB({
+        appId: applicationId,
+        message: requestBody.message,
+        role: PromptKind.USER,
+        messageKind: MessageKind.USER_MESSAGE,
+      });
     }
 
     const tempDirPath = path.join(
@@ -551,6 +569,7 @@ export async function postMessage(
             Instrumentation.trackSseEvent('sse_message_sent', {
               messageKind: minimalMessage.kind,
               status: completeParsedMessage.status,
+              userId,
             });
 
             session.push(parsedCLIMessage);
@@ -646,6 +665,7 @@ export async function postMessage(
                   commitMessage:
                     completeParsedMessage.message.commit_message ||
                     'feat: update',
+                  userId,
                 });
               } else if (
                 completeParsedMessage.message.kind !==
@@ -752,11 +772,15 @@ export async function postMessage(
                     {
                       type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
                       deploymentId: deployResult.deploymentId,
+                      deploymentUrl: deployResult.appURL,
+                      deployStatus: DeployStatus.DEPLOYING,
+                      githubUrl: githubEntity.repositoryUrl,
                       deploymentType: requestBody.databricksHost
                         ? 'databricks'
                         : 'koyeb',
                     },
                   ),
+                  userId,
                 );
               }
             }
@@ -869,7 +893,10 @@ export async function postMessage(
     await messageHandlerQueue.waitForCompletion(streamLog);
     if (isPermanentApp) conversationManager.removeConversation(applicationId);
     Instrumentation.trackAiAgentEnd(traceId!, 'success');
-    Instrumentation.trackSseEvent('sse_connection_ended', { applicationId });
+    Instrumentation.trackSseEvent('sse_connection_ended', {
+      applicationId,
+      userId,
+    });
 
     streamLog(
       {
@@ -889,6 +916,7 @@ export async function postMessage(
     Instrumentation.trackSseEvent('sse_connection_error', {
       error: String(error),
       applicationId,
+      userId,
     });
 
     Instrumentation.captureError(error as Error, {
@@ -1000,6 +1028,22 @@ async function appCreation({
     'info',
   );
 
+  const inMemoryMessages =
+    conversationManager.getConversationHistory(applicationId);
+
+  await saveMessageToDB(
+    inMemoryMessages.map((message) => ({
+      appId: applicationId,
+      message: message.content,
+      role: message.role,
+      messageKind:
+        message.kind ||
+        (message.role === PromptKind.USER
+          ? MessageKind.USER_MESSAGE
+          : MessageKind.STAGE_RESULT),
+    })),
+  );
+
   await pushAndSavePlatformMessage(
     session,
     applicationId,
@@ -1007,8 +1051,12 @@ async function appCreation({
       AgentStatus.IDLE,
       traceId as TraceId,
       `Your application has been uploaded to this github repository: ${result.repositoryUrl}`,
-      { type: PlatformMessageType.REPO_CREATED },
+      {
+        type: PlatformMessageType.REPO_CREATED,
+        githubUrl: result.repositoryUrl,
+      },
     ),
+    ownerId,
   );
 
   return { newAppName: result.appName };
@@ -1023,6 +1071,7 @@ async function appIteration({
   traceId,
   session,
   commitMessage,
+  userId,
 }: {
   appName: string;
   githubEntity: GithubEntityInitialized;
@@ -1032,6 +1081,7 @@ async function appIteration({
   session: Session;
   agentState: AgentSseEvent['message']['agentState'];
   commitMessage: string;
+  userId: string;
 }) {
   const commitStartTime = Instrumentation.trackGitHubCommit();
 
@@ -1043,6 +1093,8 @@ async function appIteration({
   });
 
   Instrumentation.trackGitHubCommitEnd(commitStartTime);
+
+  githubEntity.repositoryUrl = `https://github.com/${githubEntity.owner}/${appName}`;
 
   if (agentState) {
     await db
@@ -1064,6 +1116,7 @@ async function appIteration({
       `committed in existing app - commit url: ${commitUrl}`,
       { type: PlatformMessageType.COMMIT_CREATED },
     ),
+    userId,
   );
 }
 
@@ -1086,7 +1139,7 @@ function getExistingConversationBody({
     allMessages: [
       ...messages,
       {
-        role: 'user' as const,
+        role: PromptKind.USER,
         content: userMessage,
       },
     ],
@@ -1149,44 +1202,46 @@ async function getMessagesFromDB(
       return prompt.messageKind !== MessageKind.PLATFORM_MESSAGE;
     })
     .map((prompt) => {
-      if (prompt.kind === 'user') {
+      if (prompt.kind === PromptKind.USER) {
         return {
-          role: 'user' as const,
+          role: PromptKind.USER,
           content: prompt.prompt,
+          kind: MessageKind.USER_MESSAGE,
         };
       }
       return {
-        role: 'assistant' as const,
+        role: PromptKind.ASSISTANT,
         content: prompt.prompt,
-        kind: prompt.messageKind || MessageKind.STAGE_RESULT,
+        kind: (prompt.messageKind || MessageKind.STAGE_RESULT) as MessageKind,
         metadata: prompt.metadata,
       };
     });
 }
 
+async function saveMessageToDB(message: DBMessage[]): Promise<void>;
+async function saveMessageToDB(message: DBMessage): Promise<void>;
 async function saveMessageToDB(
-  appId: string,
-  message: string,
-  role: 'user' | 'assistant',
-  messageKind: MessageKind,
-  metadata?: any,
-) {
+  message: DBMessage | DBMessage[],
+): Promise<void> {
+  const messageArray = Array.isArray(message) ? message : [message];
+  const values = messageArray.map((message) => ({
+    id: uuidv4(),
+    prompt: message.message,
+    appId: message.appId,
+    kind: message.role,
+    messageKind: message.messageKind,
+    metadata: message.metadata,
+  }));
+
   try {
-    await db.insert(appPrompts).values({
-      id: uuidv4(),
-      prompt: message,
-      appId: appId,
-      kind: role,
-      messageKind: messageKind,
-      metadata,
-    });
+    await db.insert(appPrompts).values(values);
   } catch (error) {
     app.log.error({
       message: 'Error saving message to DB',
       error: error instanceof Error ? error.message : String(error),
-      appId,
-      role,
-      messageKind,
+      appId: messageArray[0]?.appId,
+      role: messageArray[0]?.role,
+      messageKind: messageArray[0]?.messageKind,
     });
     throw error;
   }
@@ -1196,22 +1251,23 @@ async function pushAndSavePlatformMessage(
   session: Session,
   applicationId: string,
   message: PlatformMessage,
+  userId: string,
 ) {
   if (message.metadata?.type) {
     const messageType = message.metadata.type;
-    Instrumentation.trackPlatformMessage(messageType);
+    Instrumentation.trackPlatformMessage(messageType, userId);
   }
 
   session.push(message);
 
   const messageContent = message.message.messages[0]?.content || '';
-  await saveMessageToDB(
-    applicationId,
-    messageContent,
-    'assistant',
-    MessageKind.PLATFORM_MESSAGE,
-    message.metadata,
-  );
+  await saveMessageToDB({
+    appId: applicationId,
+    message: messageContent,
+    role: PromptKind.ASSISTANT,
+    messageKind: MessageKind.PLATFORM_MESSAGE,
+    metadata: message.metadata,
+  });
 }
 
 async function pushAndSaveStreamingErrorMessage(
@@ -1222,29 +1278,28 @@ async function pushAndSaveStreamingErrorMessage(
   session.push(message);
 
   const messageContent = message.message.messages[0]?.content || '';
-  await saveMessageToDB(
-    applicationId,
-    messageContent,
-    'assistant',
-    MessageKind.RUNTIME_ERROR,
-  );
+
+  await saveMessageToDB({
+    appId: applicationId,
+    message: messageContent,
+    role: PromptKind.ASSISTANT,
+    messageKind: MessageKind.RUNTIME_ERROR,
+  });
 }
 
 async function saveAgentMessages(
   applicationId: string,
   agentEvent: AgentSseEvent,
 ) {
-  // save each message from the agent event
-  for (const message of agentEvent.message.messages) {
-    const messageKind = agentEvent.message.kind;
+  const preparedMessages = agentEvent.message.messages.map((message) => ({
+    appId: applicationId,
+    message: message.content,
+    role: message.role,
+    messageKind: agentEvent.message.kind,
+  }));
 
-    await saveMessageToDB(
-      applicationId,
-      message.content,
-      message.role,
-      messageKind,
-    );
-  }
+  // save each message from the agent event
+  await saveMessageToDB(preparedMessages);
 }
 
 function terminateStreamWithError(

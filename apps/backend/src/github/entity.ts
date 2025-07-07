@@ -10,6 +10,7 @@ abstract class GithubEntityBase {
   private _installationId: number = 0;
   private _isDefaultInstallation: boolean = false;
   private _repo: string = '';
+  private _repositoryUrl: string = '';
 
   constructor(
     public readonly githubUsername: string,
@@ -26,6 +27,14 @@ abstract class GithubEntityBase {
 
   get repo() {
     return this._repo;
+  }
+
+  set repositoryUrl(repositoryUrl: string) {
+    this._repositoryUrl = repositoryUrl;
+  }
+
+  get repositoryUrl() {
+    return this._repositoryUrl;
   }
 
   set owner(owner: string) {

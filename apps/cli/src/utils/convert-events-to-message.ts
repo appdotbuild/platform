@@ -1,5 +1,6 @@
 import type { AgentSseEvent } from '@appdotbuild/core';
 import type { MessageDetail } from '../hooks/use-terminal-chat';
+import { PromptKind } from '@appdotbuild/core';
 
 export function convertEventToMessages({
   events,
@@ -18,7 +19,7 @@ export function convertEventToMessages({
       result.push({
         role: message.role,
         text: message.content,
-        icon: message.role === 'assistant' ? '🤖' : '👤',
+        icon: message.role === PromptKind.ASSISTANT ? '🤖' : '👤',
         kind: eventKind,
         metadata: event.message.metadata,
         isHistory,

@@ -1,7 +1,9 @@
 import {
   AgentStatus,
+  type DeployStatusType,
   MessageKind,
   PlatformMessageType,
+  PromptKind,
   type AgentSseEvent,
   type TraceId,
 } from '@appdotbuild/core';
@@ -46,10 +48,12 @@ export const useSendMessage = () => {
   const queryClient = useQueryClient();
 
   const [metadata, setMetadata] = useState<{
-    githubRepository?: string;
+    githubUrl?: string;
     applicationId: string;
     traceId: string;
     deploymentId?: string;
+    deploymentUrl?: string;
+    deployStatus?: DeployStatusType;
     deploymentType?: 'databricks' | 'koyeb';
   } | null>(null);
 
@@ -74,10 +78,17 @@ export const useSendMessage = () => {
             HEALTHY: PlatformMessageType.DEPLOYMENT_COMPLETE,
           }[type];
 
-          setMetadata({
-            ...metadata!,
+          const deployStatus = ({
+            STOPPING: 'stopping',
+            ERROR: 'failed',
+            HEALTHY: 'deployed',
+          }[type] || 'deploying') as DeployStatusType;
+
+          setMetadata((prevMetadata) => ({
+            ...prevMetadata!,
             deploymentId: undefined,
-          });
+            deployStatus,
+          }));
 
           return {
             ...oldData,
@@ -90,7 +101,7 @@ export const useSendMessage = () => {
                   kind: MessageKind.PLATFORM_MESSAGE,
                   messages: [
                     {
-                      role: 'assistant',
+                      role: PromptKind.ASSISTANT,
                       content: deploymentStatus.message,
                     },
                   ],
@@ -137,13 +148,20 @@ export const useSendMessage = () => {
             throw new Error('Application ID not found');
           }
 
-          setMetadata({
-            ...metadata,
+          const githubUrl = newEvent.metadata?.githubUrl;
+          const deploymentUrl = newEvent.metadata?.deploymentUrl;
+          const deployStatus = newEvent.metadata?.deployStatus;
+
+          setMetadata((prevMetadata) => ({
+            ...prevMetadata,
             applicationId,
             traceId: newEvent.traceId,
             deploymentId: newEvent.metadata?.deploymentId,
             deploymentType: newEvent.metadata?.deploymentType,
-          });
+            ...(deployStatus && { deployStatus }),
+            ...(githubUrl && { githubUrl }),
+            ...(deploymentUrl && { deploymentUrl }),
+          }));
 
           queryClient.setQueryData(
             queryKeys.applicationMessages(applicationId),
@@ -195,7 +213,9 @@ export const useSendMessage = () => {
                 traceId: metadata?.traceId,
                 message: {
                   kind: MessageKind.RUNTIME_ERROR,
-                  messages: [{ role: 'assistant', content: error.message }],
+                  messages: [
+                    { role: PromptKind.ASSISTANT, content: error.message },
+                  ],
                 },
               },
             ],

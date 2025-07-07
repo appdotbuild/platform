@@ -1,4 +1,4 @@
-import type { UserMessageLimit } from '@appdotbuild/core';
+import type { DeployStatusType, UserMessageLimit } from '@appdotbuild/core';
 import type { TextInputProps } from '@inkjs/ui';
 import type { MutationStatus } from '@tanstack/react-query';
 import { Box } from 'ink';
@@ -9,6 +9,7 @@ import { useInputHistory } from '../../hooks/use-terminal-input-history';
 import { ErrorMessage } from '../shared/display/error-message';
 import { TextInput } from '../shared/input/text-input';
 import { TerminalHints } from './terminal-hints';
+import { AppUrls } from '../shared/app-urls';
 
 export interface InputHistoryItem {
   prompt: string;
@@ -46,6 +47,9 @@ export type TerminalInputProps = {
   onAbort?: () => void;
   showPrompt?: boolean;
   userMessageLimit?: UserMessageLimit;
+  ghUrl?: string;
+  deploymentUrl?: string;
+  deployStatus?: DeployStatusType;
 } & TextInputProps;
 
 export function TerminalInput({
@@ -62,6 +66,9 @@ export function TerminalInput({
   onSubmitError,
   onAbort,
   userMessageLimit,
+  ghUrl,
+  deploymentUrl,
+  deployStatus,
   ...infiniteInputProps
 }: TerminalInputProps) {
   const { historyItems, addInputHistory } = useInputHistory();
@@ -106,6 +113,13 @@ export function TerminalInput({
         history={historyItems}
         {...infiniteInputProps}
       />
+      {(ghUrl || deploymentUrl) && (
+        <AppUrls
+          ghUrl={ghUrl}
+          deploymentUrl={deploymentUrl}
+          deployStatus={deployStatus}
+        />
+      )}
       <TerminalHints
         userMessageLimit={userMessageLimit}
         status={displayStatus}

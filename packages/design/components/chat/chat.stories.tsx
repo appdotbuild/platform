@@ -5,8 +5,8 @@ import {
 } from '@assistant-ui/react';
 import type { Meta, StoryObj } from '@storybook/react';
 import Chat from './chat';
-import { createAI } from 'ai/rsc';
 import { ChatConfigProvider } from './chat-provider';
+import { PromptKind } from '@appdotbuild/core';
 
 function MockChat({
   messages,
@@ -55,15 +55,15 @@ export const WithMessages: Story = {
   args: {
     messages: [
       {
-        role: 'assistant',
+        role: PromptKind.ASSISTANT,
         content: [{ type: 'text', text: 'Hello, how can I help you today?' }],
       },
       {
-        role: 'user',
+        role: PromptKind.USER,
         content: [{ type: 'text', text: 'I need help with my account' }],
       },
       {
-        role: 'assistant',
+        role: PromptKind.ASSISTANT,
         content: [
           {
             type: 'text',
@@ -79,7 +79,7 @@ export const WithMarkdown: Story = {
   args: {
     messages: [
       {
-        role: 'assistant',
+        role: PromptKind.ASSISTANT,
         content: [
           { type: 'text', text: 'Hello, **how can** I help you today?' },
         ],

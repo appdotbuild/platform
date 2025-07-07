@@ -2,6 +2,7 @@ import {
   type AgentSseEvent,
   MessageKind,
   PlatformMessageType,
+  PromptKindType,
 } from '@appdotbuild/core';
 
 export type TerminalChatState =
@@ -24,7 +25,7 @@ export interface MessagesData {
 }
 
 export type MessageDetail = {
-  role: 'assistant' | 'user';
+  role: PromptKindType;
   text: string;
   icon: string;
   kind?: MessageKind;

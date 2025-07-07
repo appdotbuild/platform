@@ -10,7 +10,10 @@ export function convertPromptsToEvents(appPrompts?: AppPrompts[]) {
   return appPrompts?.map((prompt) => {
     const contentMessages = [
       {
-        role: prompt.kind === PromptKind.USER ? 'user' : 'assistant',
+        role:
+          prompt.kind === PromptKind.USER
+            ? PromptKind.USER
+            : PromptKind.ASSISTANT,
         content: prompt.prompt,
       },
     ];
