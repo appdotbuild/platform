@@ -7,7 +7,7 @@ export function ChatPage() {
   const { chatId, isLoadingHistory } = useChatSetup();
 
   return (
-    <div className="flex flex-col items-center h-full px-40">
+    <div className="flex flex-col items-center w-full h-full">
       <div className="flex flex-col h-full w-full items-center justify-center pb-4">
         <ChatContainer chatId={chatId} isLoadingHistory={isLoadingHistory} />
       </div>

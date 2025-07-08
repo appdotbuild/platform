@@ -36,7 +36,7 @@ export function ChatInput() {
   }, []);
 
   return (
-    <div className="w-4xl h-24 border border-dashed border-input bg-background text-black flex justify-between items-center relative px-10">
+    <div className="w-full h-24 border border-dashed border-input bg-background text-black flex justify-between items-center relative px-10">
       <Input
         className="w-full h-full p-4 bg-transparent border-none outline-none text-foreground"
         placeholder={

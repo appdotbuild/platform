@@ -1,17 +1,11 @@
 import { UserButton, useUser } from '@stackframe/react';
-import { Link, useLocation } from '@tanstack/react-router';
-import { isHomePage } from '~/utils/router-checker';
+import { Link } from '@tanstack/react-router';
 
 export function Header() {
-  const { pathname } = useLocation();
   const user = useUser();
   return (
-    <header className="flex w-full items-center py-10 px-40">
-      <nav
-        className={`flex w-full items-center ${
-          isHomePage(pathname) ? 'justify-center' : 'justify-start'
-        }`}
-      >
+    <header className="flex w-full items-center py-4 lg:py-10">
+      <nav className="flex w-full items-center justify-start">
         <Link to="/">
           <img
             src="https://www.app.build/_next/static/media/ca7edce715379528b2fbeb326c96cf7b.svg"

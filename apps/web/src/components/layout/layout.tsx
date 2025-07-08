@@ -3,10 +3,9 @@ import { Footer } from './footer';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col h-screen gap-20">
+    <div className="mx-auto flex flex-col h-screen w-5/6 md:w-4/5 gap-2 lg:gap-20">
       <Header />
-
-      <main className="flex-1 overflow-hidden">{children}</main>
+      <main>{children}</main>
       <Footer />
     </div>
   );
