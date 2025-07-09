@@ -36,9 +36,9 @@ export function ChatInput() {
   }, []);
 
   return (
-    <div className="w-full h-24 border border-dashed border-input bg-background text-black flex justify-between items-center relative px-10">
+    <div className="w-full h-16 md:h-24 border border-dashed border-input bg-background text-black flex justify-between items-center relative px-2 md:px-10">
       <Input
-        className="w-full h-full p-4 bg-transparent border-none outline-none text-foreground"
+        className="w-full h-full p-2 md:p-4 bg-transparent border-none outline-none text-foreground placeholder:text-sm md:placeholder:text-base"
         placeholder={
           isChatPage(pathname)
             ? 'Type your message...'
@@ -59,6 +59,7 @@ export function ChatInput() {
         type="button"
         variant="secondary"
         size="lg"
+        className="relative before:content-['↵'] before:md:content-none before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-base md:before:hidden text-[0px] md:text-base"
         onClick={handleSubmit}
         disabled={!inputValue.trim() || isUserLimitReached}
       >

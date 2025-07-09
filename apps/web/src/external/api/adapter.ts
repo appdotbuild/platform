@@ -1,6 +1,8 @@
 import { getToken, getUserMessageLimit } from './utils';
 
-const API_BASE_URL = import.meta.env.VITE_PLATFORM_API_URL;
+const API_BASE_URL =
+  import.meta.env.VITE_PLATFORM_API_URL_LOCAL ??
+  import.meta.env.VITE_PLATFORM_API_URL;
 
 const AcceptType = {
   JSON: 'application/json',
