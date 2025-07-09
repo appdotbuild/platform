@@ -3,7 +3,13 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { appsService } from '~/external/api/services';
 import { appStateStore } from '~/stores/app-state-store';
-import { type Message, messagesStore } from '~/stores/messages-store';
+import {
+  CONFIRMATION_TYPES,
+  MESSAGE_ROLES,
+  type Message,
+  SYSTEM_MESSAGE_TYPES,
+  messagesStore,
+} from '~/stores/messages-store';
 import { useAppCreation } from './useAppCreation';
 import { useAppsList } from './useAppsList';
 import { useMessageLimit } from './userMessageLimit';
@@ -34,7 +40,7 @@ export function useChat() {
     messagesStore.addMessage(tempId, {
       id: crypto.randomUUID(),
       message: message,
-      role: 'user',
+      role: MESSAGE_ROLES.USER,
       createdAt: new Date().toISOString(),
     });
 
@@ -60,7 +66,7 @@ export function useChat() {
       messagesStore.addMessage(sendChatId, {
         id: messageId,
         message: message.trim(),
-        role: 'user',
+        role: MESSAGE_ROLES.USER,
         createdAt: new Date().toISOString(),
       });
     }
@@ -68,8 +74,8 @@ export function useChat() {
     messagesStore.addLoadingMessage(sendChatId, {
       id: 'loading-message',
       message: 'Thinking...',
-      role: 'system',
-      systemType: 'loading',
+      role: MESSAGE_ROLES.SYSTEM,
+      systemType: SYSTEM_MESSAGE_TYPES.LOADING,
       createdAt: new Date().toISOString(),
     });
 
@@ -128,9 +134,9 @@ export function useChatSetup() {
           messagesStore.addMessage(chatId, {
             id: 'error-loading-history',
             message: 'Failed to load chat history. Please try again.',
-            role: 'system',
+            role: MESSAGE_ROLES.SYSTEM,
             createdAt: new Date().toISOString(),
-            systemType: 'error',
+            systemType: SYSTEM_MESSAGE_TYPES.ERROR,
           });
         } finally {
           setIsLoadingHistory(false);
@@ -155,8 +161,8 @@ export function useChatSetup() {
       messagesStore.addLoadingMessage(chatId, {
         id: 'loading-create-app',
         message: 'Creating your app...',
-        role: 'system',
-        systemType: 'loading',
+        role: MESSAGE_ROLES.SYSTEM,
+        systemType: SYSTEM_MESSAGE_TYPES.LOADING,
         createdAt: new Date().toISOString(),
       });
 
@@ -175,9 +181,9 @@ export function useChatSetup() {
         const successMessage: Message = {
           id: crypto.randomUUID(),
           message: `App "${appName}" created successfully!`,
-          role: 'system',
-          systemType: 'notification',
-          confirmationType: 'success',
+          role: MESSAGE_ROLES.SYSTEM,
+          systemType: SYSTEM_MESSAGE_TYPES.NOTIFICATION,
+          confirmationType: CONFIRMATION_TYPES.SUCCESS,
           createdAt: new Date().toISOString(),
         };
 
@@ -190,8 +196,8 @@ export function useChatSetup() {
     messagesStore.addMessage(chatId, {
       id: 'app-name-request',
       message: '',
-      role: 'system',
-      systemType: 'app-name-request',
+      role: MESSAGE_ROLES.SYSTEM,
+      systemType: SYSTEM_MESSAGE_TYPES.APP_NAME_REQUEST,
       createdAt: new Date().toISOString(),
       action: handleAppNameSubmit,
     });

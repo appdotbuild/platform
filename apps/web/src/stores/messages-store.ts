@@ -6,7 +6,34 @@ import type {
 import { MESSAGES_QUERY_KEY } from '~/hooks/queryKeys';
 import { queryClient } from '~/lib/queryClient';
 
-export type MessageRole = 'user' | 'assistant' | 'system';
+export const MESSAGE_ROLES = {
+  USER: 'user',
+  ASSISTANT: 'assistant',
+  SYSTEM: 'system',
+} as const;
+
+export type MessageRole = (typeof MESSAGE_ROLES)[keyof typeof MESSAGE_ROLES];
+
+export const SYSTEM_MESSAGE_TYPES = {
+  APP_NAME_REQUEST: 'app-name-request',
+  NOTIFICATION: 'notification',
+  LOADING: 'loading',
+  ERROR: 'error',
+  SUCCESS: 'success',
+} as const;
+
+export type SystemMessageType =
+  (typeof SYSTEM_MESSAGE_TYPES)[keyof typeof SYSTEM_MESSAGE_TYPES];
+
+export const CONFIRMATION_TYPES = {
+  SUCCESS: 'success',
+  INFO: 'info',
+  ERROR: 'error',
+  WARNING: 'warning',
+} as const;
+
+export type ConfirmationType =
+  (typeof CONFIRMATION_TYPES)[keyof typeof CONFIRMATION_TYPES];
 
 export interface Message {
   id: string;
@@ -15,13 +42,8 @@ export interface Message {
   messageKind?: MessageKind;
   metadata?: { type: PlatformMessageType };
   createdAt: string;
-  systemType?:
-    | 'app-name-request'
-    | 'notification'
-    | 'loading'
-    | 'error'
-    | 'success';
-  confirmationType?: 'success' | 'info' | 'error' | 'warning';
+  systemType?: SystemMessageType;
+  confirmationType?: ConfirmationType;
   action?:
     | ((data: any) => void)
     | ((name: string, template: AppTemplate) => void);

@@ -2,7 +2,11 @@ import type { AgentSseEvent } from '@appdotbuild/core';
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
 import { appsService, type SendMessageInput } from '~/external/api/services';
-import { messagesStore } from '~/stores/messages-store';
+import {
+  MESSAGE_ROLES,
+  messagesStore,
+  SYSTEM_MESSAGE_TYPES,
+} from '~/stores/messages-store';
 
 interface UseSSEQueryOptions {
   onMessage?: (event: AgentSseEvent) => void;
@@ -170,7 +174,7 @@ export function useSSEMessageHandler(chatId: string | undefined) {
       if (event.message?.messages?.length > 0) {
         event.message.messages.forEach(
           (msg: { role: string; content: string }) => {
-            if (msg.role === 'assistant') {
+            if (msg.role === MESSAGE_ROLES.ASSISTANT) {
               // collapse the loading message if it exists and not finished the stream
               if (!hasReceivedFirstMessage) {
                 setHasReceivedFirstMessage(true);
@@ -182,7 +186,7 @@ export function useSSEMessageHandler(chatId: string | undefined) {
               messagesStore.addMessage(chatId, {
                 id: crypto.randomUUID(),
                 message: msg.content,
-                role: 'assistant',
+                role: MESSAGE_ROLES.ASSISTANT,
                 messageKind: event.message.kind,
                 createdAt: new Date().toISOString(),
               });
@@ -208,8 +212,8 @@ export function useSSEMessageHandler(chatId: string | undefined) {
         messagesStore.addMessage(chatId, {
           id: 'error-message',
           message: errorMessage,
-          role: 'system',
-          systemType: 'error',
+          role: MESSAGE_ROLES.SYSTEM,
+          systemType: SYSTEM_MESSAGE_TYPES.ERROR,
           createdAt: new Date().toISOString(),
         });
       }

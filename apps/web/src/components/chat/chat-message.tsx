@@ -1,5 +1,10 @@
 import { type AppTemplate, MessageKind } from '@appdotbuild/core';
-import type { Message } from '~/stores/messages-store';
+import {
+  CONFIRMATION_TYPES,
+  MESSAGE_ROLES,
+  SYSTEM_MESSAGE_TYPES,
+  type Message,
+} from '~/stores/messages-store';
 import { AgentMessage } from './messages/agent-message';
 import { ErrorMessage } from './messages/error-message';
 import { LoadingMessage } from './messages/loading-message';
@@ -14,11 +19,11 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const renderMessage = () => {
-    if (message.role === 'user')
+    if (message.role === MESSAGE_ROLES.USER)
       return <UserMessage message={message.message} />;
 
-    if (message.role === 'system') {
-      if (message.systemType === 'app-name-request')
+    if (message.role === MESSAGE_ROLES.SYSTEM) {
+      if (message.systemType === SYSTEM_MESSAGE_TYPES.APP_NAME_REQUEST) {
         return (
           <RequestMessage
             onSubmit={
@@ -26,24 +31,29 @@ export function ChatMessage({ message }: ChatMessageProps) {
             }
           />
         );
+      }
 
-      if (message.systemType === 'notification')
+      if (message.systemType === SYSTEM_MESSAGE_TYPES.NOTIFICATION) {
         return (
           <NotificationMessage
             message={message.message}
-            type={message.confirmationType || 'info'}
+            type={message.confirmationType || CONFIRMATION_TYPES.INFO}
           />
         );
+      }
 
-      if (message.systemType === 'loading')
+      if (message.systemType === SYSTEM_MESSAGE_TYPES.LOADING) {
         return (
           <LoadingMessage message={message.message} options={message.options} />
         );
+      }
 
-      if (message.systemType === 'error') return <ErrorMessage />;
+      if (message.systemType === SYSTEM_MESSAGE_TYPES.ERROR) {
+        return <ErrorMessage />;
+      }
     }
 
-    if (message.role === 'assistant') {
+    if (message.role === MESSAGE_ROLES.ASSISTANT) {
       if (message.messageKind === MessageKind.PLATFORM_MESSAGE) {
         return (
           <PlatformMessage
@@ -52,8 +62,10 @@ export function ChatMessage({ message }: ChatMessageProps) {
           />
         );
       }
-      if (message.messageKind === MessageKind.RUNTIME_ERROR)
+
+      if (message.messageKind === MessageKind.RUNTIME_ERROR) {
         return <ErrorMessage />;
+      }
 
       return (
         <AgentMessage
