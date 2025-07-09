@@ -3,7 +3,6 @@ import { isDev } from '../env';
 import { CompositeInstrumentation } from './composite-instrumentation';
 import { SegmentAdapter } from './segment-adapter';
 import { SentryAdapter } from './sentry-adapter';
-import { isDev } from '../env';
 import type {
   EventInstrumentation,
   OperationMetadata,

@@ -1,9 +1,11 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { appsService } from '~/external/api/services';
 import { APPS_QUERY_KEY } from './queryKeys';
+import { useUser } from '@stackframe/react';
 
 // fetch all apps with pagination
 export function useAppsList() {
+  const user = useUser();
   const {
     data,
     fetchNextPage,
@@ -13,6 +15,7 @@ export function useAppsList() {
     error,
   } = useInfiniteQuery({
     queryKey: APPS_QUERY_KEY,
+    enabled: !!user,
     queryFn: async ({ pageParam = 1 }) => {
       return await appsService.fetchApps(pageParam);
     },
