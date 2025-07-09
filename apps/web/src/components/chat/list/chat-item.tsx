@@ -18,7 +18,7 @@ export function ChatItem({ app, index }: { app: App; index: () => number }) {
       onClick={handleAppClick}
       onKeyDown={handleAppClick}
     >
-      <div className="block px-6 py-4 hover:bg-muted/50 transition-colors duration-150">
+      <div className="block px-6 py-4 hover:bg-muted/50 transition-colors duration-150 cursor-pointer">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-medium text-foreground">

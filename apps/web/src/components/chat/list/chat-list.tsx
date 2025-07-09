@@ -89,7 +89,7 @@ export function ChatList() {
         onValueChange={(value) => setIsOpen(value === 'apps')}
       >
         <AccordionItem value="apps" className="border-0">
-          <AccordionTrigger className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-foreground bg-background border border-input rounded-lg hover:bg-muted/50 hover:no-underline transition-colors">
+          <AccordionTrigger className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-foreground bg-background border border-input rounded-lg hover:bg-muted/50 hover:no-underline transition-colors cursor-pointer">
             <div className="flex items-center gap-2">
               <LayoutGrid className="h-4 w-4" />
               <span>My Apps</span>
