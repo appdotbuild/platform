@@ -1,7 +1,12 @@
 import { useUser } from '@stackframe/react';
+import { createLazyRoute } from '@tanstack/react-router';
 import { ChatInput } from '~/components/chat/chat-input';
 import { ChatMessageLimit } from '~/components/chat/chat-message-limit';
 import { ChatList } from '~/components/chat/list/chat-list';
+
+export const HomePageRoute = createLazyRoute('/')({
+  component: HomePage,
+});
 
 export function HomePage() {
   const user = useUser();

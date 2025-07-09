@@ -8,9 +8,6 @@ import {
 import { queryClient } from '~/lib/queryClient';
 import { Layout } from './components/layout/layout';
 import { stackClientApp } from './lib/auth';
-import { AuthPage } from './pages/auth/auth-page';
-import { ChatPage } from './pages/chat-page';
-import { HomePage } from './pages/home-page';
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -23,24 +20,21 @@ const rootRoute = createRootRoute({
 const authRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/handler/$',
-  component: AuthPage,
-});
+}).lazy(() => import('./pages/auth/auth-page').then((d) => d.AuthPageRoute));
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: HomePage,
-});
+}).lazy(() => import('./pages/home-page').then((d) => d.HomePageRoute));
 
 const chatRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/chat/$chatId',
-  component: ChatPage,
   beforeLoad: async () => {
     const user = await stackClientApp.getUser();
     if (!user) redirect({ to: '/handler/sign-in', throw: true });
   },
-});
+}).lazy(() => import('./pages/chat-page').then((d) => d.ChatPageRoute));
 
 const routeTree = rootRoute.addChildren([authRoute, homeRoute, chatRoute]);
 

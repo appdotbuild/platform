@@ -1,8 +1,16 @@
 import { StackHandler, useUser } from '@stackframe/react';
-import { useLocation, useNavigate } from '@tanstack/react-router';
+import {
+  createLazyRoute,
+  useLocation,
+  useNavigate,
+} from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { useChat } from '~/hooks/useChat';
 import { stackClientApp } from '~/lib/auth';
+
+export const AuthPageRoute = createLazyRoute('/handler/$')({
+  component: AuthPage,
+});
 
 export function AuthPage() {
   const { pathname } = useLocation();

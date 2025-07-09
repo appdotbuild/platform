@@ -1,7 +1,12 @@
+import { createLazyRoute } from '@tanstack/react-router';
 import { ChatContainer } from '~/components/chat/chat-container';
 import { ChatInput } from '~/components/chat/chat-input';
 import { ChatMessageLimit } from '~/components/chat/chat-message-limit';
 import { useChatSetup } from '~/hooks/useChat';
+
+export const ChatPageRoute = createLazyRoute('/chat/$chatId')({
+  component: ChatPage,
+});
 
 export function ChatPage() {
   const { chatId, isLoadingHistory } = useChatSetup();
