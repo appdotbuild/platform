@@ -12,7 +12,7 @@ import { useApp } from '~/hooks/useApp';
 export function ChatInfo() {
   const { chatId } = useParams({ from: '/chat/$chatId' });
   const { app, isLoading } = useApp(chatId);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const handleValueChange = (value: string) => {

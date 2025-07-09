@@ -33,7 +33,7 @@ export function ChatContainer({
       {!isTempApp && <ChatInfo />}
       <div
         ref={containerRef}
-        className="w-full max-w-4xl h-[calc(100vh-16rem)] lg:h-[calc(100vh-24rem)] bg-background rounded-lg shadow-lg p-8 border border-dashed border-input overflow-y-auto"
+        className="w-full max-w-4xl bg-background rounded-lg shadow-lg p-8 border border-dashed border-input overflow-y-auto"
       >
         {isLoadingHistory ? (
           <ChatLoading />

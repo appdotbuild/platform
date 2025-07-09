@@ -39,13 +39,13 @@ export function ChatList() {
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, isOpen]);
 
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const hasLoadedOnceRef = useRef(false);
 
-  useEffect(() => {
-    if (!isLoadingApps && !hasLoadedOnce) {
-      setHasLoadedOnce(true);
-    }
-  }, [isLoadingApps, hasLoadedOnce]);
+  if (!isLoadingApps && !hasLoadedOnceRef.current) {
+    hasLoadedOnceRef.current = true;
+  }
+
+  const hasLoadedOnce = hasLoadedOnceRef.current;
 
   const renderContent = () => {
     if (isLoadingApps) {

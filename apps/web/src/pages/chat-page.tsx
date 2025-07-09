@@ -13,7 +13,7 @@ export function ChatPage() {
 
   return (
     <div className="flex flex-col items-center w-full h-full">
-      <div className="flex flex-col h-full w-full items-center justify-center pb-4">
+      <div className="flex flex-col h-full w-full items-center overflow-auto">
         <ChatContainer chatId={chatId} isLoadingHistory={isLoadingHistory} />
       </div>
       <div
@@ -25,6 +25,7 @@ export function ChatPage() {
           <ChatInput />
         </div>
       </div>
+      <div className="w-full h-8 md:h-24"></div>
     </div>
   );
 }
