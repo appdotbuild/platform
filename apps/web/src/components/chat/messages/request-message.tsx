@@ -6,6 +6,11 @@ interface RequestMessageProps {
   onSubmit: (name: string, template: AppTemplate) => void;
 }
 
+const templates = Object.entries(APP_TEMPLATE_INFO).map(([value, info]) => ({
+  value: value as AppTemplate,
+  ...info,
+}));
+
 export function RequestMessage({ onSubmit }: RequestMessageProps) {
   const [appName, setAppName] = useState('');
   const [template, setTemplate] = useState<AppTemplate | null>(null);
@@ -19,11 +24,6 @@ export function RequestMessage({ onSubmit }: RequestMessageProps) {
       onSubmit(name, template);
     }
   };
-
-  const templates = Object.entries(APP_TEMPLATE_INFO).map(([value, info]) => ({
-    value: value as AppTemplate,
-    ...info,
-  }));
 
   return (
     <div className="flex items-start gap-3">
