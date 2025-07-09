@@ -22,7 +22,7 @@ export function HomePage() {
       </h1>
 
       <div
-        className="w-full max-w-4xl mx-auto flex flex-col gap-2"
+        className="w-full max-w-4xl mx-auto flex flex-col gap-2 overflow-y-auto"
         style={{ viewTransitionName: 'chat-input' }}
       >
         <ChatMessageLimit />
