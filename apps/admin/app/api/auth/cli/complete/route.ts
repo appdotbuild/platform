@@ -59,10 +59,11 @@ export async function POST(request: Request) {
     );
 
     /**
-     * EMU users can't install github apps, so we check if there's any app installed for them.
+     * Enterprise managed users can't install github apps, so we check if the user is EMU.
+     * Only EMU users can have _ in their username.
      */
-    const isDataUser = user.login.includes('_');
-    const canInstallApps = !isDataUser;
+    const isEnterpriseManagedUser = user.login.includes('_');
+    const canInstallApps = !isEnterpriseManagedUser;
 
     const data = await response.json();
 
