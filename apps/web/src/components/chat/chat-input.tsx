@@ -26,7 +26,7 @@ export function ChatInput() {
 
       isHomePage(pathname)
         ? createNewApp(inputValue)
-        : await sendMessage(inputValue);
+        : await sendMessage({ message: inputValue });
       setInputValue('');
     }
   }, [inputValue, pathname, user, navigate, createNewApp, sendMessage]);

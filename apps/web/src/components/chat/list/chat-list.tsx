@@ -85,7 +85,7 @@ export function ChatList() {
       <Accordion
         type="single"
         collapsible
-        value={isOpen ? 'apps' : undefined}
+        value={isOpen ? 'apps' : ''}
         onValueChange={(value) => setIsOpen(value === 'apps')}
       >
         <AccordionItem value="apps" className="border-0">

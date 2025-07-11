@@ -29,7 +29,7 @@ export function ChatInfo() {
         <Accordion
           type="single"
           collapsible
-          value={isOpen ? 'info' : undefined}
+          value={isOpen ? 'info' : ''}
           onValueChange={handleValueChange}
         >
           <AccordionItem value="info" className="border-0">
@@ -101,7 +101,7 @@ export function ChatInfo() {
       <Accordion
         type="single"
         collapsible
-        value={isOpen ? 'info' : undefined}
+        value={isOpen ? 'info' : ''}
         onValueChange={handleValueChange}
       >
         <AccordionItem value="info" className="border-0">

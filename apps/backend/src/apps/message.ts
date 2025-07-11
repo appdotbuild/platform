@@ -11,6 +11,7 @@ import {
   AgentStatus,
   agentSseEventSchema,
   type ConversationMessage,
+  DeployStatus,
   MessageKind,
   type MessageLimitHeaders,
   PlatformMessage,
@@ -18,7 +19,6 @@ import {
   PromptKind,
   StreamingError,
   type TraceId,
-  DeployStatus,
 } from '@appdotbuild/core';
 import { nodeEventSource } from '@llm-eaf/node-event-source';
 import { createSession, type Session } from 'better-sse';
@@ -50,10 +50,10 @@ import {
   type ConversationData,
   conversationManager,
 } from './conversation-manager';
+import { createApp } from './create-app';
 import { applyDiff } from './diff';
 import { checkMessageUsageLimit } from './message-limit';
 import { MessageHandlerQueue } from './message-queue';
-import { createApp } from './create-app';
 
 type Body = {
   applicationId?: string;
@@ -554,6 +554,7 @@ export async function postMessage(
 
             const parsedCLIMessage = {
               ...completeParsedMessage,
+              appId: applicationId,
               message: minimalMessage,
             };
 
@@ -768,6 +769,7 @@ export async function postMessage(
                   new PlatformMessage(
                     AgentStatus.IDLE,
                     traceId!,
+                    applicationId,
                     `Your application is being deployed to ${deployResult.appURL}`,
                     {
                       type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
@@ -907,7 +909,10 @@ export async function postMessage(
       },
       'info',
     );
-    session.push({ done: true, traceId: traceId }, 'done');
+    session.push(
+      { done: true, traceId: traceId, appId: applicationId },
+      'done',
+    );
     session.removeAllListeners();
 
     reply.raw.end();
@@ -1050,6 +1055,7 @@ async function appCreation({
     new PlatformMessage(
       AgentStatus.IDLE,
       traceId as TraceId,
+      applicationId,
       `Your application has been uploaded to this github repository: ${result.repositoryUrl}`,
       {
         type: PlatformMessageType.REPO_CREATED,
@@ -1113,6 +1119,7 @@ async function appIteration({
     new PlatformMessage(
       AgentStatus.IDLE,
       traceId as TraceId,
+      applicationId,
       `committed in existing app - commit url: ${commitUrl}`,
       { type: PlatformMessageType.COMMIT_CREATED },
     ),
@@ -1162,7 +1169,10 @@ function createStreamLogger(
 
     // only push if is neon employee
     if (isNeonEmployee) {
-      session.push({ log: logData.message, level }, 'debug');
+      session.push(
+        { log: logData.message, level, appId: logData.applicationId },
+        'debug',
+      );
     }
   };
 }

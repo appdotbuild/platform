@@ -1,12 +1,17 @@
 import type { AgentSseEvent } from '@appdotbuild/core';
 import { useMutation } from '@tanstack/react-query';
-import { useCallback, useRef, useState } from 'react';
+import { useLocation, useNavigate } from '@tanstack/react-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { appsService, type SendMessageInput } from '~/external/api/services';
 import {
   MESSAGE_ROLES,
   messagesStore,
   SYSTEM_MESSAGE_TYPES,
 } from '~/stores/messages-store';
+import { useCurrentApp } from './useCurrentApp';
+import { isChatPage, isHomePage } from '~/utils/router-checker';
+import { queryClient } from '~/lib/queryClient';
+import { APPS_QUERY_KEY } from './queryKeys';
 
 interface UseSSEQueryOptions {
   onMessage?: (event: AgentSseEvent) => void;
@@ -31,6 +36,7 @@ function safeJSONParse(data: string) {
 
 // manage SSE connection
 export function useSSEQuery(options: UseSSEQueryOptions = {}) {
+  const { pathname } = useLocation();
   const abortControllerRef = useRef<AbortController | null>(null);
   const optionsRef = useRef(options);
 
@@ -82,7 +88,7 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
 
                 // Handle different event types
                 if (parsedData.done) {
-                  optionsRef.current.onDone?.(parsedData.traceId);
+                  optionsRef.current.onDone?.(parsedData.appId);
                 } else {
                   // Regular message event
                   optionsRef.current.onMessage?.(parsedData as AgentSseEvent);
@@ -138,7 +144,9 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
 
       abortControllerRef.current = new AbortController();
 
-      const response = await appsService.sendMessage(data);
+      const response = await appsService.sendMessage(data, {
+        signal: abortControllerRef.current.signal,
+      });
       await processSSEStream(response);
     },
     onError: (error: Error) => {
@@ -153,6 +161,11 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
     }
   }, []);
 
+  // disconnect if navigating away from the chat page
+  useEffect(() => {
+    if (!isChatPage(pathname)) disconnect();
+  }, [pathname, disconnect]);
+
   return {
     sendMessage: mutation.mutate,
     sendMessageAsync: mutation.mutateAsync,
@@ -165,11 +178,31 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
 
 // manage SSE Events for specific chat
 export function useSSEMessageHandler(chatId: string | undefined) {
+  const navigate = useNavigate();
+  const { setCurrentAppState } = useCurrentApp();
   const [hasReceivedFirstMessage, setHasReceivedFirstMessage] = useState(false);
 
   const handleSSEMessage = useCallback(
     (event: AgentSseEvent) => {
-      if (!chatId) return;
+      const eventAppId = event.appId;
+      if (!eventAppId) return;
+      const currentAppState = useCurrentApp.getState().currentAppState;
+
+      if (currentAppState === 'idle' && eventAppId) {
+        setCurrentAppState('not-created');
+        messagesStore.setMessages(eventAppId, messagesStore.getMessages('new'));
+        navigate({
+          to: '/chat/$chatId',
+          params: { chatId: event.appId },
+          replace: true,
+        });
+      }
+
+      // tag the app was persisted
+      if (event.metadata?.type === 'repo_created') {
+        setCurrentAppState('just-created');
+        queryClient.invalidateQueries({ queryKey: APPS_QUERY_KEY });
+      }
 
       if (event.message?.messages?.length > 0) {
         event.message.messages.forEach(
@@ -178,16 +211,17 @@ export function useSSEMessageHandler(chatId: string | undefined) {
               // collapse the loading message if it exists and not finished the stream
               if (!hasReceivedFirstMessage) {
                 setHasReceivedFirstMessage(true);
-                messagesStore.updateMessage(chatId, 'loading-message', {
+                messagesStore.updateMessage(eventAppId, 'loading-message', {
                   options: { collapsed: true },
                 });
               }
 
-              messagesStore.addMessage(chatId, {
+              messagesStore.addMessage(eventAppId, {
                 id: crypto.randomUUID(),
                 message: msg.content,
                 role: MESSAGE_ROLES.ASSISTANT,
                 messageKind: event.message.kind,
+                metadata: event.metadata,
                 createdAt: new Date().toISOString(),
               });
             }
@@ -195,7 +229,7 @@ export function useSSEMessageHandler(chatId: string | undefined) {
         );
       }
     },
-    [chatId, hasReceivedFirstMessage],
+    [hasReceivedFirstMessage, setCurrentAppState, navigate],
   );
 
   const handleSSEError = useCallback(
@@ -221,16 +255,13 @@ export function useSSEMessageHandler(chatId: string | undefined) {
     [chatId],
   );
 
-  const handleSSEDone = useCallback(
-    (_traceId?: string) => {
-      if (chatId) {
-        // remove the loading message and reset the state
-        messagesStore.removeMessage(chatId, 'loading-message');
-        setHasReceivedFirstMessage(false);
-      }
-    },
-    [chatId],
-  );
+  const handleSSEDone = useCallback((appId?: string) => {
+    if (appId) {
+      // remove the loading message and reset the state
+      messagesStore.removeMessage(appId, 'loading-message');
+      setHasReceivedFirstMessage(false);
+    }
+  }, []);
 
   return {
     handleSSEMessage,

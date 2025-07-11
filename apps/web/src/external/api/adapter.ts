@@ -77,12 +77,21 @@ export const apiClient = {
 
   delete: <T>(endpoint: string) => request<T>(endpoint, { method: 'DELETE' }),
 
-  postSSE: async (endpoint: string, data?: unknown): Promise<Response> => {
+  postSSE: async ({
+    endpoint,
+    data,
+    options = {},
+  }: {
+    endpoint: string;
+    data?: unknown;
+    options?: RequestInit;
+  }): Promise<Response> => {
     return request<Response>(
       endpoint,
       {
         method: 'POST',
         body: data ? JSON.stringify(data) : undefined,
+        ...options,
       },
       AcceptType.SSE,
     );

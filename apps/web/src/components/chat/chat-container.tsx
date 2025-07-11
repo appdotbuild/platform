@@ -1,21 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { useChatMessages } from '~/hooks/useChatMessages';
+import { useCurrentApp } from '~/hooks/useCurrentApp';
 import { ChatInfo } from './chat-info';
 import { ChatLoading } from './chat-loading';
 import { ChatMessage } from './chat-message';
 
 interface ChatContainerProps {
   chatId: string;
-  isLoadingHistory?: boolean;
+  isLoadingApp?: boolean;
 }
 
-export function ChatContainer({
-  chatId,
-  isLoadingHistory,
-}: ChatContainerProps) {
+export function ChatContainer({ chatId }: ChatContainerProps) {
+  const { currentAppState } = useCurrentApp();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { messages } = useChatMessages(chatId);
-  const isTempApp = chatId.startsWith('temp-');
+  const { messages, isLoadingHistory } = useChatMessages(chatId);
 
   useEffect(() => {
     if (containerRef.current && messages.length > 0) {
@@ -28,9 +26,12 @@ export function ChatContainer({
     }
   }, [messages]);
 
+  const shouldShowChatInfo =
+    currentAppState === 'app-created' || currentAppState === 'just-created';
+
   return (
     <>
-      {!isTempApp && <ChatInfo />}
+      {shouldShowChatInfo && <ChatInfo />}
       <div
         ref={containerRef}
         className="w-full max-w-4xl bg-background rounded-lg shadow-lg p-8 border border-dashed border-input overflow-y-auto"

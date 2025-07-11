@@ -90,6 +90,7 @@ export const agentSseEventMessageSchema = z.object({
 
 // Agent SSE Event
 export const agentSseEventSchema = z.object({
+  appId: z.string().optional(),
   status: agentStatusSchema,
   traceId: z.string(),
   createdAt: z.date().optional(),
@@ -134,17 +135,20 @@ export class ErrorResponse {
 export class PlatformMessage {
   status: AgentStatus;
   traceId: TraceId;
+  appId: ApplicationId;
   message: AgentSseEventMessage;
   metadata?: PlatformMessageMetadata;
 
   constructor(
     status: AgentStatus,
     traceId: TraceId,
+    appId: string,
     message: string,
     metadata?: PlatformMessageMetadata,
   ) {
     this.status = status;
     this.traceId = traceId;
+    this.appId = appId;
     this.message = {
       kind: MessageKind.PLATFORM_MESSAGE,
       messages: [{ role: PromptKind.ASSISTANT, content: message }],

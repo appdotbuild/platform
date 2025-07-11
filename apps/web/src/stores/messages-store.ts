@@ -40,7 +40,7 @@ export interface Message {
   message: string;
   role: MessageRole;
   messageKind?: MessageKind;
-  metadata?: { type: PlatformMessageType };
+  metadata?: { type?: PlatformMessageType };
   createdAt: string;
   systemType?: SystemMessageType;
   confirmationType?: ConfirmationType;

@@ -1,15 +1,25 @@
 import { useUser } from '@stackframe/react';
 import { createLazyRoute } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { ChatInput } from '~/components/chat/chat-input';
 import { ChatMessageLimit } from '~/components/chat/chat-message-limit';
 import { ChatList } from '~/components/chat/list/chat-list';
+import { useCurrentApp } from '~/hooks/useCurrentApp';
+import { messagesStore } from '~/stores/messages-store';
 
 export const HomePageRoute = createLazyRoute('/')({
   component: HomePage,
 });
 
 export function HomePage() {
+  const { clearCurrentApp } = useCurrentApp();
   const user = useUser();
+
+  // clean up the current app state
+  useEffect(() => {
+    clearCurrentApp();
+    messagesStore.clearMessages('new');
+  }, [clearCurrentApp]);
 
   return (
     <div className="w-full h-full flex flex-col gap-12 lg:gap-20 justify-center items-center">

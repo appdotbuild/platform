@@ -36,7 +36,12 @@ export const appsService = {
   fetchApp: (appId: string) => apiClient.get<App>(`/apps/${appId}`),
   fetchAppMessages: (appId: string) =>
     apiClient.get<AppPrompts[]>(`/apps/${appId}/history`),
-  sendMessage: (data: SendMessageInput) => apiClient.postSSE('/message', data),
+  sendMessage: (data: SendMessageInput, options: Record<string, any>) =>
+    apiClient.postSSE({
+      endpoint: '/message',
+      data,
+      options,
+    }),
   fetchUserMessageLimit: () =>
     apiClient.get<UserMessageLimit>(`/message-limit`),
 };
