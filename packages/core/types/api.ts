@@ -71,3 +71,5 @@ export type App = {
   appName?: string | null;
   appUrl?: string | null;
 };
+
+export type TemplateId = 'trpc_agent' | 'nicegui_agent';
