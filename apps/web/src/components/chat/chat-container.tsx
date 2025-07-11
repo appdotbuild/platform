@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useChatMessages } from '~/hooks/useChatMessages';
 import { useCurrentApp } from '~/hooks/useCurrentApp';
-import { ChatInfo } from './chat-info';
 import { ChatLoading } from './chat-loading';
 import { ChatMessage } from './chat-message';
+import { ChatInfo } from './info';
 
 interface ChatContainerProps {
   chatId: string;

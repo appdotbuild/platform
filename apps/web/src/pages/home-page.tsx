@@ -12,7 +12,7 @@ export const HomePageRoute = createLazyRoute('/')({
 });
 
 export function HomePage() {
-  const { clearCurrentApp } = useCurrentApp();
+  const clearCurrentApp = useCurrentApp((state) => state.clearCurrentApp);
   const user = useUser();
 
   // clean up the current app state

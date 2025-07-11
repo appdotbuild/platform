@@ -7,7 +7,6 @@ import {
   getUserMessageLimit,
   listAllAppsForAdmin,
   listApps,
-  postCreateApp,
   postMessage,
 } from './apps';
 import { sendAnalyticsEvent } from './apps/analytics-events';
@@ -29,7 +28,6 @@ app.get('/auth/is-neon-employee', authHandler, async (request, reply) => {
   return reply.send({ isNeonEmployee: request.user.isNeonEmployee });
 });
 app.get('/apps', authHandler, listApps);
-app.post('/apps', authHandler, postCreateApp);
 app.get('/apps/:id', authHandler, appById);
 app.get('/apps/:id/history', authHandler, appHistory);
 app.get('/apps/:id/read-url', authHandler, appByIdUrl);

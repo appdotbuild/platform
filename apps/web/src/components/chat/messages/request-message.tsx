@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { cn } from '~/lib/utils';
 
 interface RequestMessageProps {
-  onSubmit: (name: string, template: AppTemplate) => void;
+  onSubmit: (name: string, template: AppTemplate) => void | Promise<void>;
 }
 
 const templates = Object.entries(APP_TEMPLATE_INFO).map(([value, info]) => ({
@@ -21,7 +21,11 @@ export function RequestMessage({ onSubmit }: RequestMessageProps) {
     const name = appName.trim();
     if (name && template && !isSubmitting) {
       setIsSubmitting(true);
-      onSubmit(name, template);
+      try {
+        await onSubmit(name, template);
+      } catch (_) {
+        setIsSubmitting(false);
+      }
     }
   };
 

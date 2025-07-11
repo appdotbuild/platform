@@ -2,7 +2,12 @@ import type { App } from '@appdotbuild/core';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 
-export function ChatItem({ app, index }: { app: App; index: () => number }) {
+interface ChatItemProps {
+  app: App;
+  index: () => number;
+}
+
+export function ChatItem({ app, index }: ChatItemProps) {
   const navigate = useNavigate({ from: '/' });
 
   const handleAppClick = () => {

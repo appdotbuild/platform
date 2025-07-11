@@ -2,9 +2,10 @@ import {
   useFetchMessageLimit,
   useMessageLimit,
 } from '~/hooks/userMessageLimit';
+import { cn } from '~/lib/utils';
 
 export function ChatMessageLimit() {
-  const { isLoading } = useFetchMessageLimit();
+  const { isLoading, error } = useFetchMessageLimit();
   const { remainingMessages, dailyMessageLimit, isUserLimitReached } =
     useMessageLimit();
 
@@ -18,11 +19,24 @@ export function ChatMessageLimit() {
     );
   }
 
-  const styles = isUserLimitReached ? 'text-red-500' : 'text-muted-foreground';
+  if (error) {
+    return (
+      <div className="flex justify-end">
+        <span className="text-sm text-center text-destructive">
+          Failed to load message limit
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-end">
-      <span className={`text-sm text-center ${styles}`}>
+      <span
+        className={cn(
+          'text-sm text-center',
+          isUserLimitReached ? 'text-red-500' : 'text-muted-foreground',
+        )}
+      >
         {remainingMessages}/{dailyMessageLimit} messages remaining
       </span>
     </div>

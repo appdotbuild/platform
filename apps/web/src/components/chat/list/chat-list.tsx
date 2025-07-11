@@ -1,4 +1,3 @@
-import type { App } from '@appdotbuild/core';
 import { LayoutGrid } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -8,7 +7,7 @@ import {
   AccordionTrigger,
 } from '~/components/shared/accordion/accordion';
 import { useAppsList } from '~/hooks/useAppsList';
-import { ChatItem } from './chat-item';
+import { ChatListContent } from './chat-list-content';
 
 export function ChatList() {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,9 +19,12 @@ export function ChatList() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    appsError,
   } = useAppsList();
 
   useEffect(() => {
+    if (!isOpen) return;
+
     const scrollContainer = scrollRef.current;
     if (!scrollContainer) return;
 
@@ -47,39 +49,6 @@ export function ChatList() {
 
   const hasLoadedOnce = hasLoadedOnceRef.current;
 
-  const renderContent = () => {
-    if (isLoadingApps) {
-      return (
-        <div key="loading" className="animate-fade-in">
-          <div className="p-4 text-muted-foreground text-center">
-            Loading your apps...
-          </div>
-        </div>
-      );
-    }
-
-    if (!apps || apps.length === 0) {
-      return (
-        <div key="empty" className="animate-slide-fade-in">
-          <div className="p-4 text-muted-foreground text-center">
-            You have no apps yet. Start building your first app!
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div key="apps" className={hasLoadedOnce ? 'animate-slide-fade-in' : ''}>
-        <AppsList apps={apps} />
-        {isFetchingNextPage && (
-          <div className="p-4 text-muted-foreground text-center">
-            Loading more apps...
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="w-full max-w-4xl mx-auto">
       <Accordion
@@ -101,22 +70,18 @@ export function ChatList() {
                 ref={scrollRef}
                 className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-muted scrollbar-thumb-muted-foreground/30"
               >
-                {renderContent()}
+                <ChatListContent
+                  apps={apps}
+                  isLoadingApps={isLoadingApps}
+                  hasLoadedOnce={hasLoadedOnce}
+                  isFetchingNextPage={isFetchingNextPage}
+                  error={appsError}
+                />
               </div>
             </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
     </div>
-  );
-}
-
-function AppsList({ apps }: { apps: App[] }) {
-  return (
-    <ul>
-      {apps.map((app) => (
-        <ChatItem key={app.id} app={app} index={() => apps.indexOf(app)} />
-      ))}
-    </ul>
   );
 }

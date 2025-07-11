@@ -53,7 +53,11 @@ export function useFetchMessageLimit() {
   const user = useUser();
   const alreadyHasData = useMessageLimit((state) => state.hasInitialData);
 
-  const { data: userLimit, isLoading } = useQuery({
+  const {
+    data: userLimit,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: USER_MESSAGE_LIMIT_QUERY_KEY,
     queryFn: async () => {
       const response = await appsService.fetchUserMessageLimit();
@@ -66,5 +70,6 @@ export function useFetchMessageLimit() {
   return {
     userLimit,
     isLoading,
+    error,
   };
 }

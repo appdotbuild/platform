@@ -7,6 +7,7 @@ import {
   CardHeadline,
 } from '~/components/shared/card';
 import { MessageDetails } from '../message-details';
+import { MESSAGE_TRUNCATION_LENGTH } from '../constants';
 
 interface RefinementRequestProps {
   message: string;
@@ -18,9 +19,11 @@ export function RefinementRequest({
   rawData,
 }: RefinementRequestProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const isLongMessage = message.length > 800;
+  const isLongMessage = message.length > MESSAGE_TRUNCATION_LENGTH;
   const displayMessage = () =>
-    isLongMessage && !isExpanded ? `${message.slice(0, 800)}...` : message;
+    isLongMessage && !isExpanded
+      ? `${message.slice(0, MESSAGE_TRUNCATION_LENGTH)}...`
+      : message;
 
   return (
     <Card>
