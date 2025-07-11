@@ -2,8 +2,8 @@ import type { ServerUser } from '@stackframe/stack';
 import fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { validateAuth } from './auth-strategy';
-import { Instrumentation } from './instrumentation';
 import { isDev } from './env';
+import { Instrumentation } from './instrumentation';
 
 // must be called before app creation
 Instrumentation.initialize();
@@ -32,6 +32,31 @@ Instrumentation.setupPerformanceMonitoring(app);
 await app.register(import('@fastify/compress'), {
   global: false,
 });
+
+// cors is only enabled in development mode
+if (isDev) {
+  await app.register(import('@fastify/cors'), {
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'Accept-Encoding',
+      'Connection',
+      'Cache-Control',
+    ],
+    exposedHeaders: [
+      'x-dailylimit-limit',
+      'x-dailylimit-remaining',
+      'x-dailylimit-usage',
+      'x-dailylimit-reset',
+    ],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  });
+}
 
 app.decorate(
   'authenticate',

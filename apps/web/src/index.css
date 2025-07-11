@@ -1,0 +1,218 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-primary: hsl(221 83% 53%);
+  --color-primary-foreground: hsl(0 0% 98%);
+  --color-secondary: hsl(240 4.8% 95.9%);
+  --color-secondary-foreground: hsl(240 5.9% 10%);
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(240 10% 3.9%);
+  --color-muted: hsl(240 4.8% 95.9%);
+  --color-muted-foreground: hsl(240 3.8% 46.1%);
+  --color-accent: hsl(240 4.8% 95.9%);
+  --color-accent-foreground: hsl(240 5.9% 10%);
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  --color-border: hsl(240 6% 85%);
+  --color-input: hsl(240 6% 75%);
+  --color-ring: hsl(240 10% 3.9%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(240 10% 3.9%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(240 10% 3.9%);
+  --radius: 0.5rem;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: rgb(245, 244, 245);
+}
+
+#root {
+  height: 100%;
+}
+
+/* View Transitions for Loading Message */
+::view-transition-group(loading-message) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(loading-message) {
+  animation: 0.5s ease-out both fade-out;
+}
+
+::view-transition-new(loading-message) {
+  animation: 0.5s ease-out both fade-in;
+}
+
+::view-transition-group(logo) {
+  animation-duration: 1.2s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-group(header) {
+  animation-duration: 0.6s;
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+::view-transition-group(footer) {
+  animation-duration: 0.4s;
+}
+
+::view-transition-old(footer) {
+  animation: 0.4s ease-out both fade-out;
+}
+
+::view-transition-new(footer) {
+  animation: 0.4s ease-out both fade-in;
+}
+
+::view-transition-old(chat-container) {
+  animation: 0.4s ease-out both fade-out;
+}
+
+::view-transition-new(chat-container) {
+  animation: 0.4s ease-out both fade-in;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+::view-transition-old(root) {
+  animation: 0.3s ease-out both fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 0.3s ease-out both fade-in;
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes content-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in-scale 0.3s ease-out forwards;
+}
+
+.animate-slide-fade-in {
+  animation: slide-fade-in 0.4s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.4s ease-out forwards;
+}
+
+.animate-slide-in-top {
+  animation: slide-in-top 0.4s ease-out forwards;
+}
+
+.animate-content-fade-in {
+  animation: content-fade-in 0.3s ease-out forwards;
+}
+
+.animate-slide-fade-in ul li {
+  opacity: 0;
+  animation: slide-fade-in 0.3s ease-out forwards;
+}
+
+.animate-slide-fade-in ul li:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.animate-slide-fade-in ul li:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.animate-slide-fade-in ul li:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.animate-slide-fade-in ul li:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.animate-slide-fade-in ul li:nth-child(5) {
+  animation-delay: 0.25s;
+}
+.animate-slide-fade-in ul li:nth-child(6) {
+  animation-delay: 0.3s;
+}
+.animate-slide-fade-in ul li:nth-child(7) {
+  animation-delay: 0.35s;
+}
+.animate-slide-fade-in ul li:nth-child(8) {
+  animation-delay: 0.4s;
+}
+.animate-slide-fade-in ul li:nth-child(9) {
+  animation-delay: 0.45s;
+}
+.animate-slide-fade-in ul li:nth-child(10) {
+  animation-delay: 0.5s;
+}
