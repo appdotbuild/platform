@@ -59,18 +59,11 @@ export async function POST(request: Request) {
     );
 
     /**
-     * EMU users can't install github apps, so we check if there's any app installed for them.
-     * We do also check if the user is not a data user, so in case a user doesn't have any app installed, we can install the app.
-     *
-     * This will only work for databricks EMU users properly.
+     * Enterprise managed users can't install github apps, so we check if the user is EMU.
+     * Only EMU users can have _ in their username.
      */
-    const isDataUser = user.login.includes('_data');
-    const canInstallApps =
-      !isDataUser &&
-      (appInstallations.installations.some(
-        (installation: any) => installation.target_type === 'User',
-      ) ||
-        appInstallations.installations.length === 0);
+    const isEnterpriseManagedUser = user.login.includes('_');
+    const canInstallApps = !isEnterpriseManagedUser;
 
     const data = await response.json();
 
