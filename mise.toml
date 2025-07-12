@@ -1,0 +1,4 @@
+[tools]
+1password = "latest"
+bun = "1.2.8"
+node = "22.10"
