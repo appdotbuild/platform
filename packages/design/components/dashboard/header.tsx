@@ -1,14 +1,8 @@
-import { useRouter } from 'next/navigation';
-
-import Image from 'next/image';
-
 export function DashboardHeader({ userMenu }: { userMenu: React.ReactNode }) {
-  const router = useRouter();
-
   return (
     <header className="sticky z-50 top-0 flex h-16 items-center border-b bg-background px-4 md:px-6">
       <div className="flex items-center gap-3 flex-1">
-        <Image
+        <img
           src="/app-icon.svg"
           alt="App.Build Icon"
           width={48}

@@ -33,6 +33,7 @@
     "@aws-sdk/client-ecr": "3.812.0",
     "@inkjs/ui": "2.0.0",
     "@stackframe/js": "^2.8.6",
+    "@stackframe/react": "^2.8.20",
     "@tanstack/react-query": "5.69.0",
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",

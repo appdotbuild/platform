@@ -1,12 +1,9 @@
 'use client';
 import { Menu } from './menu';
 import { SidebarToggle } from './sidebar-toggle';
-import { Button } from '@appdotbuild/design/shadcn/button';
 import { useSidebar } from '@appdotbuild/design/hooks/use-sidebar';
 import { useStore } from '@appdotbuild/design/hooks/use-store';
 import { cn } from '@appdotbuild/design/lib/utils';
-import { PanelsTopLeft } from 'lucide-react';
-import Link from 'next/link';
 
 export function Sidebar({ signOut }: { signOut: () => Promise<void> }) {
   const sidebar = useStore(useSidebar, (x) => x);
