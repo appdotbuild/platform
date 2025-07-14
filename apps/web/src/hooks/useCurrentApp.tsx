@@ -1,14 +1,10 @@
 import { create } from 'zustand';
 
-const CURRENT_APP_STATE = {
-  IDLE: 'idle',
-  NOT_CREATED: 'not-created',
-  JUST_CREATED: 'just-created',
-  APP_CREATED: 'app-created',
-} as const;
-
-export type CurrentAppStateType =
-  (typeof CURRENT_APP_STATE)[keyof typeof CURRENT_APP_STATE];
+type CurrentAppStateType =
+  | 'idle'
+  | 'not-created'
+  | 'just-created'
+  | 'app-created';
 
 interface CurrentAppState {
   messageBeforeCreation?: string;
