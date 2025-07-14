@@ -3,15 +3,15 @@ import { useMutation } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { appsService, type SendMessageInput } from '~/external/api/services';
+import { queryClient } from '~/lib/queryClient';
 import {
   MESSAGE_ROLES,
   messagesStore,
   SYSTEM_MESSAGE_TYPES,
 } from '~/stores/messages-store';
-import { useCurrentApp } from './useCurrentApp';
-import { isChatPage, isHomePage } from '~/utils/router-checker';
-import { queryClient } from '~/lib/queryClient';
+import { isChatPage } from '~/utils/router-checker';
 import { APPS_QUERY_KEY } from './queryKeys';
+import { useCurrentApp } from './useCurrentApp';
 
 interface UseSSEQueryOptions {
   onMessage?: (event: AgentSseEvent) => void;
