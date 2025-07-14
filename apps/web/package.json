@@ -7,8 +7,13 @@
     "build": "tsc -b && vite build",
     "clean": "rm -rf node_modules dist tmp",
     "dev": "vite",
+    "e2e:codegen": "playwright codegen --load-storage=./e2e/sessions/storageState.json",
+    "e2e:codegen:logged-out": "playwright codegen",
+    "e2e:test": "playwright test",
+    "e2e:ui": "playwright test --ui",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
+    "otp": "bun --env-file=./apps/web/.env run tools/get-otp.ts",
     "preview": "vite preview",
     "types:check": "tsc --noEmit"
   },
