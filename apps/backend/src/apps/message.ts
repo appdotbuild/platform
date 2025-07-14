@@ -18,6 +18,7 @@ import {
   PlatformMessageType,
   PromptKind,
   StreamingError,
+  type TemplateId,
   type TraceId,
 } from '@appdotbuild/core';
 import { nodeEventSource } from '@llm-eaf/node-event-source';
@@ -62,7 +63,7 @@ type Body = {
   settings: Record<string, any>;
   agentState?: any;
   allFiles?: FileData[];
-  templateId?: 'trpc_agent' | 'nicegui_agent';
+  templateId?: TemplateId;
 };
 
 type RequestBody = {
@@ -74,6 +75,7 @@ type RequestBody = {
   traceId?: TraceId;
   databricksApiKey?: string;
   databricksHost?: string;
+  templateId?: TemplateId;
 };
 
 type StructuredLog = {
@@ -224,6 +226,12 @@ export async function postMessage(
       githubAccessToken,
     ).init();
 
+    let templateId = requestBody.templateId || 'trpc_agent';
+    // databricks apps only support python apps for now
+    if (requestBody.databricksHost) {
+      templateId = 'nicegui_agent';
+    }
+
     let body: Optional<Body, 'traceId'> = {
       applicationId,
       allMessages: [
@@ -233,8 +241,7 @@ export async function postMessage(
         },
       ],
       settings: requestBody.settings || {},
-      // for now we only support python apps for databricks apps
-      templateId: requestBody.databricksHost ? 'nicegui_agent' : 'trpc_agent',
+      templateId,
     };
 
     let appName: string | null = null;

@@ -11,6 +11,7 @@ import { convertPromptsToEvents } from '../utils/convert-prompts-to-events.js';
 import { logger } from '../utils/logger.js';
 import { apiClient } from './api-client.js';
 import { parseSSE } from './sse.js';
+import { useFlagsStore } from '../store/flags-store.js';
 
 // Load environment variables from .env file
 config();
@@ -97,6 +98,7 @@ export async function sendMessage({
   signal,
 }: SendMessageParams): Promise<SendMessageResult> {
   const agentEnvironment = useEnvironmentStore.getState().agentEnvironment();
+  const templateId = useFlagsStore.getState().templateId;
 
   const response = await apiClient.post(
     '/message',
@@ -106,6 +108,7 @@ export async function sendMessage({
       applicationId,
       traceId,
       environment: agentEnvironment,
+      templateId,
       databricksApiKey,
       databricksHost,
     },

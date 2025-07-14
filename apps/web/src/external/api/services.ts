@@ -1,16 +1,5 @@
-import type {
-  App,
-  AppPrompts,
-  AppTemplate,
-  UserMessageLimit,
-} from '@appdotbuild/core';
+import type { App, AppPrompts, UserMessageLimit } from '@appdotbuild/core';
 import { apiClient } from '../api/adapter';
-
-export type CreateAppInput = {
-  appName: string;
-  userMessage?: string;
-  template?: AppTemplate;
-};
 
 export type SendMessageInput = {
   applicationId: string;
@@ -32,7 +21,6 @@ export type PaginatedResponse<T> = {
 export const appsService = {
   fetchApps: (page = 1, limit = 10) =>
     apiClient.get<PaginatedResponse<App>>(`/apps?page=${page}&limit=${limit}`),
-  createApp: (data: CreateAppInput) => apiClient.post<App>('/apps', data),
   fetchApp: (appId: string) => apiClient.get<App>(`/apps/${appId}`),
   fetchAppMessages: (appId: string) =>
     apiClient.get<AppPrompts[]>(`/apps/${appId}/history`),

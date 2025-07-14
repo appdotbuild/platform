@@ -1,8 +1,4 @@
-import type {
-  AppTemplate,
-  MessageKind,
-  PlatformMessageType,
-} from '@appdotbuild/core';
+import type { MessageKind, PlatformMessageType } from '@appdotbuild/core';
 import { MESSAGES_QUERY_KEY } from '~/hooks/queryKeys';
 import { queryClient } from '~/lib/queryClient';
 
@@ -15,7 +11,6 @@ export const MESSAGE_ROLES = {
 export type MessageRole = (typeof MESSAGE_ROLES)[keyof typeof MESSAGE_ROLES];
 
 export const SYSTEM_MESSAGE_TYPES = {
-  APP_NAME_REQUEST: 'app-name-request',
   NOTIFICATION: 'notification',
   LOADING: 'loading',
   ERROR: 'error',
@@ -44,9 +39,6 @@ export interface Message {
   createdAt: string;
   systemType?: SystemMessageType;
   confirmationType?: ConfirmationType;
-  action?:
-    | ((data: any) => void)
-    | ((name: string, template: AppTemplate) => void);
   options?: Record<string, any>;
 }
 

@@ -1,4 +1,4 @@
-import { type AppTemplate, MessageKind } from '@appdotbuild/core';
+import { MessageKind } from '@appdotbuild/core';
 import {
   CONFIRMATION_TYPES,
   MESSAGE_ROLES,
@@ -10,7 +10,6 @@ import { ErrorMessage } from './messages/error-message';
 import { LoadingMessage } from './messages/loading-message';
 import { NotificationMessage } from './messages/notification-message';
 import { PlatformMessage } from './messages/platform-message';
-import { RequestMessage } from './messages/request-message';
 import { UserMessage } from './messages/user-message';
 
 interface ChatMessageProps {
@@ -22,16 +21,6 @@ export function ChatMessageContent({ message }: { message: Message }) {
     return <UserMessage message={message.message} />;
 
   if (message.role === MESSAGE_ROLES.SYSTEM) {
-    if (message.systemType === SYSTEM_MESSAGE_TYPES.APP_NAME_REQUEST) {
-      return (
-        <RequestMessage
-          onSubmit={
-            message.action as (name: string, template: AppTemplate) => void
-          }
-        />
-      );
-    }
-
     if (message.systemType === SYSTEM_MESSAGE_TYPES.NOTIFICATION) {
       return (
         <NotificationMessage
