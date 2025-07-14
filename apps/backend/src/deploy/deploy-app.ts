@@ -25,7 +25,7 @@ import {
   getKoyebDomain,
 } from './koyeb';
 import type { App } from '../db/schema';
-import { DeployStatus } from '@appdotbuild/core';
+import { DeployStatus, type TemplateId } from '@appdotbuild/core';
 import { deployToDatabricks } from './databricks';
 
 const exec = promisify(execNative);
@@ -39,10 +39,12 @@ async function deployToKoyeb({
   appId,
   appDirectory,
   currentApp,
+  templateId,
 }: {
   appId: string;
   appDirectory: string;
   currentApp: Partial<App>;
+  templateId: TemplateId;
 }) {
   let connectionString: string | undefined;
   let neonProjectId = currentApp.neonProjectId;
@@ -186,10 +188,21 @@ async function deployToKoyeb({
     }));
   }
 
+  const customEnvs =
+    templateId === 'nicegui_agent'
+      ? [
+          {
+            key: 'NICEGUI_PORT',
+            value: '80',
+          },
+        ]
+      : undefined;
+
   const params = {
     dockerImage: imageName,
     databaseUrl: connectionString,
     token: userToken,
+    customEnvs,
   };
 
   let deploymentId: string;
@@ -249,10 +262,12 @@ export async function deployApp({
   appId,
   appDirectory,
   databricksMode,
+  templateId,
 }: {
   appId: string;
   appDirectory: string;
   databricksMode: boolean;
+  templateId: TemplateId;
 }) {
   const app = await db
     .select({
@@ -284,7 +299,7 @@ export async function deployApp({
     return deployToDatabricks({ appId, appDirectory, currentApp });
   }
 
-  return deployToKoyeb({ appId, appDirectory, currentApp });
+  return deployToKoyeb({ appId, appDirectory, currentApp, templateId });
 }
 
 async function getNeonProjectConnectionString({

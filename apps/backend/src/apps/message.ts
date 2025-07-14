@@ -728,6 +728,7 @@ export async function postMessage(
                     appId: applicationId!,
                     appDirectory: tempDirPath,
                     databricksMode: Boolean(requestBody.databricksHost),
+                    templateId,
                   }),
                 )
                 .catch(async (error) => {

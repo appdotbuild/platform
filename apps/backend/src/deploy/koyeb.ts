@@ -25,6 +25,11 @@ type CreateKoyebAppResponse = {
     id: string;
   };
 };
+type KoyebEnv = {
+  scopes?: Array<string>;
+  key: string;
+  value: string;
+};
 
 export async function createKoyebOrganization(githubUsername: string) {
   const koyebOrgName = getOrgName(githubUsername);
@@ -100,11 +105,13 @@ export async function createKoyebService({
   databaseUrl,
   dockerImage,
   token,
+  customEnvs,
 }: {
   koyebAppId: string;
   dockerImage: string;
   databaseUrl: string;
   token: string;
+  customEnvs?: KoyebEnv[];
 }) {
   const response = await fetch(`https://app.koyeb.com/v1/services`, {
     method: 'POST',
@@ -116,6 +123,7 @@ export async function createKoyebService({
       definition: getKoyebServiceBody({
         dockerImage,
         databaseUrl,
+        customEnvs,
       }),
     }),
   });
@@ -384,9 +392,11 @@ function getDomainName(appId: string) {
 function getKoyebServiceBody({
   dockerImage,
   databaseUrl,
+  customEnvs,
 }: {
   dockerImage: string;
   databaseUrl: string;
+  customEnvs?: KoyebEnv[];
 }) {
   return {
     name: 'service',
@@ -401,6 +411,11 @@ function getKoyebServiceBody({
         value: databaseUrl,
       },
       { scopes: ['region:was'], key: 'SERVER_PORT', value: '2022' },
+      ...(customEnvs?.map((e) => ({
+        scopes: e.scopes || ['region:was'],
+        key: e.key,
+        value: e.value,
+      })) ?? []),
     ],
     regions: ['was'],
     scalings: [{ scopes: ['region:was'], min: 1, max: 1, targets: [] }],
