@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowRight, MessageSquare } from '@appdotbuild/design/base/icons';
-import { Button } from '@appdotbuild/design/shadcn/button';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@appdotbuild/design/shadcn/card';
+} from '@/components/ui/card';
 
 const sections = [
   {

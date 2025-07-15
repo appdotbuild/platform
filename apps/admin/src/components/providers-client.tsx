@@ -1,5 +1,5 @@
 import type * as React from 'react';
-import { Toaster } from '@appdotbuild/design/shadcn/toaster';
+import { Toaster } from '@/components/ui/toaster';
 import { ConfigProvider } from '@appdotbuild/design/components/providers/config-provider';
 import { sidebarMenu } from '../settings/menu';
 

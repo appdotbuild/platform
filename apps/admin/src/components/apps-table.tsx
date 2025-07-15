@@ -1,21 +1,15 @@
 import { useCallback, useState } from 'react';
-import {
-  CustomColumnDev,
-  DataTable,
-} from '@appdotbuild/design/components/table/data-table';
-import { columnText } from '@appdotbuild/design/components/table/utils/default-columns';
+import { CustomColumnDev, DataTable } from '@/components/ui/data-table';
+import { columnText } from '@/components/ui/data-table/utils/default-columns';
 import { getAllApps } from '../lib/api/apps';
 import AppsTableRowMenu from './apps-table-row-menu';
 import { App } from '@appdotbuild/core/types/api';
-import { toast } from '@appdotbuild/design/hooks/use-toast';
-import {
-  TooltipContent,
-  TooltipTrigger,
-} from '@appdotbuild/design/shadcn/tooltip';
-import { Tooltip } from '@appdotbuild/design/shadcn/tooltip';
-import { TooltipProvider } from '@appdotbuild/design/shadcn/tooltip';
-import { HashAvatar } from '@appdotbuild/design/components/avatar/hash-avatar';
-import { Badge } from '@appdotbuild/design/shadcn/badge';
+import { toast } from '@/hooks/use-toast';
+import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { HashAvatar } from '@/components/ui/avatar/hash-avatar';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'timeago.js';
 
 interface AppsTableProps {

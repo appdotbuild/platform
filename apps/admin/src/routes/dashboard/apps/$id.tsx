@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { getApp } from '../../../lib/api/apps';
 import ViewCodeButton from '../../../components/view-code-button';
+import { useParams } from 'react-router';
 
-function AppDetailPage() {
-  const { id } = Route.useParams();
+export function AppDetailPage() {
+  const { id } = useParams<{ id: string }>();
 
   const {
     data: app,
@@ -12,7 +12,7 @@ function AppDetailPage() {
     error: appError,
   } = useQuery({
     queryKey: ['app', id],
-    queryFn: () => getApp(id),
+    queryFn: () => getApp(id!),
     enabled: !!id,
   });
 
@@ -27,12 +27,8 @@ function AppDetailPage() {
           <h1 className="text-2xl font-bold">{app.name}</h1>
           <p className="text-muted-foreground">App ID: {app.id}</p>
         </div>
-        <ViewCodeButton appId={id} />
+        <ViewCodeButton appId={id!} />
       </div>
     </div>
   );
 }
-
-export const Route = createFileRoute('/dashboard/apps/$id')({
-  component: AppDetailPage,
-});

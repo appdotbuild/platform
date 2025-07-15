@@ -1,12 +1,12 @@
 import { Row } from '@tanstack/react-table';
 import { MoreHorizontal, ExternalLink, FileSearch2 } from 'lucide-react';
-import { Button } from '@appdotbuild/design/shadcn/button';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@appdotbuild/design/shadcn/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { getAppReadUrl } from '../lib/api/apps';

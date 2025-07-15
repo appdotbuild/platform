@@ -1,4 +1,4 @@
-import { Button } from '@appdotbuild/design/shadcn/button';
+import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { getAppReadUrl } from '../lib/api/apps';
