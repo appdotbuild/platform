@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
+import multiavatar from '@multiavatar/multiavatar/esm';
 
 import { cn } from '@/lib/utils';
 
@@ -48,4 +49,11 @@ function AvatarFallback({
   );
 }
 
-export { Avatar, AvatarImage, AvatarFallback };
+function HashAvatar({ hash }: { hash: string }) {
+  let svgCode = multiavatar(hash);
+  return (
+    <div className="size-8" dangerouslySetInnerHTML={{ __html: svgCode }} />
+  );
+}
+
+export { Avatar, AvatarImage, AvatarFallback, HashAvatar };
