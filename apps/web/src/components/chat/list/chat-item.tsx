@@ -1,6 +1,7 @@
-import type { App } from '@appdotbuild/core';
+import { AnalyticsEvents, type App } from '@appdotbuild/core';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
+import { sendEvent } from '~/external/segment';
 
 interface ChatItemProps {
   app: App;
@@ -11,6 +12,7 @@ export function ChatItem({ app, index }: ChatItemProps) {
   const navigate = useNavigate({ from: '/' });
 
   const handleAppClick = () => {
+    sendEvent(AnalyticsEvents.APP_SELECTED);
     navigate({
       to: `/chat/${app.id}`,
       viewTransition: true,

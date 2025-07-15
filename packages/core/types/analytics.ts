@@ -15,9 +15,12 @@ export type AnalyticsEventBody = {
 };
 
 export const AnalyticsEvents = {
+  PAGE_VIEW_HOME: 'home',
+  PAGE_VIEW_CHAT: 'chat',
   APPS_LISTED: 'apps_listed',
   APP_SELECTED: 'app_selected',
   NEW_APP_SELECTED: 'new_app_selected',
+  MESSAGE_SENT: 'message_sent',
 
   DAILY_LIMIT_REACHED: 'daily_limit_reached',
 } as const;

@@ -1,8 +1,10 @@
 import { createLazyRoute, useParams } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { ChatContainer } from '~/components/chat/chat-container';
 import { ChatInput } from '~/components/chat/chat-input';
 import { ChatMessageLimit } from '~/components/chat/chat-message-limit';
 import { ChatPageLoading } from '~/components/chat/chat-page-loading';
+import { AnalyticsEvents, sendPageView } from '~/external/segment';
 import { useApp } from '~/hooks/useApp';
 import { useCurrentApp } from '~/hooks/useCurrentApp';
 
@@ -14,6 +16,10 @@ export function ChatPage() {
   const { currentAppState } = useCurrentApp();
   const { chatId } = useParams({ from: '/chat/$chatId' });
   const { isLoading } = useApp(chatId);
+
+  useEffect(() => {
+    sendPageView(AnalyticsEvents.PAGE_VIEW_CHAT);
+  }, []);
 
   const renderContent = () => {
     if (isLoading && currentAppState === 'idle') {

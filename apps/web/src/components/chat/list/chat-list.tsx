@@ -1,3 +1,4 @@
+import { AnalyticsEvents } from '@appdotbuild/core';
 import { LayoutGrid } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -6,6 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '~/components/shared/accordion/accordion';
+import { sendEvent } from '~/external/segment';
 import { useAppsList } from '~/hooks/useAppsList';
 import { ChatListContent } from './chat-list-content';
 
@@ -55,7 +57,10 @@ export function ChatList() {
         type="single"
         collapsible
         value={isOpen ? 'apps' : ''}
-        onValueChange={(value) => setIsOpen(value === 'apps')}
+        onValueChange={(value) => {
+          if (value) sendEvent(AnalyticsEvents.APPS_LISTED);
+          setIsOpen(value === 'apps');
+        }}
       >
         <AccordionItem value="apps" className="border-0">
           <AccordionTrigger className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-foreground bg-background border border-input rounded-lg hover:bg-muted/50 hover:no-underline transition-colors cursor-pointer">

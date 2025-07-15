@@ -15,6 +15,7 @@
   "dependencies": {
     "@appdotbuild/auth": "workspace:*",
     "@appdotbuild/core": "workspace:*",
+    "@segment/analytics-next": "^1.81.1",
     "@stackframe/react": "^2.8.16",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-query": "^5.81.5",

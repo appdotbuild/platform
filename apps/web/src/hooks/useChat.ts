@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from '@tanstack/react-router';
+import { AnalyticsEvents, sendEvent } from '~/external/segment';
 import {
   MESSAGE_ROLES,
   messagesStore,
@@ -29,6 +30,8 @@ export function useChat() {
   const createNewApp = (firstInput: string) => {
     const message = firstInput.trim();
     if (!message) return;
+
+    sendEvent(AnalyticsEvents.NEW_APP_SELECTED);
 
     messagesStore.addMessage('new', {
       id: crypto.randomUUID(),
@@ -61,6 +64,8 @@ export function useChat() {
 
     // increment usage optimistically
     useMessageLimit.getState().incrementUsage();
+
+    sendEvent(AnalyticsEvents.MESSAGE_SENT);
 
     // if is a new app, avoid duplicate user message
     if (!isNewApp) {
