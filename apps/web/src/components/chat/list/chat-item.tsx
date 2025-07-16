@@ -16,6 +16,7 @@ export function ChatItem({ app, index }: ChatItemProps) {
     navigate({
       to: `/chat/${app.id}`,
       viewTransition: true,
+            replace: true
     });
   };
 
