@@ -1,6 +1,7 @@
 {
   "extends": ["next/typescript"],
   "plugins": ["tailwindcss"],
+  "ignorePatterns": ["dist/**/*"],
   "rules": {
     "tailwindcss/no-custom-classname": "off",
     "tailwindcss/classnames-order": "off",

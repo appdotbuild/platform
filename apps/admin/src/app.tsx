@@ -1,11 +1,10 @@
 import { Admin } from '@/components/admin';
 import { dataProvider } from '@/lib/react-admin/data-provider';
-import { CustomRoutes, Resource } from 'ra-core';
+import { Resource } from 'ra-core';
 import { AppWindow } from 'lucide-react';
 import {
   createBrowserRouter,
   Navigate,
-  Route,
   RouterProvider,
   useLocation,
 } from 'react-router';
@@ -41,7 +40,7 @@ export function App() {
             // @ts-expect-error - types are wrong
             list={AppList}
             // @ts-expect-error - types are wrong
-            show={AppShow}
+            edit={AppShow}
           />
         </Admin>
       ),

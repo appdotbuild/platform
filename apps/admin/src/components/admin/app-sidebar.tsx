@@ -19,7 +19,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { List, House, Shell } from 'lucide-react';
+import { List, House } from 'lucide-react';
 
 export function AppSidebar() {
   const hasDashboard = useHasDashboard();
@@ -55,7 +55,7 @@ export function AppSidebar() {
                 <DashboardMenuItem onClick={handleClick} />
               ) : null}
               {Object.keys(resources)
-                .filter((name) => resources[name].hasList)
+                .filter((name) => resources[name]?.hasList)
                 .map((name) => (
                   <ResourceMenuItem
                     key={name}

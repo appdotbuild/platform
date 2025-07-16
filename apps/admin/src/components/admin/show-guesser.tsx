@@ -67,7 +67,7 @@ const ShowViewGuesser = (props: { enableLog?: boolean }) => {
                 .map((match) => match[1])
                 .filter((component) => component !== 'span'),
             ),
-          ),
+          ) as string[],
         )
         .sort();
 

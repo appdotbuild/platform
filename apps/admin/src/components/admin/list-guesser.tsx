@@ -104,7 +104,7 @@ const ListViewGuesser = (
                 .map((match) => match[1])
                 .filter((component) => component !== 'span'),
             ),
-          ),
+          ) as string[],
         )
         .sort();
 

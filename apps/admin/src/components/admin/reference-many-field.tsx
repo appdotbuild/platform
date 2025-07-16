@@ -54,9 +54,9 @@ export const ReferenceManyField = <
   return (
     <ResourceContextProvider value={reference}>
       <ListContextProvider value={controllerProps}>
-        {render && render(controllerProps)}
-        {children}
-        {pagination}
+        {render && (render(controllerProps) as ReactNode)}
+        {children as any}
+        {pagination as any}
       </ListContextProvider>
     </ResourceContextProvider>
   );

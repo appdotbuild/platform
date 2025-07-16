@@ -41,6 +41,7 @@ function BreadcrumbLink({
   const Comp = asChild ? Slot : 'a';
 
   return (
+    // @ts-expect-error - children is a ReactNode
     <Comp
       data-slot="breadcrumb-link"
       className={cn('hover:text-foreground transition-colors', className)}

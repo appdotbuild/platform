@@ -21,7 +21,6 @@ import {
   useResourceContext,
   useTranslate,
   useTranslateLabel,
-  useListContext,
 } from 'ra-core';
 import { ArrowDownAZ, ArrowUpZA } from 'lucide-react';
 import { useNavigate } from 'react-router';
@@ -371,6 +370,7 @@ function DataTableHeadCell<
               >
                 {headerClassName?.includes('text-right') ? null : (
                   <FieldTitle
+                    // @ts-expect-error - label is a ReactNode
                     label={label}
                     source={source}
                     resource={resource}
@@ -385,6 +385,7 @@ function DataTableHeadCell<
                 ) : null}
                 {headerClassName?.includes('text-right') ? (
                   <FieldTitle
+                    // @ts-expect-error - label is a ReactNode
                     label={label}
                     source={source}
                     resource={resource}
@@ -398,6 +399,7 @@ function DataTableHeadCell<
           </Tooltip>
         </TooltipProvider>
       ) : (
+        // @ts-expect-error - label is a ReactNode
         <FieldTitle label={label} source={source} resource={resource} />
       )}
     </TableHead>

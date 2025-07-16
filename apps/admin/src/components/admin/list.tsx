@@ -18,7 +18,6 @@ import {
 import { cloneElement, ReactElement, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { CreateButton } from '@/components/admin/create-button';
-import { ExportButton } from '@/components/admin/export-button';
 import { ListPagination } from '@/components/admin/list-pagination';
 import { BulkActionsToolbar } from '@/components/admin/bulk-actions-toolbar';
 
@@ -61,7 +60,7 @@ export const List = <RecordType extends RaRecord = RaRecord>(
 };
 
 export interface ListProps<RecordType extends RaRecord = RaRecord>
-  extends ListBaseProps<RecordType>,
+  extends Omit<ListBaseProps<RecordType>, 'children'>,
     ListViewProps {}
 
 export const ListView = (props: ListViewProps) => {

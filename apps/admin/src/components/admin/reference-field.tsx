@@ -29,6 +29,7 @@ export const ReferenceField = <
       empty
     )
   ) : (
+    // @ts-expect-error - label is a ReactNode
     <ReferenceFieldBase {...props}>
       <ReferenceFieldView<ReferenceRecordType> {...props} />
     </ReferenceFieldBase>
@@ -95,6 +96,7 @@ export const ReferenceFieldView = <
     return (
       <div className={className}>
         <Link to={link} onClick={stopPropagation}>
+          {/* @ts-expect-error - child is a ReactNode */}
           {child}
         </Link>
       </div>

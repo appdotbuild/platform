@@ -21,6 +21,7 @@ export const SimpleForm = ({
       className={cn(`flex flex-col gap-4 w-full max-w-lg`, className)}
       {...rest}
     >
+      {/* @ts-expect-error - children is a ReactNode */}
       {children}
       {toolbar}
     </Form>

@@ -28,6 +28,7 @@ export const ReferenceInput = (props: ReferenceInputProps) => {
   return (
     <ResourceContextProvider value={reference}>
       <ChoicesContextProvider value={controllerProps}>
+        {/* @ts-expect-error - children is a ReactNode */}
         {children}
       </ChoicesContextProvider>
     </ResourceContextProvider>

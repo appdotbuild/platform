@@ -21,6 +21,7 @@ export const SingleFieldList = <RecordType = any,>({
     <div className={`flex gap-2 ${className}`}>
       {data?.map((record, index) => (
         <RecordContextProvider key={index} value={record}>
+          {/* @ts-expect-error - children is a ReactNode */}
           {render ? render(record, index) : children || <DefaultChildren />}
         </RecordContextProvider>
       ))}
