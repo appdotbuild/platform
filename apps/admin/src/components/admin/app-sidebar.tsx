@@ -39,7 +39,7 @@ export function AppSidebar() {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <Link to="/">
+              <Link to="/dashboard/apps">
                 <img src="/app-icon.svg" alt="app.build" className="!size-5" />
                 <span className="text-base font-semibold">app.build Admin</span>
               </Link>
