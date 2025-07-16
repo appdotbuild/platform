@@ -1,5 +1,13 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
 
-export const analytics = AnalyticsBrowser.load({
-  writeKey: import.meta.env.VITE_SEGMENT_WRITE_KEY,
+const writeKey = import.meta.env.VITE_SEGMENT_WRITE_KEY;
+
+const createNoopAnalytics = () => ({
+  identify: () => {},
+  page: () => {},
+  track: () => {},
 });
+
+export const analytics = writeKey
+  ? AnalyticsBrowser.load({ writeKey })
+  : createNoopAnalytics();
