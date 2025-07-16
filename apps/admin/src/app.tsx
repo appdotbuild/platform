@@ -21,7 +21,11 @@ export function App() {
     {
       path: '/dashboard/*',
       element: (
-        <Admin dataProvider={dataProvider} authProvider={authProvider}>
+        <Admin
+          dataProvider={dataProvider}
+          authProvider={authProvider}
+          basename="/dashboard"
+        >
           <Resource
             name="apps"
             icon={AppWindow}
@@ -33,11 +37,7 @@ export function App() {
     },
     {
       path: '/handler/*',
-      element: (
-        <StackProvider app={stackClientApp}>
-          <HandlerRoutes />
-        </StackProvider>
-      ),
+      element: <HandlerRoutes />,
     },
   ]);
 

@@ -108,7 +108,7 @@ export const ListView = (props: ListViewProps) => {
         {actions ?? (
           <div className="flex items-center gap-2">
             {hasCreate ? <CreateButton /> : null}
-            {<ExportButton />}
+            {/* {<ExportButton />} */}
           </div>
         )}
       </div>

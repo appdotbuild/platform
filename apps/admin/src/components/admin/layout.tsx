@@ -31,7 +31,6 @@ export const Layout = (props: CoreLayoutProps) => {
           <ThemeModeToggle />
           <RefreshButton />
           <UserButton />
-          <UserMenu />
         </header>
         <div className="flex flex-1 flex-col px-4 ">{props.children}</div>
       </main>

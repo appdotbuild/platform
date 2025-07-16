@@ -40,8 +40,8 @@ export function AppSidebar() {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <Link to="/">
-                <Shell className="!size-5" />
-                <span className="text-base font-semibold">App.Build Admin</span>
+                <img src="/app-icon.svg" alt="app.build" className="!size-5" />
+                <span className="text-base font-semibold">app.build Admin</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
