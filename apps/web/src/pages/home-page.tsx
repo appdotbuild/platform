@@ -1,5 +1,5 @@
 import { useUser } from '@stackframe/react';
-import { createLazyRoute } from '@tanstack/react-router';
+import { createLazyRoute, Link } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { ChatInput } from '~/components/chat/chat-input';
 import { ChatMessageLimit } from '~/components/chat/chat-message-limit';
@@ -43,6 +43,14 @@ export function HomePage() {
         <ChatMessageLimit />
         <ChatInput />
         {user && <ChatList />}
+        {!user && (
+          <div className="text-center text-gray-500 mt-4">
+            <Link to="/handler/sign-in">
+              Already have an account?{' '}
+              <span className="text-blue-500 hover:text-blue-600 underline">Sign in</span>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
