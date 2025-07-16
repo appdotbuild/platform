@@ -1,16 +1,12 @@
 import { Admin, ShowGuesser } from '@/components/admin';
 import { AppList } from '@/components/apps-list';
-import { dataProvider } from '@/lib/api/data-provider';
-import { CustomRoutes, Resource } from 'ra-core';
+import { dataProvider } from '@/lib/react-admin/data-provider';
+import { Resource } from 'ra-core';
 import { AppWindow } from 'lucide-react';
-import {
-  createBrowserRouter,
-  Route,
-  RouterProvider,
-  useLocation,
-} from 'react-router';
+import { createBrowserRouter, RouterProvider, useLocation } from 'react-router';
 import { StackHandler, StackProvider, StackTheme } from '@stackframe/react';
-import { stackClientApp } from './stack';
+import { stackClientApp } from '@/stack';
+import { authProvider } from '@/lib/react-admin/auth-provider';
 
 function HandlerRoutes() {
   const location = useLocation();
@@ -23,22 +19,23 @@ function HandlerRoutes() {
 export function App() {
   const router = createBrowserRouter([
     {
-      path: '*',
+      path: '/dashboard/*',
+      element: (
+        <Admin dataProvider={dataProvider} authProvider={authProvider}>
+          <Resource
+            name="apps"
+            icon={AppWindow}
+            list={AppList}
+            show={ShowGuesser}
+          />
+        </Admin>
+      ),
+    },
+    {
+      path: '/handler/*',
       element: (
         <StackProvider app={stackClientApp}>
-          <StackTheme>
-            <Admin dataProvider={dataProvider}>
-              <Resource
-                name="apps"
-                icon={AppWindow}
-                list={AppList}
-                show={ShowGuesser}
-              />
-              <CustomRoutes>
-                <Route path="/handler/*" element={<HandlerRoutes />} />
-              </CustomRoutes>
-            </Admin>
-          </StackTheme>
+          <HandlerRoutes />
         </StackProvider>
       ),
     },

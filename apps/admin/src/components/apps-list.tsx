@@ -22,17 +22,13 @@ import {
 import ReactJson from 'react-json-view';
 import { useTheme } from '@/components/admin/theme-provider';
 import { ShowButton } from '@/components/admin/show-button';
-
 import { useRecordContext, useListContext } from 'ra-core';
 import {
   DeployStatus,
   DeployStatusType,
 } from '@appdotbuild/core/agent-message';
-import {
-  AutocompleteInput,
-  ReferenceInput,
-  TextInput,
-} from '@/components/admin';
+import { TextInput, ToggleFilterButton } from '@/components/admin';
+import { useUser } from '@stackframe/react';
 
 // Wrapper component that can access list context
 function AppListContent() {
@@ -84,13 +80,27 @@ function AppListContent() {
   );
 }
 
-const postFilters = [
-  <TextInput source="q" label="Search (owner, name, traceId, id)" />,
+function MyAppsFilter() {
+  const user = useUser({ or: 'redirect' });
+
+  return <ToggleFilterButton label="My Apps" value={{ ownerId: user.id }} />;
+}
+
+const appsFilters = [
+  <div key="search" className="flex items-center justify-between w-full ">
+    <TextInput
+      source="q"
+      size={30}
+      placeholder="Search (owner, name, traceId)"
+      label="Search"
+    />
+    <MyAppsFilter />
+  </div>,
 ];
 
 export const AppList = () => {
   return (
-    <List filters={postFilters} sort={{ field: 'createdAt', order: 'DESC' }}>
+    <List filters={appsFilters} sort={{ field: 'createdAt', order: 'DESC' }}>
       <AppListContent />
     </List>
   );

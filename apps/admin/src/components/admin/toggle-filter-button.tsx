@@ -19,7 +19,11 @@ export const ToggleFilterButton = ({
   const { filterValues, setFilters } = useListContext();
   const translate = useTranslate();
   const isSelected = getIsSelected(value, filterValues);
-  const handleClick = () => setFilters(toggleFilter(value, filterValues));
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setFilters(toggleFilter(value, filterValues));
+  };
+
   return (
     <Button
       variant={isSelected ? 'secondary' : 'ghost'}

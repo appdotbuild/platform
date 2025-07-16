@@ -92,7 +92,7 @@ const resourceHandlers = {
         field: 'createdAt',
         order: 'DESC',
       };
-      const { q: search } = params.filter || {};
+      const { q: search, ownerId } = params.filter || {};
 
       const queryParams = new URLSearchParams({
         page: page.toString(),
@@ -100,6 +100,7 @@ const resourceHandlers = {
         ...(search && { search }),
         ...(field && { sort: field }),
         ...(order && { order: order.toLowerCase() }),
+        ...(ownerId && { ownerId: ownerId.toString() }),
       });
 
       const response = await apiClient.get<Paginated<App>>(
