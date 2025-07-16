@@ -1,12 +1,18 @@
-import { Admin, ShowGuesser } from '@/components/admin';
-import { AppList } from '@/components/apps-list';
+import { Admin } from '@/components/admin';
 import { dataProvider } from '@/lib/react-admin/data-provider';
-import { Resource } from 'ra-core';
+import { CustomRoutes, Resource } from 'ra-core';
 import { AppWindow } from 'lucide-react';
-import { createBrowserRouter, RouterProvider, useLocation } from 'react-router';
+import {
+  createBrowserRouter,
+  Navigate,
+  Route,
+  RouterProvider,
+  useLocation,
+} from 'react-router';
 import { StackHandler, StackProvider, StackTheme } from '@stackframe/react';
 import { stackClientApp } from '@/stack';
 import { authProvider } from '@/lib/react-admin/auth-provider';
+import { lazy } from 'react';
 
 function HandlerRoutes() {
   const location = useLocation();
@@ -15,6 +21,9 @@ function HandlerRoutes() {
     <StackHandler app={stackClientApp} location={location.pathname} fullPage />
   );
 }
+
+const AppList = lazy(() => import('@/components/apps-list'));
+const AppShow = lazy(() => import('@/components/admin/show-guesser'));
 
 export function App() {
   const router = createBrowserRouter([
@@ -29,8 +38,10 @@ export function App() {
           <Resource
             name="apps"
             icon={AppWindow}
+            // @ts-expect-error - types are wrong
             list={AppList}
-            show={ShowGuesser}
+            // @ts-expect-error - types are wrong
+            show={AppShow}
           />
         </Admin>
       ),
@@ -38,6 +49,11 @@ export function App() {
     {
       path: '/handler/*',
       element: <HandlerRoutes />,
+    },
+    {
+      // catch all other routes
+      path: '*',
+      element: <Navigate to="/dashboard/apps" replace />,
     },
   ]);
 

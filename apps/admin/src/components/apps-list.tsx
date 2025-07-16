@@ -28,7 +28,7 @@ import {
   DeployStatusType,
 } from '@appdotbuild/core/agent-message';
 import { TextInput, ToggleFilterButton } from '@/components/admin';
-import { useUser } from '@stackframe/react';
+import { stackClientApp } from '@/stack';
 
 // Wrapper component that can access list context
 function AppListContent() {
@@ -81,7 +81,7 @@ function AppListContent() {
 }
 
 function MyAppsFilter() {
-  const user = useUser({ or: 'redirect' });
+  const user = stackClientApp.useUser({ or: 'redirect' });
 
   return <ToggleFilterButton label="My Apps" value={{ ownerId: user.id }} />;
 }
@@ -98,13 +98,13 @@ const appsFilters = [
   </div>,
 ];
 
-export const AppList = () => {
+export default function AppList() {
   return (
     <List filters={appsFilters} sort={{ field: 'createdAt', order: 'DESC' }}>
       <AppListContent />
     </List>
   );
-};
+}
 
 function OwnerIdCell({ source }: { source: string }) {
   const record = useRecordContext();

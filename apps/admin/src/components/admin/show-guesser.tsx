@@ -23,11 +23,13 @@ import { BadgeField } from '@/components/admin/badge-field';
 import { SingleFieldList } from '@/components/admin/single-field-list';
 import { ReferenceArrayField } from '@/components/admin/reference-array-field';
 
-export const ShowGuesser = (props: { enableLog?: boolean }) => (
-  <ShowBase>
-    <ShowViewGuesser {...props} />
-  </ShowBase>
-);
+export default function ShowGuesser(props: { enableLog?: boolean }) {
+  return (
+    <ShowBase>
+      <ShowViewGuesser {...props} />
+    </ShowBase>
+  );
+}
 
 const ShowViewGuesser = (props: { enableLog?: boolean }) => {
   const resource = useResourceContext();
