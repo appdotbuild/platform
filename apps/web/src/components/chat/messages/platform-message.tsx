@@ -1,4 +1,5 @@
 import { PlatformMessageType } from '@appdotbuild/core';
+import { LINK_ENABLED_TYPES, URL_REGEX } from './constants';
 import { MessageDetails } from './message-details';
 
 interface PlatformMessageProps {
@@ -46,6 +47,10 @@ export function PlatformMessage({
   const bgColor =
     PLATFORM_MESSAGE_BG_COLORS[type as PlatformMessageType] || 'bg-muted/50';
 
+  const messageContent = shouldParseLinks(type)
+    ? parseMessageWithLinks(message)
+    : message;
+
   return (
     <div
       className={`group relative border ${borderColor} rounded-lg overflow-hidden ${bgColor}`}
@@ -54,7 +59,7 @@ export function PlatformMessage({
         <div className="flex items-center gap-3">
           <span className="text-lg">{icon}</span>
           <div className="flex-1">
-            <p className="text-sm text-foreground">{message}</p>
+            <p className="text-sm text-foreground">{messageContent}</p>
             {rawData && (
               <MessageDetails
                 rawData={rawData}
@@ -67,3 +72,26 @@ export function PlatformMessage({
     </div>
   );
 }
+
+export const shouldParseLinks = (type?: PlatformMessageType): boolean =>
+  LINK_ENABLED_TYPES.includes(type as (typeof LINK_ENABLED_TYPES)[number]);
+
+export const parseMessageWithLinks = (message: string): React.ReactNode => {
+  const parts = message.split(URL_REGEX);
+
+  return parts.map((part, index) =>
+    URL_REGEX.test(part) ? createLinkElement(part, part, index) : part,
+  );
+};
+
+const createLinkElement = (url: string, text: string, index: number) => (
+  <a
+    key={index}
+    href={url.startsWith('www.') ? `https://${url}` : url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-blue-600 hover:text-blue-800 underline"
+  >
+    {text}
+  </a>
+);
