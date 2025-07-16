@@ -1,4 +1,4 @@
-import { createElement, ReactNode, useCallback } from 'react';
+import { createElement, ReactNode, useCallback, useMemo } from 'react';
 import {
   DataTableBase,
   DataTableBaseProps,
@@ -21,6 +21,7 @@ import {
   useResourceContext,
   useTranslate,
   useTranslateLabel,
+  useListContext,
 } from 'ra-core';
 import { ArrowDownAZ, ArrowUpZA } from 'lucide-react';
 import { useNavigate } from 'react-router';
@@ -43,12 +44,83 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { NumberField } from '@/components/admin/number-field';
+import { Skeleton } from '@/components/ui/skeleton';
 import get from 'lodash/get';
+
+// Skeleton loading component that adapts to the table structure
+function DataTableSkeleton({
+  children,
+  skeletonRows = 10,
+  className,
+}: {
+  children: ReactNode;
+  skeletonRows?: number;
+  className?: string;
+}) {
+  // Count the number of columns by rendering children in header context
+  const columnCount = useMemo(() => {
+    let count = 0;
+
+    // This is a bit of a hack, but we need to count the columns
+    // We'll use React.Children.count as a simple approach
+    const childArray = Array.isArray(children) ? children : [children];
+    count = childArray.length;
+
+    return count;
+  }, [children]);
+
+  return (
+    <div className={cn('rounded-md border', className)}>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {Array.from({ length: columnCount }).map((_, index) => (
+              <TableHead key={index} className="p-4 text-left font-medium">
+                <Skeleton className="h-4 w-20" />
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: skeletonRows }).map((_, rowIndex) => (
+            <TableRow key={rowIndex} className="border-b">
+              {Array.from({ length: columnCount }).map((_, colIndex) => (
+                <TableCell key={colIndex} className="p-4">
+                  <Skeleton className="h-4 w-24" />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
 
 export function DataTable<RecordType extends RaRecord = RaRecord>(
   props: DataTableProps<RecordType>,
 ) {
-  const { children, className, rowClassName, ...rest } = props;
+  const {
+    children,
+    className,
+    rowClassName,
+    skeletonRows = 10,
+    showSkeleton = true,
+    isLoading = false,
+    ...rest
+  } = props;
+
+  // Show skeleton if loading and skeleton is enabled
+  if (isLoading && showSkeleton) {
+    return (
+      <DataTableSkeleton
+        children={children}
+        skeletonRows={skeletonRows}
+        className={className}
+      />
+    );
+  }
+
   return (
     <DataTableBase<RecordType>
       hasBulkActions
@@ -226,10 +298,13 @@ const DataTableEmpty = () => {
 };
 
 export interface DataTableProps<RecordType extends RaRecord = RaRecord>
-  extends Partial<DataTableBaseProps<RecordType>> {
+  extends Omit<Partial<DataTableBaseProps<RecordType>>, 'children'> {
   children: ReactNode;
   className?: string;
   rowClassName?: (record: RecordType) => string | undefined;
+  skeletonRows?: number;
+  showSkeleton?: boolean;
+  isLoading?: boolean;
 }
 
 export function DataTableColumn<

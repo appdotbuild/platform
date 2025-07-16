@@ -7,6 +7,7 @@ import { Notification } from '@/components/admin/notification';
 import { AppSidebar } from '@/components/admin/app-sidebar';
 import { RefreshButton } from '@/components/admin/refresh-button';
 import { LocalesMenuButton } from '@/components/admin/locales-menu-button';
+import { UserButton } from '@stackframe/react';
 
 export const Layout = (props: CoreLayoutProps) => {
   return (
@@ -29,6 +30,7 @@ export const Layout = (props: CoreLayoutProps) => {
           <LocalesMenuButton />
           <ThemeModeToggle />
           <RefreshButton />
+          <UserButton />
           <UserMenu />
         </header>
         <div className="flex flex-1 flex-col px-4 ">{props.children}</div>

@@ -22,7 +22,7 @@ import type {
 } from 'ra-core';
 import type { App, Paginated } from '@appdotbuild/core/types/api';
 import axios, { type AxiosInstance } from 'axios';
-import { stackClientApp } from '../auth';
+import { stackClientApp } from '@/stack';
 
 const PLATFORM_API_URL = import.meta.env.VITE_PLATFORM_API_URL;
 

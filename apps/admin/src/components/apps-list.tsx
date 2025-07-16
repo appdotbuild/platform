@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Copy, ExternalLink, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'timeago.js';
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,47 +21,77 @@ import {
 } from '@/components/ui/dialog';
 import ReactJson from 'react-json-view';
 import { useTheme } from '@/components/admin/theme-provider';
+import { ShowButton } from '@/components/admin/show-button';
 
-import { useRecordContext } from 'ra-core';
+import { useRecordContext, useListContext } from 'ra-core';
 import {
   DeployStatus,
   DeployStatusType,
 } from '@appdotbuild/core/agent-message';
+import {
+  AutocompleteInput,
+  ReferenceInput,
+  TextInput,
+} from '@/components/admin';
+
+// Wrapper component that can access list context
+function AppListContent() {
+  const { isPending, perPage } = useListContext();
+
+  return (
+    <DataTable
+      rowClick={() => {
+        return false;
+      }}
+      rowClassName={() => {
+        return 'cursor-default';
+      }}
+      className="[&_td]:py-4 [&_th]:py-4"
+      isLoading={isPending}
+      skeletonRows={perPage}
+    >
+      <DataTable.Col source="ownerId" field={OwnerIdCell} />
+      <DataTable.Col source="name" />
+      <DataTable.Col
+        label="Deployment"
+        source="deployStatus"
+        field={StatusCell}
+      />
+      <DataTable.Col
+        label="Source"
+        source="clientSource"
+        field={ClientSourceCell}
+      />
+      <DataTable.Col
+        label="Repository URL"
+        source="repositoryUrl"
+        field={RepositoryUrlCell}
+      />
+      <DataTable.Col
+        label="Created At"
+        source="createdAt"
+        field={CreatedAtCell}
+      />
+      <DataTable.Col
+        label="Updated At"
+        source="updatedAt"
+        field={UpdatedAtCell}
+      />
+      <DataTable.Col label="Trace ID" source="traceId" field={TraceIdCell} />
+      <DataTable.Col label="Raw JSON" field={RawJsonCell} />
+      <DataTable.Col label="Actions" field={ActionsCell} />
+    </DataTable>
+  );
+}
+
+const postFilters = [
+  <TextInput source="q" label="Search (owner, name, traceId, id)" />,
+];
 
 export const AppList = () => {
   return (
-    <List>
-      <DataTable>
-        <DataTable.Col source="ownerId" field={OwnerIdCell} />
-        <DataTable.Col source="name" />
-        <DataTable.Col
-          label="Deployment"
-          source="deployStatus"
-          field={StatusCell}
-        />
-        <DataTable.Col
-          label="Source"
-          source="clientSource"
-          field={ClientSourceCell}
-        />
-        <DataTable.Col
-          label="Repository URL"
-          source="repositoryUrl"
-          field={RepositoryUrlCell}
-        />
-        <DataTable.Col
-          label="Created At"
-          source="createdAt"
-          field={CreatedAtCell}
-        />
-        <DataTable.Col
-          label="Updated At"
-          source="updatedAt"
-          field={UpdatedAtCell}
-        />
-        <DataTable.Col label="Trace ID" source="traceId" field={TraceIdCell} />
-        <DataTable.Col label="Raw JSON" field={RawJsonCell} />
-      </DataTable>
+    <List filters={postFilters} sort={{ field: 'createdAt', order: 'DESC' }}>
+      <AppListContent />
     </List>
   );
 };
@@ -214,7 +243,10 @@ function TraceIdCell({ source }: { source: string }) {
   const truncatedTraceId =
     traceId.length > 12 ? `${traceId.substring(0, 12)}...` : traceId;
 
-  const handleCopy = async () => {
+  const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     try {
       await navigator.clipboard.writeText(traceId);
       toast.success('Trace ID copied to clipboard');
@@ -325,7 +357,12 @@ function RawJsonCell() {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
+      <DialogTrigger
+        asChild
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
           <FileText className="h-4 w-4" />
         </Button>
@@ -354,4 +391,8 @@ function RawJsonCell() {
       </DialogContent>
     </Dialog>
   );
+}
+
+function ActionsCell() {
+  return <ShowButton />;
 }
