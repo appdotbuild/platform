@@ -141,11 +141,13 @@ export async function updateKoyebService({
   dockerImage,
   serviceId,
   token,
+  customEnvs,
 }: {
   dockerImage: string;
   databaseUrl: string;
   serviceId: string;
   token: string;
+  customEnvs?: KoyebEnv[];
 }) {
   const response = await fetch(
     `https://app.koyeb.com/v1/services/${serviceId}`,
@@ -158,6 +160,7 @@ export async function updateKoyebService({
         definition: getKoyebServiceBody({
           dockerImage,
           databaseUrl,
+          customEnvs,
         }),
       }),
     },
