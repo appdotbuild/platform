@@ -1,12 +1,12 @@
 import { Check, Moon, Sun } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@appdotbuild/design';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+} from '@appdotbuild/design';
+import { cn } from '@appdotbuild/design';
 import { useTheme } from '@/components/admin/theme-provider';
 
 export function ThemeModeToggle() {

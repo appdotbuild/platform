@@ -1,5 +1,5 @@
 import { Trash } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@appdotbuild/design';
 import {
   useDelete,
   useNotify,

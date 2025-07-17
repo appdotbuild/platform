@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@appdotbuild/design';
+import { Button } from '@appdotbuild/design';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,7 +7,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@appdotbuild/design';
 import { Translate, useAuthProvider, useGetIdentity, useLogout } from 'ra-core';
 
 export function UserMenu() {

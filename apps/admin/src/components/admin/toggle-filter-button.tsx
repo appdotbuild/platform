@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { cn } from '@appdotbuild/design';
+import { Button } from '@appdotbuild/design';
 import { useListContext, useTranslate } from 'ra-core';
 import matches from 'lodash/matches';
 import pickBy from 'lodash/pickBy';

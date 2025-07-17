@@ -1,25 +1,21 @@
 import * as React from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { cn } from '@appdotbuild/design';
+import { Button } from '@appdotbuild/design';
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-} from '@/components/ui/command';
+} from '@appdotbuild/design';
 import {
   FormControl,
   FormDescription,
   FormItem,
   FormLabel,
-} from '@/components/ui/form';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+} from '@appdotbuild/design';
+import { Popover, PopoverContent, PopoverTrigger } from '@appdotbuild/design';
 import {
   ChoicesProps,
   InputProps,

@@ -2,8 +2,8 @@ import { ReactNode } from 'react';
 import { Form, type FormProps, Translate, WithRecord } from 'ra-core';
 import { useNavigate } from 'react-router';
 import { CircleX, Save } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { cn } from '@appdotbuild/design';
+import { Button } from '@appdotbuild/design';
 import { DeleteButton } from '@/components/admin/delete-button';
 
 export const SimpleForm = ({

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { Switch } from '@/components/ui/switch';
-import { FormDescription, FormItem, FormLabel } from '@/components/ui/form';
+import { Switch } from '@appdotbuild/design';
+import { FormDescription, FormItem, FormLabel } from '@appdotbuild/design';
 import { FormError } from '@/components/admin/form-error';
 import { useInput, FieldTitle } from 'ra-core';
 

@@ -5,10 +5,10 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { HashAvatar } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from '@appdotbuild/design';
+import { HashAvatar } from '@appdotbuild/design';
+import { Badge } from '@appdotbuild/design';
+import { Button } from '@appdotbuild/design';
 import { Copy, ExternalLink, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'timeago.js';
@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from '@appdotbuild/design';
 import ReactJson from 'react-json-view';
 import { useTheme } from '@/components/admin/theme-provider';
 import { ShowButton } from '@/components/admin/show-button';

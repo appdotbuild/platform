@@ -1,5 +1,5 @@
 import { ExtractRecordPaths, RaRecord, useFieldValue } from 'ra-core';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@appdotbuild/design';
 
 export const BadgeField = <RecordType extends RaRecord = RaRecord>(
   props: BadgeFieldProps<RecordType>,

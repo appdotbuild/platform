@@ -9,9 +9,9 @@ import {
   FormDescription,
   FormItem,
   FormLabel,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from '@appdotbuild/design';
+import { Input } from '@appdotbuild/design';
+import { Textarea } from '@appdotbuild/design';
 import { FormError } from '@/components/admin/form-error';
 
 export type TextInputProps = InputProps & {

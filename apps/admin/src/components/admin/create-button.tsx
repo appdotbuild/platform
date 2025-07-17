@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { Plus } from 'lucide-react';
-import { buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@appdotbuild/design';
 import { useCreatePath, useResourceContext, Translate } from 'ra-core';
 
 export const CreateButton = () => {

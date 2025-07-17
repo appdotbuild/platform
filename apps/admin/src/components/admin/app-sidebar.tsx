@@ -18,7 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar';
+} from '@appdotbuild/design';
 import { List, House } from 'lucide-react';
 
 export function AppSidebar() {

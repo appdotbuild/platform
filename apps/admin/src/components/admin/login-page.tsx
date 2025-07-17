@@ -1,5 +1,5 @@
 import { TextInput } from '@/components/admin/text-input';
-import { Button } from '@/components/ui/button';
+import { Button } from '@appdotbuild/design';
 import { Form, required, useLogin } from 'ra-core';
 
 export const LoginPage = () => {

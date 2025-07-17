@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useListContext, Translate } from 'ra-core';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card } from '@appdotbuild/design';
+import { Button } from '@appdotbuild/design';
 import { BulkDeleteButton } from '@/components/admin/bulk-delete-button';
 import { X } from 'lucide-react';
 

@@ -8,8 +8,7 @@ import {
   type ExtractRecordPaths,
   type HintedString,
 } from 'ra-core';
-import { cn } from '@/lib/utils';
-
+import { cn } from '@appdotbuild/design';
 import { TextField } from '@/components/admin/text-field';
 
 export const RecordField = <

@@ -24,8 +24,8 @@ import {
 } from 'ra-core';
 import { ArrowDownAZ, ArrowUpZA } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { cn } from '@/lib/utils';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@appdotbuild/design';
+import { Alert, AlertDescription } from '@appdotbuild/design';
 import {
   Table,
   TableBody,
@@ -33,17 +33,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+} from '@appdotbuild/design';
+import { Button } from '@appdotbuild/design';
+import { Checkbox } from '@appdotbuild/design';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@appdotbuild/design';
 import { NumberField } from '@/components/admin/number-field';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@appdotbuild/design';
 import get from 'lodash/get';
 
 // Skeleton loading component that adapts to the table structure
@@ -370,7 +370,6 @@ function DataTableHeadCell<
               >
                 {headerClassName?.includes('text-right') ? null : (
                   <FieldTitle
-                    // @ts-expect-error - label is a ReactNode
                     label={label}
                     source={source}
                     resource={resource}
@@ -385,7 +384,6 @@ function DataTableHeadCell<
                 ) : null}
                 {headerClassName?.includes('text-right') ? (
                   <FieldTitle
-                    // @ts-expect-error - label is a ReactNode
                     label={label}
                     source={source}
                     resource={resource}
@@ -399,7 +397,6 @@ function DataTableHeadCell<
           </Tooltip>
         </TooltipProvider>
       ) : (
-        // @ts-expect-error - label is a ReactNode
         <FieldTitle label={label} source={source} resource={resource} />
       )}
     </TableHead>
@@ -444,7 +441,7 @@ function DataTableCell<
         (render
           ? record && render(record)
           : field
-          ? createElement(field, { source })
+          ? createElement(field as any, { source })
           : get(record, source!))}
     </TableCell>
   );

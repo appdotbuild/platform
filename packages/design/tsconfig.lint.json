@@ -1,0 +1,12 @@
+{
+  "extends": "@appdotbuild/typescript-config/react-library.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "paths": {
+      "@design/*": ["*"],
+      "@appdotbuild/*": ["../*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
+}

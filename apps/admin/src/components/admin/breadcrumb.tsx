@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '@appdotbuild/design';
 import {
   Breadcrumb as BaseBreadcrumb,
   BreadcrumbEllipsis,
@@ -8,8 +8,8 @@ import {
   BreadcrumbPage,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { Button } from '@/components/ui/button';
+} from '@appdotbuild/design';
+import { Button } from '@appdotbuild/design';
 import {
   Drawer,
   DrawerClose,
@@ -19,8 +19,8 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from '@/components/ui/drawer';
-import { useIsMobile } from '@/hooks/use-mobile';
+} from '@appdotbuild/design';
+import { useIsMobile } from '@appdotbuild/design';
 import { Translate } from 'ra-core';
 
 export const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(

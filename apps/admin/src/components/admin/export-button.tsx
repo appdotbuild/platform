@@ -9,7 +9,7 @@ import {
   Exporter,
   Translate,
 } from 'ra-core';
-import { Button } from '@/components/ui/button';
+import { Button } from '@appdotbuild/design';
 
 export const ExportButton = (props: ExportButtonProps) => {
   const {

@@ -2,12 +2,7 @@ import { Admin } from '@/components/admin';
 import { dataProvider } from '@/lib/react-admin/data-provider';
 import { Resource } from 'ra-core';
 import { AppWindow } from 'lucide-react';
-import {
-  createBrowserRouter,
-  Navigate,
-  RouterProvider,
-  useLocation,
-} from 'react-router';
+import { createBrowserRouter, RouterProvider, useLocation } from 'react-router';
 import { StackHandler, StackProvider, StackTheme } from '@stackframe/react';
 import { stackClientApp } from '@/stack';
 import { authProvider } from '@/lib/react-admin/auth-provider';

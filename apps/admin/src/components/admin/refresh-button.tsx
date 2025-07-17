@@ -1,5 +1,5 @@
 import { useRefresh, useLoading } from 'ra-core';
-import { Button } from '@/components/ui/button';
+import { Button } from '@appdotbuild/design';
 import { LoaderCircle, RotateCw } from 'lucide-react';
 
 export const RefreshButton = () => {

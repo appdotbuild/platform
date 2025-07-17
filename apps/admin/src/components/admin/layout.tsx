@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@appdotbuild/design';
 import { CoreLayoutProps } from 'ra-core';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@appdotbuild/design';
 import { ThemeModeToggle } from '@/components/admin/theme-mode-toggle';
 import { Notification } from '@/components/admin/notification';
 import { AppSidebar } from '@/components/admin/app-sidebar';

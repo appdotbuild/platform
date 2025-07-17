@@ -1,18 +1,18 @@
 import * as React from 'react';
 import { X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@appdotbuild/design';
 import {
   Command,
   CommandGroup,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from '@appdotbuild/design';
 import {
   FormControl,
   FormDescription,
   FormItem,
   FormLabel,
-} from '@/components/ui/form';
+} from '@appdotbuild/design';
 import { Command as CommandPrimitive } from 'cmdk';
 import {
   ChoicesProps,

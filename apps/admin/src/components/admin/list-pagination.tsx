@@ -1,18 +1,18 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@appdotbuild/design';
 import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
   PaginationLink,
-} from '@/components/ui/pagination';
+} from '@appdotbuild/design';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@appdotbuild/design';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { useListPaginationContext, Translate, useTranslate } from 'ra-core';
 
