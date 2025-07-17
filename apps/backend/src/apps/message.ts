@@ -778,7 +778,7 @@ export async function postMessage(
                     AgentStatus.IDLE,
                     traceId!,
                     applicationId,
-                    `Your application is being deployed to ${deployResult.appURL}`,
+                    `Your application is being deployed:`,
                     {
                       type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
                       deploymentId: deployResult.deploymentId,
@@ -1064,7 +1064,7 @@ async function appCreation({
       AgentStatus.IDLE,
       traceId as TraceId,
       applicationId,
-      `Your application has been uploaded to this github repository: ${result.repositoryUrl}`,
+      `Your application has been uploaded to GitHub:`,
       {
         type: PlatformMessageType.REPO_CREATED,
         githubUrl: result.repositoryUrl,
@@ -1128,8 +1128,11 @@ async function appIteration({
       AgentStatus.IDLE,
       traceId as TraceId,
       applicationId,
-      `committed in existing app - commit url: ${commitUrl}`,
-      { type: PlatformMessageType.COMMIT_CREATED },
+      `Changes have been committed to your repository:`,
+      {
+        type: PlatformMessageType.COMMIT_CREATED,
+        commitUrl: commitUrl,
+      },
     ),
     userId,
   );

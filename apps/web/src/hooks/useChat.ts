@@ -45,6 +45,7 @@ export function useChat() {
     navigate({
       to: '/chat/$chatId',
       params: { chatId: 'new' },
+      replace: true,
     });
 
     sendMessage({ message: message, isNewApp: true });

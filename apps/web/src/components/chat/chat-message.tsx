@@ -47,6 +47,7 @@ export function ChatMessageContent({ message }: { message: Message }) {
         <PlatformMessage
           message={message.message}
           type={message.metadata?.type}
+          metadata={message.metadata}
         />
       );
     }
