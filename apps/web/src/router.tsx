@@ -17,6 +17,15 @@ const rootRoute = createRootRoute({
   ),
 });
 
+const accountSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/handler/account-settings',
+}).lazy(() =>
+  import('./pages/auth/account-settings-page').then(
+    (d) => d.AccountSettingsRoute,
+  ),
+);
+
 const authRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/handler/$',
@@ -36,7 +45,12 @@ const chatRoute = createRoute({
   },
 }).lazy(() => import('./pages/chat-page').then((d) => d.ChatPageRoute));
 
-const routeTree = rootRoute.addChildren([authRoute, homeRoute, chatRoute]);
+const routeTree = rootRoute.addChildren([
+  authRoute,
+  homeRoute,
+  chatRoute,
+  accountSettingsRoute,
+]);
 
 export const router = createRouter({
   routeTree,
