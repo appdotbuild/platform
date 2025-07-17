@@ -9,7 +9,7 @@ import {
   messagesStore,
   SYSTEM_MESSAGE_TYPES,
 } from '~/stores/messages-store';
-import { isChatPage } from '~/utils/router-checker';
+import { isAppPage } from '~/utils/router-checker';
 import { APPS_QUERY_KEY } from './queryKeys';
 import { useCurrentApp } from './useCurrentApp';
 
@@ -163,7 +163,7 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
 
   // disconnect if navigating away from the chat page
   useEffect(() => {
-    if (!isChatPage(pathname)) disconnect();
+    if (!isAppPage(pathname)) disconnect();
   }, [pathname, disconnect]);
 
   return {
@@ -192,8 +192,8 @@ export function useSSEMessageHandler(chatId: string | undefined) {
         setCurrentAppState('not-created');
         messagesStore.setMessages(eventAppId, messagesStore.getMessages('new'));
         navigate({
-          to: '/chat/$chatId',
-          params: { chatId: event.appId },
+          to: '/apps/$appId',
+          params: { appId: event.appId },
           replace: true,
         });
       }

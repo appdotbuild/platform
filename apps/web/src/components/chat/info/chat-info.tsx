@@ -9,12 +9,12 @@ import {
 } from '~/components/shared/accordion/accordion';
 import { useApp } from '~/hooks/useApp';
 import { ChatInfoContent } from './chat-info-content';
-import { ChatInfoLoading } from './chat-info-loading';
 import { ChatInfoError } from './chat-info-error';
+import { ChatInfoLoading } from './chat-info-loading';
 
 export function ChatInfo() {
-  const { chatId } = useParams({ from: '/chat/$chatId' });
-  const { app, isLoading, error } = useApp(chatId);
+  const { appId } = useParams({ from: '/apps/$appId' });
+  const { app, isLoading, error } = useApp(appId);
   const [isOpen, setIsOpen] = useState(true);
   const hasLoadedOnceRef = useRef(false);
 
