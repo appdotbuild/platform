@@ -1,4 +1,4 @@
-import type { MessageKind, PlatformMessageType } from '@appdotbuild/core';
+import type { MessageKind, PlatformMessageMetadata } from '@appdotbuild/core';
 import { MESSAGES_QUERY_KEY } from '~/hooks/queryKeys';
 import { queryClient } from '~/lib/queryClient';
 
@@ -35,7 +35,7 @@ export interface Message {
   message: string;
   role: MessageRole;
   messageKind?: MessageKind;
-  metadata?: { type?: PlatformMessageType };
+  metadata?: PlatformMessageMetadata;
   createdAt: string;
   systemType?: SystemMessageType;
   confirmationType?: ConfirmationType;

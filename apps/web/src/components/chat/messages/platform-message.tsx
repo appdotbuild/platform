@@ -1,44 +1,25 @@
-import { PlatformMessageType } from '@appdotbuild/core';
-import { LINK_ENABLED_TYPES, URL_REGEX } from './constants';
-import { MessageDetails } from './message-details';
+import {
+  type PlatformMessageMetadata,
+  PlatformMessageType,
+} from '@appdotbuild/core';
+import {
+  PLATFORM_MESSAGE_BG_COLORS,
+  PLATFORM_MESSAGE_BORDER_COLORS,
+  PLATFORM_MESSAGE_ICONS,
+  PLATFORM_MESSAGE_LINK_TEXTS,
+  PLATFORM_MESSAGE_TEXTS,
+} from './constants';
 
 interface PlatformMessageProps {
   message: string;
   type?: PlatformMessageType;
-  rawData?: any;
+  metadata?: PlatformMessageMetadata;
 }
-
-const PLATFORM_MESSAGE_ICONS: Record<PlatformMessageType, string> = {
-  [PlatformMessageType.REPO_CREATED]: '📁',
-  [PlatformMessageType.COMMIT_CREATED]: '✅',
-  [PlatformMessageType.DEPLOYMENT_IN_PROGRESS]: '🚀',
-  [PlatformMessageType.DEPLOYMENT_COMPLETE]: '✅',
-  [PlatformMessageType.DEPLOYMENT_STOPPING]: '🛑',
-  [PlatformMessageType.DEPLOYMENT_FAILED]: '❌',
-} as const;
-
-const PLATFORM_MESSAGE_BORDER_COLORS = {
-  [PlatformMessageType.REPO_CREATED]: 'border-green-200',
-  [PlatformMessageType.COMMIT_CREATED]: 'border-green-200',
-  [PlatformMessageType.DEPLOYMENT_IN_PROGRESS]: 'border-purple-200',
-  [PlatformMessageType.DEPLOYMENT_COMPLETE]: 'border-green-200',
-  [PlatformMessageType.DEPLOYMENT_STOPPING]: 'border-yellow-200',
-  [PlatformMessageType.DEPLOYMENT_FAILED]: 'border-red-200',
-} as const;
-
-const PLATFORM_MESSAGE_BG_COLORS = {
-  [PlatformMessageType.REPO_CREATED]: 'bg-green-50/50',
-  [PlatformMessageType.COMMIT_CREATED]: 'bg-green-50/50',
-  [PlatformMessageType.DEPLOYMENT_IN_PROGRESS]: 'bg-purple-50/50',
-  [PlatformMessageType.DEPLOYMENT_COMPLETE]: 'bg-green-50/50',
-  [PlatformMessageType.DEPLOYMENT_STOPPING]: 'bg-yellow-50/50',
-  [PlatformMessageType.DEPLOYMENT_FAILED]: 'bg-red-50/50',
-} as const;
 
 export function PlatformMessage({
   message,
   type,
-  rawData,
+  metadata,
 }: PlatformMessageProps) {
   const icon = PLATFORM_MESSAGE_ICONS[type as PlatformMessageType] || 'ℹ️';
   const borderColor =
@@ -47,9 +28,17 @@ export function PlatformMessage({
   const bgColor =
     PLATFORM_MESSAGE_BG_COLORS[type as PlatformMessageType] || 'bg-muted/50';
 
-  const messageContent = shouldParseLinks(type)
-    ? parseMessageWithLinks(message)
-    : message;
+  const linkText =
+    type && type in PLATFORM_MESSAGE_LINK_TEXTS
+      ? PLATFORM_MESSAGE_LINK_TEXTS[
+          type as keyof typeof PLATFORM_MESSAGE_LINK_TEXTS
+        ]
+      : undefined;
+
+  const displayMessage =
+    type && type in PLATFORM_MESSAGE_TEXTS
+      ? PLATFORM_MESSAGE_TEXTS[type as keyof typeof PLATFORM_MESSAGE_TEXTS]
+      : message;
 
   return (
     <div
@@ -59,13 +48,12 @@ export function PlatformMessage({
         <div className="flex items-center gap-3">
           <span className="text-lg">{icon}</span>
           <div className="flex-1">
-            <p className="text-sm text-foreground">{messageContent}</p>
-            {rawData && (
-              <MessageDetails
-                rawData={rawData}
-                label="Show platform message details"
-              />
-            )}
+            <p className="text-sm text-foreground">
+              {displayMessage}{' '}
+              {linkText && type && (
+                <Link url={getLinkUrl(type, metadata)}>{linkText}</Link>
+              )}
+            </p>
           </div>
         </div>
       </div>
@@ -73,25 +61,31 @@ export function PlatformMessage({
   );
 }
 
-export const shouldParseLinks = (type?: PlatformMessageType): boolean =>
-  LINK_ENABLED_TYPES.includes(type as (typeof LINK_ENABLED_TYPES)[number]);
+const Link = ({ url, children }: { url?: string; children: string }) =>
+  url ? (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-500 hover:text-blue-800"
+    >
+      {children}
+    </a>
+  ) : null;
 
-export const parseMessageWithLinks = (message: string): React.ReactNode => {
-  const parts = message.split(URL_REGEX);
-
-  return parts.map((part, index) =>
-    URL_REGEX.test(part) ? createLinkElement(part, part, index) : part,
-  );
+const getLinkUrl = (
+  type: PlatformMessageType,
+  metadata?: PlatformMessageMetadata,
+): string | undefined => {
+  switch (type) {
+    case PlatformMessageType.REPO_CREATED:
+      return metadata?.githubUrl;
+    case PlatformMessageType.COMMIT_CREATED:
+      return metadata?.commitUrl;
+    case PlatformMessageType.DEPLOYMENT_IN_PROGRESS:
+    case PlatformMessageType.DEPLOYMENT_COMPLETE:
+      return metadata?.deploymentUrl;
+    default:
+      return undefined;
+  }
 };
-
-const createLinkElement = (url: string, text: string, index: number) => (
-  <a
-    key={index}
-    href={url.startsWith('www.') ? `https://${url}` : url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-600 hover:text-blue-800 underline"
-  >
-    {text}
-  </a>
-);

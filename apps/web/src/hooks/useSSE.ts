@@ -198,12 +198,6 @@ export function useSSEMessageHandler(chatId: string | undefined) {
         });
       }
 
-      // tag the app was persisted
-      if (event.metadata?.type === 'repo_created') {
-        setCurrentAppState('just-created');
-        queryClient.invalidateQueries({ queryKey: APPS_QUERY_KEY });
-      }
-
       if (event.message?.messages?.length > 0) {
         event.message.messages.forEach(
           (msg: { role: string; content: string }) => {
@@ -227,6 +221,11 @@ export function useSSEMessageHandler(chatId: string | undefined) {
             }
           },
         );
+      }
+
+      if (event.metadata?.type === 'repo_created') {
+        setCurrentAppState('just-created');
+        queryClient.invalidateQueries({ queryKey: APPS_QUERY_KEY });
       }
     },
     [hasReceivedFirstMessage, setCurrentAppState, navigate],
