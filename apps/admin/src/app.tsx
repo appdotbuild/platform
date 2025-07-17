@@ -27,13 +27,9 @@ const AppShow = lazy(() => import('@/components/admin/show-guesser'));
 export function App() {
   const router = createBrowserRouter([
     {
-      path: '/dashboard/*',
+      path: '*',
       element: (
-        <Admin
-          dataProvider={dataProvider}
-          authProvider={authProvider}
-          basename="/dashboard"
-        >
+        <Admin dataProvider={dataProvider} authProvider={authProvider}>
           <Resource
             name="apps"
             icon={AppWindow}
@@ -48,11 +44,6 @@ export function App() {
     {
       path: '/handler/*',
       element: <HandlerRoutes />,
-    },
-    {
-      // catch all other routes
-      path: '*',
-      element: <Navigate to="/dashboard/apps" replace />,
     },
   ]);
 
