@@ -1,4 +1,4 @@
-import type { AgentSseEvent } from '@appdotbuild/core';
+import { type AgentSseEvent, PlatformMessageType } from '@appdotbuild/core';
 import { useMutation } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -223,7 +223,7 @@ export function useSSEMessageHandler(chatId: string | undefined) {
         );
       }
 
-      if (event.metadata?.type === 'repo_created') {
+      if (event.metadata?.type === PlatformMessageType.REPO_CREATED) {
         setCurrentAppState('just-created');
         queryClient.invalidateQueries({ queryKey: APPS_QUERY_KEY });
       }
