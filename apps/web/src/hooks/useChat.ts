@@ -21,7 +21,7 @@ export function useChat() {
   const { handleSSEMessage, handleSSEError, handleSSEDone } =
     useSSEMessageHandler(chatId);
 
-  const { sendMessage: sendMessageAsync } = useSSEQuery({
+  const { sendMessage: sendMessageAsync, isLoading } = useSSEQuery({
     onMessage: handleSSEMessage,
     onError: handleSSEError,
     onDone: handleSSEDone,
@@ -100,5 +100,6 @@ export function useChat() {
     createNewApp,
     sendMessage,
     chatId,
+    isLoading,
   };
 }
