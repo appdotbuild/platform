@@ -11,15 +11,10 @@ export const stackClientApp = new StackClientApp({
   },
   redirectMethod: {
     navigate: (to: string) => {
-      // small delay to avoid redirect and state mismatch
-      setTimeout(() => {
-        router.navigate({ to: to, replace: true });
-      }, 2000);
+      router.navigate({ to: to, replace: true });
     },
     useNavigate: () => (to: string) => {
-      setTimeout(() => {
-        router.navigate({ to: to, replace: true });
-      }, 2000);
+      router.navigate({ to: to, replace: true });
     },
   },
 });
