@@ -18,6 +18,7 @@
     "dev": "NODE_ENV=development NO_COLOR=1 bun --filter='./packages/mocked-agent' --filter='./apps/**' dev",
     "docker:build": "sh ./scripts/docker-build.sh",
     "e2e:codegen": "bun --filter './apps/web' e2e:codegen",
+    "e2e:codegen:logged-out": "bun --filter './apps/web' e2e:codegen:logged-out",
     "e2e:test": "NO_COLOR=1 bun --env-file=./apps/web/.env --filter './apps/web' e2e:test",
     "e2e:test:ci": "bun --filter './apps/web' e2e:test",
     "e2e:ui": "bun --env-file=./apps/web/.env --filter './apps/web' e2e:ui",

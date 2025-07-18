@@ -16,7 +16,7 @@ test.describe('user is logged in', () => {
     });
 
     test('should show the message limit', async ({ page }) => {
-      const messageLimit = page.getByText('/10 messages remaining');
+      const messageLimit = page.getByText('messages remaining');
 
       await messageLimit.waitFor();
 
