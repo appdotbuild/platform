@@ -1,6 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
-
 import { cn } from '~/lib/utils';
 
 const buttonVariants = cva(
@@ -26,7 +25,7 @@ const buttonVariants = cva(
         xs: 'h-6 px-2.5 text-xs leading-none',
         sm: 'h-8 px-3.5 text-sm',
         md: 'h-8.5 px-4.5 text-sm md:text-base leading-none -tracking-tighter text-black',
-        lg: 'h-11 text-sm px-4 lg:px-3.5 lg:text-base py-3',
+        lg: 'h-10 px-4 lg:px-3.5 text-[14px] lg:text-[16px] -tracking-tighter',
         xl: 'h-11 px-10 text-base leading-none -tracking-tighter',
         icon: 'size-9',
         badge: 'h-5.5 px-2.5 py-1 text-xs leading-tight -tracking-tighter',

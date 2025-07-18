@@ -1,3 +1,4 @@
+import { stackClientApp } from './lib/auth';
 import {
   createRootRoute,
   createRoute,
@@ -6,15 +7,9 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { queryClient } from '~/lib/queryClient';
-import { Layout } from './components/layout/layout';
-import { stackClientApp } from './lib/auth';
 
 const rootRoute = createRootRoute({
-  component: () => (
-    <Layout>
-      <Outlet />
-    </Layout>
-  ),
+  component: () => <Outlet />,
   beforeLoad: ({ location }) => {
     if (location.pathname === '/apps') {
       redirect({ to: '/', throw: true, viewTransition: true });

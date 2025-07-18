@@ -1,8 +1,15 @@
 @import 'tailwindcss';
 
 @theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
+    Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+  --page-background: 300 5% 96%;
   --color-primary: hsl(221 83% 53%);
   --color-primary-foreground: hsl(0 0% 98%);
+  --color-blue: hsl(221 83% 53%);
   --color-secondary: hsl(240 4.8% 95.9%);
   --color-secondary-foreground: hsl(240 5.9% 10%);
   --color-background: hsl(0 0% 100%);
@@ -21,26 +28,108 @@
   --color-popover: hsl(0 0% 100%);
   --color-popover-foreground: hsl(240 10% 3.9%);
   --radius: 0.5rem;
+
+  /* Custom font sizes */
+  --font-size-14: 14px;
+  --font-size-16: 16px;
+  --font-size-18: 18px;
+  --font-size-32: 32px;
+  --font-size-36: 36px;
+  --font-size-48: 48px;
+  --font-size-60: 60px;
+
+  /* Custom letter spacing */
+  --letter-spacing-tightest: -0.04em;
+  --letter-spacing-tighter: -0.025em;
+
+  /* Custom line heights */
+  --line-height-dense: 1.125;
+  --line-height-normal: 1.5;
+}
+
+/* Page background with noise texture */
+.page-background {
+  position: relative;
+  background-color: hsl(var(--page-background));
+}
+
+.page-background::before {
+  content: '';
+  z-index: -1000;
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  background-image: url('/images/noise-pixels.png');
+  background-size: 1024px;
+  background-position: center;
+  background-repeat: repeat;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Custom text styles to match website project */
+.text-hero-paragraph {
+  font-size: 16px;
+  letter-spacing: -0.04em;
+  line-height: 1.5;
+}
+
+@media (min-width: 1024px) {
+  .text-hero-paragraph {
+    font-size: 18px;
+  }
+}
+
+/* Button text styles to match website */
+.text-button-sm {
+  font-size: 14px;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.text-button-lg {
+  font-size: 14px;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+@media (min-width: 1024px) {
+  .text-button-lg {
+    font-size: 16px;
+  }
 }
 
 body {
-  font-family:
-    'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
+    Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-weight: 400;
+  font-feature-settings: 'liga' 0;
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html,
 body {
   height: 100%;
-}
-
-body {
-  background-color: rgb(245, 244, 245);
+  min-height: 100vh;
 }
 
 #root {
   height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* View Transitions for Loading Message */

@@ -1,3 +1,5 @@
+import { Button } from '../shared/button';
+import { Textarea } from '../shared/text-area';
 import { useUser } from '@stackframe/react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useCallback, useState } from 'react';
@@ -5,8 +7,6 @@ import { useChat } from '~/hooks/useChat';
 import { useMessageLimit } from '~/hooks/userMessageLimit';
 import { cn } from '~/lib/utils';
 import { isAppPage, isHomePage } from '~/utils/router-checker';
-import { Button } from '../shared/button';
-import { Textarea } from '../shared/text-area';
 
 export function ChatInput() {
   const user = useUser();
@@ -48,9 +48,9 @@ export function ChatInput() {
   );
 
   return (
-    <div className="w-full min-h-16 md:min-h-24 border border-dashed border-input bg-background text-black flex items-center relative px-2 md:px-10 gap-2 md:gap-4">
+    <div className="w-full border border-dashed border-input bg-background text-black flex items-center relative px-4 lg:px-6 gap-2 md:gap-4">
       <Textarea
-        className="flex-1 py-4 md:py-6 bg-transparent border-none outline-none text-foreground placeholder:text-sm md:placeholder:text-base resize-none"
+        className="flex-1 py-[13px] bg-transparent border-none outline-none text-foreground placeholder:text-sm md:placeholder:text-base resize-none"
         placeholder={
           isAppPage(pathname)
             ? 'Type your message...'
@@ -66,7 +66,7 @@ export function ChatInput() {
         }}
         disabled={isUserLimitReached || isLoading}
         autoFocus
-        minHeight={50}
+        minHeight={69}
         maxHeight={250}
       />
 
