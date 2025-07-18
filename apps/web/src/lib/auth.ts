@@ -8,7 +8,6 @@ export const stackClientApp = new StackClientApp({
   urls: {
     afterSignOut: '/',
     afterSignIn: '/chat/new',
-    accountSettings: '/handler/account-settings',
   },
   redirectMethod: {
     navigate: (to: string) => {
