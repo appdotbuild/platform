@@ -15,7 +15,21 @@ const rootRoute = createRootRoute({
       <Outlet />
     </Layout>
   ),
+  beforeLoad: ({ location }) => {
+    if (location.pathname === '/apps') {
+      redirect({ to: '/', throw: true, viewTransition: true });
+    }
+  },
 });
+
+const accountSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/handler/account-settings',
+}).lazy(() =>
+  import('./pages/auth/account-settings-page').then(
+    (d) => d.AccountSettingsRoute,
+  ),
+);
 
 const authRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -27,16 +41,21 @@ const homeRoute = createRoute({
   path: '/',
 }).lazy(() => import('./pages/home-page').then((d) => d.HomePageRoute));
 
-const chatRoute = createRoute({
+const appRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/chat/$chatId',
+  path: '/apps/$appId',
   beforeLoad: async () => {
     const user = await stackClientApp.getUser();
     if (!user) redirect({ to: '/handler/sign-in', throw: true });
   },
-}).lazy(() => import('./pages/chat-page').then((d) => d.ChatPageRoute));
+}).lazy(() => import('./pages/app-page').then((d) => d.AppPageRoute));
 
-const routeTree = rootRoute.addChildren([authRoute, homeRoute, chatRoute]);
+const routeTree = rootRoute.addChildren([
+  authRoute,
+  homeRoute,
+  appRoute,
+  accountSettingsRoute,
+]);
 
 export const router = createRouter({
   routeTree,

@@ -2,14 +2,14 @@ import { useUser } from '@stackframe/react';
 import { useLocation } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { sendIdentify } from '~/external/segment';
-import { isChatPage } from '~/utils/router-checker';
+import { isAppPage } from '~/utils/router-checker';
 import { Footer } from './footer';
 import { Header } from './header';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const user = useUser();
   const { pathname } = useLocation();
-  const hideFooter = isChatPage(pathname);
+  const hideFooter = isAppPage(pathname);
 
   useEffect(() => {
     if (user?.id) {

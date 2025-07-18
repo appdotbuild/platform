@@ -8,14 +8,14 @@ import { AnalyticsEvents, sendPageView } from '~/external/segment';
 import { useApp } from '~/hooks/useApp';
 import { useCurrentApp } from '~/hooks/useCurrentApp';
 
-export const ChatPageRoute = createLazyRoute('/chat/$chatId')({
-  component: ChatPage,
+export const AppPageRoute = createLazyRoute('/apps/$appId')({
+  component: AppPage,
 });
 
-export function ChatPage() {
+export function AppPage() {
   const { currentAppState } = useCurrentApp();
-  const { chatId } = useParams({ from: '/chat/$chatId' });
-  const { isLoading } = useApp(chatId);
+  const { appId } = useParams({ from: '/apps/$appId' });
+  const { isLoading } = useApp(appId);
 
   useEffect(() => {
     sendPageView(AnalyticsEvents.PAGE_VIEW_CHAT);
@@ -27,7 +27,7 @@ export function ChatPage() {
     }
     return (
       <div className="flex flex-col h-full w-full items-center overflow-auto">
-        <ChatContainer chatId={chatId} isLoadingApp={isLoading} />
+        <ChatContainer chatId={appId} isLoadingApp={isLoading} />
       </div>
     );
   };
@@ -44,7 +44,7 @@ export function ChatPage() {
           <ChatInput />
         </div>
       </div>
-      <div className="w-full h-8 md:h-24"></div>
+      <div className="w-full h-8 md:h-24" />
     </div>
   );
 }
