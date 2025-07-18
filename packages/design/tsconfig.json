@@ -6,7 +6,7 @@
     "module": "preserve",
     "moduleResolution": "Bundler",
     "paths": {
-      "@/*": ["*"],
+      "@design/*": ["*"],
       "@appdotbuild/*": ["../*"]
     }
   },
