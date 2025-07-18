@@ -4,6 +4,7 @@ import { create } from 'zustand';
 export const templateMap = {
   python: 'nicegui_agent',
   'trpc-react': 'trpc_agent',
+  laravel: 'laravel_agent',
 } satisfies Record<string, TemplateId>;
 
 export type TemplateMap = typeof templateMap;

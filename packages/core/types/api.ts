@@ -72,4 +72,4 @@ export type App = {
   appUrl?: string | null;
 };
 
-export type TemplateId = 'trpc_agent' | 'nicegui_agent';
+export type TemplateId = 'trpc_agent' | 'nicegui_agent' | 'laravel_agent';
