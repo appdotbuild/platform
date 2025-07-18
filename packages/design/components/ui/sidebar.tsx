@@ -399,7 +399,6 @@ function SidebarGroupLabel({
   const Comp = asChild ? Slot : 'div';
 
   return (
-    // @ts-expect-error - children is a ReactNode
     <Comp
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
@@ -408,7 +407,7 @@ function SidebarGroupLabel({
         'group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0',
         className,
       )}
-      {...props}
+      {...(props as any)}
     />
   );
 }
@@ -421,7 +420,6 @@ function SidebarGroupAction({
   const Comp = asChild ? Slot : 'button';
 
   return (
-    // @ts-expect-error - children is a ReactNode
     <Comp
       data-slot="sidebar-group-action"
       data-sidebar="group-action"
@@ -432,7 +430,7 @@ function SidebarGroupAction({
         'group-data-[collapsible=icon]:hidden',
         className,
       )}
-      {...props}
+      {...(props as any)}
     />
   );
 }
@@ -512,14 +510,13 @@ function SidebarMenuButton({
   const { isMobile, state } = useSidebar();
 
   const button = (
-    // @ts-expect-error - children is a ReactNode
     <Comp
       data-slot="sidebar-menu-button"
       data-sidebar="menu-button"
       data-size={size}
       data-active={isActive}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-      {...props}
+      {...(props as any)}
     />
   );
 
@@ -558,7 +555,6 @@ function SidebarMenuAction({
   const Comp = asChild ? Slot : 'button';
 
   return (
-    // @ts-expect-error - children is a ReactNode
     <Comp
       data-slot="sidebar-menu-action"
       data-sidebar="menu-action"
@@ -574,7 +570,7 @@ function SidebarMenuAction({
           'peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0',
         className,
       )}
-      {...props}
+      {...(props as any)}
     />
   );
 }
@@ -682,7 +678,6 @@ function SidebarMenuSubButton({
   const Comp = asChild ? Slot : 'a';
 
   return (
-    // @ts-expect-error - children is a ReactNode
     <Comp
       data-slot="sidebar-menu-sub-button"
       data-sidebar="menu-sub-button"
@@ -696,7 +691,7 @@ function SidebarMenuSubButton({
         'group-data-[collapsible=icon]:hidden',
         className,
       )}
-      {...props}
+      {...(props as any)}
     />
   );
 }

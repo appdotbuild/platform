@@ -48,11 +48,10 @@ function Button({
   const Comp = asChild ? Slot : 'button';
 
   return (
-    // @ts-expect-error - children is a ReactNode
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
+      {...(props as any)}
     />
   );
 }
