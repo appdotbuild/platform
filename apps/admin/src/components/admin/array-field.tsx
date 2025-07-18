@@ -14,7 +14,6 @@ export const ArrayField = (props: ArrayFieldProps) => {
   const data = useFieldValue(props) || emptyArray;
   const listContext = useList({ data, resource, perPage, sort, filter });
   return (
-    // @ts-expect-error - types are wrong
     <ListContextProvider value={listContext}>{children}</ListContextProvider>
   );
 };

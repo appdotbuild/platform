@@ -29,7 +29,6 @@ export const ReferenceField = <
       empty
     )
   ) : (
-    // @ts-expect-error - label is a ReactNode
     <ReferenceFieldBase {...props}>
       <ReferenceFieldView<ReferenceRecordType> {...props} />
     </ReferenceFieldBase>

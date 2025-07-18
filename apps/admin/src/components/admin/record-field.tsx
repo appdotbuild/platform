@@ -48,7 +48,6 @@ export const RecordField = <
           )}
         >
           <FieldTitle
-            // @ts-expect-error - label is a ReactNode
             label={label}
             source={source}
             resource={resource}

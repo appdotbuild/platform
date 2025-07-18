@@ -28,9 +28,7 @@ export function App() {
           <Resource
             name="apps"
             icon={AppWindow}
-            // @ts-expect-error - types are wrong
             list={AppList}
-            // @ts-expect-error - types are wrong
             edit={AppShow}
           />
         </Admin>
