@@ -96,7 +96,6 @@ export const ReferenceFieldView = <
     return (
       <div className={className}>
         <Link to={link} onClick={stopPropagation}>
-          {/* @ts-expect-error - child is a ReactNode */}
           {child}
         </Link>
       </div>
