@@ -2,6 +2,6 @@ export function isHomePage(pathname: string): boolean {
   return pathname === '/';
 }
 
-export function isChatPage(pathname: string): boolean {
-  return pathname.startsWith('/chat/');
+export function isAppPage(pathname: string): boolean {
+  return pathname.startsWith('/apps/');
 }

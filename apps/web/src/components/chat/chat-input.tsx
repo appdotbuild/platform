@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useCallback, useState } from 'react';
 import { useChat } from '~/hooks/useChat';
 import { useMessageLimit } from '~/hooks/userMessageLimit';
-import { isChatPage, isHomePage } from '~/utils/router-checker';
+import { isAppPage, isHomePage } from '~/utils/router-checker';
 import { Button } from '../shared/button';
 import { Input } from '../shared/input/input';
 
@@ -40,7 +40,7 @@ export function ChatInput() {
       <Input
         className="w-full h-full p-2 md:p-4 bg-transparent border-none outline-none text-foreground placeholder:text-sm md:placeholder:text-base"
         placeholder={
-          isChatPage(pathname)
+          isAppPage(pathname)
             ? 'Type your message...'
             : 'Describe the app you want to build...'
         }
@@ -63,7 +63,7 @@ export function ChatInput() {
         onClick={handleSubmit}
         disabled={!inputValue.trim() || isUserLimitReached}
       >
-        {isChatPage(pathname) ? 'Send' : "Let's start!"}
+        {isAppPage(pathname) ? 'Send' : "Let's start!"}
       </Button>
     </div>
   );

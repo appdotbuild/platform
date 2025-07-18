@@ -7,7 +7,7 @@ export const stackClientApp = new StackClientApp({
   tokenStore: 'cookie',
   urls: {
     afterSignOut: '/',
-    afterSignIn: '/chat/new',
+    afterSignIn: '/apps/new',
   },
   redirectMethod: {
     navigate: (to: string) => {

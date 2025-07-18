@@ -14,7 +14,7 @@ export function ChatItem({ app, index }: ChatItemProps) {
   const handleAppClick = () => {
     sendEvent(AnalyticsEvents.APP_SELECTED);
     navigate({
-      to: `/chat/${app.id}`,
+      to: `/apps/${app.id}`,
       viewTransition: true,
       replace: true,
     });
