@@ -70,7 +70,7 @@
     "autoprefixer": "10.4.20",
     "eslint": "9.18.0",
     "postcss": "8.5.1",
-    "react": "19.1.0",
+    "react": "catalog:",
     "react-dom": "19.1.0",
     "shadcn": "2.1.0",
     "tailwindcss": "^4.1.11",

@@ -1,4 +1,4 @@
-import { Admin } from '@/components/admin';
+import { Admin, EditGuesser, ListGuesser } from '@/components/admin';
 import { dataProvider } from '@/lib/react-admin/data-provider';
 import { Resource } from 'ra-core';
 import { AppWindow } from 'lucide-react';
@@ -7,6 +7,7 @@ import { StackHandler, StackProvider, StackTheme } from '@stackframe/react';
 import { stackClientApp } from '@/stack';
 import { authProvider } from '@/lib/react-admin/auth-provider';
 import { lazy } from 'react';
+import ShowGuesser from '@/components/admin/show-guesser';
 
 function HandlerRoutes() {
   const location = useLocation();
@@ -19,32 +20,13 @@ function HandlerRoutes() {
 const AppList = lazy(() => import('@/components/apps-list'));
 const AppShow = lazy(() => import('@/components/admin/show-guesser'));
 
-export function App() {
-  const router = createBrowserRouter([
-    {
-      path: '*',
-      element: (
-        <Admin dataProvider={dataProvider} authProvider={authProvider}>
-          <Resource
-            name="apps"
-            icon={AppWindow}
-            list={AppList}
-            edit={AppShow}
-          />
-        </Admin>
-      ),
-    },
-    {
-      path: '/handler/*',
-      element: <HandlerRoutes />,
-    },
-  ]);
-
-  return (
-    <StackProvider app={stackClientApp}>
-      <StackTheme>
-        <RouterProvider router={router} />
-      </StackTheme>
-    </StackProvider>
-  );
-}
+export const App = () => (
+  <Admin dataProvider={dataProvider}>
+    <Resource
+      name="posts"
+      list={ListGuesser}
+      edit={EditGuesser}
+      show={ShowGuesser}
+    />
+  </Admin>
+);
