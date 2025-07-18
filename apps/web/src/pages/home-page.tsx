@@ -27,7 +27,7 @@ export function HomePage() {
   }, [clearCurrentApp]);
 
   return (
-    <div className="w-full h-full flex flex-col gap-12 lg:gap-20 justify-center items-center">
+    <div className="w-full h-full flex flex-col gap-12 lg:gap-20 pt-72 items-center">
       <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-left">
         An open-source
         <br />
