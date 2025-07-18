@@ -1,5 +1,5 @@
 import { StackClientApp } from '@stackframe/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 export const stackClientApp = new StackClientApp({
   projectId: import.meta.env.VITE_STACK_PROJECT_ID,
