@@ -16,7 +16,7 @@ export type AnalyticsEventBody = {
 
 export const AnalyticsEvents = {
   PAGE_VIEW_HOME: 'home',
-  PAGE_VIEW_CHAT: 'chat',
+  PAGE_VIEW_APP: 'app',
   APPS_LISTED: 'apps_listed',
   APP_SELECTED: 'app_selected',
   NEW_APP_SELECTED: 'new_app_selected',

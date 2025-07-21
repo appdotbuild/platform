@@ -6,6 +6,7 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
     Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 
+  /* Colors */
   --page-background: 300 5% 96%;
   --color-primary: hsl(221 83% 53%);
   --color-primary-foreground: hsl(0 0% 98%);
@@ -29,7 +30,7 @@
   --color-popover-foreground: hsl(240 10% 3.9%);
   --radius: 0.5rem;
 
-  /* Custom font sizes */
+  /* Typography */
   --font-size-14: 14px;
   --font-size-16: 16px;
   --font-size-18: 18px;
@@ -38,16 +39,86 @@
   --font-size-48: 48px;
   --font-size-60: 60px;
 
-  /* Custom letter spacing */
   --letter-spacing-tightest: -0.04em;
   --letter-spacing-tighter: -0.025em;
 
-  /* Custom line heights */
   --line-height-dense: 1.125;
   --line-height-normal: 1.5;
 }
 
-/* Page background with noise texture */
+/* ===========================
+   Base Styles
+   =========================== */
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  min-height: 100vh;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===========================
+   Typography Classes
+   =========================== */
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
+    Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-weight: 400;
+  font-feature-settings: 'liga' 0;
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.text-hero-paragraph {
+  font-size: 16px;
+  letter-spacing: -0.04em;
+  line-height: 1.5;
+}
+
+@media (min-width: 1024px) {
+  .text-hero-paragraph {
+    font-size: 18px;
+  }
+}
+
+.text-button-sm {
+  font-size: 14px;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.text-button-lg {
+  font-size: 14px;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+@media (min-width: 1024px) {
+  .text-button-lg {
+    font-size: 16px;
+  }
+}
+
+/* ===========================
+   Page Background
+   =========================== */
+
 .page-background {
   position: relative;
   background-color: hsl(var(--page-background));
@@ -69,70 +140,10 @@
   pointer-events: none;
 }
 
-/* Custom text styles to match website project */
-.text-hero-paragraph {
-  font-size: 16px;
-  letter-spacing: -0.04em;
-  line-height: 1.5;
-}
+/* ===========================
+   View Transitions
+   =========================== */
 
-@media (min-width: 1024px) {
-  .text-hero-paragraph {
-    font-size: 18px;
-  }
-}
-
-/* Button text styles to match website */
-.text-button-sm {
-  font-size: 14px;
-  letter-spacing: -0.025em;
-  line-height: 1.25;
-}
-
-.text-button-lg {
-  font-size: 14px;
-  letter-spacing: -0.025em;
-  line-height: 1.25;
-}
-
-@media (min-width: 1024px) {
-  .text-button-lg {
-    font-size: 16px;
-  }
-}
-
-body {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
-.font-mono {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
-    Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-weight: 400;
-  font-feature-settings: 'liga' 0;
-  font-variant-ligatures: none;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-html,
-body {
-  height: 100%;
-  min-height: 100vh;
-}
-
-#root {
-  height: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* View Transitions for Loading Message */
 ::view-transition-group(loading-message) {
   animation-duration: 0.5s;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -176,6 +187,18 @@ body {
   animation: 0.4s ease-out both fade-in;
 }
 
+::view-transition-old(root) {
+  animation: 0.3s ease-out both fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 0.3s ease-out both fade-in;
+}
+
+/* ===========================
+   Animations
+   =========================== */
+
 @keyframes fade-out {
   to {
     opacity: 0;
@@ -186,14 +209,6 @@ body {
   from {
     opacity: 0;
   }
-}
-
-::view-transition-old(root) {
-  animation: 0.3s ease-out both fade-out;
-}
-
-::view-transition-new(root) {
-  animation: 0.3s ease-out both fade-in;
 }
 
 @keyframes fade-in-scale {
@@ -250,6 +265,10 @@ body {
     transform: translateY(0);
   }
 }
+
+/* ===========================
+   Animation Classes
+   =========================== */
 
 .animate-fade-in {
   animation: fade-in-scale 0.3s ease-out forwards;

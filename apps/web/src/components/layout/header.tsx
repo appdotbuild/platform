@@ -5,8 +5,11 @@ export function Header() {
   const user = useUser();
 
   return (
-    <header className="flex w-full items-center py-4 lg:py-10">
-      <nav className="flex w-full items-center justify-between">
+    <header className="absolute left-0 right-0 z-50 h-[52px] top-2">
+      <nav
+        className="mx-auto flex h-full w-full max-w-[1216px] items-center justify-between px-5 md:px-8"
+        aria-label="Global"
+      >
         <Link to="/" replace>
           <img
             src="https://www.app.build/_next/static/media/ca7edce715379528b2fbeb326c96cf7b.svg"
@@ -19,6 +22,13 @@ export function Header() {
         </Link>
 
         <div className="flex items-center gap-3">
+          <Link
+            to="/blog"
+            className="text-sm font-medium transition-colors text-muted-foreground hover:text-secondary-foreground active:text-foreground"
+            style={{ letterSpacing: '-0.025em' }}
+          >
+            Blog
+          </Link>
           <a
             href="https://github.com/appdotbuild"
             target="_blank"

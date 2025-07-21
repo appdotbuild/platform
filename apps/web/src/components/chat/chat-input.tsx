@@ -50,7 +50,7 @@ export function ChatInput() {
   return (
     <div className="w-full border border-dashed border-input bg-background text-black flex items-center relative px-4 lg:px-6 gap-2 md:gap-4">
       <Textarea
-        className="flex-1 py-[13px] bg-transparent border-none outline-none text-foreground placeholder:text-sm md:placeholder:text-base resize-none"
+        className="flex-1 py-[18px] bg-transparent border-none outline-none text-foreground placeholder:text-sm md:placeholder:text-base resize-none"
         placeholder={
           isAppPage(pathname)
             ? 'Type your message...'

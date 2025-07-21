@@ -1,3 +1,4 @@
+import { Layout } from './components/layout/layout';
 import { stackClientApp } from './lib/auth';
 import {
   createRootRoute,
@@ -9,7 +10,11 @@ import {
 import { queryClient } from '~/lib/queryClient';
 
 const rootRoute = createRootRoute({
-  component: () => <Outlet />,
+  component: () => (
+    <Layout>
+      <Outlet />
+    </Layout>
+  ),
   beforeLoad: ({ location }) => {
     if (location.pathname === '/apps') {
       redirect({ to: '/', throw: true, viewTransition: true });
@@ -34,7 +39,7 @@ const authRoute = createRoute({
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-}).lazy(() => import('./pages/home-page').then((d) => d.HomePageRoute));
+}).lazy(() => import('./pages/home').then((d) => d.HomePageRoute));
 
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
