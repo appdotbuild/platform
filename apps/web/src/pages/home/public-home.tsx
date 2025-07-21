@@ -4,69 +4,34 @@ import bgPattern2 from '~/components/assets/svgs/bg-pattern-2.svg';
 import bgPattern3 from '~/components/assets/svgs/bg-pattern-3.svg';
 import bgPattern4 from '~/components/assets/svgs/bg-pattern-4.svg';
 import createLogo from '~/components/assets/svgs/create-logo-light.svg';
-import heroIllustrationMd from '~/components/assets/svgs/illustration-md.svg';
-import heroIllustration from '~/components/assets/svgs/illustration.svg';
 import replitLogo from '~/components/assets/svgs/replit-logo-light.svg';
 import sameLogo from '~/components/assets/svgs/same-logo-light.svg';
 import v0Logo from '~/components/assets/svgs/v0-logo-light.svg';
 import { ChatInput } from '~/components/chat/chat-input';
+import {
+  DecoratedInputContainer,
+  DecorationPlus,
+  DecorationSquare,
+} from '~/components/shared/decorations';
 import { GithubIcon } from '~/components/shared/icons/github-icon';
-import { cn } from '~/lib/utils';
-
-function DecorationSquare({ className }: { className?: string }) {
-  return (
-    <span
-      className={cn('h-1.5 w-1.5 rotate-45 bg-gray-500', className)}
-      aria-hidden
-    />
-  );
-}
-
-function DecorationPlus({ className }: { className?: string }) {
-  return (
-    <span
-      className={cn(
-        'relative h-0.5 w-3 bg-black after:absolute after:-top-[5px] after:left-[5px] after:h-3 after:w-0.5 after:bg-black',
-        className,
-      )}
-      aria-hidden
-    />
-  );
-}
+import { HeroTitle } from '~/components/shared/title';
 
 export function PublicHome() {
   return (
     <section className="hero relative grow overflow-hidden">
       <div className="relative mx-auto flex w-full max-w-[1216px] flex-col px-5 pb-28 pt-[125px] md:px-8 md:pb-40 md:pt-[138px] lg:pb-44 lg:pt-[152px] xl:max-w-[1280px] xl:px-8 xl:pb-48 xl:pt-[156px]">
         <div className="relative md:mx-auto md:max-w-[514px] md:px-0 lg:max-w-[640px]">
-          <h1
-            className="relative mx-auto text-3xl font-semibold leading-tight tracking-tight text-foreground md:max-w-[448px] md:text-4xl lg:max-w-[578px] lg:text-5xl xl:text-6xl"
-            style={{ lineHeight: '1.125', letterSpacing: '-0.025em' }}
-          >
+          <HeroTitle className="md:max-w-[448px] lg:max-w-[578px]">
             An open-source <br className="block md:hidden xl:block" />
             AI agent that builds <br className="block md:hidden xl:block" />
             full-stack apps
-            <span
-              className="absolute -top-12 left-0 h-9 w-2 bg-primary md:-top-16 md:h-12 md:w-3 lg:-top-20 lg:h-14 lg:w-4"
-              aria-hidden
-            />
-          </h1>
+          </HeroTitle>
           <div className="relative mt-10 pb-5 md:mt-12 md:pb-6 lg:mt-14 lg:pb-7 xl:mt-16 xl:pb-8">
-            <div className="relative">
+            <DecoratedInputContainer className="relative">
               <ChatInput />
-              <span
-                className="absolute left-1/2 top-0 -ml-[50vw] h-px w-screen border-t border-dashed border-black/20"
-                aria-hidden
-              />
-              <span
-                className="absolute bottom-0 left-1/2 -ml-[50vw] h-px w-screen border-t border-dashed border-black/20"
-                aria-hidden
-              />
-              <DecorationPlus className="absolute -left-1.5 top-0 z-10" />
-              <DecorationPlus className="absolute -right-1.5 bottom-0 z-10" />
               <DecorationSquare className="absolute -bottom-0.5 -left-24 z-10 md:-left-16 lg:-left-24" />
               <DecorationSquare className="absolute -right-24 -top-0.5 z-10 md:-right-16 lg:-right-24" />
-            </div>
+            </DecoratedInputContainer>
 
             <p className="text-hero-paragraph mt-20 px-5 font-mono text-foreground md:mt-32 md:px-8 lg:mt-[135px] lg:px-8 lg:text-left xl:mt-20">
               <span className="bg-primary pb-px text-white md:pb-1">
