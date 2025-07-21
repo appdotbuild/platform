@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   run-e2e:
-    if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success' && (github.event.deployment.environment == 'Preview - platform-web' || github.event.deployment.environment == 'Production - platform-web')
+    if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success' && github.event.deployment_status.environment == 'Preview – platform-web'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.54.0-noble
