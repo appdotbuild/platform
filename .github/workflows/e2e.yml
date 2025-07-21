@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   run-e2e:
-    if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success'
+    if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success' && (github.event.deployment.environment == 'Preview - platform-web' || github.event.deployment.environment == 'Production - platform-web')
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.54.0-noble
@@ -17,9 +17,9 @@ jobs:
       AWS_ASSUMED_ROLE: ${{ secrets.AWS_ASSUMED_ROLE }}
       BUCKET_NAME: ${{ secrets.E2E_REPORT_BUCKET }}
     steps:
-      - name: Dump GitHub context
-        run: echo "${{ toJSON(github.event) }}"
-      # - uses: actions/checkout@v4
+      # - name: Log environment
+      #   run: echo "Environment: ${{ github.event.deployment.environment }}"
+      - uses: actions/checkout@v4
 
       # - name: Install unzip
       #   run: apt-get update && apt-get install -y unzip
