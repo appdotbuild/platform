@@ -6,15 +6,15 @@ export const DebugPanel = () => {
   const logs = useDebugStore((state) => state.logs);
   const isVisible = useDebugStore((state) => state.isVisible);
   const toggleVisibility = useDebugStore((state) => state.toggleVisibility);
-  const isNeonEmployee = useAuthStore((state) => state.isNeonEmployee);
+  const isPrivilegedUser = useAuthStore((state) => state.isPrivilegedUser);
 
   useInput((input, key) => {
-    if (key.ctrl && input === 'd' && isNeonEmployee === true) {
+    if (key.ctrl && input === 'd' && isPrivilegedUser === true) {
       toggleVisibility();
     }
   });
 
-  if (!isVisible || isNeonEmployee !== true) return null;
+  if (!isVisible || isPrivilegedUser !== true) return null;
 
   return (
     <Box

@@ -128,7 +128,7 @@ export async function postMessage(
   reply: FastifyReply,
 ) {
   const userId = request.user.id;
-  const isNeonEmployee = request.user.isNeonEmployee;
+  const isPrivilegedUser = request.user.isPrivilegedUser;
 
   const {
     isUserLimitReached,
@@ -170,7 +170,7 @@ export async function postMessage(
     },
   });
 
-  const streamLog = createStreamLogger(session, isNeonEmployee);
+  const streamLog = createStreamLogger(session, isPrivilegedUser);
   const abortController = new AbortController();
   const githubUsername = request.user.githubUsername;
   const githubAccessToken = request.user.githubAccessToken;
@@ -1173,7 +1173,7 @@ function getExistingConversationBody({
 
 function createStreamLogger(
   session: Session,
-  isNeonEmployee: boolean,
+  isPrivilegedUser: boolean,
 ): StreamLogFunction {
   return function streamLog(
     logData: StructuredLog,
@@ -1181,8 +1181,8 @@ function createStreamLogger(
   ) {
     app.log[level](logData);
 
-    // only push if is neon employee
-    if (isNeonEmployee) {
+    // only push if is privileged user
+    if (isPrivilegedUser) {
       session.push(
         { log: logData.message, level, appId: logData.applicationId },
         'debug',

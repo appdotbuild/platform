@@ -15,7 +15,7 @@ import { getKoyebDeploymentEndpoint } from './deploy';
 import { dockerLoginIfNeeded } from './docker';
 import { validateEnv } from './env';
 import { logger } from './logger';
-import { requireNeonEmployee } from './middleware/neon-employee-auth';
+import { requirePrivilegedUser } from './middleware/neon-employee-auth';
 
 config({ path: '.env' });
 validateEnv();
@@ -24,8 +24,8 @@ const authHandler = { onRequest: [app.authenticate] };
 
 app.register(fastifySchedule);
 
-app.get('/auth/is-neon-employee', authHandler, async (request, reply) => {
-  return reply.send({ isNeonEmployee: request.user.isNeonEmployee });
+app.get('/auth/is-privileged-user', authHandler, async (request, reply) => {
+  return reply.send({ isPrivilegedUser: request.user.isPrivilegedUser });
 });
 app.get('/apps', authHandler, listApps);
 app.get('/apps/:id', authHandler, appById);
@@ -34,7 +34,7 @@ app.get('/apps/:id/read-url', authHandler, appByIdUrl);
 
 app.get(
   '/admin/apps',
-  { onRequest: [app.authenticate, requireNeonEmployee] },
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
   listAllAppsForAdmin,
 );
 

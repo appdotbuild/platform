@@ -12,7 +12,7 @@ declare module 'fastify' {
     user: ServerUser & {
       githubAccessToken: string;
       githubUsername: string;
-      isNeonEmployee: boolean;
+      isPrivilegedUser: boolean;
     };
   }
   export interface FastifyInstance {

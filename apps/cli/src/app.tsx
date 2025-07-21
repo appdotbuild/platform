@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Box, Static, Text } from 'ink';
 import { useEffect } from 'react';
-import { authenticate, ensureIsNeonEmployee } from './auth/auth';
+import { authenticate, ensureIsPrivilegedUser } from './auth/auth';
 import { useAuth } from './auth/use-auth';
 import { Banner } from './components/ui/Banner';
 import { DebugPanel } from './debug/debugger-panel';
@@ -44,7 +44,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
       void authenticate();
     } else {
       // ensure the user is a neon employee
-      void ensureIsNeonEmployee();
+      void ensureIsPrivilegedUser();
 
       // track identify event when user is authenticated
       trackEvent({

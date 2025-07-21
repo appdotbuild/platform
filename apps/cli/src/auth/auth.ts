@@ -134,25 +134,25 @@ export async function authenticate(): Promise<string> {
   throw new Error('Unexpected token format received from authentication');
 }
 
-export async function ensureIsNeonEmployee(): Promise<boolean> {
+export async function ensureIsPrivilegedUser(): Promise<boolean> {
   //check if already has stored the value to avoid unnecessary API calls
-  const stored = tokenStorage.getIsNeonEmployee();
+  const stored = tokenStorage.getIsPrivilegedUser();
 
   if (stored !== undefined) {
-    useAuthStore.getState().setIsNeonEmployee(stored);
+    useAuthStore.getState().setIsPrivilegedUser(stored);
     return stored;
   }
 
   try {
-    const response = await apiClient.get('/auth/is-neon-employee');
-    const isNeonEmployee = response.data.isNeonEmployee;
+    const response = await apiClient.get('/auth/is-privileged-user');
+    const isPrivilegedUser = response.data.isPrivilegedUser;
 
-    tokenStorage.saveIfNeonEmployee(isNeonEmployee);
+    tokenStorage.saveIsPrivilegedUser(isPrivilegedUser);
 
-    useAuthStore.getState().setIsNeonEmployee(isNeonEmployee);
+    useAuthStore.getState().setIsPrivilegedUser(isPrivilegedUser);
 
-    return isNeonEmployee;
-  } catch (error) {
+    return isPrivilegedUser;
+  } catch {
     return false;
   }
 }

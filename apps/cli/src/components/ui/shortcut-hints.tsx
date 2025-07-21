@@ -6,7 +6,7 @@ import { useSafeNavigate } from '../../routes.js';
 
 export const ShortcutHints = () => {
   const { goBack } = useSafeNavigate();
-  const isNeonEmployee = useAuthStore((state) => state.isNeonEmployee);
+  const isPrivilegedUser = useAuthStore((state) => state.isPrivilegedUser);
   const { clearTerminal } = useTerminalState();
   const { pathname } = useLocation();
 
@@ -25,8 +25,16 @@ export const ShortcutHints = () => {
   return (
     <Box flexDirection="row" gap={1} paddingX={1}>
       <Text dimColor>esc to return</Text>
-      {isNeonEmployee === true && (
-        <Text dimColor> | 'ctrl+d' to toggle debug panel</Text>
+      {isPrivilegedUser === true && (
+        <Box gap={1}>
+          <Text color="#888">•</Text>
+          <Text color="#888">
+            <Text bold color="#888">
+              ctrl-d
+            </Text>{' '}
+            to toggle debug panel
+          </Text>
+        </Box>
       )}
     </Box>
   );

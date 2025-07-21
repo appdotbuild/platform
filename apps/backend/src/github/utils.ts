@@ -97,33 +97,6 @@ export async function getOrgInstallationId(
   }
 }
 
-export async function isNeonEmployee(
-  githubAccessToken: string,
-  username: string,
-) {
-  try {
-    if (
-      username === 'lennartkats-db' ||
-      username === 'michaelp-db' ||
-      username === 'bilalaslamseattle'
-    ) {
-      return true;
-    }
-
-    const octokit = new Octokit({
-      auth: githubAccessToken,
-    });
-    const res = await octokit.rest.orgs.getMembershipForUser({
-      org: 'neondatabase-labs',
-      username,
-    });
-
-    return !!res.data;
-  } catch (err) {
-    return false;
-  }
-}
-
 export async function checkIfRepoExists({
   githubEntity,
   appName,

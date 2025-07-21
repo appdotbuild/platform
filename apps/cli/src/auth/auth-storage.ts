@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 import { z } from 'zod';
 import { useAuthStore } from './auth-store.js';
 import { decodeJwt } from 'jose';
@@ -18,7 +17,7 @@ const tokenConfigSchema = z.object({
       value: z.string(),
     })
     .optional(),
-  isNeonEmployee: z.boolean().optional(),
+  isPrivilegedUser: z.boolean().optional(),
 });
 
 type TokenConfig = z.infer<typeof tokenConfigSchema>;
@@ -43,7 +42,7 @@ export class TokenStorage {
       // Validate existing config file
       try {
         this.readConfig();
-      } catch (error) {
+      } catch {
         console.error('Invalid config file detected. Creating new config.');
         this.writeConfig({});
       }
@@ -182,9 +181,9 @@ export class TokenStorage {
       const config = this.readConfig();
       delete config.refreshToken;
       delete config.accessToken;
-      delete config.isNeonEmployee;
+      delete config.isPrivilegedUser;
       this.writeConfig(config);
-    } catch (error) {
+    } catch {
       // If we can't read the config, just write an empty one
       this.writeConfig({});
     } finally {
@@ -209,7 +208,7 @@ export class TokenStorage {
       }
 
       return decodedJwt.exp * 1000;
-    } catch (error) {
+    } catch {
       return 0;
     }
   }
@@ -222,18 +221,18 @@ export class TokenStorage {
     return Date.now() >= expiry - bufferMs;
   }
 
-  // Save if is neon employee
-  saveIfNeonEmployee(isNeonEmployee: boolean): void {
+  // Save privileged user status
+  saveIsPrivilegedUser(isPrivilegedUser: boolean): void {
     const config = this.readConfig();
-    config.isNeonEmployee = isNeonEmployee;
+    config.isPrivilegedUser = isPrivilegedUser;
     this.writeConfig(config);
   }
 
-  getIsNeonEmployee(): boolean | undefined {
+  getIsPrivilegedUser(): boolean | undefined {
     try {
       const config = this.readConfig();
-      return config.isNeonEmployee;
-    } catch (error) {
+      return config.isPrivilegedUser;
+    } catch {
       return undefined;
     }
   }
