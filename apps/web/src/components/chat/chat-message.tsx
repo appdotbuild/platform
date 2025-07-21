@@ -37,7 +37,7 @@ export function ChatMessageContent({ message }: { message: Message }) {
     }
 
     if (message.systemType === SYSTEM_MESSAGE_TYPES.ERROR) {
-      return <ErrorMessage />;
+      return <ErrorMessage message={message.message} />;
     }
   }
 
@@ -47,12 +47,13 @@ export function ChatMessageContent({ message }: { message: Message }) {
         <PlatformMessage
           message={message.message}
           type={message.metadata?.type}
+          metadata={message.metadata}
         />
       );
     }
 
     if (message.messageKind === MessageKind.RUNTIME_ERROR) {
-      return <ErrorMessage />;
+      return <ErrorMessage message={message.message} />;
     }
 
     return (

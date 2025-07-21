@@ -14,12 +14,12 @@ import { useSSEMessageHandler, useSSEQuery } from './useSSE';
 export function useChat() {
   const { setMessageBeforeCreation } = useCurrentApp();
   const navigate = useNavigate();
-  const params = useParams({ from: '/chat/$chatId', shouldThrow: false });
-  const chatId = params?.chatId || undefined;
+  const params = useParams({ from: '/apps/$appId', shouldThrow: false });
+  const appId = params?.appId || undefined;
   const { apps } = useAppsList();
 
   const { handleSSEMessage, handleSSEError, handleSSEDone } =
-    useSSEMessageHandler(chatId);
+    useSSEMessageHandler(appId);
 
   const { sendMessage: sendMessageAsync } = useSSEQuery({
     onMessage: handleSSEMessage,
@@ -43,8 +43,9 @@ export function useChat() {
     setMessageBeforeCreation(message);
 
     navigate({
-      to: '/chat/$chatId',
-      params: { chatId: 'new' },
+      to: '/apps/$appId',
+      params: { appId: 'new' },
+      replace: true,
     });
 
     sendMessage({ message: message, isNewApp: true });
@@ -57,7 +58,7 @@ export function useChat() {
     message: string;
     isNewApp?: boolean;
   }) => {
-    const sendChatId = isNewApp ? 'new' : chatId;
+    const sendChatId = isNewApp ? 'new' : appId;
     if (!sendChatId || !message.trim()) return;
 
     const messageId = crypto.randomUUID();
@@ -89,7 +90,7 @@ export function useChat() {
     const traceId = app?.traceId || `app-${sendChatId}.req-${Date.now()}`;
 
     sendMessageAsync({
-      applicationId: isNewApp ? null : chatId,
+      applicationId: isNewApp ? null : appId,
       message: message.trim(),
       clientSource: 'web',
       traceId: isNewApp ? undefined : traceId,
@@ -99,6 +100,6 @@ export function useChat() {
   return {
     createNewApp,
     sendMessage,
-    chatId,
+    appId,
   };
 }

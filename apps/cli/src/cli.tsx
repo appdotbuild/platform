@@ -51,7 +51,7 @@ const cli = meow(
         type: 'string',
         shortFlag: 't',
         default: 'trpc-react',
-        choices: ['python', 'trpc-react'],
+        choices: ['python', 'trpc-react', 'laravel'],
       },
     },
   },

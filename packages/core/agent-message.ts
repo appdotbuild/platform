@@ -69,6 +69,7 @@ export type PlatformMessageMetadata = {
   deploymentType?: 'databricks' | 'koyeb';
   githubUrl?: string;
   deployStatus?: DeployStatusType;
+  commitUrl?: string;
 };
 
 // Agent SSE Event message object
@@ -103,6 +104,7 @@ export const agentSseEventSchema = z.object({
       deployStatus: z.nativeEnum(DeployStatus).optional(),
       githubUrl: z.string().optional(),
       deploymentUrl: z.string().optional(),
+      commitUrl: z.string().optional(),
     })
     .optional(),
 });
