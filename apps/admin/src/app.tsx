@@ -6,6 +6,8 @@ import { StackHandler, StackProvider, StackTheme } from '@stackframe/react';
 import { stackClientApp } from '@/stack';
 import { authProvider } from '@/lib/react-admin/auth-provider';
 import { lazy } from 'react';
+import { UserList } from '@/components/users-list';
+import { AppWindow, Users } from 'lucide-react';
 
 function HandlerRoutes() {
   const location = useLocation();
@@ -16,7 +18,7 @@ function HandlerRoutes() {
 }
 
 const AppList = lazy(() => import('@/components/apps-list'));
-const AppShow = lazy(() => import('@/components/admin/show-guesser'));
+const Guesser = lazy(() => import('@/components/admin/show-guesser'));
 
 export const App = () => {
   const router = createBrowserRouter([
@@ -28,7 +30,13 @@ export const App = () => {
       path: '*',
       element: (
         <Admin dataProvider={dataProvider} authProvider={authProvider}>
-          <Resource name="apps" list={AppList} show={AppShow} />
+          <Resource
+            icon={AppWindow}
+            name="apps"
+            list={AppList}
+            show={Guesser}
+          />
+          <Resource icon={Users} name="users" list={UserList} />
         </Admin>
       ),
     },

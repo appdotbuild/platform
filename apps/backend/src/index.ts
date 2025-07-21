@@ -16,6 +16,7 @@ import { dockerLoginIfNeeded } from './docker';
 import { validateEnv } from './env';
 import { logger } from './logger';
 import { requirePrivilegedUser } from './middleware/neon-employee-auth';
+import { listUsersForAdmin } from './apps/admin/users';
 
 config({ path: '.env' });
 validateEnv();
@@ -36,6 +37,11 @@ app.get(
   '/admin/apps',
   { onRequest: [app.authenticate, requirePrivilegedUser] },
   listAllAppsForAdmin,
+);
+app.get(
+  '/admin/users',
+  { onRequest: [app.authenticate, requireNeonEmployee] },
+  listUsersForAdmin,
 );
 
 app.post(
