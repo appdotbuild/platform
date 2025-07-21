@@ -17,36 +17,37 @@ jobs:
       AWS_ASSUMED_ROLE: ${{ secrets.AWS_ASSUMED_ROLE }}
       BUCKET_NAME: ${{ secrets.E2E_REPORT_BUCKET }}
     steps:
-      # - name: Log environment
-      #   run: echo "Environment: ${{ github.event.deployment.environment }}"
       - uses: actions/checkout@v4
 
-      # - name: Install unzip
-      #   run: apt-get update && apt-get install -y unzip
+      - name: Install unzip
+        run: apt-get update && apt-get install -y unzip
 
-      # - name: Setup Bun
-      #   uses: oven-sh/setup-bun@v1
-      #   with:
-      #     bun-version: latest
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
 
-      # - name: Install Dependencies
-      #   run: bun install --frozen-lockfile
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
 
-      # - name: Install AWS CLI
-      #   run: |
-      #     apt-get update
-      #     apt-get install -y curl
-      #     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      #     unzip awscliv2.zip
-      #     ./aws/install
-      #     aws --version
+      - name: Install AWS CLI
+        run: |
+          apt-get update
+          apt-get install -y curl
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          ./aws/install
+          aws --version
 
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-to-assume: ${{ env.AWS_ASSUMED_ROLE }}
-      #     role-session-name: 'github-actions'
-      #     aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ASSUMED_ROLE }}
+          role-session-name: 'github-actions'
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log environment
+        run: echo "Running tests"
 
       # - name: Run tests
       #   run: bun run e2e:test:ci
