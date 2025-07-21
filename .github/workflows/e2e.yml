@@ -1,0 +1,81 @@
+name: Playwright Tests
+
+on:
+  deployment_status:
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  run-e2e:
+    if: >
+      github.event_name == 'deployment_status' &&
+      github.event.deployment_status.state == 'success' &&
+      contains(github.event.deployment.environment, 'platform-web')
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.54.0-noble
+    timeout-minutes: 60
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ASSUMED_ROLE: ${{ secrets.AWS_ASSUMED_ROLE }}
+      BUCKET_NAME: ${{ secrets.E2E_REPORT_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install unzip
+        run: apt-get update && apt-get install -y unzip
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install AWS CLI
+        run: |
+          apt-get update
+          apt-get install -y curl
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          ./aws/install
+          aws --version
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ASSUMED_ROLE }}
+          role-session-name: 'github-actions'
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log environment
+        run: echo "Running tests"
+
+      - name: Run tests
+        run: bun run e2e:test:ci
+        env:
+          BASE_URL: ${{ github.event.deployment_status.target_url }}
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          NEON_AUTH_API_KEY: ${{ secrets.NEON_AUTH_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+
+      - name: Upload Playwright Report to S3
+        if: always()
+        run: |
+          REPORT_DIR="./apps/web/playwright-report"
+          if [ -d "$REPORT_DIR" ]; then
+            REF="${{ github.event.deployment.ref }}"
+            RUN_ID=${{ github.run_id }}
+
+            S3_PATH="s3://${BUCKET_NAME}/${REF}/${RUN_ID}/"
+            aws s3 cp --recursive "$REPORT_DIR" "$S3_PATH"
+
+            REPORT_URL="https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${REF}/${RUN_ID}/index.html"
+            echo "✅ Playwright report uploaded to: $REPORT_URL"
+          else
+            echo "⚠️ Report directory not found: $REPORT_DIR"
+          fi

@@ -26,8 +26,10 @@ jobs:
         with:
           fetch-depth: 0 # Required for semantic-release to access full git history
 
-      - name: Set up Bun
+      - name: Setup Bun
         uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
