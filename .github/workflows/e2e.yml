@@ -10,10 +10,7 @@ jobs:
     if: >
       github.event_name == 'deployment_status' &&
       github.event.deployment_status.state == 'success' &&
-      (
-        github.event.deployment.environment == 'Preview - platform-web' ||
-        github.event.deployment.environment == 'Production - platform-web'
-      )
+      contains(github.event.deployment.environment, 'platform-web')
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.54.0-noble
@@ -55,30 +52,30 @@ jobs:
       - name: Log environment
         run: echo "Running tests"
 
-      # - name: Run tests
-      #   run: bun run e2e:test:ci
-      #   env:
-      #     BASE_URL: ${{ github.event.deployment_status.target_url }}
-      #     E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
-      #     E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-      #     TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
-      #     VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
-      #     NEON_AUTH_API_KEY: ${{ secrets.NEON_AUTH_API_KEY }}
-      #     NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+      - name: Run tests
+        run: bun run e2e:test:ci
+        env:
+          BASE_URL: ${{ github.event.deployment_status.target_url }}
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          NEON_AUTH_API_KEY: ${{ secrets.NEON_AUTH_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
 
-      # - name: Upload Playwright Report to S3
-      #   if: always()
-      #   run: |
-      #     REPORT_DIR="./apps/web/playwright-report"
-      #     if [ -d "$REPORT_DIR" ]; then
-      #       REF="${{ github.event.deployment.ref }}"
-      #       RUN_ID=${{ github.run_id }}
+      - name: Upload Playwright Report to S3
+        if: always()
+        run: |
+          REPORT_DIR="./apps/web/playwright-report"
+          if [ -d "$REPORT_DIR" ]; then
+            REF="${{ github.event.deployment.ref }}"
+            RUN_ID=${{ github.run_id }}
 
-      #       S3_PATH="s3://${BUCKET_NAME}/${REF}/${RUN_ID}/"
-      #       aws s3 cp --recursive "$REPORT_DIR" "$S3_PATH"
+            S3_PATH="s3://${BUCKET_NAME}/${REF}/${RUN_ID}/"
+            aws s3 cp --recursive "$REPORT_DIR" "$S3_PATH"
 
-      #       REPORT_URL="https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${REF}/${RUN_ID}/index.html"
-      #       echo "✅ Playwright report uploaded to: $REPORT_URL"
-      #     else
-      #       echo "⚠️ Report directory not found: $REPORT_DIR"
-      #     fi
+            REPORT_URL="https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${REF}/${RUN_ID}/index.html"
+            echo "✅ Playwright report uploaded to: $REPORT_URL"
+          else
+            echo "⚠️ Report directory not found: $REPORT_DIR"
+          fi
