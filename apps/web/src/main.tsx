@@ -1,11 +1,11 @@
 import './index.css';
-import { queryClient } from './lib/queryClient.ts';
-import { router } from './router.tsx';
 import { StackProvider, StackTheme } from '@stackframe/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { createRoot } from 'react-dom/client';
 import { stackClientApp } from '~/lib/auth.ts';
+import { queryClient } from './lib/queryClient.ts';
+import { router } from './router.tsx';
 
 // Apply page-background class to body
 document.body.className =
