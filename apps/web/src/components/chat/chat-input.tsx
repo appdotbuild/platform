@@ -12,12 +12,12 @@ export function ChatInput() {
   const user = useUser();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { createNewApp, sendMessage } = useChat();
+  const { createNewApp, sendMessage, isLoading } = useChat();
   const [inputValue, setInputValue] = useState('');
   const { isUserLimitReached } = useMessageLimit();
 
   const handleSubmit = useCallback(async () => {
-    if (inputValue.trim()) {
+    if (inputValue.trim() && !isLoading) {
       // if not logged, store the message and use it later to continue
       if (isHomePage(pathname) && !user) {
         localStorage.setItem('pendingMessage', inputValue);
@@ -30,7 +30,15 @@ export function ChatInput() {
         : await sendMessage({ message: inputValue });
       setInputValue('');
     }
-  }, [inputValue, pathname, user, navigate, createNewApp, sendMessage]);
+  }, [
+    inputValue,
+    pathname,
+    user,
+    navigate,
+    createNewApp,
+    sendMessage,
+    isLoading,
+  ]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -56,7 +64,7 @@ export function ChatInput() {
             handleSubmit();
           }
         }}
-        disabled={isUserLimitReached}
+        disabled={isUserLimitReached || isLoading}
         autoFocus
         minHeight={50}
         maxHeight={250}
@@ -76,7 +84,7 @@ export function ChatInput() {
           size="lg"
           className="relative before:content-['↵'] before:md:content-none before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-base md:before:hidden text-[0px] md:text-base shrink-0"
           onClick={handleSubmit}
-          disabled={!inputValue.trim() || isUserLimitReached}
+          disabled={!inputValue.trim() || isUserLimitReached || isLoading}
         >
           {isAppPage(pathname) ? 'Send' : "Let's start!"}
         </Button>

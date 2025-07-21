@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { exec as execNative } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { createApiClient } from '@neondatabase/api-client';
 import { apps, db, deployments } from '../db';
@@ -188,15 +189,24 @@ async function deployToKoyeb({
     }));
   }
 
-  const customEnvs =
-    templateId === 'nicegui_agent'
-      ? [
-          {
-            key: 'NICEGUI_PORT',
-            value: '80',
-          },
-        ]
-      : undefined;
+  let customEnvs;
+  if (templateId === 'nicegui_agent') {
+    customEnvs = [
+      {
+        key: 'NICEGUI_PORT',
+        value: '80',
+      },
+    ];
+  } else if (templateId === 'laravel_agent') {
+    // Generate a random 32-byte key and base64 encode it for Laravel
+    const appKey = `base64:${randomBytes(32).toString('base64')}`;
+    customEnvs = [
+      {
+        key: 'APP_KEY',
+        value: appKey,
+      },
+    ];
+  }
 
   const params = {
     dockerImage: imageName,
