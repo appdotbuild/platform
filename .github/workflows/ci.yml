@@ -1,34 +1,148 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  test:
+  setup:
+    name: Setup
+    outputs:
+      branch: ${{ steps.branch_name.outputs.current_branch }}
     runs-on: ubuntu-latest
-    env:
-      PLATFORM_API_URL: ${{ secrets.PLATFORM_API_URL }}
-      NEXT_PUBLIC_STACK_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }}
-      STACK_SECRET_SERVER_KEY: ${{ secrets.STACK_SECRET_SERVER_KEY }}
-      NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
     steps:
       - uses: actions/checkout@v4
+      - name: Get branch name
+        id: branch_name
+        uses: tj-actions/branch-names@v8
+      - uses: ./.github/actions/setup-bun
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-
-      - name: Install Dependencies
-        run: bun install --frozen-lockfile
-
+  lint_and_typecheck:
+    name: Lint & Type Check
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-bun
       - name: Run Lint
         run: bun run lint
-
       - name: Run Types Check
         run: bun run types:check
+
+  e2e_tests:
+    name: E2E Tests
+    outputs:
+      db_url: ${{ steps.create_neon_branch_encode.outputs.db_url }}
+      db_url_with_pooler: ${{ steps.create_neon_branch_encode.outputs.db_url_with_pooler }}
+    needs: [setup, lint_and_typecheck]
+    if: |
+      github.event_name == 'pull_request' && (
+      github.event.action == 'synchronize'
+      || github.event.action == 'opened'
+      || github.event.action == 'reopened')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Neon Branch
+        id: create_neon_branch
+        uses: neondatabase/create-branch-action@v6
+        with:
+          username: neondb_owner
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ASSUMED_ROLE }}
+          role-session-name: 'github-actions'
+          aws-region: ${{ env.AWS_REGION }}
+        env:
+          AWS_ASSUMED_ROLE: ${{ secrets.AWS_ASSUMED_ROLE }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: Install Playwright and browsers
+        run: npx playwright install --with-deps
+
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-bun
+      - name: Run E2E tests
+        run: bun run e2e:test:ci
+        env:
+          # BASE_URL: ${{ github.event.deployment_status.target_url }}
+          AWS_ASSUMED_ROLE: ${{ secrets.AWS_ASSUMED_ROLE }}
+          BUCKET_NAME: ${{ secrets.E2E_REPORT_BUCKET }}
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          NEON_AUTH_API_KEY: ${{ secrets.NEON_AUTH_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ECR_URL: ${{ secrets.AWS_ECR_URL }}
+          AWS_ECR_NAMESPACE: ${{ secrets.AWS_ECR_NAMESPACE }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          AGENT_API_SECRET_AUTH: ${{ secrets.AGENT_API_SECRET_AUTH }}
+          STACK_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }}
+          STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
+          STACK_SECRET_SERVER_KEY: ${{ secrets.STACK_SECRET_SERVER_KEY }}
+          GITHUB_APP_ID: ${{ secrets.GH_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          GITHUB_APP_BOT_EMAIL: ${{ secrets.GH_APP_BOT_EMAIL }}
+          KOYEB_CLI_PAT_TOKEN: ${{ secrets.KOYEB_CLI_PAT_TOKEN }}
+          VITE_STACK_PROJECT_ID: ${{ secrets.PUBLIC_STACK_PROJECT_ID }}
+          VITE_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
+          VITE_PLATFORM_API_URL_LOCAL: ${{ secrets.VITE_PLATFORM_API_URL_LOCAL }}
+          DEFAULT_APPDOTBUILDER_ORG_INSTALLATION_ID: ${{ secrets.DEFAULT_APPDOTBUILDER_ORG_INSTALLATION_ID }}
+          DATABASE_URL: ${{ steps.create_neon_branch.outputs.db_url_with_pooler }}
+          DATABASE_URL_DEV: ${{ steps.create_neon_branch.outputs.db_url_with_pooler }}
+          NODE_ENV: development
+
+      - name: Upload Playwright Report to S3
+        if: always()
+        env:
+          BUCKET_NAME: ${{ secrets.E2E_REPORT_BUCKET }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          REPORT_DIR="./apps/web/playwright-report"
+          REPORT_DIR2="./apps/web/playwright-report2"
+
+          if [ -d "$REPORT_DIR" ]; then
+            REF="${{ needs.setup.outputs.branch }}"
+            RUN_ID=${{ github.run_id }}
+
+            S3_PATH="s3://${BUCKET_NAME}/${REF}/${RUN_ID}/"
+            aws s3 cp --recursive "$REPORT_DIR" "$S3_PATH"
+
+            if [ -d "$REPORT_DIR2" ]; then
+              aws s3 cp --recursive "$REPORT_DIR2" "$S3_PATH"
+            fi
+
+            REPORT_URL="https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${REF}/${RUN_ID}/index.html"
+            echo "✅ Playwright report uploaded to: $REPORT_URL"
+          else
+            echo "⚠️ Report directory not found: $REPORT_DIR"
+          fi
+
+  delete_neon_branch:
+    name: Delete Neon Branch
+    needs: [setup, e2e_tests]
+    if: needs.e2e_tests.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Neon Branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}

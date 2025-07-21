@@ -22,7 +22,7 @@
     "cli:release": "bun --filter './apps/cli' release",
     "cli:release:latest": "cd ./apps/cli && npm run release:latest",
     "cli:watch": "bun --env-file=./apps/cli/.env --watch --inspect='ws://localhost:6499/cli' ./apps/cli/src/cli.tsx",
-    "dev": "NODE_ENV=development NO_COLOR=1 bun --filter='./packages/mocked-agent' --filter='./apps/**' dev",
+    "dev": "NODE_ENV=development NO_COLOR=1 bun --filter='./apps/**' dev",
     "docker:build": "sh ./scripts/docker-build.sh",
     "e2e:codegen": "bun --filter './apps/web' e2e:codegen",
     "e2e:codegen:logged-out": "bun --filter './apps/web' e2e:codegen:logged-out",

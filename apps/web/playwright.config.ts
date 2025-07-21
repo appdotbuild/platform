@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 import { getUrl } from './e2e/utils/get-url';
+import { isMainBranchInCI } from './e2e/utils/environment';
+
+const isCIMainBranch = isMainBranchInCI();
 
 export default defineConfig({
   testDir: 'e2e/tests',
@@ -19,7 +22,7 @@ export default defineConfig({
     baseURL: getUrl(),
     trace: 'on-first-retry',
     storageState: 'e2e/sessions/storageState.json',
-    ...(process.env.CI
+    ...(isCIMainBranch
       ? {
           extraHTTPHeaders: {
             'x-vercel-protection-bypass':
@@ -44,13 +47,27 @@ export default defineConfig({
       use: { ...devices['iPhone 14 Pro'] },
     },
   ],
-  webServer: process.env.CI
+  webServer: isCIMainBranch
     ? undefined
-    : {
-        command: 'bun run dev',
-        url: getUrl(),
-        reuseExistingServer: !process.env.CI,
-        stdout: 'pipe',
-        stderr: 'pipe',
-      },
+    : [
+        {
+          name: 'backend',
+          command: process.env.CI
+            ? 'bun run dev:ci'
+            : 'NODE_ENV=development bun run dev',
+          url: 'http://127.0.0.1:4444/health',
+          cwd: '../backend',
+          reuseExistingServer: !process.env.CI,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        },
+        {
+          name: 'frontend',
+          command: 'bun run dev',
+          url: getUrl(),
+          reuseExistingServer: !process.env.CI,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        },
+      ],
 });

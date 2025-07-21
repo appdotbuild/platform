@@ -71,6 +71,14 @@ app.get('/deployment-status/:id', authHandler, getKoyebDeploymentEndpoint);
 
 app.post('/analytics/event', authHandler, sendAnalyticsEvent);
 
+app.get('/health', () => {
+  return {
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  };
+});
+
 export const start = async () => {
   try {
     const server = await app.listen({ port: 4444, host: '0.0.0.0' });
