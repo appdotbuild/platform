@@ -36,13 +36,13 @@ export function AuthPage() {
         setTimeout(() => {
           createNewApp(pendingMessage);
         }, 100);
-      } else {
+      } else if (!pathname.includes('cli-auth-confirm')) {
         requestAnimationFrame(() => {
           navigate({ to: '/' });
         });
       }
     }
-  }, [user, navigate, createNewApp]);
+  }, [user, navigate, createNewApp, pathname]);
 
   if (isProcessing) {
     return (

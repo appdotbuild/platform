@@ -7,7 +7,7 @@ const BACKEND_DEV_API_HOST =
 const BACKEND_LOCAL_API_HOST = 'http://127.0.0.1:4444';
 
 const AUTH_HOST_PRODUCTION = 'https://app.build';
-const AUTH_HOST_DEV = 'http://localhost:3001';
+const AUTH_HOST_DEV = 'http://localhost:5173';
 
 export function getBackendHost() {
   const platformEnvironment = useEnvironmentStore
