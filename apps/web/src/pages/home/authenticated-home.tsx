@@ -35,7 +35,6 @@ export function AuthenticatedHome() {
           <ChatMessageLimit />
         </div>
       </DecoratedInputContainer>
-
       <ChatList />
     </div>
   );
