@@ -6,6 +6,7 @@ import {
   PromptKind,
   type AgentSseEvent,
   type TraceId,
+  PlatformMessageMetadata,
 } from '@appdotbuild/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState, useEffect } from 'react';
@@ -117,7 +118,12 @@ export const useSendMessage = () => {
         },
       );
     }
-  }, [deploymentStatus, queryClient]);
+  }, [
+    deploymentStatus,
+    metadata?.applicationId,
+    metadata?.traceId,
+    queryClient,
+  ]);
 
   const result = useMutation({
     mutationFn: async ({
@@ -172,11 +178,24 @@ export const useSendMessage = () => {
                   }
                 | undefined,
             ): { events: AgentSseEvent[] } => {
+              let eventContent = newEvent.message.messages;
+              if (
+                newEvent.message.kind === MessageKind.PLATFORM_MESSAGE &&
+                newEvent.metadata
+              ) {
+                eventContent = newEvent.message.messages.map((message) => ({
+                  ...message,
+                  content: `${message.content} ${getPlatformMessageContent(
+                    newEvent.metadata!,
+                  )}`,
+                }));
+              }
+
               const parsedEvent = {
                 ...newEvent,
                 message: {
                   ...newEvent.message,
-                  content: newEvent.message.messages,
+                  messages: eventContent,
                 },
               };
 
@@ -241,4 +260,16 @@ function extractApplicationId(traceId: TraceId) {
   const applicationId = appPart?.replace('app-', '').replace('temp-', '');
 
   return applicationId;
+}
+
+function getPlatformMessageContent(metadata: PlatformMessageMetadata) {
+  switch (metadata.type) {
+    case PlatformMessageType.COMMIT_CREATED:
+      return metadata?.commitUrl;
+    case PlatformMessageType.REPO_CREATED:
+      return metadata?.githubUrl;
+    case PlatformMessageType.DEPLOYMENT_COMPLETE:
+    case PlatformMessageType.DEPLOYMENT_IN_PROGRESS:
+      return metadata?.deploymentUrl;
+  }
 }

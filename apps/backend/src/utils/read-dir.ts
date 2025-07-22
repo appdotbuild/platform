@@ -8,7 +8,7 @@ export interface FileData {
   content: string;
 }
 
-const EXCLUDED_FILES_OR_DIRS = ['.git', 'unified_diff-*.patch'];
+const EXCLUDED_FILES_OR_DIRS = ['.git', 'unified_diff-*.patch', '.github'];
 
 export function readDirectoryRecursive(
   dir: string,

@@ -566,9 +566,7 @@ export async function postMessage(
             };
 
             streamLog({
-              message: `[appId: ${applicationId}] message sent to CLI: ${JSON.stringify(
-                parsedCLIMessage,
-              )}`,
+              message: `message sent to CLI with status: ${parsedCLIMessage.status}`,
               applicationId,
               traceId,
               userId,
@@ -622,7 +620,7 @@ export async function postMessage(
 
               streamLog(
                 {
-                  message: `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}, parsedMessage.message.unifiedDiff: ${completeParsedMessage.message.unifiedDiff}`,
+                  message: `[appId: ${applicationId}] writing unified diff to file, virtualDir: ${unifiedDiffPath}`,
                   applicationId,
                   traceId,
                   userId,
@@ -819,7 +817,7 @@ export async function postMessage(
             ) {
               streamLog(
                 {
-                  message: `[appId: ${applicationId}] incomplete message: ${ev.data}`,
+                  message: `[appId: ${applicationId}] incomplete message`,
                   applicationId,
                   traceId,
                   userId,
@@ -831,7 +829,7 @@ export async function postMessage(
 
             streamLog(
               {
-                message: `[appId: ${applicationId}] Error handling SSE message: ${error}, for message: ${ev.data}`,
+                message: `[appId: ${applicationId}] Error handling SSE message: ${error}`,
                 applicationId,
                 traceId,
                 userId,
@@ -970,10 +968,12 @@ function storeDevLogs(
   if (isDev) {
     const separator = '--------------------------------';
 
-    fs.writeFileSync(
-      `${logsFolder}/unified_diff-${Date.now()}.patch`,
-      `${parsedMessage.message.unifiedDiff}\n\n`,
-    );
+    if (parsedMessage.message.unifiedDiff) {
+      fs.writeFileSync(
+        `${logsFolder}/unified_diff-${Date.now()}.patch`,
+        `${parsedMessage.message.unifiedDiff}\n\n`,
+      );
+    }
     fs.writeFileSync(
       `${logsFolder}/sse_messages.log`,
       `${separator}\n\n${messageWithoutData}\n\n`,
@@ -1011,12 +1011,15 @@ async function appCreation({
     );
   }
 
-  app.log.info({
-    message: 'Creating app with name',
-    appName,
-    applicationId,
-    traceId,
-  });
+  streamLog(
+    {
+      message: 'Creating app with name',
+      appName,
+      applicationId,
+      traceId,
+    },
+    'info',
+  );
 
   // Use the isolated createApp function with the existing applicationId
   const result = await createApp({
