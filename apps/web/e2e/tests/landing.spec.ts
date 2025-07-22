@@ -14,6 +14,18 @@ test.describe('user is logged out', () => {
       await expect(page).toHaveTitle(/app.build/);
     });
 
+    test('should render PublicHome for non-authenticated users', async ({
+      page,
+    }) => {
+      // Check PublicHome is rendered
+      const publicHome = page.getByTestId('public-home');
+      await expect(publicHome).toBeVisible();
+
+      // AuthenticatedHome should NOT be rendered
+      const authenticatedHome = page.getByTestId('authenticated-home');
+      await expect(authenticatedHome).not.toBeVisible();
+    });
+
     test('should redirect to login page when not authenticated and try to access chat', async ({
       page,
     }) => {

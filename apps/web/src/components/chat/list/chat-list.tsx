@@ -189,7 +189,10 @@ export function ChatList() {
   return (
     <div className="w-full max-w-4xl mx-auto">
       <div className="space-y-4">
-        <div className="flex items-center gap-2 px-4 py-3 bg-background border border-input rounded-lg">
+        <div
+          data-testid="my-apps-header"
+          className="flex items-center gap-2 px-4 py-3 bg-background border border-input rounded-lg"
+        >
           <LayoutGrid className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium text-foreground">My Apps</span>
         </div>
@@ -199,4 +202,3 @@ export function ChatList() {
     </div>
   );
 }
-
