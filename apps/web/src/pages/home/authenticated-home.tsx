@@ -22,7 +22,7 @@ export function AuthenticatedHome() {
   }, [clearCurrentApp]);
 
   return (
-    <div className="w-full h-full flex flex-col gap-12 lg:gap-20 pt-[125px] md:pt-[138px] lg:pt-72 xl:pt-72 items-center">
+    <div className="w-full h-full flex flex-col gap-12 lg:gap-20 pt-20 md:pt-24 lg:pt-48 xl:pt-56 items-center">
       <HeroTitle>
         An open-source <br className="block md:hidden xl:block" />
         AI agent that builds <br className="block md:hidden xl:block" />
