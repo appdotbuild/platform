@@ -26,14 +26,14 @@ export function AppPage() {
       return <ChatPageLoading />;
     }
     return (
-      <div className="flex flex-col h-full w-full items-center overflow-auto">
+      <div className="flex flex-col h-full w-full items-center overflow-y-auto">
         <ChatContainer chatId={appId} isLoadingApp={isLoading} />
       </div>
     );
   };
 
   return (
-    <div className="flex flex-col items-center w-full h-full mt-24">
+    <div className="flex flex-col items-center w-full h-full mt-24 overflow-hidden">
       {renderContent()}
       <div
         className="fixed bottom-5 left-1/2 transform -translate-x-1/2 w-4/5 max-w-4xl"

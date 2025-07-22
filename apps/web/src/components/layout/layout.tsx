@@ -21,7 +21,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const content = (
     <>
       <Header />
-      <main className="flex-1 flex flex-col">{children}</main>
+      <main className="flex-1 flex flex-col overflow-y-auto">{children}</main>
       <Footer isHidden={hideFooter} />
     </>
   );
