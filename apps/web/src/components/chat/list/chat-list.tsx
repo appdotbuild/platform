@@ -8,7 +8,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '~/components/shared/carousel/carousel';
+} from '~/components/shared/carousel';
 import { sendEvent } from '~/external/segment';
 import { useAppsList } from '~/hooks/useAppsList';
 import { cn } from '~/lib/utils';
