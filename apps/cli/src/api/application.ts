@@ -111,6 +111,10 @@ export async function sendMessage({
       templateId,
       databricksApiKey,
       databricksHost,
+      settings: {
+        databricks_host: databricksHost,
+        databricks_token: databricksApiKey,
+      },
     },
     {
       headers: {
