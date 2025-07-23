@@ -74,7 +74,9 @@ export async function loginIfNeeded(
   const totp = new OTPAuth.TOTP({ secret: TOTP_SECRET });
   const code = totp.generate();
 
-  await page.getByRole('textbox', { name: 'XXXXXX' }).fill(code);
+  await page
+    .getByRole('textbox', { name: 'Enter the verification code' })
+    .fill(code);
   await page.keyboard.press('Enter');
 
   const authorizeButton = page.getByRole('button', {
