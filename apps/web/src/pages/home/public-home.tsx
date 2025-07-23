@@ -90,7 +90,7 @@ export function PublicHome() {
                 style={{ letterSpacing: '-0.35px', color: 'rgb(9, 9, 11)' }}
               >
                 <GithubIcon className="size-3.5 lg:size-4" aria-hidden />
-                CLI & Platform Code
+                Platform Code
               </Link>
             </div>
 
