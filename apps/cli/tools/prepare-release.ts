@@ -22,6 +22,7 @@ type PackageJson = {
 };
 
 export function prepareRelease() {
+  const EXCLUDED_DEPENDENCIES = ['workspace:', 'catalog:'];
   const pkgPath = path.resolve(__dirname, '../package.json');
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as PackageJson;
 
@@ -33,7 +34,9 @@ export function prepareRelease() {
     const entries: [string, string][] = Object.entries(pkg[depType]);
 
     for (const [name, version] of entries) {
-      if (version.startsWith('workspace:')) {
+      if (
+        EXCLUDED_DEPENDENCIES.some((pattern) => version.startsWith(pattern))
+      ) {
         delete pkg[depType][name];
       }
     }
