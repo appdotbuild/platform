@@ -1,0 +1,12 @@
+name: Setup Bun
+description: Installs Bun
+runs:
+  using: composite
+  steps:
+    - uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: bun install --frozen-lockfile
+      shell: bash

@@ -4,25 +4,32 @@ import {
   loginIfNeeded,
   verifyEnvironmentVariables,
 } from './shared';
+import { isMainBranchInCI } from '../utils/environment';
+
+const isCIMainBranch = isMainBranchInCI();
 
 const ENV_VARIABLES = [
   'E2E_EMAIL',
   'E2E_PASSWORD',
   'TOTP_SECRET',
-  'VERCEL_AUTOMATION_BYPASS_SECRET',
+  isCIMainBranch ? 'VERCEL_AUTOMATION_BYPASS_SECRET' : undefined,
   'NEON_AUTH_API_KEY',
   'NEON_PROJECT_ID',
-];
+].filter(Boolean) as string[];
 
 export default async function globalSetupCI(config: PlaywrightTestConfig) {
   verifyEnvironmentVariables(ENV_VARIABLES);
   createSessionsDirectory();
 
-  await prepareNeonAuthDomain();
+  if (isCIMainBranch) {
+    await prepareNeonAuthDomain();
+  }
 
   await loginIfNeeded(config);
 
-  await deleteNeonAuthDomain();
+  if (isCIMainBranch) {
+    await deleteNeonAuthDomain();
+  }
 }
 
 async function prepareNeonAuthDomain(): Promise<void> {

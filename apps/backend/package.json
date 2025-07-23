@@ -8,6 +8,8 @@
     "db:migrate": "drizzle-kit migrate",
     "predev": "bun run db:migrate",
     "dev": "bun run --watch --inspect='ws://localhost:6500/backend' src/index.ts",
+    "predev:ci": "bun run db:migrate",
+    "dev:ci": "bun run src/index.ts",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
     "prestart": "bun run db:migrate",
