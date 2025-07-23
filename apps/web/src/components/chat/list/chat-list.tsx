@@ -1,6 +1,5 @@
-import { AnalyticsEvents, type App } from '@appdotbuild/core';
-import { useNavigate } from '@tanstack/react-router';
-import { ChevronRight, LayoutGrid } from 'lucide-react';
+import { AnalyticsEvents } from '@appdotbuild/core';
+import { LayoutGrid } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import {
   Carousel,
@@ -12,51 +11,7 @@ import {
 import { sendEvent } from '~/external/segment';
 import { useAppsList } from '~/hooks/useAppsList';
 import { cn } from '~/lib/utils';
-
-interface ChatItemCardProps {
-  app: App;
-}
-
-function ChatItemCard({ app }: ChatItemCardProps) {
-  const navigate = useNavigate({ from: '/' });
-
-  const handleAppClick = () => {
-    sendEvent(AnalyticsEvents.APP_SELECTED);
-    navigate({
-      to: `/apps/${app.id}`,
-      viewTransition: true,
-      replace: true,
-    });
-  };
-
-  return (
-    <div
-      className="h-full bg-background border border-input rounded-lg p-4 hover:bg-muted/50 transition-colors duration-150 cursor-pointer"
-      onClick={handleAppClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          handleAppClick();
-        }
-      }}
-      role="button"
-      tabIndex={0}
-    >
-      <div className="flex flex-col h-full justify-between">
-        <div>
-          <h3 className="text-base font-medium text-foreground line-clamp-2">
-            {app.appName || app.name}
-          </h3>
-          <p className="text-sm text-muted-foreground mt-2">
-            Created {new Date(app.createdAt).toLocaleDateString()}
-          </p>
-        </div>
-        <div className="flex items-center justify-end mt-4">
-          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-        </div>
-      </div>
-    </div>
-  );
-}
+import { ChatItem } from './chat-item';
 
 export function ChatList() {
   const hasLoadedOnceRef = useRef(false);
@@ -163,7 +118,7 @@ export function ChatList() {
                 className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
               >
                 <div className="h-32">
-                  <ChatItemCard app={app} />
+                  <ChatItem app={app} />
                 </div>
               </CarouselItem>
             ))}
