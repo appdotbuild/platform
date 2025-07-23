@@ -198,12 +198,18 @@ async function deployToKoyeb({
       },
     ];
   } else if (templateId === 'laravel_agent') {
+    const unPooledConnectionString = connectionString.replace('-pooler', '');
     // Generate a random 32-byte key and base64 encode it for Laravel
     const appKey = `base64:${randomBytes(32).toString('base64')}`;
     customEnvs = [
       {
         key: 'APP_KEY',
         value: appKey,
+      },
+      {
+        key: 'DB_MIGRATION_URL',
+        // To run migrations in Laravel, we need to use the unpooled connection string
+        value: unPooledConnectionString,
       },
     ];
   }
