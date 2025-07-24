@@ -27,7 +27,7 @@ import {
   DeployStatus,
   DeployStatusType,
 } from '@appdotbuild/core/agent-message';
-import { TextInput, ToggleFilterButton } from '@/components/admin';
+import { TextInput, ToggleFilterButton, FilterBar } from '@/components/admin';
 import { stackClientApp } from '@/stack';
 
 // Wrapper component that can access list context
@@ -87,15 +87,24 @@ function MyAppsFilter() {
 }
 
 const appsFilters = [
-  <div key="search" className="flex items-center justify-between w-full ">
-    <TextInput
-      source="q"
-      size={30}
-      placeholder="Search (owner, name, traceId)"
-      label="Search"
-    />
-    <MyAppsFilter />
-  </div>,
+  <FilterBar
+    key="filter-bar"
+    filterLabels={{
+      q: 'Search',
+      ownerId: 'My Apps',
+    }}
+  >
+    <div className="flex-1 min-w-0">
+      <TextInput
+        source="q"
+        placeholder="Search apps by owner, name, or trace ID..."
+        label="Search"
+      />
+    </div>
+    <div className="flex items-end gap-3 flex-shrink-0 pb-1">
+      <MyAppsFilter />
+    </div>
+  </FilterBar>,
 ];
 
 export default function AppList() {

@@ -22,8 +22,7 @@ import {
 import ReactJson from 'react-json-view';
 import { useTheme } from '@/components/admin/theme-provider';
 import { useRecordContext, useListContext, useCreatePath } from 'ra-core';
-import { TextInput } from '@/components/admin';
-import { ReferenceManyCount } from '@/components/admin/reference-many-count';
+import { TextInput, FilterBar } from '@/components/admin';
 import { Link } from 'react-router';
 
 // Wrapper component that can access list context
@@ -42,7 +41,11 @@ function UserListContent() {
     >
       <DataTable.Col label="User" source="id" field={UserAvatarCell} />
       <DataTable.Col label="User ID" source="id" field={UserIdCell} />
-      <DataTable.Col label="Apps" field={UserAppsCountCell} />
+      <DataTable.Col
+        label="Apps"
+        source="appsCount"
+        field={UserAppsCountCell}
+      />
       <DataTable.Col
         label="Created At"
         source="createdAt"
@@ -59,14 +62,20 @@ function UserListContent() {
 }
 
 const usersFilters = [
-  <div key="search" className="flex items-center justify-between w-full">
-    <TextInput
-      source="q"
-      size={30}
-      placeholder="Search (name, email, ID)"
-      label="Search"
-    />
-  </div>,
+  <FilterBar
+    key="filter-bar"
+    filterLabels={{
+      q: 'Search',
+    }}
+  >
+    <div className="flex-1 min-w-0">
+      <TextInput
+        source="q"
+        placeholder="Search users by name, email, or ID..."
+        label="Search"
+      />
+    </div>
+  </FilterBar>,
 ];
 
 export default function UserList() {
@@ -172,6 +181,7 @@ function UserAppsCountCell() {
   if (!record) return null;
 
   const userId = record.id as string;
+  const appsCount = record.appsCount as number;
   const appsPath = createPath({ resource: 'apps', type: 'list' });
   const linkTo = {
     pathname: appsPath,
@@ -185,14 +195,7 @@ function UserAppsCountCell() {
           variant="secondary"
           className="hover:bg-secondary/80 transition-colors"
         >
-          <ReferenceManyCount
-            reference="apps"
-            target="ownerId"
-            source="id"
-            resource="users"
-            link={false}
-          />
-          {' apps'}
+          {appsCount} apps
         </Badge>
       </Link>
     </div>
