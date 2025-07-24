@@ -40,7 +40,7 @@ app.get(
 );
 app.get(
   '/admin/users',
-  { onRequest: [app.authenticate, requireNeonEmployee] },
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
   listUsersForAdmin,
 );
 
