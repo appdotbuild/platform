@@ -8,5 +8,9 @@ export const AccountSettingsRoute = createLazyRoute(
 });
 
 export function AccountSettingsPage() {
-  return <AccountSettings fullPage={false} />;
+  return (
+    <div className="mt-24">
+      <AccountSettings fullPage={false} />
+    </div>
+  );
 }
