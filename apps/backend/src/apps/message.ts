@@ -566,7 +566,7 @@ export async function postMessage(
             };
 
             streamLog({
-              message: `message sent to CLI with status: ${parsedCLIMessage.status}`,
+              message: `message sent to CLI with status: ${parsedCLIMessage.status}, kind: ${parsedCLIMessage.message.kind}`,
               applicationId,
               traceId,
               userId,
