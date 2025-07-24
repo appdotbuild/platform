@@ -4,6 +4,7 @@ import { app } from './app';
 import {
   appById,
   appByIdUrl,
+  getAppByIdForAdmin,
   getUserMessageLimit,
   listAllAppsForAdmin,
   listApps,
@@ -38,6 +39,12 @@ app.get(
   { onRequest: [app.authenticate, requirePrivilegedUser] },
   listAllAppsForAdmin,
 );
+app.get(
+  '/admin/apps/:id',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  getAppByIdForAdmin,
+);
+
 app.get(
   '/admin/users',
   { onRequest: [app.authenticate, requirePrivilegedUser] },

@@ -1,5 +1,6 @@
 import { DataTable } from '@/components/admin/data-table';
 import { List } from '@/components/admin/list';
+import { IdCell } from '@/components/admin/id-cell';
 import {
   Tooltip,
   TooltipContent,
@@ -9,8 +10,7 @@ import {
 import { HashAvatar } from '@appdotbuild/design';
 import { Badge } from '@appdotbuild/design';
 import { Button } from '@appdotbuild/design';
-import { Copy, FileText } from 'lucide-react';
-import { toast } from 'sonner';
+import { FileText } from 'lucide-react';
 import { format } from 'timeago.js';
 import {
   Dialog,
@@ -40,7 +40,11 @@ function UserListContent() {
       skeletonRows={perPage}
     >
       <DataTable.Col label="User" source="id" field={UserAvatarCell} />
-      <DataTable.Col label="User ID" source="id" field={UserIdCell} />
+      <DataTable.Col
+        label="User ID"
+        source="id"
+        field={(props) => <IdCell {...props} label="User ID" />}
+      />
       <DataTable.Col
         label="Apps"
         source="appsCount"
@@ -114,62 +118,6 @@ function UserAvatarCell({ source }: { source: string }) {
           {userEmail}
         </span>
       </div>
-    </div>
-  );
-}
-
-function UserIdCell({ source }: { source: string }) {
-  const record = useRecordContext();
-  if (!record) return null;
-
-  const userId = record[source] as string;
-  const truncatedId =
-    userId.length > 12 ? `${userId.substring(0, 12)}...` : userId;
-
-  const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    try {
-      await navigator.clipboard.writeText(userId);
-      toast.success('User ID copied to clipboard');
-    } catch (err) {
-      console.error('Failed to copy user ID:', err);
-      toast.error('Failed to copy user ID');
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="cursor-help font-mono text-xs bg-muted px-2 py-1 rounded border">
-              {truncatedId}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="font-mono">{userId}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCopy}
-              className="h-6 w-6 p-0"
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Copy user ID</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
     </div>
   );
 }

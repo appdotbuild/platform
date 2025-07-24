@@ -129,7 +129,7 @@ const resourceHandlers = {
     },
 
     getOne: async (params: GetOneParams): Promise<GetOneResult<AppRecord>> => {
-      const response = await apiClient.get<App>(`/apps/${params.id}`);
+      const response = await apiClient.get<App>(`/admin/apps/${params.id}`);
       return {
         data: convertAppToRecord(response.data),
       };

@@ -17,8 +17,8 @@ function HandlerRoutes() {
 }
 
 const UserList = lazy(() => import('@/components/users-list'));
-const AppList = lazy(() => import('@/components/apps-list'));
-const Guesser = lazy(() => import('@/components/admin/show-guesser'));
+const AppList = lazy(() => import('@/components/apps/apps-list'));
+const AppShow = lazy(() => import('@/components/apps/app-details'));
 
 export const App = () => {
   const router = createBrowserRouter([
@@ -34,7 +34,7 @@ export const App = () => {
             icon={AppWindow}
             name="apps"
             list={AppList}
-            show={Guesser}
+            show={AppShow}
           />
           <Resource icon={Users} name="users" list={UserList} />
         </Admin>
