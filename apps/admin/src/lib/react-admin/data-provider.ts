@@ -257,14 +257,16 @@ const resourceHandlers = {
       };
     },
 
-    getOne: async (params: GetOneParams): Promise<GetOneResult<UserRecord>> => {
+    getOne: async (
+      _params: GetOneParams,
+    ): Promise<GetOneResult<UserRecord>> => {
       // Users are managed by Stack Auth, we only have read access
       // This would require a separate endpoint for individual user lookup
       throw new Error('Individual user lookup not supported');
     },
 
     getMany: async (
-      params: GetManyParams,
+      _params: GetManyParams,
     ): Promise<GetManyResult<UserRecord>> => {
       // For users, we'll need to make individual requests or filter from the list
       // Since we only have the list endpoint, we'll need to fetch and filter
@@ -299,29 +301,39 @@ const resourceHandlers = {
       };
     },
 
-    create: async (params: CreateParams): Promise<CreateResult<UserRecord>> => {
+    create: async (
+      _params: CreateParams,
+    ): Promise<CreateResult<UserRecord>> => {
       // Users are managed by Stack Auth, not directly creatable via our API
       throw new Error('User creation not supported - managed by Stack Auth');
     },
 
-    update: async (params: UpdateParams): Promise<UpdateResult<UserRecord>> => {
+    update: async (
+      _params: UpdateParams,
+    ): Promise<UpdateResult<UserRecord>> => {
       // Users are managed by Stack Auth, not directly updatable via our API
       throw new Error('User updates not supported - managed by Stack Auth');
     },
 
-    updateMany: async (params: UpdateManyParams): Promise<UpdateManyResult> => {
+    updateMany: async (
+      _params: UpdateManyParams,
+    ): Promise<UpdateManyResult> => {
       // Users are managed by Stack Auth, not directly updatable via our API
       throw new Error(
         'Bulk user updates not supported - managed by Stack Auth',
       );
     },
 
-    delete: async (params: DeleteParams): Promise<DeleteResult<UserRecord>> => {
+    delete: async (
+      _params: DeleteParams,
+    ): Promise<DeleteResult<UserRecord>> => {
       // Users are managed by Stack Auth, not directly deletable via our API
       throw new Error('User deletion not supported - managed by Stack Auth');
     },
 
-    deleteMany: async (params: DeleteManyParams): Promise<DeleteManyResult> => {
+    deleteMany: async (
+      _params: DeleteManyParams,
+    ): Promise<DeleteManyResult> => {
       // Users are managed by Stack Auth, not directly deletable via our API
       throw new Error(
         'Bulk user deletion not supported - managed by Stack Auth',
