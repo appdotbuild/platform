@@ -3,7 +3,7 @@ import { StackServerApp, type ServerUser } from '@stackframe/stack';
 import * as jose from 'jose';
 import { logger } from './logger';
 import { getUserData } from './github';
-import { isPrivilegedUser } from './users';
+import { generateUserRole, isPrivilegedUser } from './users';
 
 type AuthError = {
   error: string;
@@ -93,18 +93,18 @@ export async function validateAuth(request: FastifyRequest): Promise<
 
     const githubUsername = userData.data.login;
 
-    const isPrivilegedUserResult = await isPrivilegedUser({
-      githubAccessToken: githubAccessToken?.accessToken as string,
+    // 'platform_admin' | 'staff' | 'member'
+    const existingRole = user.clientReadOnlyMetadata?.role;
+    const newRole = await generateUserRole({
       githubUsername,
+      githubAccessToken: githubAccessToken?.accessToken as string,
       email: user.primaryEmail as string,
     });
-
-    const adminAccess = user.clientReadOnlyMetadata?.admin_access;
-    if (isPrivilegedUserResult && !adminAccess) {
+    if (existingRole !== newRole) {
       await user.update({
         clientReadOnlyMetadata: {
           ...user.clientReadOnlyMetadata,
-          admin_access: true,
+          role: newRole,
         },
       });
     }
@@ -113,7 +113,7 @@ export async function validateAuth(request: FastifyRequest): Promise<
       ...user,
       githubUsername,
       githubAccessToken: githubAccessToken?.accessToken as string,
-      isPrivilegedUser: isPrivilegedUserResult,
+      isPrivilegedUser: isPrivilegedUser(newRole),
     };
   } catch (error) {
     logger.error('Stack Auth API call failed', { error });

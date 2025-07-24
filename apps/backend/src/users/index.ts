@@ -1,6 +1,9 @@
 import { Octokit } from '@octokit/rest';
 
 const BATABRICKS_DOMAIN = '@databricks.com';
+const PLATFORM_ADMIN_ROLES = ['platform_admin', 'staff'] as const;
+const ROLES = [...PLATFORM_ADMIN_ROLES, 'member'] as const;
+type UserRole = (typeof ROLES)[number];
 
 async function isNeonEmployee(
   githubAccessToken: string,
@@ -25,7 +28,7 @@ function isDatabricksEmployee(email: string) {
   return email.endsWith(BATABRICKS_DOMAIN);
 }
 
-export async function isPrivilegedUser({
+export async function generateUserRole({
   githubUsername,
   githubAccessToken,
   email,
@@ -33,22 +36,19 @@ export async function isPrivilegedUser({
   githubUsername: string;
   githubAccessToken: string;
   email: string;
-}) {
-  return (
-    (await isNeonEmployee(githubAccessToken, githubUsername)) ||
-    isDatabricksEmployee(email)
+}): Promise<UserRole> {
+  const isNeonEmployeeResult = await isNeonEmployee(
+    githubAccessToken,
+    githubUsername,
   );
+  const isDatabricksEmployeeResult = isDatabricksEmployee(email);
+  if (isNeonEmployeeResult || isDatabricksEmployeeResult) {
+    return 'staff';
+  }
+
+  return 'member';
 }
 
-// Deprecated: Use isPrivilegedUser instead
-export function checkIsPrivilegedUser({
-  githubUsername,
-  githubAccessToken,
-  email,
-}: {
-  githubUsername: string;
-  githubAccessToken: string;
-  email: string;
-}) {
-  return isPrivilegedUser({ githubUsername, githubAccessToken, email });
+export function isPrivilegedUser(userRole: UserRole) {
+  return PLATFORM_ADMIN_ROLES.some((role) => role === userRole);
 }
