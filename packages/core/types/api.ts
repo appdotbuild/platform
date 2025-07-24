@@ -73,3 +73,5 @@ export type App = {
 };
 
 export type TemplateId = 'trpc_agent' | 'nicegui_agent' | 'laravel_agent';
+
+export type DeploymentState = 'HEALTHY' | 'ERROR' | 'STOPPING';
