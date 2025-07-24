@@ -6,7 +6,6 @@ import { StackHandler, StackProvider, StackTheme } from '@stackframe/react';
 import { stackClientApp } from '@/stack';
 import { authProvider } from '@/lib/react-admin/auth-provider';
 import { lazy } from 'react';
-import { UserList } from '@/components/users-list';
 import { AppWindow, Users } from 'lucide-react';
 
 function HandlerRoutes() {
@@ -17,6 +16,7 @@ function HandlerRoutes() {
   );
 }
 
+const UserList = lazy(() => import('@/components/users-list'));
 const AppList = lazy(() => import('@/components/apps-list'));
 const Guesser = lazy(() => import('@/components/admin/show-guesser'));
 

@@ -69,13 +69,13 @@ const usersFilters = [
   </div>,
 ];
 
-export const UserList = () => {
+export default function UserList() {
   return (
     <List filters={usersFilters} sort={{ field: 'createdAt', order: 'DESC' }}>
       <UserListContent />
     </List>
   );
-};
+}
 
 function UserAvatarCell({ source }: { source: string }) {
   const record = useRecordContext();
