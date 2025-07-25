@@ -9,6 +9,7 @@ import {
 } from '@appdotbuild/design';
 import { HashAvatar } from '@appdotbuild/design';
 import { Badge } from '@appdotbuild/design';
+import type { VariantProps } from 'class-variance-authority';
 import { Button } from '@appdotbuild/design';
 import { ExternalLink, FileText } from 'lucide-react';
 import { format } from 'timeago.js';
@@ -29,6 +30,7 @@ import {
 } from '@appdotbuild/core/agent-message';
 import { TextInput, ToggleFilterButton, FilterBar } from '@/components/admin';
 import { stackClientApp } from '@/stack';
+import { TemplateId } from '@appdotbuild/core/types/api';
 
 // Wrapper component that can access list context
 function AppListContent() {
@@ -64,6 +66,11 @@ function AppListContent() {
         field={RepositoryUrlCell}
       />
       <DataTable.Col
+        label="Tech Stack"
+        source="techStack"
+        field={TechStackCell}
+      />
+      <DataTable.Col
         label="Created At"
         source="createdAt"
         field={CreatedAtCell}
@@ -76,9 +83,7 @@ function AppListContent() {
       <DataTable.Col
         label="Trace ID"
         source="traceId"
-        field={(props) => (
-          <IdCell {...props} label="Trace ID" showGrafanaLink={true} />
-        )}
+        field={(props) => <IdCell {...props} label="Trace ID" maxLength={20} />}
       />
       <DataTable.Col label="Raw JSON" field={RawJsonCell} />
       <DataTable.Col label="Actions" field={ActionsCell} />
@@ -358,6 +363,49 @@ function RawJsonCell() {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function TechStackCell({ source }: { source: string }) {
+  const record = useRecordContext();
+  if (!record) return null;
+
+  const techStack = record[source] as TemplateId;
+
+  if (!techStack) return <span>-</span>;
+
+  const techStackMap: Record<
+    TemplateId,
+    { label: string; variant: VariantProps<typeof Badge>['variant'] }
+  > = {
+    trpc_agent: {
+      label: 'tRPC',
+      variant: 'default',
+    },
+    nicegui_agent: {
+      label: 'NiceGUI',
+      variant: 'secondary',
+    },
+    laravel_agent: {
+      label: 'Laravel',
+      variant: 'outline',
+    },
+  };
+
+  const techStackVariant = techStackMap[techStack].variant;
+  const techStackLabel = techStackMap[techStack].label;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <Badge variant={techStackVariant}>{techStackLabel}</Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Tech Stack: {techStackLabel}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

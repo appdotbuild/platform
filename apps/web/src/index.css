@@ -1,4 +1,5 @@
-@import 'tailwindcss';
+@import '@appdotbuild/design/globals.css';
+@source '../../../node_modules/@appdotbuild/design';
 
 @theme {
   --font-sans:

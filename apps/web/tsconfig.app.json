@@ -18,7 +18,8 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@design/*": ["../../packages/design/*"]
     },
 
     /* Linting */

@@ -11,7 +11,7 @@ import {
 import { sendEvent } from '~/external/segment';
 import { useAppsList } from '~/hooks/useAppsList';
 import { cn } from '~/lib/utils';
-import { ChatItem } from './chat-item';
+import { ApplicationItem } from './chat-item';
 
 export function ChatList() {
   const hasLoadedOnceRef = useRef(false);
@@ -118,7 +118,7 @@ export function ChatList() {
                 className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
               >
                 <div className="h-32">
-                  <ChatItem app={app} />
+                  <ApplicationItem app={app} />
                 </div>
               </CarouselItem>
             ))}

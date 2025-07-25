@@ -4,6 +4,7 @@
     "": {
       "name": "root",
       "dependencies": {
+        "@appdotbuild/core": "workspace:*",
         "@aws-sdk/client-ecr": "3.812.0",
         "@stackframe/js": "^2.8.6",
         "@stackframe/react": "^2.8.20",
@@ -216,6 +217,7 @@
       "dependencies": {
         "@appdotbuild/auth": "workspace:*",
         "@appdotbuild/core": "workspace:*",
+        "@appdotbuild/design": "workspace:*",
         "@segment/analytics-next": "^1.81.1",
         "@stackframe/react": "^2.8.16",
         "@tailwindcss/vite": "^4.1.11",
@@ -246,6 +248,7 @@
         "typescript": "~5.8.3",
         "typescript-eslint": "^8.34.1",
         "vite": "^7.0.0",
+        "vite-tsconfig-paths": "^5.1.4",
       },
     },
     "packages/auth": {
