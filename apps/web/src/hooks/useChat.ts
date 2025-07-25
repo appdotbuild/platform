@@ -9,6 +9,7 @@ import { useAppsList } from './useAppsList';
 import { useCurrentApp } from './useCurrentApp';
 import { useMessageLimit } from './userMessageLimit';
 import { useSSEMessageHandler, useSSEQuery } from './useSSE';
+import type { TemplateId } from '@appdotbuild/core';
 
 // main chat logic
 export function useChat() {
@@ -27,7 +28,13 @@ export function useChat() {
     onDone: handleSSEDone,
   });
 
-  const createNewApp = (firstInput: string) => {
+  const createNewApp = ({
+    firstInput,
+    templateId,
+  }: {
+    firstInput: string;
+    templateId: TemplateId;
+  }) => {
     const message = firstInput.trim();
     if (!message) return;
 
@@ -48,15 +55,17 @@ export function useChat() {
       replace: true,
     });
 
-    sendMessage({ message: message, isNewApp: true });
+    sendMessage({ message: message, isNewApp: true, templateId });
   };
 
   const sendMessage = async ({
     message,
     isNewApp,
+    templateId,
   }: {
     message: string;
     isNewApp?: boolean;
+    templateId?: TemplateId;
   }) => {
     const sendChatId = isNewApp ? 'new' : appId;
     if (!sendChatId || !message.trim()) return;
@@ -89,11 +98,13 @@ export function useChat() {
     const app = apps.find((a) => a.id === sendChatId);
     const traceId = app?.traceId || `app-${sendChatId}.req-${Date.now()}`;
 
+    console.log('templateId', templateId);
     sendMessageAsync({
       applicationId: isNewApp ? null : appId,
       message: message.trim(),
       clientSource: 'web',
       traceId: isNewApp ? undefined : traceId,
+      templateId,
     });
   };
 
