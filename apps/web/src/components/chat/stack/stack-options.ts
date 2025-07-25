@@ -1,14 +1,13 @@
 import type { TemplateId } from '@appdotbuild/core';
 import { Code2, Server, Zap } from 'lucide-react';
 
-export type StackOption = {
+type StackOption = {
   id: TemplateId;
   name: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
 };
 
-// Only the first 3 are functional template IDs, others are for display
 export const STACK_OPTIONS: StackOption[] = [
   {
     id: 'trpc_agent',

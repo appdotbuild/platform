@@ -4,11 +4,11 @@ import { cn } from '~/lib/utils';
 import { createElement } from 'react';
 import { STACK_OPTIONS } from '~/components/chat/stack/stack-options';
 
-interface StackBadgeProps {
+type StackBadgeProps = {
   templateId: TemplateId;
   variant?: 'default' | 'secondary' | 'outline';
   className?: string;
-}
+};
 
 export function StackBadge({
   templateId,
