@@ -1,18 +1,4 @@
 /**
- * Utility functions for generating external links related to app management
- */
-
-export interface AppRecord {
-  id: string;
-  updatedAt: string;
-  repositoryUrl?: string;
-  appUrl?: string;
-  koyebServiceId?: string;
-  neonProjectId?: string;
-  traceId?: string;
-}
-
-/**
  * Creates a Grafana link for viewing logs filtered by trace ID with smart time range
  * @param traceId - The trace ID to filter logs by
  * @param updatedAt - ISO timestamp to calculate time range around
@@ -117,27 +103,4 @@ export function createRepositoryLink(repositoryUrl: string): string | null {
   }
 
   return repositoryUrl;
-}
-
-/**
- * Gets all available external links for an app record
- * @param record - The app record
- * @returns Object with all available links
- */
-export function getAppLinks(record: AppRecord) {
-  return {
-    grafana: record.traceId
-      ? createGrafanaLink(record.traceId, record.updatedAt)
-      : null,
-    koyeb: record.koyebServiceId
-      ? createKoyebServiceLink(record.koyebServiceId)
-      : null,
-    neon: record.neonProjectId
-      ? createNeonProjectLink(record.neonProjectId)
-      : null,
-    app: record.appUrl ? createAppLink(record.appUrl) : null,
-    repository: record.repositoryUrl
-      ? createRepositoryLink(record.repositoryUrl)
-      : null,
-  };
 }
