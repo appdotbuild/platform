@@ -43,6 +43,7 @@
     ]
   },
   "dependencies": {
+    "@appdotbuild/core": "workspace:*",
     "@aws-sdk/client-ecr": "3.812.0",
     "@stackframe/js": "^2.8.6",
     "@stackframe/react": "^2.8.20",

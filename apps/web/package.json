@@ -20,6 +20,9 @@
   "dependencies": {
     "@appdotbuild/auth": "workspace:*",
     "@appdotbuild/core": "workspace:*",
+    "@appdotbuild/design": "workspace:*",
+    "@radix-ui/react-select": "^2.2.5",
+    "@radix-ui/react-tooltip": "^1.2.7",
     "@segment/analytics-next": "^1.81.1",
     "@stackframe/react": "^2.8.16",
     "@tailwindcss/vite": "^4.1.11",
@@ -50,6 +53,7 @@
     "tailwindcss": "^4.1.11",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vite-tsconfig-paths": "^5.1.4"
   }
 }

@@ -44,7 +44,7 @@ export function AppPage() {
           <ChatInput />
         </div>
       </div>
-      <div className="w-full h-24" />
+      <div className="w-full h-10 md:h-24" />
     </div>
   );
 }

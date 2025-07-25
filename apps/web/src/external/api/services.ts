@@ -2,8 +2,10 @@ import type {
   App,
   AppPrompts,
   DeploymentState,
+  TemplateId,
   UserMessageLimit,
 } from '@appdotbuild/core';
+
 import { apiClient } from '../api/adapter';
 
 export type SendMessageInput = {
@@ -11,6 +13,7 @@ export type SendMessageInput = {
   message: string;
   clientSource?: string;
   traceId?: string;
+  templateId?: TemplateId;
 };
 
 export type PaginatedResponse<T> = {
@@ -35,7 +38,7 @@ export const appsService = {
   fetchApp: (appId: string) => apiClient.get<App>(`/apps/${appId}`),
   fetchAppMessages: (appId: string) =>
     apiClient.get<AppPrompts[]>(`/apps/${appId}/history`),
-  sendMessage: (data: SendMessageInput, options: Record<string, any>) =>
+  sendMessage: (data: SendMessageInput, options: Record<string, unknown>) =>
     apiClient.postSSE({
       endpoint: '/message',
       data,
