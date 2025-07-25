@@ -1,4 +1,9 @@
-import type { App, AppPrompts, UserMessageLimit } from '@appdotbuild/core';
+import type {
+  App,
+  AppPrompts,
+  DeploymentState,
+  UserMessageLimit,
+} from '@appdotbuild/core';
 import { apiClient } from '../api/adapter';
 
 export type SendMessageInput = {
@@ -18,6 +23,12 @@ export type PaginatedResponse<T> = {
   };
 };
 
+export type DeploymentStatusResponse = {
+  message: string;
+  isDeployed: boolean;
+  type: DeploymentState;
+};
+
 export const appsService = {
   fetchApps: (page = 1, limit = 10) =>
     apiClient.get<PaginatedResponse<App>>(`/apps?page=${page}&limit=${limit}`),
@@ -32,4 +43,10 @@ export const appsService = {
     }),
   fetchUserMessageLimit: () =>
     apiClient.get<UserMessageLimit>(`/message-limit`),
+  fetchDeploymentStatus: (deploymentId: string, messageId?: string) =>
+    apiClient.get<DeploymentStatusResponse>(
+      `/deployment-status/${deploymentId}${
+        messageId ? `?messageId=${messageId}` : ''
+      }`,
+    ),
 };

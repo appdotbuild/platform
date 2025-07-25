@@ -27,6 +27,7 @@
     "@tanstack/react-router": "^1.123.0",
     "embla-carousel-react": "^8.6.0",
     "lucide-react": "^0.525.0",
+    "motion": "^12.23.9",
     "react": "catalog:",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0"

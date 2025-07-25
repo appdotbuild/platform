@@ -48,6 +48,7 @@ export function ChatMessageContent({ message }: { message: Message }) {
           message={message.message}
           type={message.metadata?.type}
           metadata={message.metadata}
+          messageId={message.id}
         />
       );
     }
