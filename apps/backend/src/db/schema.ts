@@ -44,6 +44,7 @@ export const apps = pgTable(
     appUrl: text(),
     databricksApiKey: text(),
     databricksHost: text(),
+    techStack: text('techStack').notNull().default('trpc_agent'), // 'trpc_agent' | 'nicegui_agent' | 'laravel_agent';
   },
   (table) => [index('idx_apps_ownerid_id').on(table.ownerId, table.id)],
 );

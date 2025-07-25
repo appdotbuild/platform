@@ -1,0 +1,1 @@
+ALTER TABLE "apps" ADD COLUMN "techStack" text DEFAULT 'trpc_agent' NOT NULL;

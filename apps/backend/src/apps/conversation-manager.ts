@@ -4,12 +4,14 @@ import {
   type AgentSseEvent,
   type ApplicationId,
   type ConversationMessage,
+  type TemplateId,
 } from '@appdotbuild/core';
 import { app } from '../app';
 
 export interface ConversationData {
   agentState?: AgentSseEvent['message']['agentState'];
   allMessages: ConversationMessage[];
+  techStack: TemplateId;
 }
 
 export class ConversationManager {
@@ -18,7 +20,11 @@ export class ConversationManager {
   /**
    * Add or update conversation data for an application
    */
-  addConversation(applicationId: string, event: AgentSseEvent): void {
+  addConversation(
+    applicationId: string,
+    event: AgentSseEvent,
+    techStack: TemplateId,
+  ): void {
     const existingConversation = this.conversationMap.get(applicationId);
     let allMessages: ConversationData['allMessages'] = [];
     let agentState: ConversationData['agentState'] = null;
@@ -38,10 +44,15 @@ export class ConversationManager {
     this.conversationMap.set(applicationId, {
       agentState,
       allMessages,
+      techStack: techStack,
     });
   }
 
-  addUserMessageToConversation(applicationId: string, message: string): void {
+  addUserMessageToConversation(
+    applicationId: string,
+    message: string,
+    techStack: TemplateId,
+  ): void {
     const userMessage: ConversationMessage = {
       role: PromptKind.USER,
       content: message,
@@ -56,6 +67,7 @@ export class ConversationManager {
       this.conversationMap.set(applicationId, {
         allMessages: [userMessage],
         agentState: undefined,
+        techStack: techStack,
       });
     }
   }
@@ -63,6 +75,7 @@ export class ConversationManager {
   addMessagesToConversation(
     applicationId: string,
     messages: ConversationMessage[],
+    techStack: TemplateId,
   ): void {
     const existingData = this.conversationMap.get(applicationId);
     if (existingData) {
@@ -72,6 +85,7 @@ export class ConversationManager {
       this.conversationMap.set(applicationId, {
         allMessages: messages,
         agentState: undefined,
+        techStack: techStack,
       });
     }
   }
