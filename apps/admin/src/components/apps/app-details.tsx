@@ -176,6 +176,14 @@ function AppDetailsView() {
               <Separator />
               <div>
                 <RecordField
+                  source="techStack"
+                  label="Tech Stack"
+                  variant="inline"
+                />
+              </div>
+              <Separator />
+              <div>
+                <RecordField
                   source="createdAt"
                   label="Created At"
                   variant="inline"
