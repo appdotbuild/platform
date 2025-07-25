@@ -1,3 +1,5 @@
+import { GRAFANA_BASE_URL, KOYEB_BASE_URL, NEON_BASE_URL } from '@/urls';
+
 /**
  * Creates a Grafana link for viewing logs filtered by trace ID with smart time range
  * @param traceId - The trace ID to filter logs by
@@ -16,8 +18,7 @@ export function createGrafanaLink(
     const fromTime = new Date(updatedTime.getTime() - 30 * 60 * 1000); // 30 min before
     const toTime = new Date(updatedTime.getTime() + 30 * 60 * 1000); // 30 min after
 
-    const baseUrl =
-      'https://neonprod.grafana.net/a/grafana-lokiexplore-app/explore/service/appdotbuild/logs';
+    const baseUrl = `${GRAFANA_BASE_URL}/explore/service/appdotbuild/logs`;
     const params = new URLSearchParams({
       patterns: '[]',
       from: fromTime.toISOString(),
@@ -57,7 +58,7 @@ export function createGrafanaLink(
  */
 export function createKoyebServiceLink(serviceId: string): string | null {
   if (!serviceId) return null;
-  return `https://app.koyeb.com/services/${serviceId}`;
+  return `${KOYEB_BASE_URL}/${serviceId}`;
 }
 
 /**
@@ -67,7 +68,7 @@ export function createKoyebServiceLink(serviceId: string): string | null {
  */
 export function createNeonProjectLink(projectId: string): string | null {
   if (!projectId) return null;
-  return `https://console.neon.tech/app/projects/${projectId}`;
+  return `${NEON_BASE_URL}/${projectId}`;
 }
 
 /**
