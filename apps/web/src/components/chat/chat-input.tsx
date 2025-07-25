@@ -24,6 +24,7 @@ export function ChatInput() {
       // if not logged, store the message and use it later to continue
       if (isHomePage(pathname) && !user) {
         localStorage.setItem('pendingMessage', inputValue);
+        localStorage.setItem('pendingTemplateId', selectedStack);
         navigate({ to: '/handler/sign-in' });
         return;
       }
