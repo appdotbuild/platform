@@ -9,6 +9,7 @@ import {
 } from '@appdotbuild/design';
 import { HashAvatar } from '@appdotbuild/design';
 import { Badge } from '@appdotbuild/design';
+import type { VariantProps } from 'class-variance-authority';
 import { Button } from '@appdotbuild/design';
 import { ExternalLink, FileText } from 'lucide-react';
 import { format } from 'timeago.js';
@@ -29,6 +30,7 @@ import {
 } from '@appdotbuild/core/agent-message';
 import { TextInput, ToggleFilterButton, FilterBar } from '@/components/admin';
 import { stackClientApp } from '@/stack';
+import { TemplateId } from '@appdotbuild/core/types/api';
 
 // Wrapper component that can access list context
 function AppListContent() {
@@ -368,46 +370,39 @@ function TechStackCell({ source }: { source: string }) {
   const record = useRecordContext();
   if (!record) return null;
 
-  const techStack = record[source] as string;
+  const techStack = record[source] as TemplateId;
 
   if (!techStack) return <span>-</span>;
 
-  const getTechStackLabel = (stack: string) => {
-    switch (stack) {
-      case 'trpc_agent':
-        return 'tRPC';
-      case 'nicegui_agent':
-        return 'NiceGUI';
-      case 'laravel_agent':
-        return 'Laravel';
-      default:
-        return stack;
-    }
+  const techStackMap: Record<
+    TemplateId,
+    { label: string; variant: VariantProps<typeof Badge>['variant'] }
+  > = {
+    trpc_agent: {
+      label: 'tRPC',
+      variant: 'default',
+    },
+    nicegui_agent: {
+      label: 'NiceGUI',
+      variant: 'secondary',
+    },
+    laravel_agent: {
+      label: 'Laravel',
+      variant: 'outline',
+    },
   };
 
-  const getTechStackVariant = (stack: string) => {
-    switch (stack) {
-      case 'trpc_agent':
-        return 'default';
-      case 'nicegui_agent':
-        return 'secondary';
-      case 'laravel_agent':
-        return 'outline';
-      default:
-        return 'outline';
-    }
-  };
+  const techStackVariant = techStackMap[techStack].variant;
+  const techStackLabel = techStackMap[techStack].label;
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
-          <Badge variant={getTechStackVariant(techStack)}>
-            {getTechStackLabel(techStack)}
-          </Badge>
+          <Badge variant={techStackVariant}>{techStackLabel}</Badge>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Tech Stack: {getTechStackLabel(techStack)}</p>
+          <p>Tech Stack: {techStackLabel}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

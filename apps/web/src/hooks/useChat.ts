@@ -98,7 +98,6 @@ export function useChat() {
     const app = apps.find((a) => a.id === sendChatId);
     const traceId = app?.traceId || `app-${sendChatId}.req-${Date.now()}`;
 
-    console.log('templateId', templateId);
     sendMessageAsync({
       applicationId: isNewApp ? null : appId,
       message: message.trim(),
