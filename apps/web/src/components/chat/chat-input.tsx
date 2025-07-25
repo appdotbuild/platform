@@ -77,7 +77,7 @@ export function ChatInput() {
           }}
           disabled={isUserLimitReached || isLoading}
           autoFocus
-          minHeight={isHomePage(pathname) ? 120 : 30}
+          minHeight={isHomePage(pathname) ? 50 : 30}
           maxHeight={120}
         />
         <div
