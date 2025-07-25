@@ -64,6 +64,11 @@ function AppListContent() {
         field={RepositoryUrlCell}
       />
       <DataTable.Col
+        label="Tech Stack"
+        source="techStack"
+        field={TechStackCell}
+      />
+      <DataTable.Col
         label="Created At"
         source="createdAt"
         field={CreatedAtCell}
@@ -76,9 +81,7 @@ function AppListContent() {
       <DataTable.Col
         label="Trace ID"
         source="traceId"
-        field={(props) => (
-          <IdCell {...props} label="Trace ID" showGrafanaLink={true} />
-        )}
+        field={(props) => <IdCell {...props} label="Trace ID" maxLength={20} />}
       />
       <DataTable.Col label="Raw JSON" field={RawJsonCell} />
       <DataTable.Col label="Actions" field={ActionsCell} />
@@ -358,6 +361,56 @@ function RawJsonCell() {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function TechStackCell({ source }: { source: string }) {
+  const record = useRecordContext();
+  if (!record) return null;
+
+  const techStack = record[source] as string;
+
+  if (!techStack) return <span>-</span>;
+
+  const getTechStackLabel = (stack: string) => {
+    switch (stack) {
+      case 'trpc_agent':
+        return 'tRPC';
+      case 'nicegui_agent':
+        return 'NiceGUI';
+      case 'laravel_agent':
+        return 'Laravel';
+      default:
+        return stack;
+    }
+  };
+
+  const getTechStackVariant = (stack: string) => {
+    switch (stack) {
+      case 'trpc_agent':
+        return 'default';
+      case 'nicegui_agent':
+        return 'secondary';
+      case 'laravel_agent':
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  };
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <Badge variant={getTechStackVariant(techStack)}>
+            {getTechStackLabel(techStack)}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Tech Stack: {getTechStackLabel(techStack)}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
