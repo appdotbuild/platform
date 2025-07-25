@@ -1,3 +1,4 @@
+import type { TemplateId } from '@appdotbuild/core';
 import { StackHandler, useUser } from '@stackframe/react';
 import {
   createLazyRoute,
@@ -26,15 +27,21 @@ export function AuthPage() {
 
       // check if already started a new app
       const pendingMessage = localStorage.getItem('pendingMessage');
+      const pendingTemplateId =
+        localStorage.getItem('pendingTemplateId') || 'trpc_agent';
 
       if (pendingMessage) {
         // remove the pending message
         localStorage.removeItem('pendingMessage');
+        localStorage.removeItem('pendingTemplateId');
         setIsProcessing(true);
 
         // redirect to the app creation flow
         setTimeout(() => {
-          createNewApp(pendingMessage);
+          createNewApp({
+            firstInput: pendingMessage,
+            templateId: pendingTemplateId as TemplateId,
+          });
         }, 100);
       } else if (!pathname.includes('cli-auth-confirm')) {
         requestAnimationFrame(() => {
