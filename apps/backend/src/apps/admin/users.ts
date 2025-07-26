@@ -13,14 +13,16 @@ import {
 } from 'drizzle-orm';
 import { usersSync as users } from 'drizzle-orm/neon';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { apps, db } from '../../db';
+import { apps, db, customMessageLimits } from '../../db';
 
 type User = typeof users.$inferSelect;
 
 export async function listUsersForAdmin(
   request: FastifyRequest,
   reply: FastifyReply,
-): Promise<Paginated<User & { appsCount?: number }>> {
+): Promise<
+  Paginated<User & { appsCount?: number; dailyMessageLimit?: number }>
+> {
   const {
     limit = 10,
     page = 1,
@@ -80,12 +82,19 @@ export async function listUsersForAdmin(
     .from(users)
     .where(and(...filterConditions));
 
+  const DEFAULT_MESSAGE_LIMIT = Number(process.env.DAILY_MESSAGE_LIMIT) || 10;
+
   const usersQuery = db
     .select({
       ...columns,
       appsCount: db.$count(apps, eq(apps.ownerId, users.id)),
+      dailyMessageLimit:
+        sql<number>`COALESCE(${customMessageLimits.dailyLimit}, ${DEFAULT_MESSAGE_LIMIT})`.as(
+          'dailyMessageLimit',
+        ),
     })
     .from(users)
+    .leftJoin(customMessageLimits, eq(users.id, customMessageLimits.userId))
     .orderBy(orderBy)
     .limit(pagesize)
     .offset(offset)

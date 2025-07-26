@@ -18,6 +18,7 @@ export * from './edit-guesser';
 export * from './edit';
 export * from './export-button';
 export * from './form-error';
+export * from './in-place-editor';
 export * from './layout';
 export * from './list-guesser';
 export * from './list-pagination';

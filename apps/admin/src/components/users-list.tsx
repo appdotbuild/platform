@@ -10,7 +10,8 @@ import {
 import { HashAvatar } from '@appdotbuild/design';
 import { Badge } from '@appdotbuild/design';
 import { Button } from '@appdotbuild/design';
-import { FileText } from 'lucide-react';
+import { FileText, Info } from 'lucide-react';
+import { InPlaceEditor } from '@/components/admin';
 import { format } from 'timeago.js';
 import {
   Dialog,
@@ -50,6 +51,7 @@ function UserListContent() {
         source="appsCount"
         field={UserAppsCountCell}
       />
+
       <DataTable.Col
         label="Created At"
         source="createdAt"
@@ -61,6 +63,26 @@ function UserListContent() {
         field={UpdatedAtCell}
       />
       <DataTable.Col label="Raw JSON" field={RawJsonCell} />
+      <DataTable.Col
+        disableSort
+        label={
+          <div className="flex items-center gap-1">
+            <span>Message Limit</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Daily message limit per user (default: 10)</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        }
+        source="dailyMessageLimit"
+        field={MessageLimitCell}
+      />
     </DataTable>
   );
 }
@@ -164,6 +186,32 @@ function UpdatedAtCell({ source }: { source: string }) {
 
   const date = record[source] as string;
   return <span>{format(date)}</span>;
+}
+
+function MessageLimitCell() {
+  const record = useRecordContext();
+  if (!record) return null;
+
+  const dailyMessageLimit = record.dailyMessageLimit as number;
+  const DEFAULT_MESSAGE_LIMIT = 10;
+  const isCustomLimit = dailyMessageLimit !== DEFAULT_MESSAGE_LIMIT;
+
+  return (
+    <div className="flex items-center justify-center">
+      <div
+        className={`px-2 py-1 rounded-md text-xs font-medium ${
+          isCustomLimit
+            ? 'border-2 border-primary/60 bg-primary/5 text-primary font-semibold hover:bg-primary/10 hover:border-primary/80'
+            : 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/90'
+        }`}
+      >
+        <InPlaceEditor
+          source="dailyMessageLimit"
+          className="text-inherit font-inherit"
+        />
+      </div>
+    </div>
+  );
 }
 
 function RawJsonCell() {
