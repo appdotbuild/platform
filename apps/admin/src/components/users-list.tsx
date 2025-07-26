@@ -207,6 +207,7 @@ function MessageLimitCell() {
       >
         <InPlaceEditor
           source="dailyMessageLimit"
+          inputType="number"
           className="text-inherit font-inherit"
         />
       </div>

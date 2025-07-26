@@ -308,11 +308,14 @@ const resourceHandlers = {
       throw new Error('User creation not supported - managed by Stack Auth');
     },
 
-    update: async (
-      _params: UpdateParams,
-    ): Promise<UpdateResult<UserRecord>> => {
-      // Users are managed by Stack Auth, not directly updatable via our API
-      throw new Error('User updates not supported - managed by Stack Auth');
+    update: async (params: UpdateParams): Promise<UpdateResult<UserRecord>> => {
+      const response = await apiClient.put<User>(
+        `/admin/users/${params.id}`,
+        params.data,
+      );
+      return {
+        data: convertUserToRecord(response.data),
+      };
     },
 
     updateMany: async (

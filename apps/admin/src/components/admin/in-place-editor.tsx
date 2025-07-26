@@ -12,7 +12,7 @@ import {
 } from 'ra-core';
 import isEqual from 'lodash/isEqual';
 import { Button } from '@appdotbuild/design';
-import { Check, X, Loader2, Edit3, Edit, Edit2 } from 'lucide-react';
+import { Check, X, Loader2, Edit2 } from 'lucide-react';
 import { cn } from '@appdotbuild/design';
 import { TextField } from './text-field';
 
@@ -41,6 +41,7 @@ export interface InPlaceEditorProps<
   showButtons?: boolean;
   children?: React.ReactNode;
   className?: string;
+  inputType?: 'number' | 'string';
 }
 
 /**
@@ -63,6 +64,7 @@ export const InPlaceEditor = <
     cancelOnBlur,
     children = source ? <TextField source={source} /> : null,
     notifyOnSuccess,
+    inputType = 'string',
   } = props;
 
   if (!source && !children) {
@@ -80,7 +82,7 @@ export const InPlaceEditor = <
 
   const [state, dispatch] = useReducer(
     (
-      prevState: InPlaceEditorValue,
+      _prevState: InPlaceEditorValue,
       action: InPlaceEditorAction,
     ): InPlaceEditorValue => {
       switch (action.type) {
@@ -137,10 +139,16 @@ export const InPlaceEditor = <
     }
 
     // Handle direct value or form values object
-    const newValue =
+    let newValue =
       typeof values === 'object' && values[source] !== undefined
         ? values[source]
         : values;
+
+    // Convert to number if inputType is number
+    if (inputType === 'number' && newValue !== undefined && newValue !== '') {
+      newValue = Number(newValue);
+    }
+
     const newValues = { ...record, [source]: newValue };
 
     if (isEqual(newValues, record)) {
@@ -158,6 +166,7 @@ export const InPlaceEditor = <
       },
       {
         onSuccess,
+        // @ts-expect-error - this is a workaround to fix the type error
         onError,
         mutationMode,
         ...otherMutationOptions,
@@ -178,7 +187,8 @@ export const InPlaceEditor = <
     }
     if (event.key === 'Enter' && state.state !== 'saving') {
       event.preventDefault();
-      handleSave({ [source!]: (event.target as HTMLInputElement).value });
+      const inputValue = (event.target as HTMLInputElement).value;
+      handleSave({ [source!]: inputValue });
     }
   };
 
@@ -224,6 +234,7 @@ export const InPlaceEditor = <
               <input
                 autoFocus
                 name={source}
+                type={inputType}
                 defaultValue={record?.[source] || ''}
                 onKeyDown={handleKeyDown}
                 onBlur={handleBlur}
@@ -244,7 +255,15 @@ export const InPlaceEditor = <
               <Button
                 size="sm"
                 variant="ghost"
-                type="submit"
+                type="button"
+                onClick={(e) => {
+                  const form = e.currentTarget.closest('form');
+                  if (form) {
+                    const formData = new FormData(form);
+                    const value = formData.get(source);
+                    handleSave({ [source]: value });
+                  }
+                }}
                 ref={submitButtonRef}
                 disabled={false}
                 className="h-5 w-5 p-0 text-green-400 hover:text-green-300 disabled:opacity-50"

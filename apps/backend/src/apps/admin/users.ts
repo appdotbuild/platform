@@ -113,3 +113,61 @@ export async function listUsersForAdmin(
     },
   };
 }
+
+export async function updateUserForAdmin(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { id: userId } = request.params as { id: string };
+  const { dailyMessageLimit } = request.body as { dailyMessageLimit?: number };
+  console.log('dailyMessageLimit', dailyMessageLimit);
+
+  // Validate input - only allow dailyMessageLimit updates
+  if (dailyMessageLimit === undefined) {
+    return reply.status(400).send({
+      error: 'dailyMessageLimit is required',
+    });
+  }
+
+  if (!Number.isInteger(dailyMessageLimit) || dailyMessageLimit < 1) {
+    return reply.status(400).send({
+      error: 'dailyMessageLimit must be a positive integer',
+    });
+  }
+
+  // Check if user exists
+  const existingUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (existingUser.length === 0) {
+    return reply.status(404).send({
+      error: 'User not found',
+    });
+  }
+
+  const user = existingUser[0];
+
+  // Upsert custom message limit
+  await db
+    .insert(customMessageLimits)
+    .values({
+      userId,
+      dailyLimit: dailyMessageLimit,
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: customMessageLimits.userId,
+      set: {
+        dailyLimit: dailyMessageLimit,
+        updatedAt: new Date(),
+      },
+    });
+
+  return reply.send({
+    ...user,
+    dailyMessageLimit,
+  });
+}
