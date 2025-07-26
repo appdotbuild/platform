@@ -118,9 +118,9 @@ export async function updateUserForAdmin(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
+  const MAX_DAILY_MESSAGE_LIMIT = 1000;
   const { id: userId } = request.params as { id: string };
   const { dailyMessageLimit } = request.body as { dailyMessageLimit?: number };
-  console.log('dailyMessageLimit', dailyMessageLimit);
 
   // Validate input - only allow dailyMessageLimit updates
   if (dailyMessageLimit === undefined) {
@@ -132,6 +132,12 @@ export async function updateUserForAdmin(
   if (!Number.isInteger(dailyMessageLimit) || dailyMessageLimit < 1) {
     return reply.status(400).send({
       error: 'dailyMessageLimit must be a positive integer',
+    });
+  }
+
+  if (dailyMessageLimit > MAX_DAILY_MESSAGE_LIMIT) {
+    return reply.status(400).send({
+      error: 'dailyMessageLimit must be less than 10,000',
     });
   }
 
