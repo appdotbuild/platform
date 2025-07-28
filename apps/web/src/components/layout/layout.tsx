@@ -5,12 +5,14 @@ import { useLocation } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { sendIdentify } from '~/external/segment';
 import { isAppPage } from '~/utils/router-checker';
+import { cn } from '~/lib/utils';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const user = useUser();
   const { pathname } = useLocation();
   const hideFooter = isAppPage(pathname);
-  const isPublicHome = pathname === '/' && !user;
+  const isHomePage = pathname === '/';
+  const isPublicHome = isHomePage && !user;
 
   useEffect(() => {
     if (user?.id) {
@@ -21,7 +23,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const content = (
     <>
       <Header />
-      <main className="flex-1 flex flex-col overflow-y-auto">{children}</main>
+      <main
+        className={cn('flex-1 flex flex-col overflow-y-auto', {
+          'mt-[52px]': !isPublicHome && isHomePage,
+        })}
+      >
+        {children}
+      </main>
       <Footer isHidden={hideFooter} />
     </>
   );

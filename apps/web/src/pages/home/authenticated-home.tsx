@@ -22,23 +22,25 @@ export function AuthenticatedHome() {
   }, [clearCurrentApp]);
 
   return (
-    <div
-      data-testid="authenticated-home"
-      className="w-full h-full flex flex-col gap-12 lg:gap-20 pt-20 md:pt-24 lg:pt-48 xl:pt-56 items-center"
-    >
-      <HeroTitle>
-        An open-source <br className="block md:hidden xl:block" />
-        AI agent that builds <br className="block md:hidden xl:block" />
-        full-stack apps
-      </HeroTitle>
+    <section className="hero relative grow overflow-hidden">
+      <div
+        data-testid="authenticated-home"
+        className="w-full h-full flex flex-col gap-12 lg:gap-20 pt-20 md:pt-24 lg:pt-48 xl:pt-56 items-center"
+      >
+        <HeroTitle>
+          An open-source <br className="block md:hidden xl:block" />
+          AI agent that builds <br className="block md:hidden xl:block" />
+          full-stack apps
+        </HeroTitle>
 
-      <DecoratedInputContainer>
-        <ChatInput />
-        <div className="absolute left-0 right-0 top-full mt-2">
-          <ChatMessageLimit />
-        </div>
-      </DecoratedInputContainer>
-      <ChatList />
-    </div>
+        <DecoratedInputContainer>
+          <ChatInput />
+          <div className="absolute left-0 right-0 top-full mt-2">
+            <ChatMessageLimit />
+          </div>
+        </DecoratedInputContainer>
+        <ChatList />
+      </div>
+    </section>
   );
 }
