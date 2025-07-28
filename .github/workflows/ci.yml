@@ -52,8 +52,9 @@ jobs:
     steps:
       - name: Create Neon Branch
         id: create_neon_branch
-        uses: neondatabase/create-branch-action@v6
+        uses: neondatabase/create-branch-action@v5
         with:
+          username: neondb_owner
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
@@ -76,7 +77,6 @@ jobs:
       - name: Run E2E tests
         run: bun run e2e:test:ci
         env:
-          # BASE_URL: ${{ github.event.deployment_status.target_url }}
           AWS_ASSUMED_ROLE: ${{ secrets.AWS_ASSUMED_ROLE }}
           BUCKET_NAME: ${{ secrets.E2E_REPORT_BUCKET }}
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
