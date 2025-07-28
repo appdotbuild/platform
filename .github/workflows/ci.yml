@@ -54,7 +54,6 @@ jobs:
         id: create_neon_branch
         uses: neondatabase/create-branch-action@v6
         with:
-          username: neondb_owner
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
