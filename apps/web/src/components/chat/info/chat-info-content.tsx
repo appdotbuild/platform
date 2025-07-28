@@ -69,70 +69,72 @@ export function ChatInfoContent({ app, hasLoadedOnce }: ChatInfoContentProps) {
 
   return (
     <div key="status" className={hasLoadedOnce ? 'animate-slide-fade-in' : ''}>
-      <div className="p-6">
+      <div className="p-4">
         {/* App Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-foreground mb-1">
+        <div className="flex items-center justify-between ">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-foreground">
               {app?.appName || 'Untitled App'}
             </h2>
-            {stackOption && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                {createElement(stackOption.icon, { className: 'w-4 h-4' })}
-                <span className="text-sm">{stackOption.name}</span>
-              </div>
+
+            {/* Deployment Status Badge */}
+            {deploymentStatus && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <div
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${deploymentStatus.bgColor} ${deploymentStatus.color}`}
+                  >
+                    {createElement(deploymentStatus.icon, {
+                      className: `w-3.5 h-3.5 ${
+                        deploymentStatus.animate ? 'animate-spin' : ''
+                      }`,
+                    })}
+                    {deploymentStatus.text}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{deploymentStatus.tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
 
-          {/* Deployment Status Badge */}
-          {deploymentStatus && (
-            <Tooltip>
-              <TooltipTrigger>
-                <div
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${deploymentStatus.bgColor} ${deploymentStatus.color}`}
-                >
-                  {createElement(deploymentStatus.icon, {
-                    className: `w-3.5 h-3.5 ${
-                      deploymentStatus.animate ? 'animate-spin' : ''
-                    }`,
-                  })}
-                  {deploymentStatus.text}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{deploymentStatus.tooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
+          {/* Quick Actions */}
+          <div className="flex gap-2">
+            {app?.repositoryUrl && (
+              <a
+                href={app.repositoryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg text-sm font-medium text-foreground transition-colors"
+              >
+                <GitBranch className="w-4 h-4" />
+                <span className="hidden sm:inline">View Code</span>
+                <span className="sm:hidden">Code</span>
+              </a>
+            )}
+
+            {app?.deployStatus === 'deployed' && app?.appUrl && (
+              <a
+                href={app.appUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg text-sm font-medium transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Visit App
+              </a>
+            )}
+          </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex flex-col sm:flex-row gap-2">
-          {app?.deployStatus === 'deployed' && app?.appUrl && (
-            <a
-              href={app.appUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg text-sm font-medium transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Visit App
-            </a>
-          )}
-
-          {app?.repositoryUrl && (
-            <a
-              href={app.repositoryUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg text-sm font-medium text-foreground transition-colors"
-            >
-              <GitBranch className="w-4 h-4" />
-              <span className="hidden sm:inline">View Code</span>
-              <span className="sm:hidden">Code</span>
-            </a>
-          )}
-        </div>
+        {/* Tech Stack */}
+        {stackOption && (
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            {createElement(stackOption.icon, { className: 'w-4 h-4' })}
+            <span className="text-sm">{stackOption.name}</span>
+          </div>
+        )}
       </div>
     </div>
   );

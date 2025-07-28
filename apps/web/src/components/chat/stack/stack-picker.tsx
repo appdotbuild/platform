@@ -39,9 +39,9 @@ export function StackPicker({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="h-6 px-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 border-0"
+          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
         >
           {selectedOption?.name}
           <ChevronDown className="w-3 h-3 ml-1" />
