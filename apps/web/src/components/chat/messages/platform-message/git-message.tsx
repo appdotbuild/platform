@@ -10,17 +10,13 @@ import {
   PLATFORM_MESSAGE_TEXTS,
 } from './constants';
 
-interface PlatformMessageProps {
+interface GitMessageProps {
   message: string;
   type?: PlatformMessageType;
   metadata?: PlatformMessageMetadata;
 }
 
-export function PlatformMessage({
-  message,
-  type,
-  metadata,
-}: PlatformMessageProps) {
+export function GitMessage({ message, type, metadata }: GitMessageProps) {
   const icon = PLATFORM_MESSAGE_ICONS[type as PlatformMessageType] || 'ℹ️';
   const borderColor =
     PLATFORM_MESSAGE_BORDER_COLORS[type as PlatformMessageType] ||
@@ -82,9 +78,6 @@ const getLinkUrl = (
       return metadata?.githubUrl;
     case PlatformMessageType.COMMIT_CREATED:
       return metadata?.commitUrl;
-    case PlatformMessageType.DEPLOYMENT_IN_PROGRESS:
-    case PlatformMessageType.DEPLOYMENT_COMPLETE:
-      return metadata?.deploymentUrl;
     default:
       return undefined;
   }

@@ -1,9 +1,9 @@
-import type { FastifyReply } from 'fastify';
-import type { FastifyRequest } from 'fastify';
-import { logger } from '../logger';
+import { type DeploymentState, PlatformMessageType } from '@appdotbuild/core';
 import { desc, eq } from 'drizzle-orm';
-import { deployments } from '../db/schema';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { db } from '../db';
+import { appPrompts, deployments } from '../db/schema';
+import { logger } from '../logger';
 
 type KoyebOrgSwitchResponse = {
   token: {
@@ -314,11 +314,13 @@ export async function getKoyebDeployment({
 export const getKoyebDeploymentEndpoint = async (
   request: FastifyRequest<{
     Params: { id: string };
+    Querystring: { messageId?: string };
   }>,
   reply: FastifyReply,
 ) => {
   try {
     const { id } = request.params;
+    const { messageId } = request.query;
 
     if (!id) {
       return reply.status(400).send({ message: 'Deployment ID is required' });
@@ -349,6 +351,14 @@ export const getKoyebDeploymentEndpoint = async (
     });
 
     const response = await deploymentChecker();
+
+    // if received messageId, should update the message with the deployment status
+    if (
+      messageId &&
+      (response.type === 'HEALTHY' || response.type === 'ERROR')
+    ) {
+      await updateDeploymentMessage(messageId, response.type, response.message);
+    }
 
     return reply.send(response);
   } catch (error) {
@@ -452,7 +462,7 @@ function getDeploymentChecker({
   async function checkDeployment(retryCount = 0): Promise<{
     message: string;
     isDeployed: boolean;
-    type: 'HEALTHY' | 'STOPPING' | 'ERROR';
+    type: DeploymentState;
   }> {
     try {
       const { koyebDeploymentStatus } = await getKoyebDeployment({
@@ -531,4 +541,47 @@ function getDeploymentChecker({
   }
 
   return checkDeployment;
+}
+
+async function updateDeploymentMessage(
+  messageId: string,
+  deploymentType: DeploymentState,
+  message: string,
+) {
+  try {
+    const newPlatformType =
+      deploymentType === 'HEALTHY'
+        ? PlatformMessageType.DEPLOYMENT_COMPLETE
+        : PlatformMessageType.DEPLOYMENT_FAILED;
+
+    const existingMessage = await db
+      .select()
+      .from(appPrompts)
+      .where(eq(appPrompts.id, messageId))
+      .limit(1);
+
+    if (existingMessage.length === 0) {
+      return;
+    }
+
+    const currentMetadata = existingMessage[0]?.metadata || {};
+    const updatedMetadata = {
+      ...currentMetadata,
+      type: newPlatformType,
+    };
+
+    await db
+      .update(appPrompts)
+      .set({
+        metadata: updatedMetadata,
+        prompt: message,
+      })
+      .where(eq(appPrompts.id, messageId));
+  } catch (error) {
+    logger.error('Failed to update deployment message', {
+      messageId,
+      deploymentType,
+      error,
+    });
+  }
 }

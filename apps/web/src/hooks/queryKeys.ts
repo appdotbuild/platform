@@ -14,3 +14,7 @@ export const MESSAGES_QUERY_KEY = (appId: string) =>
 
 // user message limit
 export const USER_MESSAGE_LIMIT_QUERY_KEY = ['user', 'message-limit'] as const;
+
+// deployment status
+export const DEPLOYMENT_STATUS_QUERY_KEY = (deploymentId: string) =>
+  ['deployment', 'status', deploymentId] as const;
