@@ -7,7 +7,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@appdotbuild/design';
-import { Button } from '~/components/shared/button';
+import { Button } from '@appdotbuild/design';
 import { ChevronDown } from 'lucide-react';
 import { STACK_OPTIONS } from './stack-options';
 

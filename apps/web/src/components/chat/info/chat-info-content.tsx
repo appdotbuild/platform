@@ -16,56 +16,55 @@ interface ChatInfoContentProps {
   hasLoadedOnce: boolean;
 }
 
+const getDeploymentStatus = (app: App | undefined) => {
+  if (!app?.deployStatus) return null;
+
+  switch (app.deployStatus) {
+    case 'deployed':
+      return {
+        icon: CheckCircle2,
+        text: 'Deployed',
+        color: 'text-green-600',
+        bgColor: 'bg-green-50',
+        tooltip: 'Your app is live and ready to use',
+      };
+    case 'deploying':
+      return {
+        icon: Loader2,
+        text: 'Deploying',
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-50',
+        animate: true,
+        tooltip: 'Your app is being deployed. This usually takes 2-3 minutes.',
+      };
+    case 'failed':
+      return {
+        icon: XCircle,
+        text: 'Failed',
+        color: 'text-red-600',
+        bgColor: 'bg-red-50',
+        tooltip:
+          'Deployment failed. Try making changes to trigger a new deployment.',
+      };
+    case 'pending':
+      return {
+        icon: Clock,
+        text: 'Queued',
+        color: 'text-yellow-600',
+        bgColor: 'bg-yellow-50',
+        tooltip: 'Your app is queued for deployment and will start shortly.',
+      };
+    default:
+      return null;
+  }
+};
+
 export function ChatInfoContent({ app, hasLoadedOnce }: ChatInfoContentProps) {
   const stackOption = app?.techStack
     ? STACK_OPTIONS.find((option) => option.id === app.techStack)
     : null;
 
-  const getDeploymentStatus = () => {
-    if (!app?.deployStatus) return null;
-
-    switch (app.deployStatus) {
-      case 'deployed':
-        return {
-          icon: CheckCircle2,
-          text: 'Deployed',
-          color: 'text-green-600',
-          bgColor: 'bg-green-50',
-          tooltip: 'Your app is live and ready to use',
-        };
-      case 'deploying':
-        return {
-          icon: Loader2,
-          text: 'Deploying',
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-50',
-          animate: true,
-          tooltip:
-            'Your app is being deployed. This usually takes 2-3 minutes.',
-        };
-      case 'failed':
-        return {
-          icon: XCircle,
-          text: 'Failed',
-          color: 'text-red-600',
-          bgColor: 'bg-red-50',
-          tooltip:
-            'Deployment failed. Try making changes to trigger a new deployment.',
-        };
-      case 'pending':
-        return {
-          icon: Clock,
-          text: 'Queued',
-          color: 'text-yellow-600',
-          bgColor: 'bg-yellow-50',
-          tooltip: 'Your app is queued for deployment and will start shortly.',
-        };
-      default:
-        return null;
-    }
-  };
-
-  const deploymentStatus = getDeploymentStatus();
+  const deploymentStatus = getDeploymentStatus(app);
 
   return (
     <div key="status" className={hasLoadedOnce ? 'animate-slide-fade-in' : ''}>

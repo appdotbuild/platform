@@ -1,7 +1,7 @@
 import type { TemplateId } from '@appdotbuild/core';
 import { Badge } from '@appdotbuild/design';
 import { cn } from '~/lib/utils';
-import { createElement } from 'react';
+import { createElement, useMemo } from 'react';
 import { STACK_OPTIONS } from '~/components/chat/stack/stack-options';
 
 type StackBadgeProps = {
@@ -15,7 +15,10 @@ export function StackBadge({
   variant = 'secondary',
   className,
 }: StackBadgeProps) {
-  const stackOption = STACK_OPTIONS.find((option) => option.id === templateId);
+  const stackOption = useMemo(
+    () => STACK_OPTIONS.find((option) => option.id === templateId),
+    [templateId],
+  );
 
   if (!stackOption) {
     return null;

@@ -58,7 +58,7 @@ export function ChatInput() {
   const showStackPicker = isHomePage(pathname);
 
   return (
-    <div className="flex-col py-[18px]  w-full border border-dashed border-input bg-background text-black flex items-center relative px-4 lg:px-6 gap-2 md:gap-4">
+    <div className="flex-col py-4.5 w-full border border-dashed border-input bg-background text-black flex items-center relative px-4 lg:px-6 gap-2 md:gap-4">
       <div className="flex justify-between w-full">
         <Textarea
           className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-sm md:placeholder:text-base resize-none"
