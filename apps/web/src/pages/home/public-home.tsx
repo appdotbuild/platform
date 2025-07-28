@@ -58,7 +58,7 @@ export function PublicHome() {
             <p className="text-hero-paragraph mt-6 px-5 font-mono text-foreground md:px-8 lg:px-8 lg:text-left">
               Learn more in our{' '}
               <Link
-                to="/blog/app-build-open-source-ai-agent"
+                to="https://app.build/blog/app-build-open-source-ai-agent"
                 className="underline"
               >
                 launch blog post

@@ -1,2 +1,14 @@
 @import '@appdotbuild/design/globals.css';
 @source '../../../node_modules/@appdotbuild/design';
+
+/* Hide the up and down arrows in the number input */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Firefox */
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+/* ************************************************* */

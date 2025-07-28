@@ -1,12 +1,13 @@
-import { createElement } from 'react';
+import { createElement, useCallback } from 'react';
 import {
   useCreatePath,
   useGetResourceLabel,
   useHasDashboard,
   useResourceDefinitions,
   useTranslate,
+  useStoreContext,
 } from 'ra-core';
-import { Link, useMatch } from 'react-router';
+import { Link, useMatch, useNavigate } from 'react-router';
 import {
   Sidebar,
   SidebarContent,
@@ -100,17 +101,43 @@ export const ResourceMenuItem = ({
   const resources = useResourceDefinitions();
   const getResourceLabel = useGetResourceLabel();
   const createPath = useCreatePath();
+  const navigate = useNavigate();
+  // Try to get list context, but it may not be available in all contexts
+  const storeContext = useStoreContext();
+
   const to = createPath({
     resource: name,
     type: 'list',
   });
   const match = useMatch({ path: to, end: false });
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      // Clear filters if we're in a list context
+      if (storeContext?.reset) {
+        console.log('clearing filters');
+        storeContext.reset();
+      }
+
+      // Navigate after clearing filters
+      navigate(to, { state: { _scrollToTop: true } });
+
+      // Call the original onClick handler for mobile sidebar
+      if (onClick) {
+        onClick();
+      }
+    },
+    [storeContext, navigate, to, onClick],
+  );
+
   if (!resources || !resources[name]) return null;
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={!!match}>
-        <Link to={to} state={{ _scrollToTop: true }} onClick={onClick}>
+        <Link onClick={handleClick} to={to} state={{ _scrollToTop: true }}>
           {resources[name].icon ? (
             createElement(resources[name].icon)
           ) : (

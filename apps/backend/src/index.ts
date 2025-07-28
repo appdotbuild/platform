@@ -4,6 +4,7 @@ import { app } from './app';
 import {
   appById,
   appByIdUrl,
+  getAppByIdForAdmin,
   getUserMessageLimit,
   listAllAppsForAdmin,
   listApps,
@@ -16,6 +17,7 @@ import { dockerLoginIfNeeded } from './docker';
 import { validateEnv } from './env';
 import { logger } from './logger';
 import { requirePrivilegedUser } from './middleware/neon-employee-auth';
+import { listUsersForAdmin, updateUserForAdmin } from './apps/admin/users';
 
 config({ path: '.env' });
 validateEnv();
@@ -37,6 +39,22 @@ app.get(
   { onRequest: [app.authenticate, requirePrivilegedUser] },
   listAllAppsForAdmin,
 );
+app.get(
+  '/admin/apps/:id',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  getAppByIdForAdmin,
+);
+
+app.get(
+  '/admin/users',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  listUsersForAdmin,
+);
+app.put(
+  '/admin/users/:id',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  updateUserForAdmin,
+);
 
 app.post(
   '/message',
@@ -52,6 +70,14 @@ app.get('/message-limit', authHandler, getUserMessageLimit);
 app.get('/deployment-status/:id', authHandler, getKoyebDeploymentEndpoint);
 
 app.post('/analytics/event', authHandler, sendAnalyticsEvent);
+
+app.get('/health', () => {
+  return {
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  };
+});
 
 export const start = async () => {
   try {

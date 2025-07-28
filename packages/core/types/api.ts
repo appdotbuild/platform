@@ -72,6 +72,15 @@ export type App = {
   appUrl?: string | null;
 };
 
+export type User = {
+  id: string;
+  email: string;
+  name: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  rawJson: string;
+};
+
 export type TemplateId = 'trpc_agent' | 'nicegui_agent' | 'laravel_agent';
 
 export type DeploymentState = 'HEALTHY' | 'ERROR' | 'STOPPING';

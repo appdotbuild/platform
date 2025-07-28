@@ -8,7 +8,9 @@ import { checkMessageUsageLimit } from './message-limit';
 export async function listApps(
   request: FastifyRequest,
   reply: FastifyReply,
-): Promise<Paginated<Pick<App, 'id' | 'appName' | 'name' | 'createdAt'>>> {
+): Promise<
+  Paginated<Pick<App, 'id' | 'appName' | 'name' | 'techStack' | 'createdAt'>>
+> {
   const user = request.user;
 
   const { dailyMessageLimit, nextResetTime, remainingMessages, currentUsage } =
@@ -36,7 +38,7 @@ export async function listApps(
   const pageNum = Math.max(1, Number(page));
   const offset = (pageNum - 1) * pagesize;
 
-  const { id, appName, name, createdAt } = getTableColumns(apps);
+  const { id, appName, name, createdAt, techStack } = getTableColumns(apps);
 
   const countResultP = db
     .select({ count: sql`count(*)` })
@@ -44,7 +46,7 @@ export async function listApps(
     .where(eq(apps.ownerId, user.id));
 
   const appsP = db
-    .select({ id, appName, name, createdAt })
+    .select({ id, appName, name, createdAt, techStack })
     .from(apps)
     .where(eq(apps.ownerId, user.id))
     .orderBy(desc(apps.createdAt))

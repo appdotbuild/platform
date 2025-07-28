@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: E2E Tests - Staging
 
 on:
   deployment_status:
@@ -6,11 +6,27 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  run-e2e:
+  setup:
     if: >
       github.event_name == 'deployment_status' &&
       github.event.deployment_status.state == 'success' &&
-      contains(github.event.deployment.environment, 'platform-web')
+      contains(github.event.deployment.environment, 'Staging - platform-web')
+    name: Setup
+    outputs:
+      branch: ${{ steps.branch_name.outputs.current_branch }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get branch name
+        id: branch_name
+        uses: tj-actions/branch-names@v8
+
+  run-e2e:
+    needs: setup
+    if: >
+      github.event_name == 'deployment_status' &&
+      github.event.deployment_status.state == 'success' &&
+      contains(github.event.deployment.environment, 'Staging - platform-web')
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.54.0-noble
@@ -49,9 +65,6 @@ jobs:
           role-session-name: 'github-actions'
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Log environment
-        run: echo "Running tests"
-
       - name: Run tests
         run: bun run e2e:test:ci
         env:
@@ -65,14 +78,23 @@ jobs:
 
       - name: Upload Playwright Report to S3
         if: always()
+        env:
+          BUCKET_NAME: ${{ secrets.E2E_REPORT_BUCKET }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           REPORT_DIR="./apps/web/playwright-report"
+          REPORT_DIR2="./apps/web/playwright-report2"
+
           if [ -d "$REPORT_DIR" ]; then
-            REF="${{ github.event.deployment.ref }}"
+            REF="${{ needs.setup.outputs.branch }}"
             RUN_ID=${{ github.run_id }}
 
             S3_PATH="s3://${BUCKET_NAME}/${REF}/${RUN_ID}/"
             aws s3 cp --recursive "$REPORT_DIR" "$S3_PATH"
+
+            if [ -d "$REPORT_DIR2" ]; then
+              aws s3 cp --recursive "$REPORT_DIR2" "$S3_PATH"
+            fi
 
             REPORT_URL="https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${REF}/${RUN_ID}/index.html"
             echo "✅ Playwright report uploaded to: $REPORT_URL"

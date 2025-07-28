@@ -26,17 +26,19 @@ export const ToggleFilterButton = ({
 
   return (
     <Button
-      variant={isSelected ? 'secondary' : 'ghost'}
+      variant={isSelected ? 'secondary' : 'outline'}
       onClick={handleClick}
       className={cn(
         'cursor-pointer',
         'flex flex-row items-center gap-2',
+        'hover:bg-accent hover:text-accent-foreground',
+        'transition-colors',
         className,
       )}
       size={size}
     >
       {translate(label, { _: label })}
-      {isSelected && <CircleX className="opacity-50" />}
+      {isSelected && <CircleX className="h-3 w-3 opacity-70" />}
     </Button>
   );
 };

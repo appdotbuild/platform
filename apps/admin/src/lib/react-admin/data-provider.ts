@@ -20,7 +20,7 @@ import type {
   UpdateResult,
   RaRecord,
 } from 'ra-core';
-import type { App, Paginated } from '@appdotbuild/core/types/api';
+import type { App, Paginated, User } from '@appdotbuild/core/types/api';
 import axios, { type AxiosInstance } from 'axios';
 import { stackClientApp } from '@/stack';
 
@@ -28,6 +28,12 @@ const PLATFORM_API_URL = import.meta.env.VITE_PLATFORM_API_URL;
 
 // React-admin compatible App type with string dates
 type AppRecord = Omit<App, 'createdAt' | 'updatedAt'> & {
+  createdAt: string;
+  updatedAt: string;
+};
+
+// React-admin compatible User type with string dates
+type UserRecord = Omit<User, 'createdAt' | 'updatedAt'> & {
   createdAt: string;
   updatedAt: string;
 };
@@ -81,6 +87,15 @@ function convertAppToRecord(app: App): AppRecord {
   };
 }
 
+// Helper function to convert User to UserRecord
+function convertUserToRecord(user: User): UserRecord {
+  return {
+    ...user,
+    createdAt: new Date(user.createdAt).toISOString(),
+    updatedAt: new Date(user.updatedAt).toISOString(),
+  };
+}
+
 // Resource-specific implementations
 const resourceHandlers = {
   apps: {
@@ -114,7 +129,7 @@ const resourceHandlers = {
     },
 
     getOne: async (params: GetOneParams): Promise<GetOneResult<AppRecord>> => {
-      const response = await apiClient.get<App>(`/apps/${params.id}`);
+      const response = await apiClient.get<App>(`/admin/apps/${params.id}`);
       return {
         data: convertAppToRecord(response.data),
       };
@@ -211,6 +226,121 @@ const resourceHandlers = {
       return {
         data: params.ids,
       };
+    },
+  },
+  users: {
+    getList: async (
+      params: GetListParams,
+    ): Promise<GetListResult<UserRecord>> => {
+      const { page, perPage } = params.pagination || { page: 1, perPage: 10 };
+      const { field, order } = params.sort || {
+        field: 'createdAt',
+        order: 'DESC',
+      };
+      const { q: search } = params.filter || {};
+
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: perPage.toString(),
+        ...(search && { search }),
+        ...(field && { sort: field }),
+        ...(order && { order: order.toLowerCase() }),
+      });
+
+      const response = await apiClient.get<Paginated<User>>(
+        `/admin/users?${queryParams}`,
+      );
+
+      return {
+        data: response.data.data.map(convertUserToRecord),
+        total: response.data.pagination.total,
+      };
+    },
+
+    getOne: async (
+      _params: GetOneParams,
+    ): Promise<GetOneResult<UserRecord>> => {
+      // Users are managed by Stack Auth, we only have read access
+      // This would require a separate endpoint for individual user lookup
+      throw new Error('Individual user lookup not supported');
+    },
+
+    getMany: async (
+      _params: GetManyParams,
+    ): Promise<GetManyResult<UserRecord>> => {
+      // For users, we'll need to make individual requests or filter from the list
+      // Since we only have the list endpoint, we'll need to fetch and filter
+      throw new Error('Bulk user lookup not supported');
+    },
+
+    getManyReference: async (
+      params: GetManyReferenceParams,
+    ): Promise<GetManyReferenceResult<UserRecord>> => {
+      // This would be used to get users related to another resource
+      // Use the same as getList but with reference filtering
+      const { q: search, ...otherFilters } = params.filter || {};
+
+      const queryParams = new URLSearchParams({
+        ...(search && { search }),
+        [params.target]: params.id.toString(),
+        ...Object.entries(otherFilters).reduce((acc, [key, value]) => {
+          if (value !== undefined && value !== null) {
+            acc[key] = value.toString();
+          }
+          return acc;
+        }, {} as Record<string, string>),
+      });
+
+      const response = await apiClient.get<Paginated<User>>(
+        `/admin/users?${queryParams}`,
+      );
+
+      return {
+        data: response.data.data.map(convertUserToRecord),
+        total: response.data.pagination.total,
+      };
+    },
+
+    create: async (
+      _params: CreateParams,
+    ): Promise<CreateResult<UserRecord>> => {
+      // Users are managed by Stack Auth, not directly creatable via our API
+      throw new Error('User creation not supported - managed by Stack Auth');
+    },
+
+    update: async (params: UpdateParams): Promise<UpdateResult<UserRecord>> => {
+      const response = await apiClient.put<User>(
+        `/admin/users/${params.id}`,
+        params.data,
+      );
+      return {
+        data: convertUserToRecord(response.data),
+      };
+    },
+
+    updateMany: async (
+      _params: UpdateManyParams,
+    ): Promise<UpdateManyResult> => {
+      // Users are managed by Stack Auth, not directly updatable via our API
+      throw new Error(
+        'Bulk user updates not supported - managed by Stack Auth',
+      );
+    },
+
+    delete: async (
+      _params: DeleteParams,
+    ): Promise<DeleteResult<UserRecord>> => {
+      // Users are managed by Stack Auth, not directly deletable via our API
+      throw new Error('User deletion not supported - managed by Stack Auth');
+    },
+
+    deleteMany: async (
+      _params: DeleteManyParams,
+    ): Promise<DeleteManyResult> => {
+      // Users are managed by Stack Auth, not directly deletable via our API
+      throw new Error(
+        'Bulk user deletion not supported - managed by Stack Auth',
+      );
     },
   },
 };

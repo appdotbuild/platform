@@ -1,5 +1,6 @@
 import { DataTable } from '@/components/admin/data-table';
 import { List } from '@/components/admin/list';
+import { IdCell } from '@/components/admin/id-cell';
 import {
   Tooltip,
   TooltipContent,
@@ -9,8 +10,7 @@ import {
 import { HashAvatar } from '@appdotbuild/design';
 import { Badge } from '@appdotbuild/design';
 import { Button } from '@appdotbuild/design';
-import { Copy, ExternalLink, FileText } from 'lucide-react';
-import { toast } from 'sonner';
+import { ExternalLink, FileText } from 'lucide-react';
 import { format } from 'timeago.js';
 import {
   Dialog,
@@ -27,7 +27,7 @@ import {
   DeployStatus,
   DeployStatusType,
 } from '@appdotbuild/core/agent-message';
-import { TextInput, ToggleFilterButton } from '@/components/admin';
+import { TextInput, ToggleFilterButton, FilterBar } from '@/components/admin';
 import { stackClientApp } from '@/stack';
 
 // Wrapper component that can access list context
@@ -73,7 +73,13 @@ function AppListContent() {
         source="updatedAt"
         field={UpdatedAtCell}
       />
-      <DataTable.Col label="Trace ID" source="traceId" field={TraceIdCell} />
+      <DataTable.Col
+        label="Trace ID"
+        source="traceId"
+        field={(props) => (
+          <IdCell {...props} label="Trace ID" showGrafanaLink={true} />
+        )}
+      />
       <DataTable.Col label="Raw JSON" field={RawJsonCell} />
       <DataTable.Col label="Actions" field={ActionsCell} />
     </DataTable>
@@ -87,15 +93,24 @@ function MyAppsFilter() {
 }
 
 const appsFilters = [
-  <div key="search" className="flex items-center justify-between w-full ">
-    <TextInput
-      source="q"
-      size={30}
-      placeholder="Search (owner, name, traceId)"
-      label="Search"
-    />
-    <MyAppsFilter />
-  </div>,
+  <FilterBar
+    key="filter-bar"
+    filterLabels={{
+      q: 'Search',
+      ownerId: 'My Apps',
+    }}
+  >
+    <div className="flex-1 min-w-0">
+      <TextInput
+        source="q"
+        placeholder="Search apps by owner, name, or trace ID..."
+        label="Search"
+      />
+    </div>
+    <div className="flex items-end gap-3 flex-shrink-0 pb-1">
+      <MyAppsFilter />
+    </div>
+  </FilterBar>,
 ];
 
 export default function AppList() {
@@ -240,63 +255,6 @@ function UpdatedAtCell({ source }: { source: string }) {
 
   const date = record[source] as string;
   return <span>{format(date)}</span>;
-}
-
-function TraceIdCell({ source }: { source: string }) {
-  const record = useRecordContext();
-  if (!record) return null;
-
-  const traceId = record[source] as string | undefined;
-
-  if (!traceId) return <span>-</span>;
-
-  const truncatedTraceId =
-    traceId.length > 12 ? `${traceId.substring(0, 12)}...` : traceId;
-
-  const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    try {
-      await navigator.clipboard.writeText(traceId);
-      toast.success('Trace ID copied to clipboard');
-    } catch (err) {
-      console.error('Failed to copy trace ID:', err);
-      toast.error('Failed to copy trace ID');
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="cursor-help">{truncatedTraceId}</span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{traceId}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCopy}
-              className="h-6 w-6 p-0"
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Copy trace ID</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </div>
-  );
 }
 
 function ClientSourceCell({ source }: { source: string }) {

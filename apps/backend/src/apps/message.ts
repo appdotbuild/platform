@@ -283,6 +283,7 @@ export async function postMessage(
           'info',
         );
         appName = application[0]!.appName;
+        templateId = application[0]!.techStack as TemplateId;
 
         if (application[0]!.repositoryUrl) {
           githubEntity.repositoryUrl = application[0]!.repositoryUrl;
@@ -297,6 +298,7 @@ export async function postMessage(
         conversationManager.addMessagesToConversation(
           applicationId,
           messagesFromHistory,
+          templateId,
         );
 
         body = {
@@ -324,6 +326,7 @@ export async function postMessage(
         // for temporary apps, we need to get the previous request from the memory
         const existingConversation =
           conversationManager.getConversation(applicationId);
+        templateId = existingConversation?.techStack || templateId;
         if (!existingConversation) {
           streamLog(
             {
@@ -367,6 +370,7 @@ export async function postMessage(
     conversationManager.addUserMessageToConversation(
       applicationId,
       requestBody.message,
+      templateId,
     );
 
     // Save user message to database immediately for permanent apps
@@ -548,6 +552,7 @@ export async function postMessage(
             conversationManager.addConversation(
               applicationId,
               completeParsedMessage,
+              templateId,
             );
 
             // save agent messages to database immediately
@@ -562,6 +567,7 @@ export async function postMessage(
             const parsedCLIMessage = {
               ...completeParsedMessage,
               appId: applicationId,
+              techStack: templateId,
               message: minimalMessage,
             };
 
@@ -696,6 +702,7 @@ export async function postMessage(
 
                 const { newAppName } = await appCreation({
                   applicationId: applicationId!,
+                  techStack: templateId,
                   appName,
                   traceId: traceId!,
                   agentState: completeParsedMessage.message.agentState,
@@ -984,6 +991,7 @@ function storeDevLogs(
 async function appCreation({
   applicationId,
   appName,
+  techStack,
   traceId,
   agentState,
   githubEntity,
@@ -995,6 +1003,7 @@ async function appCreation({
 }: {
   applicationId: string;
   appName: string;
+  techStack: TemplateId;
   traceId: TraceId;
   agentState: AgentSseEvent['message']['agentState'];
   githubEntity: GithubEntityInitialized;
@@ -1033,6 +1042,7 @@ async function appCreation({
     databricksApiKey: requestBody.databricksApiKey,
     databricksHost: requestBody.databricksHost,
     files,
+    techStack,
   });
 
   streamLog(

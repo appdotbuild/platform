@@ -14,6 +14,36 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { apps, db } from '../../db';
 import type { App } from '../../db/schema';
 
+export async function getAppByIdForAdmin(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<Omit<App, 'agentState'> | null> {
+  const { id } = request.params as { id: string };
+
+  if (!id) {
+    return reply.status(400).send({
+      error: 'App ID is required',
+    });
+  }
+
+  const { agentState, ...columns } = getTableColumns(apps);
+
+  const appsResult = await db
+    .select(columns)
+    .from(apps)
+    .where(eq(apps.id, id))
+    .limit(1);
+  const app = appsResult[0];
+
+  if (!app) {
+    return reply.status(404).send({
+      error: 'App not found',
+    });
+  }
+
+  return app;
+}
+
 export async function listAllAppsForAdmin(
   request: FastifyRequest,
   reply: FastifyReply,

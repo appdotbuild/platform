@@ -9,6 +9,7 @@ import {
 } from '../github';
 import { Instrumentation } from '../instrumentation';
 import type { FileData } from '../utils';
+import type { TemplateId } from '@appdotbuild/core';
 
 export interface CreateAppParams {
   applicationId?: string; // Optional - if not provided, will generate a new one
@@ -21,6 +22,7 @@ export interface CreateAppParams {
   databricksApiKey?: string;
   databricksHost?: string;
   files?: FileData[];
+  techStack: TemplateId;
 }
 
 export interface CreateAppResult {
@@ -44,6 +46,7 @@ export async function createApp({
   agentState,
   databricksApiKey,
   databricksHost,
+  techStack,
   files = [],
 }: CreateAppParams): Promise<CreateAppResult> {
   const applicationId = providedApplicationId || uuidv4();
@@ -111,6 +114,7 @@ export async function createApp({
     githubUsername: githubEntity.githubUsername || null,
     databricksApiKey: databricksApiKey || null,
     databricksHost: databricksHost || null,
+    techStack,
   });
 
   app.log.info({
