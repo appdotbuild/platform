@@ -28,3 +28,4 @@ export * from './table';
 export * from './textarea';
 export * from './tabs';
 export * from './tooltip';
+export * from './tabs';

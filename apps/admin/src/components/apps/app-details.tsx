@@ -20,6 +20,7 @@ import {
   createNeonProjectLink,
   createGrafanaLink,
 } from './apps-utils';
+import { LogsSection } from './logs-section';
 
 export default function AppShow() {
   return (
@@ -310,6 +311,12 @@ function AppDetailsView() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Application Logs Section */}
+      <LogsSection
+        appId={String(record.id)}
+        appName={record.name || record.appName}
+      />
     </div>
   );
 }
