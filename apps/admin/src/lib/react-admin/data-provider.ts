@@ -23,6 +23,11 @@ import type {
 import type { App, Paginated, User } from '@appdotbuild/core/types/api';
 import axios, { type AxiosInstance } from 'axios';
 import { stackClientApp } from '@/stack';
+import type {
+  LogFolder,
+  TraceLogMetadata,
+  SingleIterationJsonData,
+} from '@/components/apps/logs-types';
 
 const PLATFORM_API_URL = import.meta.env.VITE_PLATFORM_API_URL;
 
@@ -98,6 +103,280 @@ function convertUserToRecord(user: User): UserRecord {
 
 // Resource-specific implementations
 const resourceHandlers = {
+  'logs-metadata': {
+    getList: async (params: GetListParams): Promise<GetListResult<any>> => {
+      const { appId } = params.filter || {};
+      if (!appId) {
+        throw new Error('appId is required for logs-metadata');
+      }
+
+      try {
+        // First get log folders to find trace IDs
+        const folders = await apiClient.get<LogFolder[]>(
+          `/admin/apps/${appId}/logs`,
+        );
+
+        // Group folders by trace ID and get metadata for each unique trace
+        const traceIds = new Set<string>();
+        folders.data.forEach((folder) => {
+          traceIds.add(folder.traceId);
+        });
+
+        // Get metadata for each trace
+        const metadataPromises = Array.from(traceIds).map((traceId) =>
+          apiClient
+            .get<TraceLogMetadata>(
+              `/admin/apps/${appId}/logs/${traceId}/metadata`,
+            )
+            .then((response) => ({
+              ...response.data,
+              id: response.data.traceId,
+            }))
+            .catch((err) => {
+              console.error(
+                `Failed to get metadata for trace ${traceId}:`,
+                err,
+              );
+              return null;
+            }),
+        );
+
+        const metadataResults = await Promise.all(metadataPromises);
+        const validMetadata = metadataResults.filter(
+          (metadata): metadata is TraceLogMetadata & { id: string } =>
+            metadata !== null && metadata.totalIterations > 0,
+        );
+
+        return {
+          data: validMetadata,
+          total: validMetadata.length,
+        };
+      } catch (error) {
+        console.error('Error loading trace metadata:', error);
+        throw new Error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to load trace metadata',
+        );
+      }
+    },
+
+    getOne: async (params: GetOneParams): Promise<GetOneResult<any>> => {
+      // For logs-metadata, getOne would return a single trace's metadata
+      // The ID should be in format "appId:traceId"
+      const [appId, traceId] = params.id.toString().split(':');
+      if (!appId || !traceId) {
+        throw new Error('Invalid ID format. Expected "appId:traceId"');
+      }
+
+      try {
+        const response = await apiClient.get<TraceLogMetadata>(
+          `/admin/apps/${appId}/logs/${traceId}/metadata`,
+        );
+        return {
+          data: { ...response.data, id: params.id },
+        };
+      } catch (error) {
+        console.error('Error loading trace metadata:', error);
+        throw new Error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to load trace metadata',
+        );
+      }
+    },
+
+    getMany: async (params: GetManyParams): Promise<GetManyResult<any>> => {
+      // Not typically needed for logs, but implementing for completeness
+      const results = await Promise.all(
+        params.ids.map((id) =>
+          resourceHandlers['logs-metadata']
+            .getOne({ id } as GetOneParams)
+            .then((result) => result.data)
+            .catch(() => null),
+        ),
+      );
+
+      return {
+        data: results.filter(Boolean),
+      };
+    },
+
+    getManyReference: async (): Promise<GetManyReferenceResult<any>> => {
+      throw new Error('getManyReference not supported for logs-metadata');
+    },
+
+    create: async (): Promise<CreateResult<any>> => {
+      throw new Error('create not supported for logs-metadata');
+    },
+
+    update: async (): Promise<UpdateResult<any>> => {
+      throw new Error('update not supported for logs-metadata');
+    },
+
+    updateMany: async (): Promise<UpdateManyResult> => {
+      throw new Error('updateMany not supported for logs-metadata');
+    },
+
+    delete: async (): Promise<DeleteResult<any>> => {
+      throw new Error('delete not supported for logs-metadata');
+    },
+
+    deleteMany: async (): Promise<DeleteManyResult> => {
+      throw new Error('deleteMany not supported for logs-metadata');
+    },
+  },
+
+  'logs-iteration': {
+    getList: async (params: GetListParams): Promise<GetListResult<any>> => {
+      const { appId, preloadedMetadata } = params.filter || {};
+      if (!appId) {
+        throw new Error('appId is required for logs-iteration');
+      }
+
+      try {
+        let traceMetadata: (TraceLogMetadata & { id: string })[];
+
+        // Use pre-loaded metadata if provided, otherwise fetch it
+        if (preloadedMetadata && Array.isArray(preloadedMetadata)) {
+          traceMetadata = preloadedMetadata.map((trace: TraceLogMetadata) => ({
+            ...trace,
+            id: trace.traceId,
+          }));
+        } else {
+          // Fallback to fetching metadata if not provided
+          const metadataResult = await resourceHandlers[
+            'logs-metadata'
+          ].getList({
+            filter: { appId },
+            pagination: { page: 1, perPage: 1000 },
+            sort: { field: 'traceId', order: 'ASC' },
+          });
+          traceMetadata = metadataResult.data as (TraceLogMetadata & {
+            id: string;
+          })[];
+        }
+
+        // Create list of all iterations to fetch
+        const iterationsToFetch = traceMetadata.flatMap((trace) =>
+          trace.iterations.map((iteration) => ({
+            traceId: trace.traceId,
+            iteration: iteration.iteration,
+            id: `${appId}:${trace.traceId}:${iteration.iteration}`,
+          })),
+        );
+
+        // Fetch all iterations in parallel
+        const iterationPromises = iterationsToFetch.map((item) =>
+          apiClient
+            .get<SingleIterationJsonData>(
+              `/admin/apps/${appId}/logs/${item.traceId}/iterations/${item.iteration}/json`,
+            )
+            .then((response) => ({
+              ...response.data,
+              id: item.id,
+            }))
+            .catch((err) => {
+              console.error(
+                `Failed to get iteration data for ${item.id}:`,
+                err,
+              );
+              return {
+                id: item.id,
+                error: err.message || 'Failed to load iteration data',
+                traceId: item.traceId,
+                iteration: item.iteration,
+                jsonFiles: {},
+                totalFiles: 0,
+                folderName: '',
+                timestamp: '',
+              };
+            }),
+        );
+
+        const iterationResults = await Promise.all(iterationPromises);
+
+        return {
+          data: iterationResults,
+          total: iterationResults.length,
+        };
+      } catch (error) {
+        console.error('Error loading iterations:', error);
+        throw new Error(
+          error instanceof Error ? error.message : 'Failed to load iterations',
+        );
+      }
+    },
+
+    getOne: async (params: GetOneParams): Promise<GetOneResult<any>> => {
+      // For logs-iteration, ID should be in format "appId:traceId:iteration"
+      const [appId, traceId, iterationStr] = params.id.toString().split(':');
+      const iteration = parseInt(iterationStr, 10);
+
+      if (!appId || !traceId || isNaN(iteration)) {
+        throw new Error(
+          'Invalid ID format. Expected "appId:traceId:iteration"',
+        );
+      }
+
+      try {
+        const response = await apiClient.get<SingleIterationJsonData>(
+          `/admin/apps/${appId}/logs/${traceId}/iterations/${iteration}/json`,
+        );
+        return {
+          data: { ...response.data, id: params.id },
+        };
+      } catch (error) {
+        console.error('Error loading iteration data:', error);
+        throw new Error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to load iteration data',
+        );
+      }
+    },
+
+    getMany: async (params: GetManyParams): Promise<GetManyResult<any>> => {
+      // Not typically needed for logs, but implementing for completeness
+      const results = await Promise.all(
+        params.ids.map((id) =>
+          resourceHandlers['logs-iteration']
+            .getOne({ id } as GetOneParams)
+            .then((result) => result.data)
+            .catch(() => null),
+        ),
+      );
+
+      return {
+        data: results.filter(Boolean),
+      };
+    },
+
+    getManyReference: async (): Promise<GetManyReferenceResult<any>> => {
+      throw new Error('getManyReference not supported for logs-iteration');
+    },
+
+    create: async (): Promise<CreateResult<any>> => {
+      throw new Error('create not supported for logs-iteration');
+    },
+
+    update: async (): Promise<UpdateResult<any>> => {
+      throw new Error('update not supported for logs-iteration');
+    },
+
+    updateMany: async (): Promise<UpdateManyResult> => {
+      throw new Error('updateMany not supported for logs-iteration');
+    },
+
+    delete: async (): Promise<DeleteResult<any>> => {
+      throw new Error('delete not supported for logs-iteration');
+    },
+
+    deleteMany: async (): Promise<DeleteManyResult> => {
+      throw new Error('deleteMany not supported for logs-iteration');
+    },
+  },
+
   apps: {
     getList: async (
       params: GetListParams,
@@ -345,8 +624,19 @@ const resourceHandlers = {
   },
 };
 
+// Extended data provider interface with custom logs methods
+export interface ExtendedDataProvider extends DataProvider {
+  getLogMetadata: (appId: string) => Promise<TraceLogMetadata[]>;
+  getSingleIterationJson: (
+    appId: string,
+    traceId: string,
+    iteration: number,
+  ) => Promise<SingleIterationJsonData>;
+  getLogFolders: (appId: string) => Promise<LogFolder[]>;
+}
+
 // Main data provider implementation
-export const dataProvider: DataProvider = {
+export const dataProvider: ExtendedDataProvider = {
   getList: async <RecordType extends RaRecord = any>(
     resource: string,
     params: GetListParams,
@@ -458,5 +748,83 @@ export const dataProvider: DataProvider = {
       throw new Error(`Unknown resource: ${resource}`);
     }
     return handler.deleteMany(params);
+  },
+
+  // Custom logs methods
+  getLogMetadata: async (appId: string): Promise<TraceLogMetadata[]> => {
+    try {
+      // First get log folders to find trace IDs
+      const folders = await apiClient.get<LogFolder[]>(
+        `/admin/apps/${appId}/logs`,
+      );
+
+      // Group folders by trace ID and get metadata for each unique trace
+      const traceIds = new Set<string>();
+      folders.data.forEach((folder) => {
+        traceIds.add(folder.traceId);
+      });
+
+      // Get metadata for each trace
+      const metadataPromises = Array.from(traceIds).map((traceId) =>
+        apiClient
+          .get<TraceLogMetadata>(
+            `/admin/apps/${appId}/logs/${traceId}/metadata`,
+          )
+          .then((response) => response.data)
+          .catch((err) => {
+            console.error(`Failed to get metadata for trace ${traceId}:`, err);
+            return null;
+          }),
+      );
+
+      const metadataResults = await Promise.all(metadataPromises);
+      const validMetadata = metadataResults.filter(
+        (metadata): metadata is TraceLogMetadata =>
+          metadata !== null && metadata.totalIterations > 0,
+      );
+
+      return validMetadata;
+    } catch (error) {
+      console.error('Error loading trace metadata:', error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to load trace metadata',
+      );
+    }
+  },
+
+  getSingleIterationJson: async (
+    appId: string,
+    traceId: string,
+    iteration: number,
+  ): Promise<SingleIterationJsonData> => {
+    try {
+      const response = await apiClient.get<SingleIterationJsonData>(
+        `/admin/apps/${appId}/logs/${traceId}/iterations/${iteration}/json`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error loading iteration data:', error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to load iteration data',
+      );
+    }
+  },
+
+  getLogFolders: async (appId: string): Promise<LogFolder[]> => {
+    try {
+      const response = await apiClient.get<LogFolder[]>(
+        `/admin/apps/${appId}/logs`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error loading log folders:', error);
+      throw new Error(
+        error instanceof Error ? error.message : 'Failed to load log folders',
+      );
+    }
   },
 };

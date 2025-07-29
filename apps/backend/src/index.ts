@@ -18,6 +18,16 @@ import { validateEnv } from './env';
 import { logger } from './logger';
 import { requirePrivilegedUser } from './middleware/neon-employee-auth';
 import { listUsersForAdmin, updateUserForAdmin } from './apps/admin/users';
+import {
+  getAppLogFolders,
+  getAppLogFiles,
+  getAppLogFileUrl,
+  getAppLogFilesWithUrls,
+  getAppTraceLogJson,
+  getAppAllTraceLogs,
+  getAppTraceLogMetadata,
+  getAppSingleIterationJsonData,
+} from './apps/admin/app-logs';
 
 config({ path: '.env' });
 validateEnv();
@@ -54,6 +64,52 @@ app.put(
   '/admin/users/:id',
   { onRequest: [app.authenticate, requirePrivilegedUser] },
   updateUserForAdmin,
+);
+
+// Admin log routes
+app.get(
+  '/admin/apps/:id/logs',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  getAppLogFolders,
+);
+app.get(
+  '/admin/apps/:id/logs/:folderId/files',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  getAppLogFiles,
+);
+app.get(
+  '/admin/apps/:id/logs/:folderId/files/:fileName/url',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  getAppLogFileUrl,
+);
+app.get(
+  '/admin/apps/:id/logs/:folderId/files-with-urls',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  getAppLogFilesWithUrls,
+);
+
+// New JSON log routes
+app.get(
+  '/admin/apps/:id/logs/:traceId/json',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  getAppTraceLogJson,
+);
+app.get(
+  '/admin/apps/:id/trace-logs',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  getAppAllTraceLogs,
+);
+
+// New iteration-based log routes
+app.get(
+  '/admin/apps/:id/logs/:traceId/metadata',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  getAppTraceLogMetadata,
+);
+app.get(
+  '/admin/apps/:id/logs/:traceId/iterations/:iteration/json',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  getAppSingleIterationJsonData,
 );
 
 app.post(
@@ -95,7 +151,7 @@ export const start = async () => {
 if (process.env.NODE_ENV !== 'test') {
   start()
     .then(() => {
-      return dockerLoginIfNeeded();
+      // return dockerLoginIfNeeded();
     })
     .catch((err) => {
       logger.error('Failed to login to ECR', { error: err });

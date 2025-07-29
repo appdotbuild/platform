@@ -18,6 +18,10 @@ Always do mobile first design.
 - Use react-router for routing.
 - Use react-hook-form for form handling.
 
+### Components Specifics
+
+- For `copy` buttons, use `toast` for success and error messages.
+
 ### Docs
 
 Make sure to use React Admin [docs](https://marmelab.com/react-admin/documentation.html) for all the components.

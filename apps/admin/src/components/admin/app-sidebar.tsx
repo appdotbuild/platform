@@ -117,7 +117,6 @@ export const ResourceMenuItem = ({
 
       // Clear filters if we're in a list context
       if (storeContext?.reset) {
-        console.log('clearing filters');
         storeContext.reset();
       }
 
