@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { sendIdentify } from '~/external/segment';
 import { isAppPage } from '~/utils/router-checker';
 import { cn } from '~/lib/utils';
+import { useLayout } from '~/hooks/useLayout';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const user = useUser();
@@ -13,6 +14,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const hideFooter = isAppPage(pathname);
   const isHomePage = pathname === '/';
   const isPublicHome = isHomePage && !user;
+  const { mxAuto } = useLayout();
 
   useEffect(() => {
     if (user?.id) {
@@ -39,7 +41,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="mx-auto flex flex-col h-screen w-5/6 md:w-4/5 gap-2 overflow-hidden">
+    <div
+      className={cn(
+        'flex flex-col h-screen w-5/6 md:w-4/5 gap-2 overflow-hidden',
+        {
+          'mx-auto': mxAuto,
+        },
+      )}
+    >
       {content}
     </div>
   );

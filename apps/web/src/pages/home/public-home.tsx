@@ -20,7 +20,7 @@ export function PublicHome() {
   return (
     <section
       data-testid="public-home"
-      className="hero relative grow overflow-hidden"
+      className="hero relative grow overflow-y-auto overflow-x-hidden"
     >
       <div className="relative mx-auto flex w-full max-w-[1216px] flex-col px-5 pb-28 pt-[125px] md:px-8 md:pb-40 md:pt-[138px] lg:pb-44 lg:pt-[152px] xl:max-w-[1280px] xl:px-8 xl:pb-48 xl:pt-[156px]">
         <div className="relative md:mx-auto md:max-w-[514px] md:px-0 lg:max-w-[640px]">

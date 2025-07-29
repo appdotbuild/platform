@@ -71,7 +71,7 @@ export function ChatInfoContent({ app, hasLoadedOnce }: ChatInfoContentProps) {
       <div className="p-4">
         {/* App Header */}
         <div className="flex items-start md:items-center justify-between">
-          <div className="flex flex-col items-start md:flex-row md:items-center gap-3">
+          <div className="flex items-start flex-row md:items-center gap-2">
             <h2 className="text-sm md:text-lg font-semibold text-foreground">
               {app?.appName || 'Untitled App'}
             </h2>
@@ -88,7 +88,9 @@ export function ChatInfoContent({ app, hasLoadedOnce }: ChatInfoContentProps) {
                         deploymentStatus.animate ? 'animate-spin' : ''
                       }`,
                     })}
-                    {deploymentStatus.text}
+                    <span className="hidden sm:inline">
+                      {deploymentStatus.text}
+                    </span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -99,7 +101,7 @@ export function ChatInfoContent({ app, hasLoadedOnce }: ChatInfoContentProps) {
           </div>
 
           {/* Quick Actions */}
-          <div className="flex flex-col md:flex-row gap-2">
+          <div className="flex flex-row gap-2">
             {app?.repositoryUrl && (
               <a
                 href={app.repositoryUrl}
@@ -108,8 +110,6 @@ export function ChatInfoContent({ app, hasLoadedOnce }: ChatInfoContentProps) {
                 className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg text-sm font-medium text-foreground transition-colors"
               >
                 <GitBranch className="w-4 h-4" />
-                <span className="hidden sm:inline">View Code</span>
-                <span className="sm:hidden">Code</span>
               </a>
             )}
 
@@ -121,7 +121,6 @@ export function ChatInfoContent({ app, hasLoadedOnce }: ChatInfoContentProps) {
                 className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg text-sm font-medium transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
-                Visit App
               </a>
             )}
           </div>
