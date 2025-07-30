@@ -17,13 +17,15 @@ test.describe('chat', () => {
     await chatInput.fill('What can you build?');
     await chatInput.press('Enter');
 
-    const thinking = page.getByText('Thinking...');
+    const thinking = page.getByText('Thinking...').filter({ visible: true });
 
     await thinking.waitFor();
 
     expect(thinking).toBeVisible();
 
-    const moreInfo = page.getByText('I need more information to continue');
+    const moreInfo = page
+      .getByText('I need more information to continue')
+      .filter({ visible: true });
 
     await moreInfo.waitFor();
 

@@ -35,7 +35,7 @@ export function DesktopChat({
         <motion.div
           layout
           layoutId="chat-container"
-          className="flex flex-col items-center w-full h-full overflow-hidden relative"
+          className="flex flex-col items-center w-full h-full overflow-hidden relative hidden xl:flex"
           transition={{ duration: 0.2, type: 'spring', bounce: 0 }}
         >
           <div className="flex flex-col items-center w-full h-full mt-24 overflow-hidden">
