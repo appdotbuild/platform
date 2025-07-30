@@ -9,13 +9,16 @@ import { Button } from '@design/components/ui/button';
 import { ChatMessageLimit } from './chat-message-limit';
 import { ChatInput } from './chat-input';
 import { useRef, useState } from 'react';
+import type { DeployStatusType } from '@appdotbuild/core';
 
 export function DesktopChat({
   appUrl,
   renderContent,
+  deployStatus,
 }: {
   appUrl?: string | null;
   renderContent: () => React.ReactNode;
+  deployStatus?: DeployStatusType;
 }) {
   const [key, setKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -26,7 +29,7 @@ export function DesktopChat({
     }
   };
 
-  if (!appUrl) {
+  if (!appUrl || deployStatus !== 'deployed') {
     return (
       <AnimatePresence mode="popLayout">
         <motion.div

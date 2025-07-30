@@ -48,8 +48,16 @@ export function AppPage() {
 
   return (
     <>
-      <MobileChat appUrl={app?.appUrl} renderContent={renderContent} />
-      <DesktopChat appUrl={app?.appUrl} renderContent={renderContent} />
+      <MobileChat
+        appUrl={app?.appUrl}
+        renderContent={renderContent}
+        deployStatus={app?.deployStatus}
+      />
+      <DesktopChat
+        appUrl={app?.appUrl}
+        renderContent={renderContent}
+        deployStatus={app?.deployStatus}
+      />
     </>
   );
 }

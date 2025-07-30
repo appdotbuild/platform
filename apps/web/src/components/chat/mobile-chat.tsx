@@ -10,13 +10,16 @@ import { ChatInput } from './chat-input';
 import { ExternalLink, RotateCcw } from 'lucide-react';
 import { Button } from '@design/components/ui/button';
 import { useRef, useState } from 'react';
+import type { DeployStatusType } from '@appdotbuild/core';
 
 export function MobileChat({
   appUrl,
   renderContent,
+  deployStatus,
 }: {
   appUrl?: string | null;
   renderContent: () => React.ReactNode;
+  deployStatus?: DeployStatusType;
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [key, setKey] = useState(0);
@@ -35,7 +38,10 @@ export function MobileChat({
       <Tabs defaultValue="chat" className="w-full h-full">
         <TabsList>
           <TabsTrigger value="chat">Chat</TabsTrigger>
-          <TabsTrigger disabled={!appUrl} value="preview">
+          <TabsTrigger
+            disabled={!appUrl || deployStatus !== 'deployed'}
+            value="preview"
+          >
             Preview
           </TabsTrigger>
         </TabsList>
@@ -62,7 +68,7 @@ export function MobileChat({
           </motion.div>
         </TabsContent>
         <TabsContent value="preview" className="px-2 h-full">
-          {appUrl && (
+          {appUrl && deployStatus === 'deployed' && (
             <motion.div
               layout
               className="w-full h-full"
