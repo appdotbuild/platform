@@ -1,4 +1,8 @@
-import { createLazyRoute, useParams } from '@tanstack/react-router';
+import {
+  createLazyRoute,
+  useParams,
+  useNavigate,
+} from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { ChatContainer } from '~/components/chat/chat-container';
 import { ChatPageLoading } from '~/components/chat/chat-page-loading';
@@ -21,7 +25,8 @@ export function AppPage() {
   const { width } = useWindowSize();
   const { appId } = useParams({ from: '/apps/$appId' });
   const { setMxAuto } = useLayout();
-  const { isLoading, app } = useApp(appId);
+  const { isLoading, app, isError } = useApp(appId);
+  const navigate = useNavigate();
 
   useEffect(() => {
     sendPageView(AnalyticsEvents.PAGE_VIEW_APP);
@@ -34,6 +39,12 @@ export function AppPage() {
 
     return () => setMxAuto(true);
   }, [app?.appUrl, setMxAuto, width]);
+
+  useEffect(() => {
+    if (isError) {
+      navigate({ to: '/', replace: true });
+    }
+  }, [isError, navigate]);
 
   const renderContent = () => {
     if (isLoading && currentAppState === 'idle') {

@@ -11,6 +11,7 @@ export function useApp(appId: string) {
     data: app,
     isLoading,
     error,
+    isError,
   } = useQuery({
     queryKey: APP_QUERY_KEY(appId),
     queryFn: async () => {
@@ -27,5 +28,6 @@ export function useApp(appId: string) {
     app,
     isLoading,
     error,
+    isError,
   };
 }
