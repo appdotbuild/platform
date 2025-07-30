@@ -19,10 +19,16 @@ import {
   Maximize2,
   Clock,
   Search,
+  AlertTriangle,
 } from 'lucide-react';
 import { JsonViewer } from '@textea/json-viewer';
 import { toast } from 'sonner';
 import type { SingleIterationJsonData } from './logs-types';
+import {
+  iterationHasErrors,
+  countRuntimeErrors,
+  getErrorHighlights,
+} from './logs-utils';
 
 type JsonViewerModalProps = {
   isOpen: boolean;
@@ -39,6 +45,10 @@ export function JsonViewerModal({
 }: JsonViewerModalProps) {
   const [fullscreen, setFullscreen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Check for runtime errors
+  const hasRuntimeErrors = data ? iterationHasErrors(data) : false;
+  const runtimeErrorCount = data ? countRuntimeErrors(data) : 0;
 
   // Get sorted file entries
   const sortedFiles = data?.jsonFiles
@@ -222,6 +232,27 @@ export function JsonViewerModal({
           </div>
         ) : data && Object.keys(unifiedJson).length > 0 ? (
           <div className="flex-1 flex flex-col min-h-0">
+            {/* Runtime Error Alert */}
+            {hasRuntimeErrors && (
+              <div className="flex-shrink-0 mb-3">
+                <Alert
+                  variant="destructive"
+                  className="border-red-500 bg-red-50 dark:bg-red-950/30"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  <div className="flex-1">
+                    <div className="font-medium">Runtime Errors Detected</div>
+                    <div className="text-sm mt-1">
+                      Found {runtimeErrorCount} JSON file
+                      {runtimeErrorCount !== 1 ? 's' : ''} containing
+                      MessageKind.RUNTIME_ERROR. These indicate generation
+                      errors in the agent process.
+                    </div>
+                  </div>
+                </Alert>
+              </div>
+            )}
+
             {/* Actions Bar */}
             <div className="flex flex-col gap-2 py-2 px-1 border-b flex-shrink-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
@@ -229,6 +260,16 @@ export function JsonViewerModal({
                   <Badge variant="secondary" className="text-xs flex-shrink-0">
                     {sortedFiles.length} files unified
                   </Badge>
+                  {hasRuntimeErrors && (
+                    <Badge
+                      variant="destructive"
+                      className="text-xs flex-shrink-0"
+                    >
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      {runtimeErrorCount} error
+                      {runtimeErrorCount !== 1 ? 's' : ''}
+                    </Badge>
+                  )}
                   {data.folderName && (
                     <span className="text-xs text-muted-foreground font-mono truncate max-w-[200px] sm:max-w-xs">
                       {data.folderName}

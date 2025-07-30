@@ -6,7 +6,10 @@ import {
 import { s3Client } from './client';
 
 function getBucketName(): string {
-  return process.env.AWS_BUCKET_NAME || `${process.env.NODE_ENV || 'staging'}-agent-service-snapshots`;
+  return (
+    process.env.AWS_BUCKET_NAME_AGENT ||
+    `${process.env.NODE_ENV || 'staging'}-agent-service-snapshots`
+  );
 }
 
 export type SingleIterationJsonData = {
