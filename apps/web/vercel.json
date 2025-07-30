@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/blog/:path*",
+      "destination": "https://website-neondatabase.vercel.app/blog/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
