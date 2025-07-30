@@ -353,6 +353,7 @@ export async function postMessage(
             applicationId,
             userMessage: requestBody.message,
             settings: requestBody.settings,
+            templateId,
           }),
         };
       }
@@ -1157,12 +1158,14 @@ function getExistingConversationBody({
   settings,
   existingTraceId,
   applicationId,
+  templateId,
 }: {
   existingConversation: ConversationData;
   existingTraceId: string;
   applicationId: string;
   userMessage: string;
   settings?: Record<string, any>;
+  templateId: TemplateId;
 }) {
   const messages = existingConversation.allMessages;
 
@@ -1178,6 +1181,7 @@ function getExistingConversationBody({
     traceId: existingTraceId,
     applicationId,
     settings: settings || {},
+    templateId,
   };
 }
 

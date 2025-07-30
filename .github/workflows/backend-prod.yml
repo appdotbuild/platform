@@ -3,6 +3,10 @@ name: Build and deploy backend to production
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read  
+
 jobs:
   setup:
     name: Setup
