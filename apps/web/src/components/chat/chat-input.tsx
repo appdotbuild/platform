@@ -82,7 +82,7 @@ export function ChatInput() {
         />
         <div
           className={cn(
-            'transition-all duration-300 ease-out flex items-center translate-y-4',
+            'transition-all duration-300 ease-out flex items-center',
             inputValue.length > 0
               ? 'w-auto opacity-100'
               : 'w-0 opacity-0 overflow-hidden',
