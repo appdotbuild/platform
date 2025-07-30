@@ -3,13 +3,14 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
   ResizableHandle,
-} from '@design/components/ui/resizable';
+  Button,
+} from '@design/components/ui';
 import { ExternalLink, RotateCcw } from 'lucide-react';
-import { Button } from '@design/components/ui/button';
 import { ChatMessageLimit } from './chat-message-limit';
 import { ChatInput } from './chat-input';
 import { useRef, useState } from 'react';
 import type { DeployStatusType } from '@appdotbuild/core';
+import { Iframe } from './iframe';
 
 export function DesktopChat({
   appUrl,
@@ -22,12 +23,16 @@ export function DesktopChat({
 }) {
   const [key, setKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
 
   const handleIframeReload = () => {
     if (iframeRef.current) {
+      setIframeLoaded(false);
       setKey((prev) => prev + 1);
     }
   };
+
+  const handleIframeLoad = () => setIframeLoaded(true);
 
   if (!appUrl || deployStatus !== 'deployed') {
     return (
@@ -109,6 +114,7 @@ export function DesktopChat({
                   <ExternalLink className="text-gray-700 w-4 h-4" />
                 </a>
                 <Button
+                  disabled={!iframeLoaded}
                   variant="ghost"
                   className="cursor-pointer hover:bg-muted rounded-md aspect-square h-6 w-6 p-1"
                   size="icon"
@@ -118,12 +124,12 @@ export function DesktopChat({
                 </Button>
               </div>
             </div>
-            <iframe
+            <Iframe
               key={`desktop-${key}`}
               ref={iframeRef}
               src={appUrl}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-popups-to-escape-sandbox allow-popups allow-downloads allow-storage-access-by-user-activation"
-              className="w-full h-full rounded-b-lg border-none"
+              className="rounded-b-lg"
+              onLoad={handleIframeLoad}
             />
           </motion.div>
         </ResizablePanel>

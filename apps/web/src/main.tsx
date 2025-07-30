@@ -6,7 +6,6 @@ import { createRoot } from 'react-dom/client';
 import { stackClientApp } from '~/lib/auth.ts';
 import { queryClient } from './lib/queryClient.ts';
 import { router } from './router.tsx';
-import { LayoutProvider } from './hooks/useLayout.tsx';
 
 // Apply page-background class to body
 document.body.className =
@@ -16,9 +15,7 @@ createRoot(document.getElementById('root')!).render(
   <StackProvider app={stackClientApp}>
     <StackTheme>
       <QueryClientProvider client={queryClient}>
-        <LayoutProvider>
-          <RouterProvider router={router} />
-        </LayoutProvider>
+        <RouterProvider router={router} />
       </QueryClientProvider>
     </StackTheme>
   </StackProvider>,

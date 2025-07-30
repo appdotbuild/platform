@@ -1,21 +1,11 @@
-import { createContext, useContext, useState } from 'react';
+import { create } from 'zustand';
 
-const LayoutContext = createContext<{
+interface LayoutState {
   mxAuto: boolean;
   setMxAuto: (mxAuto: boolean) => void;
-}>({
+}
+
+export const useLayout = create<LayoutState>((set) => ({
   mxAuto: true,
-  setMxAuto: () => {},
-});
-
-export const LayoutProvider = ({ children }: { children: React.ReactNode }) => {
-  const [mxAuto, setMxAuto] = useState(true);
-
-  return (
-    <LayoutContext.Provider value={{ mxAuto, setMxAuto }}>
-      {children}
-    </LayoutContext.Provider>
-  );
-};
-
-export const useLayout = () => useContext(LayoutContext);
+  setMxAuto: (mxAuto) => set({ mxAuto }),
+}));

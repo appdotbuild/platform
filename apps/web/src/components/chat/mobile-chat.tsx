@@ -1,16 +1,17 @@
 import { motion } from 'motion/react';
 import {
+  Button,
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
-} from '@design/components/ui/tabs';
+} from '@design/components/ui';
 import { ChatMessageLimit } from './chat-message-limit';
 import { ChatInput } from './chat-input';
 import { ExternalLink, RotateCcw } from 'lucide-react';
-import { Button } from '@design/components/ui/button';
 import { useRef, useState } from 'react';
 import type { DeployStatusType } from '@appdotbuild/core';
+import { Iframe } from './iframe';
 
 export function MobileChat({
   appUrl,
@@ -23,12 +24,16 @@ export function MobileChat({
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [key, setKey] = useState(0);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
 
   const handleIframeReload = () => {
     if (iframeRef.current) {
+      setIframeLoaded(false);
       setKey((prev) => prev + 1);
     }
   };
+
+  const handleIframeLoad = () => setIframeLoaded(true);
 
   return (
     <motion.div
@@ -77,12 +82,12 @@ export function MobileChat({
               exit={{ opacity: 0, x: -100 }}
               transition={{ duration: 0.2, type: 'spring', bounce: 0 }}
             >
-              <iframe
+              <Iframe
+                src={appUrl}
                 key={`mobile-${key}`}
                 ref={iframeRef}
-                src={appUrl}
-                sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-popups-to-escape-sandbox allow-popups allow-downloads allow-storage-access-by-user-activation"
-                className="w-full h-full rounded-t-lg border-none"
+                className="rounded-t-lg"
+                onLoad={handleIframeLoad}
               />
               <div className="w-full relative flex h-12 flex-grow items-center justify-between gap-2 px-2 text-sm bg-background border border-input sticky bottom-0 rounded-b-lg">
                 <div className="flex-grow">
@@ -100,6 +105,7 @@ export function MobileChat({
                     <ExternalLink className="text-gray-700 w-4 h-4" />
                   </a>
                   <Button
+                    disabled={!iframeLoaded}
                     variant="ghost"
                     className="cursor-pointer hover:bg-muted rounded-md aspect-square h-6 w-6 p-1"
                     size="icon"
