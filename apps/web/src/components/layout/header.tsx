@@ -23,7 +23,7 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           <Link
-            to="https://app.build/blog"
+            to="/blog"
             className="text-sm font-medium transition-colors text-muted-foreground hover:text-secondary-foreground active:text-foreground"
             style={{ letterSpacing: '-0.025em' }}
           >

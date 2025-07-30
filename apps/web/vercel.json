@@ -1,6 +1,18 @@
 {
   "rewrites": [
     {
+      "source": "/blog",
+      "destination": "https://website-neondatabase.vercel.app/blog"
+    },
+    {
+      "source": "/blog/:path*",
+      "destination": "https://website-neondatabase.vercel.app/blog/:path*"
+    },
+    {
+      "source": "/_next/:path*",
+      "destination": "https://website-neondatabase.vercel.app/_next/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
