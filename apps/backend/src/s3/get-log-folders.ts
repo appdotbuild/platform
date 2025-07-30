@@ -13,7 +13,7 @@ export async function getLogFolders(appId: string): Promise<LogFolder[]> {
   const prefix = `app-${appId}.req-`;
 
   const command = new ListObjectsV2Command({
-    Bucket: process.env.AWS_BUCKET_NAME!,
+    Bucket: process.env.AWS_BUCKET_NAME_AGENT!,
     Prefix: prefix,
     Delimiter: '/',
   });

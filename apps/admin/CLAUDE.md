@@ -25,3 +25,5 @@ Always do mobile first design.
 ### Docs
 
 Make sure to use React Admin [docs](https://marmelab.com/react-admin/documentation.html) for all the components.
+
+### IMPORTANT NOTES

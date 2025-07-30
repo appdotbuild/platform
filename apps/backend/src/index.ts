@@ -42,7 +42,6 @@ app.get('/auth/is-privileged-user', authHandler, async (request, reply) => {
 app.get('/apps', authHandler, listApps);
 app.get('/apps/:id', authHandler, appById);
 app.get('/apps/:id/history', authHandler, appHistory);
-app.get('/apps/:id/read-url', authHandler, appByIdUrl);
 
 app.get(
   '/admin/apps',

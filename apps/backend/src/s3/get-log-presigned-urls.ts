@@ -37,7 +37,7 @@ export async function getLogPresignedUrls(
 
   try {
     const command = new GetObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
+      Bucket: process.env.AWS_BUCKET_NAME_AGENT!,
       Key: key,
     });
 

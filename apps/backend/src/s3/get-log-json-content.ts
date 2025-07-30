@@ -1,10 +1,6 @@
 import { ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { s3Client } from './client';
 
-function getBucketName(): string {
-  return process.env.AWS_BUCKET_NAME || `${process.env.NODE_ENV || 'staging'}-agent-service-snapshots`;
-}
-
 export type LogIteration = {
   folder: string;
   timestamp: string;
@@ -71,7 +67,7 @@ type FolderInfo = {
 
 async function findTraceIdFolders(traceId: string): Promise<FolderInfo[]> {
   const command = new ListObjectsV2Command({
-    Bucket: process.env.AWS_BUCKET_NAME!,
+    Bucket: process.env.AWS_BUCKET_NAME_AGENT!,
     Prefix: traceId,
     Delimiter: '/',
   });
@@ -109,7 +105,7 @@ async function getJsonFilesFromFolder(
     // Step 1: List all files in the sse_events subfolder
     const sseEventsPrefix = `${folderName}/sse_events/`;
     const listCommand = new ListObjectsV2Command({
-      Bucket: process.env.AWS_BUCKET_NAME!,
+      Bucket: process.env.AWS_BUCKET_NAME_AGENT!,
       Prefix: sseEventsPrefix,
     });
 
@@ -133,7 +129,7 @@ async function getJsonFilesFromFolder(
     const downloadPromises = jsonFileKeys.map(async (key) => {
       try {
         const getCommand = new GetObjectCommand({
-          Bucket: process.env.AWS_BUCKET_NAME!,
+          Bucket: process.env.AWS_BUCKET_NAME_AGENT!,
           Key: key,
         });
 
@@ -206,7 +202,7 @@ export async function getAppTraceLogJsonContent(
     // If no specific trace ID, find all traces for this app
     const appPrefix = `app-${appId}.req-`;
     const command = new ListObjectsV2Command({
-      Bucket: process.env.AWS_BUCKET_NAME!,
+      Bucket: process.env.AWS_BUCKET_NAME_AGENT!,
       Prefix: appPrefix,
       Delimiter: '/',
     });

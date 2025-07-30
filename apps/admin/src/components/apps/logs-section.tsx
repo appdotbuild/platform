@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@appdotbuild/design';
 import { Button } from '@appdotbuild/design';
 import { Alert } from '@appdotbuild/design';
 import { Skeleton } from '@appdotbuild/design';
+import { Badge } from '@appdotbuild/design';
 import {
   FileText,
   RefreshCw,
@@ -10,6 +11,7 @@ import {
   Database,
   Eye,
   ChevronLeft,
+  AlertTriangle,
 } from 'lucide-react';
 import { JsonViewerModal } from './json-viewer-modal';
 import {
@@ -19,6 +21,7 @@ import {
   usePrefetchIterations,
 } from './logs-hooks';
 import type { TraceLogMetadata, SingleIterationJsonData } from './logs-types';
+import { iterationHasErrors, countRuntimeErrors } from './logs-utils';
 
 type LogsSectionProps = {
   appId: string;
@@ -87,14 +90,38 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
     const iterationData = allIterations.find((item) => item.id === iterationId);
 
     if (!iterationData) {
-      return { loading: false, error: null, hasError: false };
+      return {
+        loading: false,
+        error: null,
+        hasError: false,
+        hasRuntimeError: false,
+      };
     }
+
+    const hasRuntimeError = iterationHasErrors(iterationData.data);
 
     return {
       loading: false, // Data is already loaded from getList
       error: iterationData.error || null,
       hasError: !!iterationData.error,
+      hasRuntimeError,
     };
+  };
+
+  // Helper function to check if a trace has any runtime errors
+  const traceHasRuntimeErrors = (trace: TraceLogMetadata): boolean => {
+    return trace.iterations.some((iteration) => {
+      const status = getIterationStatus(trace.traceId, iteration.iteration);
+      return status.hasRuntimeError;
+    });
+  };
+
+  // Helper function to count runtime errors in a trace
+  const countTraceRuntimeErrors = (trace: TraceLogMetadata): number => {
+    return trace.iterations.reduce((count, iteration) => {
+      const status = getIterationStatus(trace.traceId, iteration.iteration);
+      return count + (status.hasRuntimeError ? 1 : 0);
+    }, 0);
   };
 
   const handleRefresh = () => {
@@ -441,93 +468,127 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {traceMetadata.map((trace: TraceLogMetadata) => (
-              <Card
-                key={trace.traceId}
-                className="border-l-4 border-l-blue-500"
-              >
-                <CardHeader className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium font-mono break-all mb-1">
-                        {trace.traceId}
+            {traceMetadata.map((trace: TraceLogMetadata) => {
+              const hasErrors = traceHasRuntimeErrors(trace);
+              const errorCount = countTraceRuntimeErrors(trace);
+
+              return (
+                <Card
+                  key={trace.traceId}
+                  className={`border-l-4 ${
+                    hasErrors ? 'border-l-red-500' : 'border-l-blue-500'
+                  }`}
+                >
+                  <CardHeader className="py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="text-sm font-medium font-mono break-all">
+                            {trace.traceId}
+                          </div>
+                          {hasErrors && (
+                            <Badge
+                              variant="destructive"
+                              className="text-xs flex-shrink-0"
+                            >
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              {errorCount} error{errorCount !== 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {trace.iterations.reduce(
+                            (sum: number, iter: any) =>
+                              sum + iter.jsonFileCount,
+                            0,
+                          )}{' '}
+                          JSON files total
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {trace.iterations.reduce(
-                          (sum: number, iter: any) => sum + iter.jsonFileCount,
-                          0,
-                        )}{' '}
-                        JSON files total
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      {trace.totalIterations === 1
-                        ? // Single iteration - direct JSON view
-                          (() => {
-                            const status = getIterationStatus(trace.traceId, 1);
-                            return (
-                              <Button
-                                variant={
-                                  status.hasError ? 'destructive' : 'outline'
-                                }
-                                size="sm"
-                                onClick={() => handleDirectJsonView(trace, 1)}
-                                disabled={modalLoading}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                View JSON (
-                                {trace.iterations[0]?.jsonFileCount || 0})
-                                {status.hasError && ' ⚠️'}
-                              </Button>
-                            );
-                          })()
-                        : // Multiple iterations - show ordinal buttons
-                          trace.iterations
-                            .sort((a: any, b: any) => a.iteration - b.iteration)
-                            .slice(0, 3) // Show max 3 buttons to avoid overflow
-                            .map((iteration: any) => {
+                      <div className="flex items-center gap-2 ml-4">
+                        {trace.totalIterations === 1
+                          ? // Single iteration - direct JSON view
+                            (() => {
                               const status = getIterationStatus(
                                 trace.traceId,
-                                iteration.iteration,
+                                1,
                               );
                               return (
                                 <Button
-                                  key={iteration.iteration}
                                   variant={
-                                    status.hasError ? 'destructive' : 'outline'
+                                    status.hasRuntimeError || status.hasError
+                                      ? 'destructive'
+                                      : 'outline'
                                   }
                                   size="sm"
-                                  onClick={() =>
-                                    handleDirectJsonView(
-                                      trace,
-                                      iteration.iteration,
-                                    )
-                                  }
+                                  onClick={() => handleDirectJsonView(trace, 1)}
                                   disabled={modalLoading}
-                                  className="text-xs"
                                 >
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  {getOrdinalSuffix(iteration.iteration)} (
-                                  {iteration.jsonFileCount})
-                                  {status.hasError && ' ⚠️'}
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View JSON (
+                                  {trace.iterations[0]?.jsonFileCount || 0})
+                                  {(status.hasRuntimeError ||
+                                    status.hasError) && (
+                                    <AlertTriangle className="h-3 w-3 ml-1" />
+                                  )}
                                 </Button>
                               );
-                            })}
-                      {trace.totalIterations > 3 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewTraceIterations(trace)}
-                          className="text-xs text-muted-foreground"
-                        >
-                          +{trace.totalIterations - 3} more
-                        </Button>
-                      )}
+                            })()
+                          : // Multiple iterations - show ordinal buttons
+                            trace.iterations
+                              .sort(
+                                (a: any, b: any) => a.iteration - b.iteration,
+                              )
+                              .slice(0, 3) // Show max 3 buttons to avoid overflow
+                              .map((iteration: any) => {
+                                const status = getIterationStatus(
+                                  trace.traceId,
+                                  iteration.iteration,
+                                );
+                                return (
+                                  <Button
+                                    key={iteration.iteration}
+                                    variant={
+                                      status.hasRuntimeError || status.hasError
+                                        ? 'destructive'
+                                        : 'outline'
+                                    }
+                                    size="sm"
+                                    onClick={() =>
+                                      handleDirectJsonView(
+                                        trace,
+                                        iteration.iteration,
+                                      )
+                                    }
+                                    disabled={modalLoading}
+                                    className="text-xs"
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    {getOrdinalSuffix(iteration.iteration)} (
+                                    {iteration.jsonFileCount})
+                                    {(status.hasRuntimeError ||
+                                      status.hasError) && (
+                                      <AlertTriangle className="h-3 w-3 ml-1" />
+                                    )}
+                                  </Button>
+                                );
+                              })}
+                        {trace.totalIterations > 3 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewTraceIterations(trace)}
+                            className="text-xs text-muted-foreground"
+                          >
+                            +{trace.totalIterations - 3} more
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
+                  </CardHeader>
+                </Card>
+              );
+            })}
           </div>
         )}
       </CardContent>

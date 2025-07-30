@@ -17,7 +17,7 @@ export type TraceLogMetadata = {
 
 function getBucketName(): string {
   return (
-    process.env.AWS_BUCKET_NAME ||
+    process.env.AWS_BUCKET_NAME_AGENT ||
     `${process.env.NODE_ENV || 'staging'}-agent-service-snapshots`
   );
 }

@@ -14,7 +14,7 @@ export async function getLogFiles(folderPath: string): Promise<LogFile[]> {
   const prefix = folderPath.endsWith('/') ? folderPath : `${folderPath}/`;
 
   const command = new ListObjectsV2Command({
-    Bucket: process.env.AWS_BUCKET_NAME!,
+    Bucket: process.env.AWS_BUCKET_NAME_AGENT!,
     Prefix: prefix,
   });
 
