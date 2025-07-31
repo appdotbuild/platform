@@ -17,6 +17,7 @@ Always do mobile first design.
 - Use react-admin for data provider.
 - Use react-router for routing.
 - Use react-hook-form for form handling.
+- Use `cn` for class name composition.
 
 ### Components Specifics
 
@@ -27,3 +28,5 @@ Always do mobile first design.
 Make sure to use React Admin [docs](https://marmelab.com/react-admin/documentation.html) for all the components.
 
 ### IMPORTANT NOTES
+
+- Always use absolute imports - `@/components/apps/logs-utils` instead of `./logs-utils`.

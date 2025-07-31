@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import {
   Dialog,
@@ -7,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  Alert,
 } from '@appdotbuild/design';
 import { Button } from '@appdotbuild/design';
 import { Badge } from '@appdotbuild/design';
@@ -22,13 +21,13 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { JsonViewer } from '@textea/json-viewer';
+import { cn } from '@appdotbuild/design';
 import { toast } from 'sonner';
-import type { SingleIterationJsonData } from './logs-types';
+import type { SingleIterationJsonData } from '@/components/apps/logs-types';
 import {
   iterationHasErrors,
   countRuntimeErrors,
-  getErrorHighlights,
-} from './logs-utils';
+} from '@/components/apps/logs-utils';
 
 type JsonViewerModalProps = {
   isOpen: boolean;
@@ -183,19 +182,19 @@ export function JsonViewerModal({
               <DialogDescription id="json-viewer-description">
                 {data && (
                   <>
-                    <div className="font-mono text-xs break-all mb-1 sm:mb-2 text-muted-foreground">
+                    <span className="font-mono text-xs break-all mb-1 sm:mb-2 text-muted-foreground block">
                       {data.traceId}
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-                      <div className="flex items-center gap-1">
+                    </span>
+                    <span className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                      <span className="flex items-center gap-1">
                         <FileText className="h-3 w-3" />
                         {data.totalFiles} JSON files
-                      </div>
-                      <div className="flex items-center gap-1">
+                      </span>
+                      <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         <span className="truncate">{data.timestamp}</span>
-                      </div>
-                    </div>
+                      </span>
+                    </span>
                   </>
                 )}
               </DialogDescription>
@@ -344,9 +343,12 @@ export function JsonViewerModal({
                       ? `search: "${searchTerm}"`
                       : `iteration_${data.iteration}`
                   }
-                  className={`bg-transparent font-mono ${
-                    fullscreen ? 'text-sm' : 'text-xs'
-                  }`}
+                  className={cn(
+                    'bg-transparent font-mono',
+                    fullscreen ? 'text-sm' : 'text-xs',
+                  )}
+                  groupArraysAfterLength={20}
+                  quotesOnKeys={false}
                 />
               ) : searchTerm ? (
                 <div className="flex items-center justify-center h-32 text-muted-foreground">
