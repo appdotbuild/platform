@@ -46,7 +46,7 @@ import {
   readDirectoryRecursive,
   writeMemfsToTempDir,
 } from '../utils';
-import { getAppPromptHistory } from './app-history';
+import { getAppPromptHistoryForAgent } from './app-history';
 import {
   type ConversationData,
   conversationManager,
@@ -1228,7 +1228,7 @@ async function getMessagesFromDB(
   applicationId: string,
   userId: string,
 ): Promise<ConversationMessage[]> {
-  const history = await getAppPromptHistory(applicationId, userId);
+  const history = await getAppPromptHistoryForAgent(applicationId, userId);
 
   if (!history || history.length === 0) {
     return [];
