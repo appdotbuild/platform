@@ -3,7 +3,24 @@ import {
   appsService,
   type DeploymentStatusResponse,
 } from '~/external/api/services';
+import { create } from 'zustand';
 import { DEPLOYMENT_STATUS_QUERY_KEY } from './queryKeys';
+import {
+  DEPLOYMENT_STATE_TO_DEPLOY_STATUS,
+  type DeployStatusType,
+} from '@appdotbuild/core';
+
+interface DeploymentStatusState {
+  deploymentStatus: DeployStatusType | null;
+  setDeploymentStatus: (deploymentStatus: DeployStatusType) => void;
+}
+
+export const useDeploymentStatusState = create<DeploymentStatusState>(
+  (set) => ({
+    deploymentStatus: null,
+    setDeploymentStatus: (deploymentStatus) => set({ deploymentStatus }),
+  }),
+);
 
 export function useDeploymentStatus(
   deploymentId: string | undefined,
@@ -17,7 +34,20 @@ export function useDeploymentStatus(
   return useQuery({
     queryKey: DEPLOYMENT_STATUS_QUERY_KEY(deploymentId!),
     queryFn: async () => {
-      return await appsService.fetchDeploymentStatus(deploymentId!, messageId);
+      const response = await appsService.fetchDeploymentStatus(
+        deploymentId!,
+        messageId,
+      );
+
+      useDeploymentStatusState
+        .getState()
+        .setDeploymentStatus(
+          DEPLOYMENT_STATE_TO_DEPLOY_STATUS[
+            response.type as keyof typeof DEPLOYMENT_STATE_TO_DEPLOY_STATUS
+          ],
+        );
+
+      return response;
     },
     enabled: Boolean(deploymentId && options?.enabled !== false),
     refetchInterval: (query) => {

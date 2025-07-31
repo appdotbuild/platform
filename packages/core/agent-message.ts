@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DEPLOYMENT_STATE } from './types/api';
 
 export const PlatformMessageType = {
   DEPLOYMENT_COMPLETE: 'deployment_complete',
@@ -21,6 +22,12 @@ export const DeployStatus = {
   FAILED: 'failed',
   STOPPING: 'stopping',
   PENDING: 'pending',
+} as const;
+
+export const DEPLOYMENT_STATE_TO_DEPLOY_STATUS = {
+  [DEPLOYMENT_STATE.HEALTHY]: DeployStatus.DEPLOYED,
+  [DEPLOYMENT_STATE.ERROR]: DeployStatus.FAILED,
+  [DEPLOYMENT_STATE.STOPPING]: DeployStatus.STOPPING,
 } as const;
 
 export const MessageKind = {

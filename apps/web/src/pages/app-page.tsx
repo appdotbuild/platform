@@ -13,6 +13,7 @@ import { useLayout } from '~/hooks/useLayout';
 import { useWindowSize } from '~/hooks/useWindowSize';
 import { DesktopChat } from '~/components/chat/desktop-chat';
 import { MobileChat } from '~/components/chat/mobile-chat';
+import { useDeploymentStatusState } from '~/hooks/useDeploymentStatus';
 
 export const AppPageRoute = createLazyRoute('/apps/$appId')({
   component: AppPage,
@@ -27,6 +28,8 @@ export function AppPage() {
   const { setMxAuto } = useLayout();
   const { isLoading, app, isError } = useApp(appId);
   const navigate = useNavigate();
+
+  const { deploymentStatus } = useDeploymentStatusState();
 
   useEffect(() => {
     sendPageView(AnalyticsEvents.PAGE_VIEW_APP);
@@ -62,12 +65,12 @@ export function AppPage() {
       <MobileChat
         appUrl={app?.appUrl}
         renderContent={renderContent}
-        deployStatus={app?.deployStatus}
+        deployStatus={deploymentStatus || app?.deployStatus}
       />
       <DesktopChat
         appUrl={app?.appUrl}
         renderContent={renderContent}
-        deployStatus={app?.deployStatus}
+        deployStatus={deploymentStatus || app?.deployStatus}
       />
     </>
   );
