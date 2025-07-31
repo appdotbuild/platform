@@ -148,8 +148,8 @@ export async function postMessage(
 
   const userLimitHeader: MessageLimitHeaders = {
     'x-dailylimit-limit': dailyMessageLimit,
-    'x-dailylimit-remaining': remainingMessages - 1, // count new message
-    'x-dailylimit-usage': currentUsage + 1, // count new message
+    'x-dailylimit-remaining': remainingMessages,
+    'x-dailylimit-usage': currentUsage,
     'x-dailylimit-reset': nextResetTime.toISOString(),
   };
 
@@ -157,7 +157,9 @@ export async function postMessage(
     'Access-Control-Allow-Origin': request.headers.origin,
     'Access-Control-Allow-Methods': 'POST',
     'Access-Control-Allow-Headers':
-      'Content-Type, Authorization, Accept, Accept-Encoding, Connection, Cache-Control',
+      'Content-Type, Authorization, Accept, Accept-Encoding, Connection, Cache-Control,',
+    'Access-Control-Expose-Headers':
+      'x-dailylimit-limit, x-dailylimit-remaining, x-dailylimit-usage, x-dailylimit-reset',
     'Access-Control-Allow-Credentials': 'true',
   };
 

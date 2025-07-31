@@ -1,5 +1,5 @@
 import { type AgentSseEvent, PlatformMessageType } from '@appdotbuild/core';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { appsService, type SendMessageInput } from '~/external/api/services';
@@ -10,7 +10,7 @@ import {
   SYSTEM_MESSAGE_TYPES,
 } from '~/stores/messages-store';
 import { isAppPage } from '~/utils/router-checker';
-import { APPS_QUERY_KEY } from './queryKeys';
+import { APPS_QUERY_KEY, USER_MESSAGE_LIMIT_QUERY_KEY } from './queryKeys';
 import { useCurrentApp } from './useCurrentApp';
 
 interface UseSSEQueryOptions {
@@ -39,6 +39,7 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
   const { pathname } = useLocation();
   const abortControllerRef = useRef<AbortController | null>(null);
   const optionsRef = useRef(options);
+  const queryClient = useQueryClient();
 
   optionsRef.current = options;
 
@@ -52,6 +53,13 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
         throw rateLimitError;
       }
       throw new Error(`Failed to connect: ${response.statusText}`);
+    }
+
+    // Extract the headers here
+
+    console.log('All response headers:');
+    for (const [key, value] of response.headers.entries()) {
+      console.log(`${key}: ${value}`);
     }
 
     if (!response.body) {
@@ -151,6 +159,9 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
     },
     onError: (error: Error) => {
       optionsRef.current.onError?.(error);
+    },
+    onSettled() {
+      queryClient.invalidateQueries({ queryKey: USER_MESSAGE_LIMIT_QUERY_KEY });
     },
   });
 

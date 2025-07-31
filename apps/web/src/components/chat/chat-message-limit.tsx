@@ -1,17 +1,13 @@
 import { useUser } from '@stackframe/react';
-import {
-  useFetchMessageLimit,
-  useMessageLimit,
-} from '~/hooks/userMessageLimit';
+import { useFetchMessageLimit } from '~/hooks/userMessageLimit';
 import { cn } from '~/lib/utils';
 
 export function ChatMessageLimit() {
-  const { isLoading, error } = useFetchMessageLimit();
-  const { remainingMessages, dailyMessageLimit, isUserLimitReached } =
-    useMessageLimit();
+  const { isLoading, error, userLimit } = useFetchMessageLimit();
+  const { isUserLimitReached, remainingMessages, dailyMessageLimit } =
+    userLimit ?? {};
 
   const user = useUser();
-
   if (!user) {
     return null;
   }

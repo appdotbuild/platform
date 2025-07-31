@@ -1,4 +1,4 @@
-import { getToken, getUserMessageLimit } from './utils';
+import { getToken } from './utils';
 
 const API_BASE_URL =
   import.meta.env.VITE_PLATFORM_API_URL_LOCAL ??
@@ -49,8 +49,6 @@ async function request<T>(
 
     throw new Error(`API Error: ${response.status} - ${error}`);
   }
-
-  getUserMessageLimit(response.headers);
 
   // return Response directly for SSE, parse JSON for other types
   if (acceptType === AcceptType.SSE) {

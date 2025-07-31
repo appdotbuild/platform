@@ -7,7 +7,6 @@ import {
 } from '~/stores/messages-store';
 import { useAppsList } from './useAppsList';
 import { useCurrentApp } from './useCurrentApp';
-import { useMessageLimit } from './userMessageLimit';
 import { useSSEMessageHandler, useSSEQuery } from './useSSE';
 import type { TemplateId } from '@appdotbuild/core';
 
@@ -71,9 +70,6 @@ export function useChat() {
     if (!sendChatId || !message.trim()) return;
 
     const messageId = crypto.randomUUID();
-
-    // increment usage optimistically
-    useMessageLimit.getState().incrementUsage();
 
     sendEvent(AnalyticsEvents.MESSAGE_SENT);
 

@@ -94,6 +94,8 @@ export async function getUserMessageLimit(
   const user = request.user;
   const limit = await checkMessageUsageLimit(user.id);
 
+  console.log('limit', limit);
+
   reply.headers({
     'x-dailylimit-limit': limit.dailyMessageLimit.toString(),
     'x-dailylimit-remaining': limit.remainingMessages.toString(),

@@ -5,7 +5,7 @@ import { useUser } from '@stackframe/react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useCallback, useState } from 'react';
 import { useChat } from '~/hooks/useChat';
-import { useMessageLimit } from '~/hooks/userMessageLimit';
+import { useFetchMessageLimit } from '~/hooks/userMessageLimit';
 import { cn } from '~/lib/utils';
 import { isAppPage, isHomePage } from '~/utils/router-checker';
 import type { TemplateId } from '@appdotbuild/core';
@@ -16,8 +16,13 @@ export function ChatInput() {
   const navigate = useNavigate();
   const { createNewApp, sendMessage, isLoading } = useChat();
   const [inputValue, setInputValue] = useState('');
-  const { isUserLimitReached } = useMessageLimit();
+  const { userLimit, isLoading: isLoadingMessageLimit } =
+    useFetchMessageLimit();
   const [selectedStack, setSelectedStack] = useState<TemplateId>('trpc_agent');
+
+  const isUserLimitReached = userLimit?.isUserLimitReached;
+  const buttonDisabled =
+    isUserLimitReached || isLoadingMessageLimit || isLoading;
 
   const handleSubmit = useCallback(async () => {
     if (inputValue.trim() && !isLoading) {
@@ -75,7 +80,7 @@ export function ChatInput() {
               handleSubmit();
             }
           }}
-          disabled={isUserLimitReached || isLoading}
+          disabled={buttonDisabled}
           autoFocus
           minHeight={isHomePage(pathname) ? 50 : 30}
           maxHeight={120}
@@ -94,7 +99,7 @@ export function ChatInput() {
             size="lg"
             className="relative before:content-['↵'] before:md:content-none before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-base md:before:hidden text-[0px] md:text-base shrink-0"
             onClick={handleSubmit}
-            disabled={!inputValue.trim() || isUserLimitReached || isLoading}
+            disabled={!inputValue.trim() || buttonDisabled}
           >
             {isAppPage(pathname) ? 'Send' : "Let's start!"}
           </Button>
