@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ResizablePanel,
@@ -5,10 +6,10 @@ import {
   ResizableHandle,
   Button,
 } from '@design/components/ui';
+import { useWatchDeployedStatus } from '~/hooks/useWatchDeployedStatus';
 import { ExternalLink, RotateCcw } from 'lucide-react';
 import { ChatMessageLimit } from './chat-message-limit';
 import { ChatInput } from './chat-input';
-import { useRef, useState } from 'react';
 import type { DeployStatusType } from '@appdotbuild/core';
 import { Iframe } from './iframe';
 
@@ -21,20 +22,23 @@ export function DesktopChat({
   renderContent: () => React.ReactNode;
   deployStatus?: DeployStatusType;
 }) {
-  const [key, setKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
   const handleIframeReload = () => {
-    if (iframeRef.current) {
-      setIframeLoaded(false);
-      setKey((prev) => prev + 1);
-    }
+    if (!iframeRef.current) return;
+
+    setIframeLoaded(false);
+    const url = new URL(iframeRef.current.src);
+    url.searchParams.set('nocache', Date.now().toString());
+    iframeRef.current.src = url.toString();
   };
+
+  useWatchDeployedStatus(deployStatus, handleIframeReload);
 
   const handleIframeLoad = () => setIframeLoaded(true);
 
-  if (!appUrl || deployStatus !== 'deployed') {
+  if (!appUrl) {
     return (
       <AnimatePresence mode="popLayout">
         <motion.div
@@ -125,7 +129,6 @@ export function DesktopChat({
               </div>
             </div>
             <Iframe
-              key={`desktop-${key}`}
               ref={iframeRef}
               src={appUrl}
               className="rounded-b-lg"

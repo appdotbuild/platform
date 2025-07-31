@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Button,
@@ -6,12 +7,12 @@ import {
   TabsTrigger,
   TabsContent,
 } from '@design/components/ui';
+import { ExternalLink, RotateCcw } from 'lucide-react';
+import type { DeployStatusType } from '@appdotbuild/core';
 import { ChatMessageLimit } from './chat-message-limit';
 import { ChatInput } from './chat-input';
-import { ExternalLink, RotateCcw } from 'lucide-react';
-import { useRef, useState } from 'react';
-import type { DeployStatusType } from '@appdotbuild/core';
 import { Iframe } from './iframe';
+import { useWatchDeployedStatus } from '~/hooks/useWatchDeployedStatus';
 
 export function MobileChat({
   appUrl,
@@ -23,15 +24,18 @@ export function MobileChat({
   deployStatus?: DeployStatusType;
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [key, setKey] = useState(0);
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
   const handleIframeReload = () => {
-    if (iframeRef.current) {
-      setIframeLoaded(false);
-      setKey((prev) => prev + 1);
-    }
+    if (!iframeRef.current) return;
+
+    setIframeLoaded(false);
+    const url = new URL(iframeRef.current.src);
+    url.searchParams.set('nocache', Date.now().toString());
+    iframeRef.current.src = url.toString();
   };
+
+  useWatchDeployedStatus(deployStatus, handleIframeReload);
 
   const handleIframeLoad = () => setIframeLoaded(true);
 
@@ -84,7 +88,6 @@ export function MobileChat({
             >
               <Iframe
                 src={appUrl}
-                key={`mobile-${key}`}
                 ref={iframeRef}
                 className="rounded-t-lg"
                 onLoad={handleIframeLoad}
