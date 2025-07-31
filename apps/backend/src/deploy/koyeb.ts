@@ -506,7 +506,7 @@ function getDeploymentChecker({
       return {
         message: `Your application is being deployed`,
         isDeployed: false,
-        type: 'STOPPING',
+        type: 'DEPLOYMENT_IN_PROGRESS',
       };
     } catch (error) {
       logger.error('Error checking deployment status', { error, deploymentId });

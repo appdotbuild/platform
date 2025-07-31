@@ -54,8 +54,11 @@ export function useDeploymentStatus(
       const data = query.state.data;
       const error = query.state.error;
 
-      // stop pooling if the new state is HEALTHY or ERROR
-      if (error || data?.type === 'HEALTHY' || data?.type === 'ERROR') {
+      // stop pooling if the new state is HEALTHY, ERROR or STOPPING
+      if (
+        error ||
+        ['HEALTHY', 'ERROR', 'STOPPING'].includes(data?.type ?? '')
+      ) {
         return false;
       }
 

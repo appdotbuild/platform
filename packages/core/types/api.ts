@@ -88,6 +88,7 @@ export const DEPLOYMENT_STATE = {
   HEALTHY: 'HEALTHY',
   ERROR: 'ERROR',
   STOPPING: 'STOPPING',
+  DEPLOYMENT_IN_PROGRESS: 'DEPLOYMENT_IN_PROGRESS',
 } as const;
 export type DeploymentState =
   (typeof DEPLOYMENT_STATE)[keyof typeof DEPLOYMENT_STATE];
