@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ResizablePanel,
@@ -5,10 +6,10 @@ import {
   ResizableHandle,
   Button,
 } from '@design/components/ui';
+import { useWatchDeployedStatus } from '~/hooks/useWatchDeployedStatus';
 import { ExternalLink, RotateCcw } from 'lucide-react';
 import { ChatMessageLimit } from './chat-message-limit';
 import { ChatInput } from './chat-input';
-import { useRef, useState } from 'react';
 import type { DeployStatusType } from '@appdotbuild/core';
 import { Iframe } from './iframe';
 
@@ -33,9 +34,11 @@ export function DesktopChat({
     iframeRef.current.src = url.toString();
   };
 
+  useWatchDeployedStatus(deployStatus, handleIframeReload);
+
   const handleIframeLoad = () => setIframeLoaded(true);
 
-  if (!appUrl || deployStatus !== 'deployed') {
+  if (!appUrl) {
     return (
       <AnimatePresence mode="popLayout">
         <motion.div

@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Button,
@@ -6,12 +7,12 @@ import {
   TabsTrigger,
   TabsContent,
 } from '@design/components/ui';
+import { ExternalLink, RotateCcw } from 'lucide-react';
+import type { DeployStatusType } from '@appdotbuild/core';
 import { ChatMessageLimit } from './chat-message-limit';
 import { ChatInput } from './chat-input';
-import { ExternalLink, RotateCcw } from 'lucide-react';
-import { useRef, useState } from 'react';
-import type { DeployStatusType } from '@appdotbuild/core';
 import { Iframe } from './iframe';
+import { useWatchDeployedStatus } from '~/hooks/useWatchDeployedStatus';
 
 export function MobileChat({
   appUrl,
@@ -33,6 +34,8 @@ export function MobileChat({
     url.searchParams.set('nocache', Date.now().toString());
     iframeRef.current.src = url.toString();
   };
+
+  useWatchDeployedStatus(deployStatus, handleIframeReload);
 
   const handleIframeLoad = () => setIframeLoaded(true);
 
