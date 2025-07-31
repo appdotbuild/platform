@@ -1,1 +1,13 @@
+#!/bin/sh
+# Load environment variables from .env if it exists
+if [ -f ".env" ]; then
+  export $(grep -v '^#' .env | xargs)
+fi
+
+# Skip pre-commit hooks if SKIP_PRECOMMIT_HOOKS is set
+if [ "$SKIP_PRECOMMIT_HOOKS" = "true" ] || [ "$SKIP_PRECOMMIT_HOOKS" = "1" ]; then
+  echo "Skipping pre-commit hooks (SKIP_PRECOMMIT_HOOKS is set)"
+  exit 0
+fi
+
 lint-staged
