@@ -6,8 +6,8 @@ import {
 import { create } from 'zustand';
 import { DEPLOYMENT_STATUS_QUERY_KEY } from './queryKeys';
 import {
-  type DeployStatusType,
   DEPLOYMENT_STATE_TO_DEPLOY_STATUS,
+  type DeployStatusType,
 } from '@appdotbuild/core';
 
 interface DeploymentStatusState {
@@ -23,7 +23,7 @@ export const useDeploymentStatusState = create<DeploymentStatusState>(
 );
 
 export function useDeploymentStatus(
-  deploymentId?: string,
+  deploymentId: string | undefined,
   messageId?: string,
   options?: {
     enabled?: boolean;
@@ -50,6 +50,17 @@ export function useDeploymentStatus(
       return response;
     },
     enabled: Boolean(deploymentId && options?.enabled !== false),
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      const error = query.state.error;
+
+      // stop pooling if the new state is HEALTHY or ERROR
+      if (error || data?.type === 'HEALTHY' || data?.type === 'ERROR') {
+        return false;
+      }
+
+      return 5000; // pooling interval in 5s
+    },
     retry: (failureCount, error) => {
       // avoid retrying for specific error statuses
       if (
@@ -63,6 +74,7 @@ export function useDeploymentStatus(
       // limit the number of retries to 3
       return failureCount < 3;
     },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // exponential backoff
     staleTime: 0,
     gcTime: 1000 * 60,
   });
