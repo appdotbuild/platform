@@ -3,7 +3,21 @@ import {
   appsService,
   type DeploymentStatusResponse,
 } from '~/external/api/services';
+import { create } from 'zustand';
 import { DEPLOYMENT_STATUS_QUERY_KEY } from './queryKeys';
+import type { DeployStatusType } from '@appdotbuild/core';
+
+interface DeploymentStatusState {
+  deploymentStatus: DeployStatusType | null;
+  setDeploymentStatus: (deploymentStatus: DeployStatusType) => void;
+}
+
+export const useDeploymentStatusState = create<DeploymentStatusState>(
+  (set) => ({
+    deploymentStatus: null,
+    setDeploymentStatus: (deploymentStatus) => set({ deploymentStatus }),
+  }),
+);
 
 export function useDeploymentStatus(
   deploymentId: string | undefined,

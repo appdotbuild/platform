@@ -1,9 +1,14 @@
 import {
   type PlatformMessageMetadata,
   PlatformMessageType,
+  PLATFORM_MESSAGE_TYPE_TO_DEPLOY_STATUS,
 } from '@appdotbuild/core';
 import { motion } from 'motion/react';
-import { useDeploymentStatus } from '~/hooks/useDeploymentStatus';
+import { useEffect } from 'react';
+import {
+  useDeploymentStatus,
+  useDeploymentStatusState,
+} from '~/hooks/useDeploymentStatus';
 import { determineDeploymentState } from './utils';
 
 interface DeploymentMessageProps {
@@ -21,6 +26,7 @@ export function DeploymentMessage({
 }: DeploymentMessageProps) {
   const deploymentId = metadata?.deploymentId;
   const deploymentUrl = metadata?.deploymentUrl;
+  const { setDeploymentStatus } = useDeploymentStatusState();
 
   const { data: deploymentStatus, error: deploymentError } =
     useDeploymentStatus(deploymentId, messageId, {
@@ -33,6 +39,16 @@ export function DeploymentMessage({
     deploymentStatus,
     deploymentError,
   );
+
+  useEffect(() => {
+    if (state.type) {
+      setDeploymentStatus(
+        PLATFORM_MESSAGE_TYPE_TO_DEPLOY_STATUS[
+          state.type as keyof typeof PLATFORM_MESSAGE_TYPE_TO_DEPLOY_STATUS
+        ],
+      );
+    }
+  }, [state.type, setDeploymentStatus]);
 
   return (
     <div
