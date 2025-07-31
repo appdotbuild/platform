@@ -55,13 +55,6 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
       throw new Error(`Failed to connect: ${response.statusText}`);
     }
 
-    // Extract the headers here
-
-    console.log('All response headers:');
-    for (const [key, value] of response.headers.entries()) {
-      console.log(`${key}: ${value}`);
-    }
-
     if (!response.body) {
       throw new Error('No response body');
     }

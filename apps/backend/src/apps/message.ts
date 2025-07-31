@@ -158,8 +158,7 @@ export async function postMessage(
     'Access-Control-Allow-Methods': 'POST',
     'Access-Control-Allow-Headers':
       'Content-Type, Authorization, Accept, Accept-Encoding, Connection, Cache-Control,',
-    'Access-Control-Expose-Headers':
-      'x-dailylimit-limit, x-dailylimit-remaining, x-dailylimit-usage, x-dailylimit-reset',
+    'Access-Control-Expose-Headers': Object.keys(userLimitHeader).join(', '),
     'Access-Control-Allow-Credentials': 'true',
   };
 
