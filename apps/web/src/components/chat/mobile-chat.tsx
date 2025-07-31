@@ -23,14 +23,15 @@ export function MobileChat({
   deployStatus?: DeployStatusType;
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [key, setKey] = useState(0);
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
   const handleIframeReload = () => {
-    if (iframeRef.current) {
-      setIframeLoaded(false);
-      setKey((prev) => prev + 1);
-    }
+    if (!iframeRef.current) return;
+
+    setIframeLoaded(false);
+    const url = new URL(iframeRef.current.src);
+    url.searchParams.set('nocache', Date.now().toString());
+    iframeRef.current.src = url.toString();
   };
 
   const handleIframeLoad = () => setIframeLoaded(true);
@@ -84,7 +85,6 @@ export function MobileChat({
             >
               <Iframe
                 src={appUrl}
-                key={`mobile-${key}`}
                 ref={iframeRef}
                 className="rounded-t-lg"
                 onLoad={handleIframeLoad}

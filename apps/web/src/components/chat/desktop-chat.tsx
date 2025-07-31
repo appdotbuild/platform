@@ -21,15 +21,16 @@ export function DesktopChat({
   renderContent: () => React.ReactNode;
   deployStatus?: DeployStatusType;
 }) {
-  const [key, setKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
   const handleIframeReload = () => {
-    if (iframeRef.current) {
-      setIframeLoaded(false);
-      setKey((prev) => prev + 1);
-    }
+    if (!iframeRef.current) return;
+
+    setIframeLoaded(false);
+    const url = new URL(iframeRef.current.src);
+    url.searchParams.set('nocache', Date.now().toString());
+    iframeRef.current.src = url.toString();
   };
 
   const handleIframeLoad = () => setIframeLoaded(true);
@@ -125,7 +126,6 @@ export function DesktopChat({
               </div>
             </div>
             <Iframe
-              key={`desktop-${key}`}
               ref={iframeRef}
               src={appUrl}
               className="rounded-b-lg"
