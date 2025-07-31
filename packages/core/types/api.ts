@@ -84,4 +84,10 @@ export type User = {
 
 export type TemplateId = 'trpc_agent' | 'nicegui_agent' | 'laravel_agent';
 
-export type DeploymentState = 'HEALTHY' | 'ERROR' | 'STOPPING';
+export const DEPLOYMENT_STATE = {
+  HEALTHY: 'HEALTHY',
+  ERROR: 'ERROR',
+  STOPPING: 'STOPPING',
+} as const;
+export type DeploymentState =
+  (typeof DEPLOYMENT_STATE)[keyof typeof DEPLOYMENT_STATE];

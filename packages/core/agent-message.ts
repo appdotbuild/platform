@@ -1,11 +1,11 @@
 import { z } from 'zod';
+import { DEPLOYMENT_STATE } from './types/api';
 
 export const PlatformMessageType = {
   DEPLOYMENT_COMPLETE: 'deployment_complete',
   DEPLOYMENT_IN_PROGRESS: 'deployment_in_progress',
   DEPLOYMENT_STOPPING: 'deployment_stopping',
   DEPLOYMENT_FAILED: 'deployment_failed',
-  DEPLOYMENT_PENDING: 'deployment_pending',
   REPO_CREATED: 'repo_created',
   COMMIT_CREATED: 'commit_created',
 } as const;
@@ -24,12 +24,10 @@ export const DeployStatus = {
   PENDING: 'pending',
 } as const;
 
-export const PLATFORM_MESSAGE_TYPE_TO_DEPLOY_STATUS = {
-  [PlatformMessageType.DEPLOYMENT_COMPLETE]: DeployStatus.DEPLOYED,
-  [PlatformMessageType.DEPLOYMENT_IN_PROGRESS]: DeployStatus.DEPLOYING,
-  [PlatformMessageType.DEPLOYMENT_STOPPING]: DeployStatus.STOPPING,
-  [PlatformMessageType.DEPLOYMENT_FAILED]: DeployStatus.FAILED,
-  [PlatformMessageType.DEPLOYMENT_PENDING]: DeployStatus.PENDING,
+export const DEPLOYMENT_STATE_TO_DEPLOY_STATUS = {
+  [DEPLOYMENT_STATE.HEALTHY]: DeployStatus.DEPLOYED,
+  [DEPLOYMENT_STATE.ERROR]: DeployStatus.FAILED,
+  [DEPLOYMENT_STATE.STOPPING]: DeployStatus.STOPPING,
 } as const;
 
 export const MessageKind = {
