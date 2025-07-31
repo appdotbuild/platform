@@ -113,6 +113,12 @@ cd apps/backend && bun run db:migrate   # Run migrations
 - Use `bun add` to install packages
 - Never use npm or yarn - this is a Bun monorepo
 
+**Git and Pre-commit Hooks:**
+
+- Pre-commit hooks run `lint-staged` automatically on commits
+- To skip pre-commit hooks, set `SKIP_PRECOMMIT_HOOKS=true` in your `.env` file or use: `SKIP_PRECOMMIT_HOOKS=true git commit -m "message"`
+- Use sparingly - only for emergency fixes or work-in-progress commits
+
 ## Error Handling
 
 - Prioritize error handling with early returns and guard clauses
