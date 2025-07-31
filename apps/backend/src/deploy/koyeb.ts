@@ -455,11 +455,7 @@ function getDeploymentChecker({
   deploymentId: string;
   token: string;
 }) {
-  const MAX_RETRIES = 20;
-  const INITIAL_DELAY = 2500;
-  const MAX_DELAY = 50000;
-
-  async function checkDeployment(retryCount = 0): Promise<{
+  async function checkDeployment(): Promise<{
     message: string;
     isDeployed: boolean;
     type: DeploymentState;
@@ -470,8 +466,13 @@ function getDeploymentChecker({
         token,
       });
 
+      logger.info('Deployment status check', {
+        deploymentId,
+        status: koyebDeploymentStatus,
+      });
+
       if (koyebDeploymentStatus === 'HEALTHY') {
-        logger.info('Deployment check successful');
+        logger.info('Deployment is healthy');
         return {
           message: `Your application has been deployed`,
           isDeployed: true,
@@ -481,17 +482,17 @@ function getDeploymentChecker({
 
       if (koyebDeploymentStatus === 'STOPPING') {
         logger.info(
-          'Deployment is stopping, a new deployment its being created',
+          'Deployment is stopping, a new deployment is being created',
         );
         return {
-          message: `Current deployment is stopping, a new deployment its being created`,
+          message: `Current deployment is stopping, a new deployment is being created`,
           isDeployed: false,
           type: 'STOPPING',
         };
       }
 
       if (koyebDeploymentStatus === 'ERROR') {
-        logger.error('There was an error deploying your application.', {});
+        logger.error('Deployment has error status');
         return {
           message: `There was an error deploying your application.`,
           isDeployed: false,
@@ -499,44 +500,21 @@ function getDeploymentChecker({
         };
       }
 
-      if (retryCount >= MAX_RETRIES) {
-        logger.error('Max retries reached for deployment check');
-        return {
-          message: `There was an error deploying your application.`,
-          isDeployed: false,
-          type: 'ERROR',
-        };
-      }
-
-      const delay = Math.min(
-        INITIAL_DELAY * Math.pow(2, retryCount),
-        MAX_DELAY,
-      );
-
-      logger.info('Deployment not ready, retrying...', {
-        retryCount,
-        nextRetryIn: delay,
+      logger.info('Deployment still in progress', {
+        status: koyebDeploymentStatus,
       });
-
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      return checkDeployment(retryCount + 1);
+      return {
+        message: `Your application is being deployed`,
+        isDeployed: false,
+        type: 'STOPPING',
+      };
     } catch (error) {
-      logger.error('Error checking deployment', { error });
-      if (retryCount >= MAX_RETRIES) {
-        return {
-          message: `There was an error deploying your application.`,
-          isDeployed: false,
-          type: 'ERROR',
-        };
-      }
-
-      const delay = Math.min(
-        INITIAL_DELAY * Math.pow(2, retryCount),
-        MAX_DELAY,
-      );
-
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      return checkDeployment(retryCount + 1);
+      logger.error('Error checking deployment status', { error, deploymentId });
+      return {
+        message: `Unable to check deployment status`,
+        isDeployed: false,
+        type: 'ERROR',
+      };
     }
   }
 
