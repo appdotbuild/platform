@@ -20,6 +20,7 @@ import {
   StreamingError,
   type TemplateId,
   type TraceId,
+  extractApplicationIdFromTraceId,
 } from '@appdotbuild/core';
 import { nodeEventSource } from '@llm-eaf/node-event-source';
 import { createSession, type Session } from 'better-sse';
@@ -754,6 +755,7 @@ export async function postMessage(
                     applicationId!,
                     new StreamingError(
                       `There was an error deploying your application, check the code in the Github repository.`,
+                      applicationId!,
                       traceId!,
                     ),
                   );
@@ -956,7 +958,10 @@ export async function postMessage(
       'error',
     );
     session.push(
-      new StreamingError((error as Error).message ?? 'Unknown error'),
+      new StreamingError(
+        (error as Error).message ?? 'Unknown error',
+        applicationId!,
+      ),
       'error',
     );
     session.removeAllListeners();
@@ -1346,7 +1351,12 @@ function terminateStreamWithError(
   abortController: AbortController,
   traceId: TraceId,
 ) {
-  session.push(new StreamingError(error, traceId), 'error');
+  const appId = extractApplicationIdFromTraceId(traceId);
+  if (!appId) {
+    throw new Error('App ID not found in trace ID');
+  }
+
+  session.push(new StreamingError(error, appId, traceId), 'error');
   abortController.abort();
   session.removeAllListeners();
 }
