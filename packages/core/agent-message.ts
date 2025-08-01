@@ -170,15 +170,17 @@ export class PlatformMessage {
 export class StreamingError {
   error: string;
   traceId?: TraceId;
+  appId?: ApplicationId;
   message: AgentSseEventMessage;
 
-  constructor(error: string, traceId?: TraceId) {
+  constructor(error: string, appId: ApplicationId, traceId?: TraceId) {
     this.error = error;
     this.traceId = traceId;
     this.message = {
       kind: MessageKind.RUNTIME_ERROR,
       messages: [{ role: PromptKind.ASSISTANT, content: error }],
     };
+    this.appId = appId;
   }
 }
 
@@ -189,4 +191,11 @@ export interface Message {
   kind: MessageKind;
   metadata?: Record<string, any>;
   isHistory?: boolean;
+}
+
+export function extractApplicationIdFromTraceId(traceId: TraceId) {
+  const appPart = traceId.split('.')[0];
+  const applicationId = appPart?.replace('app-', '').replace('temp-', '');
+
+  return applicationId;
 }
