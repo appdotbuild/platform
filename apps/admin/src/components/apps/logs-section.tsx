@@ -149,7 +149,7 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
           <div className="flex items-center gap-2">
             {traceMetadata.length > 0 && (
               <div className="text-sm text-muted-foreground">
-                {traceMetadata.length} trace
+                {traceMetadata.length} iteration
                 {traceMetadata.length !== 1 ? 's' : ''}
               </div>
             )}

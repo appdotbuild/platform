@@ -3,7 +3,6 @@ import { config } from 'dotenv';
 import { app } from './app';
 import {
   appById,
-  appByIdUrl,
   getAppByIdForAdmin,
   getUserMessageLimit,
   listAllAppsForAdmin,
@@ -13,7 +12,6 @@ import {
 import { sendAnalyticsEvent } from './apps/analytics-events';
 import { appHistory } from './apps/app-history';
 import { getKoyebDeploymentEndpoint } from './deploy';
-import { dockerLoginIfNeeded } from './docker';
 import { validateEnv } from './env';
 import { logger } from './logger';
 import { requirePrivilegedUser } from './middleware/neon-employee-auth';
@@ -21,8 +19,6 @@ import { listUsersForAdmin, updateUserForAdmin } from './apps/admin/users';
 import {
   getAppLogFolders,
   getAppLogFiles,
-  getAppLogFileUrl,
-  getAppLogFilesWithUrls,
   getAppTraceLogJson,
   getAppAllTraceLogs,
   getAppTraceLogMetadata,
@@ -43,6 +39,7 @@ app.get('/apps', authHandler, listApps);
 app.get('/apps/:id', authHandler, appById);
 app.get('/apps/:id/history', authHandler, appHistory);
 
+// *********** Admin routes ***********
 app.get(
   '/admin/apps',
   { onRequest: [app.authenticate, requirePrivilegedUser] },
@@ -76,17 +73,6 @@ app.get(
   { onRequest: [app.authenticate, requirePrivilegedUser] },
   getAppLogFiles,
 );
-app.get(
-  '/admin/apps/:id/logs/:folderId/files/:fileName/url',
-  { onRequest: [app.authenticate, requirePrivilegedUser] },
-  getAppLogFileUrl,
-);
-app.get(
-  '/admin/apps/:id/logs/:folderId/files-with-urls',
-  { onRequest: [app.authenticate, requirePrivilegedUser] },
-  getAppLogFilesWithUrls,
-);
-
 // New JSON log routes
 app.get(
   '/admin/apps/:id/logs/:traceId/json',

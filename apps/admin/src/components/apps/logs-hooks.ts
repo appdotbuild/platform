@@ -8,7 +8,7 @@ import type {
 export function useSnapshotMetadata(appId: string) {
   return useGetList<TraceSnapshotMetadata & { id: string }>('logs-metadata', {
     filter: { appId },
-    pagination: { page: 1, perPage: 1000 }, // Get all traces
+    pagination: { page: 1, perPage: 1000 },
     sort: { field: 'traceId', order: 'ASC' },
   });
 }

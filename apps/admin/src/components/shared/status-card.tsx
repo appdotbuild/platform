@@ -29,7 +29,7 @@ const variantConfig = {
   neutral: {
     borderColor: 'border-gray-800',
     bgColor: 'bg-gray-900/50',
-    barColor: 'bg-blue-500',
+    barColor: 'bg-gray-500',
   },
 };
 
