@@ -1,5 +1,5 @@
 import { MessageKind } from '@appdotbuild/core/agent-message';
-import type { SingleIterationJsonData } from './logs-types';
+import type { SingleIterationJsonData } from '@/components/apps/logs-types';
 
 /**
  * Checks if JSON content contains runtime errors
@@ -13,23 +13,23 @@ export function hasRuntimeError(jsonContent: any): boolean {
 }
 
 /**
- * Checks if iteration data contains runtime errors
+ * Checks if snapshot data contains runtime errors
  */
 export function iterationHasErrors(
-  iterationData: SingleIterationJsonData | null,
+  snapshotData: SingleIterationJsonData | null,
 ): boolean {
-  if (!iterationData || !iterationData.jsonFiles) return false;
+  if (!snapshotData || !snapshotData.jsonFiles) return false;
 
-  return Object.values(iterationData.jsonFiles).some(hasRuntimeError);
+  return Object.values(snapshotData.jsonFiles).some(hasRuntimeError);
 }
 
 /**
- * Counts runtime errors in iteration data
+ * Counts runtime errors in snapshot data
  */
 export function countRuntimeErrors(
-  iterationData: SingleIterationJsonData | null,
+  snapshotData: SingleIterationJsonData | null,
 ): number {
-  if (!iterationData || !iterationData.jsonFiles) return 0;
+  if (!snapshotData || !snapshotData.jsonFiles) return 0;
 
-  return Object.values(iterationData.jsonFiles).filter(hasRuntimeError).length;
+  return Object.values(snapshotData.jsonFiles).filter(hasRuntimeError).length;
 }

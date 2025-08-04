@@ -5,7 +5,6 @@ import {
 } from 'ra-core';
 import { Badge } from '@appdotbuild/design';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const SingleFieldList = <RecordType = any,>({
   children,
   render,

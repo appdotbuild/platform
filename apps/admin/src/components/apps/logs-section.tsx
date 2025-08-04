@@ -12,13 +12,16 @@ import {
   Eye,
   AlertTriangle,
 } from 'lucide-react';
-import { JsonViewerModal } from './json-viewer-modal';
+import { JsonViewerModal } from '@/components/apps/json-viewer-modal';
 import {
-  useLogMetadata,
-  useLogsRefresh,
+  useSnapshotMetadata,
+  useSnapshotsRefresh,
   usePrefetchIterations,
-} from './logs-hooks';
-import type { TraceLogMetadata, SingleIterationJsonData } from './logs-types';
+} from '@/components/apps/logs-hooks';
+import type {
+  TraceSnapshotMetadata,
+  SingleIterationJsonData,
+} from '@/components/apps/logs-types';
 import { StatusCard } from '@/components/shared/status-card';
 import { countRuntimeErrors } from '@/components/apps/logs-utils';
 import { VariantProps } from 'class-variance-authority';
@@ -37,8 +40,8 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
     isLoading: loading,
     error,
     isFetching: refreshing,
-  } = useLogMetadata(appId);
-  const { refreshMetadata } = useLogsRefresh();
+  } = useSnapshotMetadata(appId);
+  const { refreshMetadata } = useSnapshotsRefresh();
   const { data: allIterations = [], isLoading: loadingIterations } =
     usePrefetchIterations(appId, traceMetadata);
 
@@ -62,11 +65,11 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Database className="h-5 w-5" />
-            <CardTitle className="text-lg">Application Logs</CardTitle>
+            <CardTitle className="text-lg">Agent Snapshots</CardTitle>
           </div>
           {appName && (
             <div className="text-sm text-muted-foreground">
-              Viewing logs for: {appName}
+              Viewing snapshots for: {appName}
             </div>
           )}
         </CardHeader>
@@ -94,11 +97,11 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Database className="h-5 w-5" />
-            <CardTitle className="text-lg">Application Logs</CardTitle>
+            <CardTitle className="text-lg">Agent Snapshots</CardTitle>
           </div>
           {appName && (
             <div className="text-sm text-muted-foreground">
-              Viewing logs for: {appName}
+              Viewing snapshots for: {appName}
             </div>
           )}
         </CardHeader>
@@ -107,7 +110,7 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
             <AlertCircle className="h-4 w-4" />
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">Failed to load logs</div>
+                <div className="font-medium">Failed to load snapshots</div>
                 <div className="text-sm mt-1">{errorMessage}</div>
               </div>
               <Button
@@ -135,11 +138,11 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
           <div>
             <div className="flex items-center gap-2">
               <Database className="h-5 w-5" />
-              <CardTitle className="text-lg">Application Logs</CardTitle>
+              <CardTitle className="text-lg">Agent Snapshots</CardTitle>
             </div>
             {appName && (
               <div className="text-sm text-muted-foreground mt-1">
-                Viewing logs for: {appName}
+                Viewing snapshots for: {appName}
               </div>
             )}
           </div>
@@ -169,11 +172,11 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
           <div className="text-center py-8">
             <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <h3 className="text-lg font-medium mb-2">
-              No trace logs available
+              No agent snapshots available
             </h3>
             <p className="text-muted-foreground mb-4">
-              No trace logs were found for this application. Logs will appear
-              here once the application generates them.
+              No agent snapshots were found for this application. Snapshots will
+              appear here once the application generates them.
             </p>
             <Button
               variant="outline"
@@ -188,7 +191,7 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {traceMetadata.map((trace: TraceLogMetadata) => {
+            {traceMetadata.map((trace: TraceSnapshotMetadata) => {
               const data = allIterations.find(
                 (i) => i.folderName === trace.traceId,
               );

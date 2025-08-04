@@ -71,6 +71,7 @@ const ShowViewGuesser = (props: { enableLog?: boolean }) => {
         )
         .sort();
 
+      // eslint-disable-next-line no-console
       console.log(
         `Guessed Show:
 

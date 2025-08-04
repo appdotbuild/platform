@@ -121,7 +121,7 @@ export const ResourceMenuItem = ({
       }
 
       // Navigate after clearing filters
-      navigate(to, { state: { _scrollToTop: true } });
+      void navigate(to, { state: { _scrollToTop: true } });
 
       // Call the original onClick handler for mobile sidebar
       if (onClick) {

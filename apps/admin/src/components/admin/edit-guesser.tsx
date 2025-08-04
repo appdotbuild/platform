@@ -65,6 +65,7 @@ const EditViewGuesser = (props: { enableLog?: boolean }) => {
         )
         .sort();
 
+      // eslint-disable-next-line no-console
       console.log(
         `Guessed Edit:
 

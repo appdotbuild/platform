@@ -8,7 +8,7 @@ import { Button } from '@appdotbuild/design';
 import { Copy, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRecordContext } from 'ra-core';
-import { createGrafanaLink } from '../apps/apps-utils';
+import { createGrafanaLink } from '@/components/apps/apps-utils';
 
 interface IdCellProps {
   source: string;
@@ -77,7 +77,7 @@ export function IdCell({
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleCopy}
+              onClick={(e) => void handleCopy(e)}
               className="h-6 w-6 p-0"
             >
               <Copy className="h-3 w-3" />

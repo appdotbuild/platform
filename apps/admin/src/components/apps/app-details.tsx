@@ -1,15 +1,18 @@
 import { RecordField } from '@/components/admin/record-field';
 import { IdCell } from '@/components/admin/id-cell';
 import { Show } from '@/components/admin/show';
-import { Card, CardHeader, CardTitle, CardContent } from '@appdotbuild/design';
-import { Badge } from '@appdotbuild/design';
-import { Separator } from '@appdotbuild/design';
-import { Button } from '@appdotbuild/design';
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Badge,
+  Separator,
 } from '@appdotbuild/design';
 import { useRecordContext } from 'ra-core';
 import { ExternalLink, Github, Database } from 'lucide-react';
@@ -19,8 +22,8 @@ import {
   createKoyebServiceLink,
   createNeonProjectLink,
   createGrafanaLink,
-} from './apps-utils';
-import { LogsSection } from './logs-section';
+} from '@/components/apps/apps-utils';
+import { LogsSection } from '@/components/apps/logs-section';
 
 export default function AppShow() {
   return (

@@ -11,10 +11,14 @@ import {
   Clock,
   FileText,
 } from 'lucide-react';
-import type { TraceLogData, LogIteration } from './logs-types';
+import type {
+  TraceSnapshotData,
+  SnapshotIteration,
+} from '@/components/apps/logs-types';
+import { toast } from 'sonner';
 
 type JsonLogViewerProps = {
-  traceData: TraceLogData;
+  traceData: TraceSnapshotData;
   onClose?: () => void;
 };
 
@@ -47,10 +51,9 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
   const copyToClipboard = async (content: any, label: string) => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(content, null, 2));
-      alert(`${label} content copied to clipboard successfully`);
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
-      alert('Failed to copy content to clipboard');
+      toast.success(`${label} content copied to clipboard successfully`);
+    } catch {
+      toast.error('Failed to copy content to clipboard');
     }
   };
 
@@ -72,7 +75,7 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
   };
 
   const getIterationLabel = (
-    _iteration: LogIteration,
+    _iteration: SnapshotIteration,
     index: number,
   ): string => {
     const ordinals = ['1st', '2nd', '3rd'];
@@ -177,7 +180,7 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      copyToClipboard(
+                      void copyToClipboard(
                         iteration.jsonFiles,
                         `${getIterationLabel(iteration, index)} logs`,
                       );
@@ -243,7 +246,7 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    copyToClipboard(content, fileName);
+                                    void copyToClipboard(content, fileName);
                                   }}
                                 >
                                   <Copy className="h-3 w-3" />

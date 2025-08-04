@@ -41,7 +41,11 @@ export const FormToolbar = ({ className }: { className?: string }) => {
           <Save />
           <Translate i18nKey="ra.action.save">Save</Translate>
         </Button>
-        <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void navigate(-1)}
+        >
           <CircleX />
           <Translate i18nKey="ra.action.cancel">Cancel</Translate>
         </Button>

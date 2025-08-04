@@ -1,4 +1,4 @@
-export type LogFolder = {
+export type SnapshotFolder = {
   folderName: string;
   fullPath: string;
   traceId: string;
@@ -6,7 +6,7 @@ export type LogFolder = {
   lastModified?: Date;
 };
 
-export type LogFile = {
+export type SnapshotFile = {
   fileName: string;
   key: string;
   size: number;
@@ -14,27 +14,21 @@ export type LogFile = {
   contentType?: string;
 };
 
-export type LogPresignedUrl = {
-  readUrl: string;
-  fileName: string;
-  expiresIn: number;
-};
-
-export type LogFileWithUrl = LogFile & {
+export type SnapshotFileWithUrl = SnapshotFile & {
   presignedUrl?: string;
 };
-export type LogIteration = {
+export type SnapshotIteration = {
   folder: string;
   timestamp: string;
   jsonFiles: Record<string, any>;
 };
 
-export type TraceLogData = {
+export type TraceSnapshotData = {
   traceId: string;
-  iterations: LogIteration[];
+  iterations: SnapshotIteration[];
   totalIterations: number;
 };
-export type LogIterationMetadata = {
+export type SnapshotIterationMetadata = {
   iteration: number;
   folderName: string;
   timestamp: string;
@@ -42,9 +36,9 @@ export type LogIterationMetadata = {
   ordinal: string;
 };
 
-export type TraceLogMetadata = {
+export type TraceSnapshotMetadata = {
   traceId: string;
-  iterations: LogIterationMetadata[];
+  iterations: SnapshotIterationMetadata[];
   totalIterations: number;
 };
 

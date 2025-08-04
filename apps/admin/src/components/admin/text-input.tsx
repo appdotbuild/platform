@@ -21,15 +21,7 @@ export type TextInputProps = InputProps & {
 
 export const TextInput = (props: TextInputProps) => {
   const resource = useResourceContext(props);
-  const {
-    label,
-    source,
-    multiline,
-    className,
-    validate: _validateProp,
-    format: _formatProp,
-    ...rest
-  } = props;
+  const { label, source, multiline, className, ...rest } = props;
   const { field, fieldState, isRequired } = useInput(props);
 
   return (

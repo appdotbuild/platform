@@ -41,7 +41,6 @@ export interface ReferenceFieldProps<
 > extends Partial<ReferenceFieldViewProps<ReferenceRecordType>> {
   children?: ReactNode;
   queryOptions?: UseQueryOptions<RaRecord[], Error> & {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     meta?: any;
   };
   record?: RecordType;
@@ -52,7 +51,7 @@ export interface ReferenceFieldProps<
 }
 
 // useful to prevent click bubbling in a datagrid with rowClick
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const stopPropagation = (e: any) => e.stopPropagation();
 
 export const ReferenceFieldView = <

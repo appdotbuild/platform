@@ -24,8 +24,8 @@ import type { App, Paginated, User } from '@appdotbuild/core/types/api';
 import axios, { type AxiosInstance } from 'axios';
 import { stackClientApp } from '@/stack';
 import type {
-  LogFolder,
-  TraceLogMetadata,
+  SnapshotFolder,
+  TraceSnapshotData,
   SingleIterationJsonData,
 } from '@/components/apps/logs-types';
 
@@ -44,7 +44,7 @@ type UserRecord = Omit<User, 'createdAt' | 'updatedAt'> & {
 };
 
 // Create axios instance with base configuration
-const apiClient: AxiosInstance = axios.create({
+export const apiClient: AxiosInstance = axios.create({
   baseURL: PLATFORM_API_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    return Promise.reject(error);
+    return Promise.reject(new Error(error.message));
   },
 );
 
@@ -112,7 +112,7 @@ const resourceHandlers = {
 
       try {
         // First get log folders to find trace IDs
-        const folders = await apiClient.get<LogFolder[]>(
+        const folders = await apiClient.get<SnapshotFolder[]>(
           `/admin/apps/${appId}/logs`,
         );
 
@@ -125,7 +125,7 @@ const resourceHandlers = {
         // Get metadata for each trace
         const metadataPromises = Array.from(traceIds).map((traceId) =>
           apiClient
-            .get<TraceLogMetadata>(
+            .get<TraceSnapshotData>(
               `/admin/apps/${appId}/logs/${traceId}/metadata`,
             )
             .then((response) => ({
@@ -143,7 +143,7 @@ const resourceHandlers = {
 
         const metadataResults = await Promise.all(metadataPromises);
         const validMetadata = metadataResults.filter(
-          (metadata): metadata is TraceLogMetadata & { id: string } =>
+          (metadata): metadata is TraceSnapshotData & { id: string } =>
             metadata !== null && metadata.totalIterations > 0,
         );
 
@@ -170,7 +170,7 @@ const resourceHandlers = {
       }
 
       try {
-        const response = await apiClient.get<TraceLogMetadata>(
+        const response = await apiClient.get<TraceSnapshotData>(
           `/admin/apps/${appId}/logs/${traceId}/metadata`,
         );
         return {
@@ -202,27 +202,27 @@ const resourceHandlers = {
       };
     },
 
-    getManyReference: async (): Promise<GetManyReferenceResult<any>> => {
+    getManyReference: (): Promise<GetManyReferenceResult<any>> => {
       throw new Error('getManyReference not supported for logs-metadata');
     },
 
-    create: async (): Promise<CreateResult<any>> => {
+    create: (): Promise<CreateResult<any>> => {
       throw new Error('create not supported for logs-metadata');
     },
 
-    update: async (): Promise<UpdateResult<any>> => {
+    update: (): Promise<UpdateResult<any>> => {
       throw new Error('update not supported for logs-metadata');
     },
 
-    updateMany: async (): Promise<UpdateManyResult> => {
+    updateMany: (): Promise<UpdateManyResult> => {
       throw new Error('updateMany not supported for logs-metadata');
     },
 
-    delete: async (): Promise<DeleteResult<any>> => {
+    delete: (): Promise<DeleteResult<any>> => {
       throw new Error('delete not supported for logs-metadata');
     },
 
-    deleteMany: async (): Promise<DeleteManyResult> => {
+    deleteMany: (): Promise<DeleteManyResult> => {
       throw new Error('deleteMany not supported for logs-metadata');
     },
   },
@@ -235,11 +235,11 @@ const resourceHandlers = {
       }
 
       try {
-        let traceMetadata: (TraceLogMetadata & { id: string })[];
+        let traceMetadata: (TraceSnapshotData & { id: string })[];
 
         // Use pre-loaded metadata if provided, otherwise fetch it
         if (preloadedMetadata && Array.isArray(preloadedMetadata)) {
-          traceMetadata = preloadedMetadata.map((trace: TraceLogMetadata) => ({
+          traceMetadata = preloadedMetadata.map((trace: TraceSnapshotData) => ({
             ...trace,
             id: trace.traceId,
           }));
@@ -252,7 +252,7 @@ const resourceHandlers = {
             pagination: { page: 1, perPage: 1000 },
             sort: { field: 'traceId', order: 'ASC' },
           });
-          traceMetadata = metadataResult.data as (TraceLogMetadata & {
+          traceMetadata = metadataResult.data as (TraceSnapshotData & {
             id: string;
           })[];
         }
@@ -352,27 +352,27 @@ const resourceHandlers = {
       };
     },
 
-    getManyReference: async (): Promise<GetManyReferenceResult<any>> => {
+    getManyReference: (): Promise<GetManyReferenceResult<any>> => {
       throw new Error('getManyReference not supported for logs-iteration');
     },
 
-    create: async (): Promise<CreateResult<any>> => {
+    create: (): Promise<CreateResult<any>> => {
       throw new Error('create not supported for logs-iteration');
     },
 
-    update: async (): Promise<UpdateResult<any>> => {
+    update: (): Promise<UpdateResult<any>> => {
       throw new Error('update not supported for logs-iteration');
     },
 
-    updateMany: async (): Promise<UpdateManyResult> => {
+    updateMany: (): Promise<UpdateManyResult> => {
       throw new Error('updateMany not supported for logs-iteration');
     },
 
-    delete: async (): Promise<DeleteResult<any>> => {
+    delete: (): Promise<DeleteResult<any>> => {
       throw new Error('delete not supported for logs-iteration');
     },
 
-    deleteMany: async (): Promise<DeleteManyResult> => {
+    deleteMany: (): Promise<DeleteManyResult> => {
       throw new Error('deleteMany not supported for logs-iteration');
     },
   },
@@ -447,6 +447,7 @@ const resourceHandlers = {
         [params.target]: params.id.toString(),
         ...Object.entries(otherFilters).reduce((acc, [key, value]) => {
           if (value !== undefined && value !== null) {
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
             acc[key] = value.toString();
           }
           return acc;
@@ -536,17 +537,13 @@ const resourceHandlers = {
       };
     },
 
-    getOne: async (
-      _params: GetOneParams,
-    ): Promise<GetOneResult<UserRecord>> => {
+    getOne: (_params: GetOneParams): Promise<GetOneResult<UserRecord>> => {
       // Users are managed by Stack Auth, we only have read access
       // This would require a separate endpoint for individual user lookup
       throw new Error('Individual user lookup not supported');
     },
 
-    getMany: async (
-      _params: GetManyParams,
-    ): Promise<GetManyResult<UserRecord>> => {
+    getMany: (_params: GetManyParams): Promise<GetManyResult<UserRecord>> => {
       // For users, we'll need to make individual requests or filter from the list
       // Since we only have the list endpoint, we'll need to fetch and filter
       throw new Error('Bulk user lookup not supported');
@@ -564,6 +561,7 @@ const resourceHandlers = {
         [params.target]: params.id.toString(),
         ...Object.entries(otherFilters).reduce((acc, [key, value]) => {
           if (value !== undefined && value !== null) {
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
             acc[key] = value.toString();
           }
           return acc;
@@ -580,9 +578,7 @@ const resourceHandlers = {
       };
     },
 
-    create: async (
-      _params: CreateParams,
-    ): Promise<CreateResult<UserRecord>> => {
+    create: (_params: CreateParams): Promise<CreateResult<UserRecord>> => {
       // Users are managed by Stack Auth, not directly creatable via our API
       throw new Error('User creation not supported - managed by Stack Auth');
     },
@@ -597,25 +593,19 @@ const resourceHandlers = {
       };
     },
 
-    updateMany: async (
-      _params: UpdateManyParams,
-    ): Promise<UpdateManyResult> => {
+    updateMany: (_params: UpdateManyParams): Promise<UpdateManyResult> => {
       // Users are managed by Stack Auth, not directly updatable via our API
       throw new Error(
         'Bulk user updates not supported - managed by Stack Auth',
       );
     },
 
-    delete: async (
-      _params: DeleteParams,
-    ): Promise<DeleteResult<UserRecord>> => {
+    delete: (_params: DeleteParams): Promise<DeleteResult<UserRecord>> => {
       // Users are managed by Stack Auth, not directly deletable via our API
       throw new Error('User deletion not supported - managed by Stack Auth');
     },
 
-    deleteMany: async (
-      _params: DeleteManyParams,
-    ): Promise<DeleteManyResult> => {
+    deleteMany: (_params: DeleteManyParams): Promise<DeleteManyResult> => {
       // Users are managed by Stack Auth, not directly deletable via our API
       throw new Error(
         'Bulk user deletion not supported - managed by Stack Auth',
@@ -626,13 +616,13 @@ const resourceHandlers = {
 
 // Extended data provider interface with custom logs methods
 export interface ExtendedDataProvider extends DataProvider {
-  getLogMetadata: (appId: string) => Promise<TraceLogMetadata[]>;
+  getLogMetadata: (appId: string) => Promise<TraceSnapshotData[]>;
   getSingleIterationJson: (
     appId: string,
     traceId: string,
     iteration: number,
   ) => Promise<SingleIterationJsonData>;
-  getLogFolders: (appId: string) => Promise<LogFolder[]>;
+  getLogFolders: (appId: string) => Promise<SnapshotFolder[]>;
 }
 
 // Main data provider implementation
@@ -751,10 +741,10 @@ export const dataProvider: ExtendedDataProvider = {
   },
 
   // Custom logs methods
-  getLogMetadata: async (appId: string): Promise<TraceLogMetadata[]> => {
+  getLogMetadata: async (appId: string): Promise<TraceSnapshotData[]> => {
     try {
       // First get log folders to find trace IDs
-      const folders = await apiClient.get<LogFolder[]>(
+      const folders = await apiClient.get<SnapshotFolder[]>(
         `/admin/apps/${appId}/logs`,
       );
 
@@ -767,7 +757,7 @@ export const dataProvider: ExtendedDataProvider = {
       // Get metadata for each trace
       const metadataPromises = Array.from(traceIds).map((traceId) =>
         apiClient
-          .get<TraceLogMetadata>(
+          .get<TraceSnapshotData>(
             `/admin/apps/${appId}/logs/${traceId}/metadata`,
           )
           .then((response) => response.data)
@@ -779,7 +769,7 @@ export const dataProvider: ExtendedDataProvider = {
 
       const metadataResults = await Promise.all(metadataPromises);
       const validMetadata = metadataResults.filter(
-        (metadata): metadata is TraceLogMetadata =>
+        (metadata): metadata is TraceSnapshotData =>
           metadata !== null && metadata.totalIterations > 0,
       );
 
@@ -814,9 +804,9 @@ export const dataProvider: ExtendedDataProvider = {
     }
   },
 
-  getLogFolders: async (appId: string): Promise<LogFolder[]> => {
+  getLogFolders: async (appId: string): Promise<SnapshotFolder[]> => {
     try {
-      const response = await apiClient.get<LogFolder[]>(
+      const response = await apiClient.get<SnapshotFolder[]>(
         `/admin/apps/${appId}/logs`,
       );
       return response.data;

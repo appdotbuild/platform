@@ -14,7 +14,7 @@ import isEqual from 'lodash/isEqual';
 import { Button } from '@appdotbuild/design';
 import { Check, X, Loader2, Edit2 } from 'lucide-react';
 import { cn } from '@appdotbuild/design';
-import { TextField } from './text-field';
+import { TextField } from '@/components/admin/text-field';
 
 export type InPlaceEditorAction =
   | { type: 'edit'; inputRef?: React.RefObject<HTMLInputElement> }
@@ -133,7 +133,7 @@ export const InPlaceEditor = <
     ...otherMutationOptions
   } = mutationOptions;
 
-  const handleSave = async (values: any) => {
+  const handleSave = (values: any) => {
     if (!record || !source) {
       throw new Error('No record or source found');
     }
@@ -156,7 +156,7 @@ export const InPlaceEditor = <
       return;
     }
     dispatch({ type: 'save', values: newValues });
-    update(
+    void update(
       resource,
       {
         id: record.id,

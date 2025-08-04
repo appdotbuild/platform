@@ -122,8 +122,7 @@ export function JsonViewerModal({
     try {
       await navigator.clipboard.writeText(JSON.stringify(unifiedJson, null, 2));
       toast.success('JSON copied to clipboard');
-    } catch (error) {
-      console.error('Failed to copy unified JSON:', error);
+    } catch {
       toast.error('Failed to copy JSON');
     }
   };
@@ -279,7 +278,7 @@ export function JsonViewerModal({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleCopyAll}
+                    onClick={() => void handleCopyAll()}
                     className="text-xs"
                   >
                     <Copy className="h-3 w-3 mr-1" />

@@ -260,7 +260,7 @@ const DataTableRow = ({
     if (path === false || path == null) {
       return;
     }
-    navigate(path, {
+    void navigate(path, {
       state: { _scrollToTop: true },
     });
   }, [record, resource, rowClick, navigate, getPathForRecord]);
@@ -268,7 +268,7 @@ const DataTableRow = ({
   return (
     <TableRow
       key={record.id}
-      onClick={handleClick}
+      onClick={() => void handleClick()}
       className={cn(rowClick !== false && 'cursor-pointer', className)}
     >
       {hasBulkActions ? (
@@ -284,7 +284,6 @@ const DataTableRow = ({
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isPromise = (value: any): value is Promise<any> =>
   value && typeof value.then === 'function';
 

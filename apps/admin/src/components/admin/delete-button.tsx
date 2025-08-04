@@ -24,7 +24,7 @@ export const DeleteButton = ({
   const handleClick = (e: React.MouseEvent) => {
     stopPropagation(e);
     if (!record) return;
-    deleteOne(
+    void deleteOne(
       resource,
       { id: record.id },
       {
@@ -61,5 +61,5 @@ export const DeleteButton = ({
 };
 
 // useful to prevent click bubbling in a datagrid with rowClick
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const stopPropagation = (e: any) => e.stopPropagation();

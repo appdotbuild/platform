@@ -36,7 +36,7 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => logout()}>
+        <DropdownMenuItem onClick={() => void logout()}>
           <Translate i18nKey="ra.auth.logout">Log out</Translate>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Filter } from 'lucide-react';
 import { useListContext } from 'ra-core';
-import { ClearFiltersButton } from './clear-filters-button';
-import { AppliedFiltersIndicator } from './applied-filters-indicator';
+import { ClearFiltersButton } from '@/components/admin/clear-filters-button';
+import { AppliedFiltersIndicator } from '@/components/admin/applied-filters-indicator';
 
 interface FilterBarProps {
   children: React.ReactNode;

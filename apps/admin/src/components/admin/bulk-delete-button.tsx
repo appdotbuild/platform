@@ -17,7 +17,7 @@ export const BulkDeleteButton = () => {
   const translate = useTranslate();
   const handleClick = (e: React.MouseEvent) => {
     stopPropagation(e);
-    deleteMany(
+    void deleteMany(
       resource,
       { ids: selectedIds },
       {
@@ -52,5 +52,5 @@ export const BulkDeleteButton = () => {
 };
 
 // useful to prevent click bubbling in a datagrid with rowClick
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const stopPropagation = (e: any) => e.stopPropagation();

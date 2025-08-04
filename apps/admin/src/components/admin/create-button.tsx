@@ -23,5 +23,5 @@ export const CreateButton = () => {
 };
 
 // useful to prevent click bubbling in a datagrid with rowClick
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const stopPropagation = (e: any) => e.stopPropagation();
