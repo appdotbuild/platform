@@ -29,6 +29,7 @@ export const ReferenceField = <
       empty
     )
   ) : (
+    // @ts-expect-error - this is a workaround to fix the type error
     <ReferenceFieldBase {...props}>
       <ReferenceFieldView<ReferenceRecordType> {...props} />
     </ReferenceFieldBase>

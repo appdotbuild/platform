@@ -24,10 +24,10 @@ import type { App, Paginated, User } from '@appdotbuild/core/types/api';
 import axios, { type AxiosInstance } from 'axios';
 import { stackClientApp } from '@/stack';
 import type {
-  SnapshotFolder,
-  TraceSnapshotData,
-  SingleIterationJsonData,
-} from '@/components/apps/logs-types';
+  AgentSnapshotMetadata,
+  AgentSnapshotIterationJsonData,
+  AgentSnapshotFolder,
+} from '@appdotbuild/core';
 
 const PLATFORM_API_URL = import.meta.env.VITE_PLATFORM_API_URL;
 
@@ -112,7 +112,7 @@ const resourceHandlers = {
 
       try {
         // First get log folders to find trace IDs
-        const folders = await apiClient.get<SnapshotFolder[]>(
+        const folders = await apiClient.get<AgentSnapshotFolder[]>(
           `/admin/apps/${appId}/logs`,
         );
 
@@ -125,7 +125,7 @@ const resourceHandlers = {
         // Get metadata for each trace
         const metadataPromises = Array.from(traceIds).map((traceId) =>
           apiClient
-            .get<TraceSnapshotData>(
+            .get<AgentSnapshotMetadata>(
               `/admin/apps/${appId}/logs/${traceId}/metadata`,
             )
             .then((response) => ({
@@ -143,8 +143,8 @@ const resourceHandlers = {
 
         const metadataResults = await Promise.all(metadataPromises);
         const validMetadata = metadataResults.filter(
-          (metadata): metadata is TraceSnapshotData & { id: string } =>
-            metadata !== null && metadata.totalIterations > 0,
+          (metadata): metadata is AgentSnapshotMetadata & { id: string } =>
+            metadata !== null && metadata.iterations.length > 0,
         );
 
         return {
@@ -170,7 +170,7 @@ const resourceHandlers = {
       }
 
       try {
-        const response = await apiClient.get<TraceSnapshotData>(
+        const response = await apiClient.get<AgentSnapshotMetadata>(
           `/admin/apps/${appId}/logs/${traceId}/metadata`,
         );
         return {
@@ -235,14 +235,16 @@ const resourceHandlers = {
       }
 
       try {
-        let traceMetadata: (TraceSnapshotData & { id: string })[];
+        let traceMetadata: (AgentSnapshotMetadata & { id: string })[];
 
         // Use pre-loaded metadata if provided, otherwise fetch it
         if (preloadedMetadata && Array.isArray(preloadedMetadata)) {
-          traceMetadata = preloadedMetadata.map((trace: TraceSnapshotData) => ({
-            ...trace,
-            id: trace.traceId,
-          }));
+          traceMetadata = preloadedMetadata.map(
+            (trace: AgentSnapshotMetadata) => ({
+              ...trace,
+              id: trace.traceId,
+            }),
+          );
         } else {
           // Fallback to fetching metadata if not provided
           const metadataResult = await resourceHandlers[
@@ -252,7 +254,7 @@ const resourceHandlers = {
             pagination: { page: 1, perPage: 1000 },
             sort: { field: 'traceId', order: 'ASC' },
           });
-          traceMetadata = metadataResult.data as (TraceSnapshotData & {
+          traceMetadata = metadataResult.data as (AgentSnapshotMetadata & {
             id: string;
           })[];
         }
@@ -261,15 +263,15 @@ const resourceHandlers = {
         const iterationsToFetch = traceMetadata.flatMap((trace) =>
           trace.iterations.map((iteration) => ({
             traceId: trace.traceId,
-            iteration: iteration.iteration,
-            id: `${appId}:${trace.traceId}:${iteration.iteration}`,
+            iteration: iteration.iterationNumber,
+            id: `${appId}:${trace.traceId}:${iteration.iterationNumber}`,
           })),
         );
 
         // Fetch all iterations in parallel
         const iterationPromises = iterationsToFetch.map((item) =>
           apiClient
-            .get<SingleIterationJsonData>(
+            .get<AgentSnapshotIterationJsonData>(
               `/admin/apps/${appId}/logs/${item.traceId}/iterations/${item.iteration}/json`,
             )
             .then((response) => ({
@@ -320,7 +322,7 @@ const resourceHandlers = {
       }
 
       try {
-        const response = await apiClient.get<SingleIterationJsonData>(
+        const response = await apiClient.get<AgentSnapshotIterationJsonData>(
           `/admin/apps/${appId}/logs/${traceId}/iterations/${iteration}/json`,
         );
         return {
@@ -616,13 +618,8 @@ const resourceHandlers = {
 
 // Extended data provider interface with custom logs methods
 export interface ExtendedDataProvider extends DataProvider {
-  getLogMetadata: (appId: string) => Promise<TraceSnapshotData[]>;
-  getSingleIterationJson: (
-    appId: string,
-    traceId: string,
-    iteration: number,
-  ) => Promise<SingleIterationJsonData>;
-  getLogFolders: (appId: string) => Promise<SnapshotFolder[]>;
+  getLogMetadata: (appId: string) => Promise<AgentSnapshotMetadata[]>;
+  getLogFolders: (appId: string) => Promise<AgentSnapshotFolder[]>;
 }
 
 // Main data provider implementation
@@ -741,10 +738,10 @@ export const dataProvider: ExtendedDataProvider = {
   },
 
   // Custom logs methods
-  getLogMetadata: async (appId: string): Promise<TraceSnapshotData[]> => {
+  getLogMetadata: async (appId: string): Promise<AgentSnapshotMetadata[]> => {
     try {
       // First get log folders to find trace IDs
-      const folders = await apiClient.get<SnapshotFolder[]>(
+      const folders = await apiClient.get<AgentSnapshotFolder[]>(
         `/admin/apps/${appId}/logs`,
       );
 
@@ -757,7 +754,7 @@ export const dataProvider: ExtendedDataProvider = {
       // Get metadata for each trace
       const metadataPromises = Array.from(traceIds).map((traceId) =>
         apiClient
-          .get<TraceSnapshotData>(
+          .get<AgentSnapshotMetadata>(
             `/admin/apps/${appId}/logs/${traceId}/metadata`,
           )
           .then((response) => response.data)
@@ -769,8 +766,8 @@ export const dataProvider: ExtendedDataProvider = {
 
       const metadataResults = await Promise.all(metadataPromises);
       const validMetadata = metadataResults.filter(
-        (metadata): metadata is TraceSnapshotData =>
-          metadata !== null && metadata.totalIterations > 0,
+        (metadata): metadata is AgentSnapshotMetadata =>
+          metadata !== null && metadata.iterations.length > 0,
       );
 
       return validMetadata;
@@ -784,29 +781,9 @@ export const dataProvider: ExtendedDataProvider = {
     }
   },
 
-  getSingleIterationJson: async (
-    appId: string,
-    traceId: string,
-    iteration: number,
-  ): Promise<SingleIterationJsonData> => {
+  getLogFolders: async (appId: string): Promise<AgentSnapshotFolder[]> => {
     try {
-      const response = await apiClient.get<SingleIterationJsonData>(
-        `/admin/apps/${appId}/logs/${traceId}/iterations/${iteration}/json`,
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error loading iteration data:', error);
-      throw new Error(
-        error instanceof Error
-          ? error.message
-          : 'Failed to load iteration data',
-      );
-    }
-  },
-
-  getLogFolders: async (appId: string): Promise<SnapshotFolder[]> => {
-    try {
-      const response = await apiClient.get<SnapshotFolder[]>(
+      const response = await apiClient.get<AgentSnapshotFolder[]>(
         `/admin/apps/${appId}/logs`,
       );
       return response.data;

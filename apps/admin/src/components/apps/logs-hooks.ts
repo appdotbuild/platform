@@ -1,12 +1,12 @@
 import { useGetList, useRefresh } from 'ra-core';
 import type {
-  TraceSnapshotMetadata,
-  SingleIterationJsonData,
-} from '@/components/apps/logs-types';
+  AgentSnapshotMetadata,
+  AgentSnapshotIterationJsonData,
+} from '@appdotbuild/core';
 
 // Use react-admin's useGetList hook for trace metadata
 export function useSnapshotMetadata(appId: string) {
-  return useGetList<TraceSnapshotMetadata & { id: string }>('logs-metadata', {
+  return useGetList<AgentSnapshotMetadata & { id: string }>('logs-metadata', {
     filter: { appId },
     pagination: { page: 1, perPage: 1000 },
     sort: { field: 'traceId', order: 'ASC' },
@@ -27,12 +27,14 @@ export function useSnapshotsRefresh() {
 // Hook to prefetch all iterations using getList with pre-loaded metadata
 export function usePrefetchIterations(
   appId: string,
-  traceMetadata: TraceSnapshotMetadata[] = [],
+  traceMetadata: AgentSnapshotMetadata[] = [],
 ) {
   // Only fetch iterations when we have metadata to avoid duplicate calls
   const enabled = traceMetadata.length > 0;
 
-  return useGetList<SingleIterationJsonData & { id: string; error?: string }>(
+  return useGetList<
+    AgentSnapshotIterationJsonData & { id: string; error?: string }
+  >(
     'logs-iteration',
     {
       filter: { appId, preloadedMetadata: enabled ? traceMetadata : undefined },

@@ -1,16 +1,11 @@
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { s3Client } from './client';
+import type { AgentSnapshotFolder } from '@appdotbuild/core';
 
-export type LogFolder = {
-  folderName: string;
-  fullPath: string;
-  traceId: string;
-  timestamp: string;
-  lastModified?: Date;
-};
-
-export async function getLogFolders(appId: string): Promise<LogFolder[]> {
-  const prefix = `app-${appId}.req-`;
+export async function getAgentSnapshotFolders(
+  appId: string,
+): Promise<AgentSnapshotFolder[]> {
+  const prefix = `app-${appId}.`;
 
   const command = new ListObjectsV2Command({
     Bucket: process.env.AWS_BUCKET_NAME_AGENT!,
@@ -20,7 +15,7 @@ export async function getLogFolders(appId: string): Promise<LogFolder[]> {
 
   try {
     const response = await s3Client.send(command);
-    const folders: LogFolder[] = [];
+    const folders: AgentSnapshotFolder[] = [];
 
     // Process CommonPrefixes (folders)
     if (response.CommonPrefixes) {

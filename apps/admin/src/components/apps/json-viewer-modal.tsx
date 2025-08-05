@@ -23,7 +23,7 @@ import {
 import { JsonViewer } from '@textea/json-viewer';
 import { cn } from '@appdotbuild/design';
 import { toast } from 'sonner';
-import type { SingleIterationJsonData } from '@/components/apps/logs-types';
+import type { AgentSnapshotIterationJsonData } from '@appdotbuild/core';
 import {
   iterationHasErrors,
   countRuntimeErrors,
@@ -32,7 +32,7 @@ import {
 type JsonViewerModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  data: SingleIterationJsonData | null;
+  data?: AgentSnapshotIterationJsonData;
   loading?: boolean;
 };
 

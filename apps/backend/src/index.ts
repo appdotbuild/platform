@@ -17,13 +17,10 @@ import { logger } from './logger';
 import { requirePrivilegedUser } from './middleware/neon-employee-auth';
 import { listUsersForAdmin, updateUserForAdmin } from './apps/admin/users';
 import {
+  getAppAgentSnapshotMetadata,
   getAppLogFolders,
-  getAppLogFiles,
-  getAppTraceLogJson,
-  getAppAllTraceLogs,
-  getAppTraceLogMetadata,
   getAppSingleIterationJsonData,
-} from './apps/admin/app-logs';
+} from './apps/admin/app-agent-snaphots';
 
 config({ path: '.env' });
 validateEnv();
@@ -62,34 +59,16 @@ app.put(
   updateUserForAdmin,
 );
 
-// Admin log routes
+// Admin Agent Snapshots routes
 app.get(
   '/admin/apps/:id/logs',
   { onRequest: [app.authenticate, requirePrivilegedUser] },
   getAppLogFolders,
 );
 app.get(
-  '/admin/apps/:id/logs/:folderId/files',
-  { onRequest: [app.authenticate, requirePrivilegedUser] },
-  getAppLogFiles,
-);
-// New JSON log routes
-app.get(
-  '/admin/apps/:id/logs/:traceId/json',
-  { onRequest: [app.authenticate, requirePrivilegedUser] },
-  getAppTraceLogJson,
-);
-app.get(
-  '/admin/apps/:id/trace-logs',
-  { onRequest: [app.authenticate, requirePrivilegedUser] },
-  getAppAllTraceLogs,
-);
-
-// New iteration-based log routes
-app.get(
   '/admin/apps/:id/logs/:traceId/metadata',
   { onRequest: [app.authenticate, requirePrivilegedUser] },
-  getAppTraceLogMetadata,
+  getAppAgentSnapshotMetadata,
 );
 app.get(
   '/admin/apps/:id/logs/:traceId/iterations/:iteration/json',

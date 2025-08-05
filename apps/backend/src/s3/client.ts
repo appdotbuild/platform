@@ -7,3 +7,7 @@ export const s3Client = new S3Client({
   },
   region: process.env.AWS_REGION_AGENT,
 });
+
+export function getAgentSnapshotsBucketName() {
+  return process.env.AWS_BUCKET_NAME_AGENT!;
+}

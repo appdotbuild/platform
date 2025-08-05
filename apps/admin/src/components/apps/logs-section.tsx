@@ -19,9 +19,9 @@ import {
   usePrefetchIterations,
 } from '@/components/apps/logs-hooks';
 import type {
-  TraceSnapshotMetadata,
-  SingleIterationJsonData,
-} from '@/components/apps/logs-types';
+  AgentSnapshotIterationJsonData,
+  AgentSnapshotMetadata,
+} from '@appdotbuild/core';
 import { StatusCard } from '@/components/shared/status-card';
 import { countRuntimeErrors } from '@/components/apps/logs-utils';
 import { VariantProps } from 'class-variance-authority';
@@ -32,8 +32,9 @@ type LogsSectionProps = {
 };
 
 export function LogsSection({ appId, appName }: LogsSectionProps) {
-  const [selectedIterationData, setSelectedIterationData] =
-    useState<SingleIterationJsonData | null>(null);
+  const [selectedIterationData, setSelectedIterationData] = useState<
+    AgentSnapshotIterationJsonData | undefined
+  >(undefined);
 
   const {
     data: traceMetadata = [],
@@ -47,7 +48,7 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
 
   const handleViewIteration = (folderName: string) => {
     setSelectedIterationData(
-      allIterations.find((i) => i.folderName === folderName) || null,
+      allIterations.find((i) => i.folderName === folderName) || undefined,
     );
   };
 
@@ -56,7 +57,7 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
   };
 
   const handleCloseModal = () => {
-    setSelectedIterationData(null);
+    setSelectedIterationData(undefined);
   };
 
   if (loading) {
@@ -191,7 +192,7 @@ export function LogsSection({ appId, appName }: LogsSectionProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {traceMetadata.map((trace: TraceSnapshotMetadata) => {
+            {traceMetadata.map((trace: AgentSnapshotMetadata) => {
               const data = allIterations.find(
                 (i) => i.folderName === trace.traceId,
               );

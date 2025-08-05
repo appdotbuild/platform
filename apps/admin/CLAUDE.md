@@ -30,3 +30,4 @@ Make sure to use React Admin [docs](https://marmelab.com/react-admin/documentati
 ### IMPORTANT NOTES
 
 - Always use absolute imports - `@/components/apps/logs-utils` instead of `./logs-utils`.
+- Common types between backend and Admin should be in `@appdotbuild/core` package.

@@ -11,14 +11,11 @@ import {
   Clock,
   FileText,
 } from 'lucide-react';
-import type {
-  TraceSnapshotData,
-  SnapshotIteration,
-} from '@/components/apps/logs-types';
+import type { AgentSnapshotMetadata } from '@appdotbuild/core';
 import { toast } from 'sonner';
 
 type JsonLogViewerProps = {
-  traceData: TraceSnapshotData;
+  traceData: AgentSnapshotMetadata;
   onClose?: () => void;
 };
 
@@ -74,10 +71,7 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
     return JSON.stringify(content, null, 2);
   };
 
-  const getIterationLabel = (
-    _iteration: SnapshotIteration,
-    index: number,
-  ): string => {
+  const getIterationLabel = (index: number): string => {
     const ordinals = ['1st', '2nd', '3rd'];
     const ordinal = ordinals[index] || `${index + 1}th`;
     return `${ordinal} iteration`;
@@ -135,8 +129,8 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                {traceData.totalIterations} iteration
-                {traceData.totalIterations !== 1 ? 's' : ''}
+                {traceData.iterations.length} iteration
+                {traceData.iterations.length !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
@@ -144,14 +138,14 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
       </Card>
 
       {traceData.iterations.map((iteration, index) => {
-        const isExpanded = expandedIterations.has(iteration.folder);
-        const fileCount = Object.keys(iteration.jsonFiles).length;
+        const isExpanded = expandedIterations.has(iteration.folderName);
+        const fileCount = iteration.jsonFileCount;
 
         return (
-          <Card key={iteration.folder}>
+          <Card key={iteration.folderName}>
             <CardHeader
               className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => toggleIteration(iteration.folder)}
+              onClick={() => toggleIteration(iteration.folderName)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -162,14 +156,14 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
                   )}
                   <div>
                     <CardTitle className="text-base">
-                      {getIterationLabel(iteration, index)}
+                      {getIterationLabel(index)}
                     </CardTitle>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="secondary" className="text-xs">
                         {fileCount} JSON file{fileCount !== 1 ? 's' : ''}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        {getTimestampFromFolder(iteration.folder)}
+                        {getTimestampFromFolder(iteration.folderName)}
                       </span>
                     </div>
                   </div>
@@ -181,8 +175,8 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
                     onClick={(e) => {
                       e.stopPropagation();
                       void copyToClipboard(
-                        iteration.jsonFiles,
-                        `${getIterationLabel(iteration, index)} logs`,
+                        iteration.jsonFileCount,
+                        `${getIterationLabel(index)} logs`,
                       );
                     }}
                   >
@@ -194,8 +188,8 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
                     onClick={(e) => {
                       e.stopPropagation();
                       downloadJson(
-                        iteration.jsonFiles,
-                        `${iteration.folder}_logs.json`,
+                        iteration.jsonFileCount,
+                        `${iteration.folderName}_logs.json`,
                       );
                     }}
                   >
@@ -209,7 +203,7 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
               <CardContent className="pt-0">
                 <Separator className="mb-4" />
                 <div className="space-y-3">
-                  {Object.entries(iteration.jsonFiles)
+                  {Object.entries(iteration.jsonFileCount)
                     .sort(([a], [b]) => {
                       // Sort numerically by filename
                       const aNum = parseInt(a.split('.')[0] || '0') || 0;
@@ -217,7 +211,7 @@ export function JsonLogViewer({ traceData, onClose }: JsonLogViewerProps) {
                       return aNum - bNum;
                     })
                     .map(([fileName, content]) => {
-                      const fileKey = `${iteration.folder}-${fileName}`;
+                      const fileKey = `${iteration.folderName}-${fileName}`;
                       const isFileExpanded = expandedFiles.has(fileKey);
 
                       return (

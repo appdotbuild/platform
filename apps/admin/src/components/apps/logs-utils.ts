@@ -1,11 +1,11 @@
 import { MessageKind } from '@appdotbuild/core/agent-message';
-import type { SingleIterationJsonData } from '@/components/apps/logs-types';
+import type { AgentSnapshotIterationJsonData } from '@appdotbuild/core';
 
 /**
  * Checks if JSON content contains runtime errors
  * Looks for MessageKind.RUNTIME_ERROR or "RuntimeError" strings
  */
-export function hasRuntimeError(jsonContent: any): boolean {
+function hasRuntimeError(jsonContent: any): boolean {
   if (!jsonContent) return false;
 
   const jsonString = JSON.stringify(jsonContent);
@@ -16,7 +16,7 @@ export function hasRuntimeError(jsonContent: any): boolean {
  * Checks if snapshot data contains runtime errors
  */
 export function iterationHasErrors(
-  snapshotData: SingleIterationJsonData | null,
+  snapshotData: AgentSnapshotIterationJsonData | undefined,
 ): boolean {
   if (!snapshotData || !snapshotData.jsonFiles) return false;
 
@@ -27,7 +27,7 @@ export function iterationHasErrors(
  * Counts runtime errors in snapshot data
  */
 export function countRuntimeErrors(
-  snapshotData: SingleIterationJsonData | null,
+  snapshotData: AgentSnapshotIterationJsonData | undefined,
 ): number {
   if (!snapshotData || !snapshotData.jsonFiles) return 0;
 
