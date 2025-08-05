@@ -6,7 +6,6 @@ type RequiredEnvVars =
   | 'AWS_REGION'
   | 'AWS_ECR_URL'
   | 'AWS_ECR_NAMESPACE'
-  | 'AWS_BUCKET_NAME'
   | 'NEON_API_KEY'
   | 'AGENT_API_SECRET_AUTH'
   | 'STACK_PROJECT_ID'
@@ -16,6 +15,7 @@ type RequiredEnvVars =
   | 'GITHUB_APP_PRIVATE_KEY'
   | 'GITHUB_APP_BOT_EMAIL'
   | 'DATABASE_URL'
+  | 'DATABASE_URL_DEV'
   | 'KOYEB_CLI_PAT_TOKEN';
 
 type EnvVars = {
@@ -38,7 +38,6 @@ export const requiredVars: RequiredEnvVars[] = [
   'AWS_REGION',
   'AWS_ECR_URL',
   'AWS_ECR_NAMESPACE',
-  'AWS_BUCKET_NAME',
   'NEON_API_KEY',
   'AGENT_API_SECRET_AUTH',
   'STACK_PROJECT_ID',
@@ -47,7 +46,7 @@ export const requiredVars: RequiredEnvVars[] = [
   'GITHUB_APP_ID',
   'GITHUB_APP_PRIVATE_KEY',
   'GITHUB_APP_BOT_EMAIL',
-  'DATABASE_URL',
+  isDev ? 'DATABASE_URL_DEV' : 'DATABASE_URL',
   'KOYEB_CLI_PAT_TOKEN',
 ] as const;
 

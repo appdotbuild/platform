@@ -21,6 +21,7 @@ import {
   getAppLogFolders,
   getAppSingleIterationJsonData,
 } from './apps/admin/app-agent-snaphots';
+import { dockerLoginIfNeeded } from './docker';
 
 config({ path: '.env' });
 validateEnv();
@@ -115,7 +116,7 @@ export const start = async () => {
 if (process.env.NODE_ENV !== 'test') {
   start()
     .then(() => {
-      // return dockerLoginIfNeeded();
+      return dockerLoginIfNeeded();
     })
     .catch((err) => {
       logger.error('Failed to login to ECR', { error: err });
