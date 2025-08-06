@@ -13,33 +13,11 @@ body:
   - type: textarea
     id: what-happened
     attributes:
-      label: What happened?
+      label: Describe the issue
       description: Brief, plain description of what went wrong
-      placeholder: Tell us what you see!
+      placeholder: Describe what happened with as much detail as possible
     validations:
       required: true
-
-  - type: textarea
-    id: reproduce-steps
-    attributes:
-      label: Steps to reproduce (if you know)
-      description: Optional - How can we see the bug?
-      placeholder: |
-        1. Go to '...'
-        2. Click on '....'
-        3. Scroll down to '....'
-        4. See error
-    validations:
-      required: false
-
-  - type: textarea
-    id: anything-else
-    attributes:
-      label: Anything else?
-      description: Optional - Screenshots, comments, additional context, etc.
-      placeholder: Add any other context about the problem here
-    validations:
-      required: false
 
   - type: markdown
     attributes:

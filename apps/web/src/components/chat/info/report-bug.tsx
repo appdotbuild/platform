@@ -4,7 +4,7 @@ import type { App } from '@appdotbuild/core';
 import { UAParser } from 'ua-parser-js';
 
 interface ReportBugProps {
-  app?: App;
+  app: App | undefined;
 }
 
 function getBrowserAndOSInfo(): { browser: string; os: string } {

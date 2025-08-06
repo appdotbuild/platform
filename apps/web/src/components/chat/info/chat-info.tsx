@@ -54,7 +54,7 @@ export function ChatInfo() {
               <span>App Info</span>
             </div>
             <div className="ml-auto mr-2">
-              <ReportBug />
+              <ReportBug app={app} />
             </div>
           </AccordionTrigger>
           <AccordionContent className="p-0 pb-0 pt-2">
