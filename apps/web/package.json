@@ -31,7 +31,8 @@
     "motion": "^12.23.9",
     "react": "catalog:",
     "react-dom": "^19.1.0",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "ua-parser-js": "^2.0.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
@@ -40,6 +41,7 @@
     "@tanstack/router-devtools": "^1.123.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@types/ua-parser-js": "^0.7.39",
     "@vitejs/plugin-react": "^4.5.2",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.29.0",

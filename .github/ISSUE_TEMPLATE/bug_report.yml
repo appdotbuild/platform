@@ -1,0 +1,123 @@
+name: Bug Report
+description: Report a bug or issue with the app.build platform
+title: "[Bug]: "
+labels: ["bug", "Web"]
+assignees:
+  - pffigueiredo
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the sections below to help us understand and fix the issue.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Brief, plain description of what went wrong
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce-steps
+    attributes:
+      label: Steps to reproduce (if you know)
+      description: Optional - How can we see the bug?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: false
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else?
+      description: Optional - Screenshots, comments, additional context, etc.
+      placeholder: Add any other context about the problem here
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        <details>
+        <summary><b>App Info & Environment</b> (auto-filled - click to expand)</summary>
+        
+        *The fields below are automatically filled from your app data. You don't need to edit them unless something is incorrect.*
+        </details>
+
+  - type: input
+    id: app-name
+    attributes:
+      label: App Name
+      placeholder: e.g., simple-counter-e831
+    validations:
+      required: false
+
+  - type: input
+    id: app-id
+    attributes:
+      label: App ID
+      placeholder: e.g., 7ebb87ae-0bdf-456b-a3e9-ae27851363d7
+    validations:
+      required: false
+
+  - type: input
+    id: trace-id
+    attributes:
+      label: Trace ID
+      placeholder: e.g., trace-abc123def456
+    validations:
+      required: false
+
+  - type: input
+    id: tech-stack
+    attributes:
+      label: Tech Stack
+      placeholder: e.g., trpc_agent
+    validations:
+      required: false
+
+  - type: input
+    id: deploy-status
+    attributes:
+      label: Deploy Status
+      placeholder: e.g., deployed
+    validations:
+      required: false
+
+  - type: input
+    id: app-url
+    attributes:
+      label: App URL
+      placeholder: https://your-app.com
+    validations:
+      required: false
+
+  - type: input
+    id: repository
+    attributes:
+      label: Repository
+      placeholder: https://github.com/username/repo-name
+    validations:
+      required: false
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: e.g., Chrome 138.0.0.0
+    validations:
+      required: false
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      placeholder: e.g., macOS 10.15.7
+    validations:
+      required: false

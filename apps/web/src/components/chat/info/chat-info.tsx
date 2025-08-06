@@ -11,6 +11,7 @@ import { useApp } from '~/hooks/useApp';
 import { ChatInfoContent } from './chat-info-content';
 import { ChatInfoError } from './chat-info-error';
 import { ChatInfoLoading } from './chat-info-loading';
+import { ReportBug } from '~/components/chat/info/report-bug';
 
 export function ChatInfo() {
   const { appId } = useParams({ from: '/apps/$appId' });
@@ -51,6 +52,9 @@ export function ChatInfo() {
             <div className="flex items-center gap-2">
               <Info className="h-4 w-4" />
               <span>App Info</span>
+            </div>
+            <div className="ml-auto mr-2">
+              <ReportBug />
             </div>
           </AccordionTrigger>
           <AccordionContent className="p-0 pb-0 pt-2">
