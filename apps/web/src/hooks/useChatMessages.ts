@@ -4,17 +4,22 @@ import { appsService } from '~/external/api/services';
 import { messagesStore } from '~/stores/messages-store';
 import { HISTORY_QUERY_KEY, MESSAGES_QUERY_KEY } from './queryKeys';
 import { useCurrentApp } from './useCurrentApp';
+import { validate as isValidUUID } from 'uuid';
 
-// query app messages from store
 export function useChatMessages(chatId: string) {
   const { currentAppState } = useCurrentApp();
+
+  // needed because sometimes the chatID is still a temporary 'new'
+  const isValidChatId = isValidUUID(chatId);
+
   const { data: messages = [] } = useQuery({
     queryKey: MESSAGES_QUERY_KEY(chatId),
     queryFn: () => messagesStore.getMessages(chatId),
+    enabled: isValidChatId,
   });
 
   const { isLoading: isLoadingHistory } = useQuery({
-    enabled: currentAppState === 'app-created',
+    enabled: currentAppState === 'app-created' && isValidChatId,
     queryKey: HISTORY_QUERY_KEY(chatId),
     queryFn: async () => {
       const history = await appsService.fetchAppMessages(chatId);
