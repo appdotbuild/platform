@@ -1,4 +1,8 @@
-import { type AgentSseEvent, PlatformMessageType } from '@appdotbuild/core';
+import {
+  type AgentSseEvent,
+  agentSseEventSchema,
+  PlatformMessageType,
+} from '@appdotbuild/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -12,6 +16,8 @@ import {
 import { isAppPage } from '~/utils/router-checker';
 import { APPS_QUERY_KEY, USER_MESSAGE_LIMIT_QUERY_KEY } from './queryKeys';
 import { useCurrentApp } from './useCurrentApp';
+import z from 'zod';
+import { EventSourceController, EventSourcePlus } from 'event-source-plus';
 
 interface UseSSEQueryOptions {
   onMessage?: (event: AgentSseEvent) => void;
@@ -19,122 +25,56 @@ interface UseSSEQueryOptions {
   onDone?: (traceId?: string) => void;
 }
 
-type SSEEvent = {
-  event?: string;
-  data: string;
-  id?: string;
-  retry?: number;
-};
-
-function safeJSONParse(data: string) {
+// Helper: safely parse string to JSON and report issues
+const zJsonString = z.string().transform((str, ctx) => {
   try {
-    return JSON.parse(data);
-  } catch {
-    return data;
+    return JSON.parse(str);
+  } catch (e) {
+    ctx.addIssue({
+      code: 'custom',
+      message: `Invalid JSON in data property: ${e}`,
+    });
+    return z.NEVER;
   }
-}
+});
+
+const eventSchema = z
+  .discriminatedUnion('event', [
+    z.object({
+      event: z.literal('debug'),
+      data: z.string(),
+    }),
+    z.object({
+      event: z.literal('done'),
+      data: zJsonString.pipe(
+        agentSseEventSchema.pick({ traceId: true, appId: true }),
+      ),
+    }),
+    z.object({
+      event: z.literal('error'),
+      data: z.string(),
+    }),
+    z.object({
+      event: z.literal('message'),
+      data: zJsonString.pipe(agentSseEventSchema),
+    }),
+  ])
+  .and(
+    z.object({
+      id: z.string().optional(),
+      retry: z.number().optional(),
+    }),
+  );
 
 // manage SSE connection
 export function useSSEQuery(options: UseSSEQueryOptions = {}) {
   const { pathname } = useLocation();
   const abortControllerRef = useRef<AbortController | null>(null);
+  const eventSourceControllerRef = useRef<EventSourceController | null>(null);
   const optionsRef = useRef(options);
   const queryClient = useQueryClient();
 
   optionsRef.current = options;
-
-  const processSSEStream = useCallback(async (response: Response) => {
-    if (!response.ok) {
-      if (response.status === 429) {
-        const rateLimitError = new Error(
-          'Daily message limit exceeded. Please try again tomorrow.',
-        );
-        (rateLimitError as any).status = 429;
-        throw rateLimitError;
-      }
-      throw new Error(`Failed to connect: ${response.statusText}`);
-    }
-
-    if (!response.body) {
-      throw new Error('No response body');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          optionsRef.current.onDone?.();
-          break;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-
-        // Keep the last incomplete line in the buffer
-        buffer = lines.pop() || '';
-
-        let currentEvent: SSEEvent = { data: '' };
-
-        for (const line of lines) {
-          if (line.trim() === '') {
-            // Empty line indicates end of SSE block
-            if (currentEvent.data) {
-              try {
-                const parsedData = safeJSONParse(currentEvent.data);
-
-                // Handle different event types
-                if (parsedData.done) {
-                  optionsRef.current.onDone?.(parsedData.appId);
-                } else {
-                  // Regular message event
-                  optionsRef.current.onMessage?.(parsedData as AgentSseEvent);
-                }
-              } catch (error) {
-                console.error(
-                  'Failed to parse SSE data:',
-                  currentEvent.data,
-                  error,
-                );
-              }
-            }
-
-            // Reset for next event
-            currentEvent = { data: '' };
-            continue;
-          }
-
-          // Parse SSE field
-          const colonIndex = line.indexOf(':');
-          if (colonIndex === -1) continue;
-
-          const field = line.slice(0, colonIndex);
-          const value = line.slice(colonIndex + 1).trim();
-
-          switch (field) {
-            case 'event':
-              currentEvent.event = value;
-              break;
-            case 'data':
-              currentEvent.data = value;
-              break;
-            case 'id':
-              currentEvent.id = value;
-              break;
-            case 'retry':
-              currentEvent.retry = parseInt(value);
-              break;
-          }
-        }
-      }
-    } finally {
-      reader.releaseLock();
-    }
-  }, []);
 
   // mutation to send new messages
   const mutation = useMutation({
@@ -142,13 +82,59 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      if (eventSourceControllerRef.current) {
+        eventSourceControllerRef.current.abort();
+      }
 
       abortControllerRef.current = new AbortController();
 
-      const response = await appsService.sendMessage(data, {
-        signal: abortControllerRef.current.signal,
+      eventSourceControllerRef.current = new EventSourcePlus(
+        'THIS URL IS IRRELEVANT, WE ARE USING A CUSTOM FETCH',
+        {
+          // @ts-expect-error - this happens because it's a bun fetch
+          fetch: async () => {
+            return appsService.sendMessage(data, {
+              signal: abortControllerRef.current?.signal,
+            });
+          },
+          retryStrategy: 'on-error',
+          signal: abortControllerRef.current?.signal,
+        },
+      ).listen({
+        onMessage: (event) => {
+          try {
+            const parsedEvent = eventSchema.parse(event);
+
+            if (parsedEvent.event === 'debug') {
+              console.log('Debug: %s', parsedEvent.data);
+            }
+
+            if (parsedEvent.event === 'message') {
+              optionsRef.current.onMessage?.(parsedEvent.data);
+            }
+
+            if (parsedEvent.event === 'done') {
+              optionsRef.current.onDone?.(parsedEvent.data.traceId);
+              eventSourceControllerRef.current?.abort();
+            }
+
+            if (parsedEvent.event === 'error') {
+              optionsRef.current.onError?.(new Error(parsedEvent.data));
+              eventSourceControllerRef.current?.abort();
+            }
+
+            return false;
+          } catch (error) {
+            console.error('Error parsing event:', error);
+          }
+        },
+        onResponse: (response) => {
+          console.log('Response: %s', response);
+        },
+        onResponseError: (error) => {
+          console.log('Response error: %s', error);
+        },
       });
-      await processSSEStream(response);
     },
     onError: (error: Error) => {
       optionsRef.current.onError?.(error);
@@ -162,6 +148,10 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
+    }
+    if (eventSourceControllerRef.current) {
+      eventSourceControllerRef.current.abort();
+      eventSourceControllerRef.current = null;
     }
   }, []);
 
@@ -242,7 +232,7 @@ export function useSSEMessageHandler(chatId: string | undefined) {
 
         // Check if it's a rate limit error
         const errorMessage =
-          (error as any).status === 429
+          (error as unknown as { status?: number }).status === 429
             ? 'Daily message limit exceeded. Please try again tomorrow.'
             : `An error occurred while processing your message. Please try again. ${error.message}`;
 

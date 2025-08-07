@@ -21,6 +21,7 @@
     "@appdotbuild/auth": "workspace:*",
     "@appdotbuild/core": "workspace:*",
     "@appdotbuild/design": "workspace:*",
+    "@llm-eaf/node-event-source": "^1.0.1",
     "@segment/analytics-next": "^1.81.1",
     "@stackframe/react": "^2.8.16",
     "@tailwindcss/typography": "0.5.16",
@@ -28,13 +29,15 @@
     "@tanstack/react-query": "^5.81.5",
     "@tanstack/react-router": "^1.123.0",
     "embla-carousel-react": "^8.6.0",
+    "event-source-plus": "^0.1.12",
     "lucide-react": "^0.525.0",
     "motion": "^12.23.9",
     "react": "catalog:",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
     "ua-parser-js": "^2.0.4",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zod": "3.22.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

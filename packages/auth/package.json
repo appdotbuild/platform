@@ -10,8 +10,7 @@
     "types:check": "tsc --noEmit"
   },
   "dependencies": {
-    "@stackframe/stack": "2.8.6",
-    "zod": "3.24.1"
+    "@stackframe/stack": "2.8.6"
   },
   "devDependencies": {
     "next": "15.2.4"

@@ -59,7 +59,6 @@
     "query-string": "^9.1.1",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.3",
-    "zod": "^3.24.2",
     "zustand": "5.0.3"
   },
   "devDependencies": {
