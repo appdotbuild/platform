@@ -64,6 +64,8 @@ This is the **React frontend** for the app.build platform, built with:
 
 - Use Tailwind CSS classes
 - Import `cn` from `~/lib/utils.ts` for conditional classes
+- use `@appdotbuild/design` for base components and `~/components/shared` for components that are not part of the design package
+- use `useIsMobile` hook from `@appdotbuild/design` to check if the user is on a mobile device
 
 **State Management:**
 

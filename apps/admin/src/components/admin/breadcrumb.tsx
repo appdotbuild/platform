@@ -20,13 +20,13 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@appdotbuild/design';
-import { useIsMobile } from '@appdotbuild/design';
+import { useIsSmallScreen } from '@appdotbuild/design';
 import { Translate } from 'ra-core';
 
 export const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
   function Breadcrumb({ children }, forwardedRef) {
     const breadcrumbPortal = document.getElementById('breadcrumb');
-    const isMobile = useIsMobile();
+    const isMobile = useIsSmallScreen();
     const [open, setOpen] = React.useState(false);
     if (!breadcrumbPortal) return null;
     return createPortal(

@@ -15,6 +15,10 @@ import {
 } from '~/components/shared/decorations';
 import { GithubIcon } from '~/components/shared/icons/github-icon';
 import { HeroTitle } from '~/components/shared/title';
+import {
+  AGENT_GITHUB_REPO_URL,
+  PLATFORM_GITHUB_REPO_URL,
+} from '~/lib/constants';
 
 export function PublicHome() {
   return (
@@ -75,7 +79,7 @@ export function PublicHome() {
 
             <div className="mt-8 flex flex-col items-center gap-x-6 gap-y-2.5 px-5 md:mt-6 md:flex-row md:px-8 lg:mt-10 lg:px-8">
               <Link
-                to="https://github.com/appdotbuild/agent"
+                to={AGENT_GITHUB_REPO_URL}
                 target="_blank"
                 className="relative inline-flex items-center justify-center gap-1 whitespace-nowrap font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 bg-[rgba(113,113,122,0.16)] hover:bg-[rgba(113,113,122,0.32)] active:bg-[rgba(113,113,122,0.40)] h-10 px-4 lg:px-3.5 text-[14px] lg:text-[16px] w-full gap-x-1.5 md:w-auto z-20 hover:text-black/80 leading-snug"
                 style={{ letterSpacing: '-0.35px', color: 'rgb(9, 9, 11)' }}
@@ -84,7 +88,7 @@ export function PublicHome() {
                 Agent Code
               </Link>
               <Link
-                to="https://github.com/appdotbuild/platform"
+                to={PLATFORM_GITHUB_REPO_URL}
                 target="_blank"
                 className="relative inline-flex items-center justify-center gap-1 whitespace-nowrap font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 bg-[rgba(113,113,122,0.16)] hover:bg-[rgba(113,113,122,0.32)] active:bg-[rgba(113,113,122,0.40)] h-10 px-4 lg:px-3.5 text-[14px] lg:text-[16px] w-full gap-x-1.5 md:w-auto z-20 hover:text-black/80 leading-snug"
                 style={{ letterSpacing: '-0.35px', color: 'rgb(9, 9, 11)' }}

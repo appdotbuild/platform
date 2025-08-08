@@ -2,6 +2,7 @@ import { Button } from '~/components/shared/button';
 import { Bug } from 'lucide-react';
 import type { App } from '@appdotbuild/core';
 import { UAParser } from 'ua-parser-js';
+import { PLATFORM_GITHUB_REPO_URL } from '~/lib/constants';
 
 interface ReportBugProps {
   app: App | undefined;
@@ -25,7 +26,7 @@ function getBrowserAndOSInfo(): { browser: string; os: string } {
 }
 
 function createGitHubIssueUrl(app?: App): string {
-  const baseUrl = 'https://github.com/appdotbuild/platform/issues/new';
+  const baseUrl = `${PLATFORM_GITHUB_REPO_URL}/issues/new`;
   const { browser, os } = getBrowserAndOSInfo();
 
   const params = new URLSearchParams({

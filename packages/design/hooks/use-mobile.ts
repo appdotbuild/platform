@@ -1,21 +1,14 @@
-import * as React from 'react';
+import { useMediaQuery } from 'react-responsive';
+import { breakpoints } from '../lib';
 
-const MOBILE_BREAKPOINT = 768;
+// < md
+export function useIsSmallScreen() {
+  const maxWidth = breakpoints.md - 1;
+  return useMediaQuery({ maxWidth });
+}
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
-    undefined,
-  );
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    };
-    mql.addEventListener('change', onChange);
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    return () => mql.removeEventListener('change', onChange);
-  }, []);
-
-  return !!isMobile;
+// Chat layout uses a compact (mobile) version on small/medium screens (< xl)
+export function useIsTabletOrMobile() {
+  const maxWidth = breakpoints.xl - 1;
+  return useMediaQuery({ maxWidth });
 }

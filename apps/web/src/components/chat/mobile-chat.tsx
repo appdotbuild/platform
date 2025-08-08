@@ -40,10 +40,7 @@ export function MobileChat({
   const handleIframeLoad = () => setIframeLoaded(true);
 
   return (
-    <motion.div
-      layout
-      className="w-full h-full flex flex-col pt-16 pb-16 flex xl:hidden"
-    >
+    <motion.div layout className="w-full h-full flex flex-col pt-16 pb-16">
       <Tabs defaultValue="chat" className="w-full h-full">
         <TabsList>
           <TabsTrigger value="chat">Chat</TabsTrigger>
