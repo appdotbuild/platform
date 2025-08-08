@@ -18,11 +18,12 @@ import { APPS_QUERY_KEY, USER_MESSAGE_LIMIT_QUERY_KEY } from './queryKeys';
 import { useCurrentApp } from './useCurrentApp';
 import z from 'zod';
 import { EventSourceController, EventSourcePlus } from 'event-source-plus';
+import { useUser } from '@stackframe/react';
 
 interface UseSSEQueryOptions {
   onMessage?: (event: AgentSseEvent) => void;
   onError?: (error: Error) => void;
-  onDone?: (traceId?: string) => void;
+  onDone?: (appId?: string) => void;
 }
 
 // Helper: safely parse string to JSON and report issues
@@ -72,7 +73,10 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const eventSourceControllerRef = useRef<EventSourceController | null>(null);
   const optionsRef = useRef(options);
+  const lastAppIdRef = useRef<string | undefined>(undefined);
   const queryClient = useQueryClient();
+  const user = useUser();
+  const isStaff = user?.clientReadOnlyMetadata.role === 'staff';
 
   optionsRef.current = options;
 
@@ -104,9 +108,17 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
         onMessage: (event) => {
           try {
             const parsedEvent = eventSchema.parse(event);
+            if (
+              typeof parsedEvent.data === 'object' &&
+              'appId' in parsedEvent.data
+            ) {
+              lastAppIdRef.current = parsedEvent.data.appId;
+            }
 
             if (parsedEvent.event === 'debug') {
-              console.log('Debug: %s', parsedEvent.data);
+              if (isStaff) {
+                console.log('Debug: %s', parsedEvent.data);
+              }
             }
 
             if (parsedEvent.event === 'message') {
@@ -114,7 +126,7 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
             }
 
             if (parsedEvent.event === 'done') {
-              optionsRef.current.onDone?.(parsedEvent.data.traceId);
+              optionsRef.current.onDone?.(parsedEvent.data.appId);
               eventSourceControllerRef.current?.abort();
             }
 
@@ -129,11 +141,17 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
           }
         },
         onResponse: (response) => {
-          console.log('Response: %s', response);
+          if (isStaff) {
+            console.log('Response: %s', response);
+          }
         },
         onResponseError: (error) => {
           console.log('Response error: %s', error);
         },
+      });
+
+      eventSourceControllerRef.current.onAbort(() => {
+        optionsRef.current.onDone?.(lastAppIdRef.current || undefined);
       });
     },
     onError: (error: Error) => {

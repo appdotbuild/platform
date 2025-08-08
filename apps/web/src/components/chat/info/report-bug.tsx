@@ -48,21 +48,19 @@ function createGitHubIssueUrl(app?: App): string {
 }
 
 export function ReportBug({ app }: ReportBugProps) {
-  const handleReportBug = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    const issueUrl = createGitHubIssueUrl(app);
-    window.open(issueUrl, '_blank', 'noopener,noreferrer');
-  };
+  const issueUrl = createGitHubIssueUrl(app);
 
   return (
     <Button
       size="sm"
       variant="ghost"
       className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:brightness-95"
-      onClick={handleReportBug}
+      asChild
     >
-      <Bug className="w-3 h-3 mr-1" />
-      Report Issue
+      <a href={issueUrl} target="_blank" rel="noopener noreferrer">
+        <Bug className="w-3 h-3 mr-1" />
+        Report Issue
+      </a>
     </Button>
   );
 }

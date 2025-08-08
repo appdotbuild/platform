@@ -172,8 +172,14 @@ export class StreamingError {
   traceId?: TraceId;
   appId?: ApplicationId;
   message: AgentSseEventMessage;
+  status: AgentStatus;
 
-  constructor(error: string, appId: ApplicationId, traceId?: TraceId) {
+  constructor(
+    error: string,
+    appId: ApplicationId,
+    status: AgentStatus,
+    traceId?: TraceId,
+  ) {
     this.error = error;
     this.traceId = traceId;
     this.message = {
@@ -181,6 +187,7 @@ export class StreamingError {
       messages: [{ role: PromptKind.ASSISTANT, content: error }],
     };
     this.appId = appId;
+    this.status = status;
   }
 }
 

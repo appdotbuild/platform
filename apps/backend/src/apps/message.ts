@@ -757,6 +757,7 @@ export async function postMessage(
                     new StreamingError(
                       `There was an error deploying your application, check the code in the Github repository.`,
                       applicationId!,
+                      AgentStatus.RUNNING,
                       traceId!,
                     ),
                   );
@@ -962,6 +963,8 @@ export async function postMessage(
       new StreamingError(
         (error as Error).message ?? 'Unknown error',
         applicationId!,
+        AgentStatus.IDLE,
+        traceId,
       ),
       'error',
     );
@@ -1357,7 +1360,10 @@ function terminateStreamWithError(
     throw new Error('App ID not found in trace ID');
   }
 
-  session.push(new StreamingError(error, appId, traceId), 'error');
+  session.push(
+    new StreamingError(error, appId, AgentStatus.IDLE, traceId),
+    'error',
+  );
   abortController.abort();
   session.removeAllListeners();
 }

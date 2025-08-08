@@ -29,8 +29,6 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
   const shouldShowChatInfo =
     currentAppState === 'app-created' || currentAppState === 'just-created';
 
-  console.log({ messages });
-
   return (
     <>
       {shouldShowChatInfo && <ChatInfo />}
