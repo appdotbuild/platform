@@ -142,11 +142,11 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
         },
         onResponse: (response) => {
           if (isStaff) {
-            console.log('Response: %s', response);
+            console.log('Response: %s', JSON.stringify(response));
           }
         },
         onResponseError: (error) => {
-          console.log('Response error: %s', error);
+          console.log('Response error: %s', JSON.stringify(error));
         },
       });
 
