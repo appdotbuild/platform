@@ -223,7 +223,6 @@
         "@appdotbuild/auth": "workspace:*",
         "@appdotbuild/core": "workspace:*",
         "@appdotbuild/design": "workspace:*",
-        "@llm-eaf/node-event-source": "^1.0.1",
         "@segment/analytics-next": "^1.81.1",
         "@stackframe/react": "^2.8.16",
         "@tailwindcss/typography": "0.5.16",
@@ -232,13 +231,11 @@
         "@tanstack/react-router": "^1.123.0",
         "embla-carousel-react": "^8.6.0",
         "event-source-plus": "^0.1.12",
-        "eventsource-client": "^1.1.4",
         "lucide-react": "^0.525.0",
         "motion": "^12.23.9",
         "react": "catalog:",
         "react-dom": "^19.1.0",
         "react-markdown": "^10.1.0",
-        "sse.js": "^2.6.0",
         "ua-parser-js": "^2.0.4",
         "uuid": "^11.1.0",
         "zod": "3.22.4",
@@ -2207,8 +2204,6 @@
 
     "eventsource": ["eventsource@3.0.7", "", { "dependencies": { "eventsource-parser": "^3.0.1" } }, "sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA=="],
 
-    "eventsource-client": ["eventsource-client@1.1.4", "", { "dependencies": { "eventsource-parser": "^3.0.0" } }, "sha512-CKnqZTwXCnHN2EqrEB9eLSjMMRqHum09VOsikkgSPoa2Jr2XgQnX7P1Fxhnnj/UHxi3GQ2xVsXDKIktEes07bg=="],
-
     "eventsource-parser": ["eventsource-parser@3.0.3", "", {}, "sha512-nVpZkTMM9rF6AQ9gPJpFsNAMt48wIzB5TQgiTLdHiuO8XEDhUgZEhqKlZWXbIzo9VmJ/HvysHqEaVeD5v9TPvA=="],
 
     "execa": ["execa@5.1.1", "", { "dependencies": { "cross-spawn": "^7.0.3", "get-stream": "^6.0.0", "human-signals": "^2.1.0", "is-stream": "^2.0.0", "merge-stream": "^2.0.0", "npm-run-path": "^4.0.1", "onetime": "^5.1.2", "signal-exit": "^3.0.3", "strip-final-newline": "^2.0.0" } }, "sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg=="],
@@ -3474,8 +3469,6 @@
     "split-on-first": ["split-on-first@3.0.0", "", {}, "sha512-qxQJTx2ryR0Dw0ITYyekNQWpz6f8dGd7vffGNflQQ3Iqj9NJ6qiZ7ELpZsJ/QBhIVAiDfXdag3+Gp8RvWa62AA=="],
 
     "split2": ["split2@1.0.0", "", { "dependencies": { "through2": "~2.0.0" } }, "sha512-NKywug4u4pX/AZBB1FCPzZ6/7O+Xhz1qMVbzTvvKvikjO99oPN87SkK08mEY9P63/5lWjK+wgOOgApnTg5r6qg=="],
-
-    "sse.js": ["sse.js@2.6.0", "", {}, "sha512-eGEqOwiPX9Cm+KsOYkcz7HIEqWUSOFeChr0sT515hDOBLvQy5yxaLSZx9JWMhwjf75CXJq+7cgG1MKNh9GQ36w=="],
 
     "stable-hash": ["stable-hash@0.0.5", "", {}, "sha512-+L3ccpzibovGXFK+Ap/f8LOS0ahMrHTf3xu7mMLSpEGU0EO9ucaysSylKo9eRDFNhWve/y275iPmIZ4z39a9iA=="],
 

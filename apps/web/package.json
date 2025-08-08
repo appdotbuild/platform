@@ -21,7 +21,6 @@
     "@appdotbuild/auth": "workspace:*",
     "@appdotbuild/core": "workspace:*",
     "@appdotbuild/design": "workspace:*",
-    "@llm-eaf/node-event-source": "^1.0.1",
     "@segment/analytics-next": "^1.81.1",
     "@stackframe/react": "^2.8.16",
     "@tailwindcss/typography": "0.5.16",
