@@ -3,7 +3,7 @@ import { app } from '../app';
 import { apps, db } from '../db';
 import type { FastifyRequest } from 'fastify';
 
-export const DAILY_APPS_LIMIT = Number(process.env.DAILY_APP_LIMIT) || 50;
+export const DAILY_APPS_LIMIT = Number(process.env.DAILY_APPS_LIMIT) || 50;
 const getCurrentDayStart = (): Date => {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
