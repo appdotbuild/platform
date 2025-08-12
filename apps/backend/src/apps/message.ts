@@ -156,8 +156,11 @@ export async function postMessage(
     });
   }
 
+  const requestBody = request.body as RequestBody;
+  let applicationId = requestBody.applicationId;
+  let isPermanentApp = await appExistsInDb(applicationId);
   const hasReachedPlatformLimit = await userReachedPlatformLimit(request);
-  if (hasReachedPlatformLimit) {
+  if (!isPermanentApp && hasReachedPlatformLimit) {
     app.log.error({
       message: 'Daily apps limit reached.',
       userId,
@@ -207,8 +210,6 @@ export async function postMessage(
   const abortController = new AbortController();
   const githubUsername = request.user.githubUsername;
   const githubAccessToken = request.user.githubAccessToken;
-  const requestBody = request.body as RequestBody;
-  let applicationId = requestBody.applicationId;
   let traceId = requestBody.traceId;
 
   request.socket.on('close', () => {
@@ -278,7 +279,6 @@ export async function postMessage(
     };
 
     let appName: string | null = null;
-    let isPermanentApp = await appExistsInDb(applicationId);
     if (applicationId) {
       app.log.info({
         message: 'Processing existing applicationId',
