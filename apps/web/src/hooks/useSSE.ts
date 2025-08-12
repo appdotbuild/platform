@@ -2,6 +2,7 @@ import {
   type AgentSseEvent,
   agentSseEventSchema,
   PlatformMessageType,
+  isRateLimitError,
 } from '@appdotbuild/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
@@ -77,6 +78,8 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
   const queryClient = useQueryClient();
   const user = useUser();
   const isStaff = user?.clientReadOnlyMetadata?.role === 'staff';
+  const shouldRetryOnErrorRef = useRef(true);
+  const MAX_RETRY_COUNT = 3;
 
   optionsRef.current = options;
 
@@ -103,6 +106,7 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
           },
           retryStrategy: 'on-error',
           signal: abortControllerRef.current?.signal,
+          maxRetryCount: shouldRetryOnErrorRef.current ? MAX_RETRY_COUNT : 0,
         },
       ).listen({
         onMessage: (event) => {
@@ -147,6 +151,15 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
         },
         onResponseError: (error) => {
           console.log('Response error: %s', JSON.stringify(error));
+        },
+        onRequestError: (request) => {
+          optionsRef.current.onError?.(request.error);
+
+          // @ts-expect-error - status should be typed
+          if (request.error.status === 429) {
+            shouldRetryOnErrorRef.current = false;
+            abortControllerRef.current?.abort();
+          }
         },
       });
 
@@ -245,23 +258,21 @@ export function useSSEMessageHandler(chatId: string | undefined) {
 
   const handleSSEError = useCallback(
     (error: Error) => {
-      if (chatId) {
-        messagesStore.removeMessage(chatId, 'loading-message');
+      const newChatId = chatId ?? 'new';
+      messagesStore.removeMessage(newChatId, 'loading-message');
 
-        // Check if it's a rate limit error
-        const errorMessage =
-          (error as unknown as { status?: number }).status === 429
-            ? 'Daily message limit exceeded. Please try again tomorrow.'
-            : `An error occurred while processing your message. Please try again. ${error.message}`;
+      // Check if it's a rate limit error
+      const errorMessage = isRateLimitError(error)
+        ? error.message
+        : `An error occurred while processing your message. Please try again. ${error.message}`;
 
-        messagesStore.addMessage(chatId, {
-          id: 'error-message',
-          message: errorMessage,
-          role: MESSAGE_ROLES.SYSTEM,
-          systemType: SYSTEM_MESSAGE_TYPES.ERROR,
-          createdAt: new Date().toISOString(),
-        });
-      }
+      messagesStore.addMessage(newChatId, {
+        id: 'error-message',
+        message: errorMessage,
+        role: MESSAGE_ROLES.SYSTEM,
+        systemType: SYSTEM_MESSAGE_TYPES.ERROR,
+        createdAt: new Date().toISOString(),
+      });
     },
     [chatId],
   );

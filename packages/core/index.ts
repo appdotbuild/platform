@@ -16,3 +16,4 @@ export * from './types/api';
 export * from './types/utils';
 export * from './types/analytics';
 export * from './types/agent-snapshots';
+export * from './platform-api/error';

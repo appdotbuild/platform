@@ -1,3 +1,4 @@
+import { RateLimitError } from '@appdotbuild/core';
 import { getToken } from './utils';
 
 const API_BASE_URL =
@@ -36,18 +37,14 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    const error = await response.text();
+    const errorBody = await response.json();
 
     // Handle rate limit error specifically
     if (response.status === 429) {
-      const rateLimitError = new Error(
-        'Daily message limit exceeded. Please try again tomorrow.',
-      );
-      (rateLimitError as any).status = 429;
-      throw rateLimitError;
+      throw new RateLimitError(errorBody.message);
     }
 
-    throw new Error(`API Error: ${response.status} - ${error}`);
+    throw new Error(`API Error: ${response.status} - ${errorBody.message}`);
   }
 
   // return Response directly for SSE, parse JSON for other types
