@@ -169,7 +169,7 @@ export async function createKoyebService({
   const data = await response.json();
   const serviceId = data?.service?.id;
   const deploymentId = data?.service?.latest_deployment_id;
-  
+
   if (!serviceId) {
     throw new Error('Service ID not found in the response');
   }
@@ -226,7 +226,7 @@ export async function updateKoyebService({
   const data = await response.json();
   const updatedServiceId = data?.service?.id;
   const updatedDeploymentId = data?.service?.latest_deployment_id;
-  
+
   if (!updatedServiceId) {
     throw new Error('Service ID not found in the response');
   }
