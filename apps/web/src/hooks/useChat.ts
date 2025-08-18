@@ -12,7 +12,7 @@ import type { TemplateId } from '@appdotbuild/core';
 
 // main chat logic
 export function useChat() {
-  const { setMessageBeforeCreation } = useCurrentApp();
+  const { setMessageBeforeCreation, setCurrentAppTemplateId } = useCurrentApp();
   const navigate = useNavigate();
   const params = useParams({ from: '/apps/$appId', shouldThrow: false });
   const appId = params?.appId || undefined;
@@ -47,6 +47,7 @@ export function useChat() {
     });
 
     setMessageBeforeCreation(message);
+    setCurrentAppTemplateId(templateId);
 
     navigate({
       to: '/apps/$appId',
@@ -99,7 +100,7 @@ export function useChat() {
       message: message.trim(),
       clientSource: 'web',
       traceId: isNewApp ? undefined : traceId,
-      templateId,
+      templateId: app?.techStack ?? templateId,
     });
   };
 

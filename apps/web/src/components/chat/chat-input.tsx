@@ -9,6 +9,7 @@ import { useFetchMessageLimit } from '~/hooks/userMessageLimit';
 import { cn } from '~/lib/utils';
 import { isAppPage, isHomePage } from '~/utils/router-checker';
 import type { TemplateId } from '@appdotbuild/core';
+import { useCurrentApp } from '~/hooks/useCurrentApp';
 
 export function ChatInput() {
   const user = useUser();
@@ -18,7 +19,9 @@ export function ChatInput() {
   const [inputValue, setInputValue] = useState('');
   const { userLimit, isLoading: isLoadingMessageLimit } =
     useFetchMessageLimit();
-  const [selectedStack, setSelectedStack] = useState<TemplateId>('trpc_agent');
+  const { currentAppTemplateId } = useCurrentApp();
+  const [selectedStack, setSelectedStack] =
+    useState<TemplateId>(currentAppTemplateId);
 
   const isUserLimitReached = userLimit?.isUserLimitReached;
   const buttonDisabled =
