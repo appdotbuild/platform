@@ -11,11 +11,18 @@ import { STSClient, AssumeRoleCommand } from '@aws-sdk/client-sts';
 import { ecrClient } from './client';
 import { logger } from '../logger';
 
+function getRepositoryName(githubUsername: string, appId: string) {
+  return `${process.env.AWS_ECR_NAMESPACE}-${githubUsername}/${appId}`;
+}
+
 export async function createRepositoryIfNotExists(
   repositoryName: string,
   githubUsername: string,
 ) {
-  const nameSpacedRepositoryName = `${process.env.AWS_ECR_NAMESPACE}-${githubUsername}/${repositoryName}`;
+  const nameSpacedRepositoryName = getRepositoryName(
+    githubUsername,
+    repositoryName,
+  );
 
   try {
     logger.info('Creating ECR repository');
@@ -113,7 +120,7 @@ export async function deleteECRImages({
   appId: string;
   githubUsername: string;
 }) {
-  const repositoryName = `${process.env.AWS_ECR_NAMESPACE}-${githubUsername}/${appId}`;
+  const repositoryName = getRepositoryName(githubUsername, appId);
 
   try {
     logger.info('Deleting ECR images', { repositoryName, appId });
@@ -173,7 +180,7 @@ export async function deleteECRRepository({
   appId: string;
   githubUsername: string;
 }) {
-  const repositoryName = `${process.env.AWS_ECR_NAMESPACE}-${githubUsername}/${appId}`;
+  const repositoryName = getRepositoryName(githubUsername, appId);
 
   try {
     logger.info('Deleting ECR repository', { repositoryName, appId });
