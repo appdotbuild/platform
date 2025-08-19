@@ -20,7 +20,6 @@ async function request<T>(
   const token = await getToken();
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     Accept: acceptType ?? AcceptType.JSON,
   };
 
@@ -62,15 +61,20 @@ export const apiClient = {
     request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
+      headers: { 'Content-Type': 'application/json' },
     }),
 
   put: <T>(endpoint: string, data?: unknown) =>
     request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
+      headers: { 'Content-Type': 'application/json' },
     }),
 
-  delete: <T>(endpoint: string) => request<T>(endpoint, { method: 'DELETE' }),
+  delete: <T>(endpoint: string) =>
+    request<T>(endpoint, {
+      method: 'DELETE',
+    }),
 
   postSSE: async ({
     endpoint,
@@ -87,6 +91,7 @@ export const apiClient = {
         method: 'POST',
         body: data ? JSON.stringify(data) : undefined,
         ...options,
+        headers: { 'Content-Type': 'application/json' },
       },
       AcceptType.SSE,
     );

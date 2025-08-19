@@ -54,7 +54,17 @@ function DialogContent({
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+      <DialogOverlay
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent click from bubbling up
+        }}
+        onTouchStart={(e) => {
+          e.stopPropagation(); // Prevent touch event bubbling for mobile
+        }}
+        onTouchEnd={(e) => {
+          e.stopPropagation(); // Prevent touch event bubbling for mobile
+        }}
+      />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(

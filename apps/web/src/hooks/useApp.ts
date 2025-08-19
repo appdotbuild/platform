@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { appsService } from '~/external/api/services';
-import { APP_QUERY_KEY } from './queryKeys';
+import { APP_QUERY_KEY, APPS_QUERY_KEY } from './queryKeys';
 import { useCurrentApp } from './useCurrentApp';
 import type { TemplateId } from '@appdotbuild/core';
 
@@ -38,4 +38,14 @@ export function useApp(appId: string) {
     error,
     isError,
   };
+}
+
+export function useAppDelete() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: appsService.deleteApp,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: APPS_QUERY_KEY });
+    },
+  });
 }

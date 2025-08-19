@@ -52,4 +52,5 @@ export const appsService = {
         messageId ? `?messageId=${messageId}` : ''
       }`,
     ),
+  deleteApp: (appId: string) => apiClient.delete(`/apps/${appId}`),
 };
