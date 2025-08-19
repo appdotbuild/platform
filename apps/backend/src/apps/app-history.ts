@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { appPrompts, apps, db, type AppPrompts } from '../db';
 import { validate } from 'uuid';
@@ -42,7 +42,9 @@ export async function getAppPromptHistory(
   const application = await db
     .select()
     .from(apps)
-    .where(and(eq(apps.id, appId), eq(apps.ownerId, userId)));
+    .where(
+      and(eq(apps.id, appId), eq(apps.ownerId, userId), isNull(apps.deletedAt)),
+    );
 
   if (!application || application.length === 0) {
     return null;

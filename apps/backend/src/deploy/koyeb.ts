@@ -1,5 +1,5 @@
 import { type DeploymentState, PlatformMessageType } from '@appdotbuild/core';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { db } from '../db';
 import { appPrompts, deployments } from '../db/schema';
@@ -466,7 +466,12 @@ export const getKoyebDeploymentEndpoint = async (
         koyebOrgId: deployments.koyebOrgId,
       })
       .from(deployments)
-      .where(eq(deployments.ownerId, request.user.id!))
+      .where(
+        and(
+          eq(deployments.ownerId, request.user.id!),
+          isNull(deployments.deletedAt),
+        ),
+      )
       .orderBy(desc(deployments.createdAt))
       .limit(1);
 
@@ -697,4 +702,150 @@ async function updateDeploymentMessage(
       error,
     });
   }
+}
+
+export async function deleteKoyebService({
+  serviceId,
+  token,
+}: {
+  serviceId: string;
+  token: string;
+}) {
+  const response = await fetch(
+    `https://app.koyeb.com/v1/services/${serviceId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    // Don't throw on 404 - resource might already be deleted
+    if (response.status === 404) {
+      logger.info('Koyeb service already deleted or not found', { serviceId });
+      return { deleted: true, alreadyDeleted: true };
+    }
+
+    const error = await response.text();
+    logger.error('Failed to delete Koyeb service', {
+      status: response.status,
+      statusText: response.statusText,
+      error,
+      serviceId,
+    });
+    throw new Error(`Failed to delete Koyeb service: ${error}`);
+  }
+
+  logger.info('Successfully deleted Koyeb service', { serviceId });
+  return { deleted: true, alreadyDeleted: false };
+}
+
+export async function deleteKoyebDomain({
+  domainId,
+  token,
+}: {
+  domainId: string;
+  token: string;
+}) {
+  const response = await fetch(`https://app.koyeb.com/v1/domains/${domainId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    // Don't throw on 404 - resource might already be deleted
+    if (response.status === 404) {
+      logger.info('Koyeb domain already deleted or not found', { domainId });
+      return { deleted: true, alreadyDeleted: true };
+    }
+
+    const error = await response.text();
+    logger.error('Failed to delete Koyeb domain', {
+      status: response.status,
+      statusText: response.statusText,
+      error,
+      domainId,
+    });
+    throw new Error(`Failed to delete Koyeb domain: ${error}`);
+  }
+
+  logger.info('Successfully deleted Koyeb domain', { domainId });
+  return { deleted: true, alreadyDeleted: false };
+}
+
+export async function deleteKoyebApp({
+  appId,
+  token,
+}: {
+  appId: string;
+  token: string;
+}) {
+  const response = await fetch(`https://app.koyeb.com/v1/apps/${appId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    // Don't throw on 404 - resource might already be deleted
+    if (response.status === 404) {
+      logger.info('Koyeb app already deleted or not found', { appId });
+      return { deleted: true, alreadyDeleted: true };
+    }
+
+    const error = await response.text();
+    logger.error('Failed to delete Koyeb app', {
+      status: response.status,
+      statusText: response.statusText,
+      error,
+      appId,
+    });
+    throw new Error(`Failed to delete Koyeb app: ${error}`);
+  }
+
+  logger.info('Successfully deleted Koyeb app', { appId });
+  return { deleted: true, alreadyDeleted: false };
+}
+
+export async function deleteKoyebOrganization({
+  orgId,
+  token,
+}: {
+  orgId: string;
+  token: string;
+}) {
+  const response = await fetch(
+    `https://app.koyeb.com/v1/organizations/${orgId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    // Handle 404 as already deleted (idempotent)
+    if (response.status === 404) {
+      logger.warn('Koyeb organization already deleted or not found', { orgId });
+      return { deleted: false, alreadyDeleted: true };
+    }
+
+    const error = await response.text();
+    logger.error('Failed to delete Koyeb organization', {
+      status: response.status,
+      statusText: response.statusText,
+      error,
+      orgId,
+    });
+    throw new Error(`Failed to delete Koyeb organization: ${error}`);
+  }
+
+  logger.info('Successfully deleted Koyeb organization', { orgId });
+  return { deleted: true, alreadyDeleted: false };
 }

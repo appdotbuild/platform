@@ -27,7 +27,6 @@ export const apps = pgTable(
     s3Checksum: text(),
     deployStatus: text().default(DeployStatus.PENDING), // pending, deploying, deployed, failed
     traceId: text(),
-    // TODO: this should be set per deployment, and not per app, so we can rollback to a previous state
     agentState: jsonb('agentState'),
     receivedSuccess: boolean('receivedSuccess').notNull().default(false),
     recompileInProgress: boolean('recompileInProgress')
@@ -45,6 +44,7 @@ export const apps = pgTable(
     databricksApiKey: text(),
     databricksHost: text(),
     techStack: text('techStack').notNull().default('trpc_agent'), // 'trpc_agent' | 'nicegui_agent' | 'laravel_agent';
+    deletedAt: timestamp('deletedAt', { withTimezone: true }),
   },
   (table) => [index('idx_apps_ownerid_id').on(table.ownerId, table.id)],
 );
@@ -83,6 +83,7 @@ export const deployments = pgTable(
     createdAt: timestamp('createdAt', { withTimezone: true })
       .notNull()
       .defaultNow(),
+    deletedAt: timestamp('deletedAt', { withTimezone: true }),
   },
   (table) => [index('idx_ownerid').on(table.ownerId)],
 );

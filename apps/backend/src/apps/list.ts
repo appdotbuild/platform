@@ -1,5 +1,5 @@
 import type { Paginated } from '@appdotbuild/core';
-import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
+import { desc, eq, getTableColumns, sql, and, isNull } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { apps, db } from '../db';
 import type { App } from '../db/schema';
@@ -43,12 +43,12 @@ export async function listApps(
   const countResultP = db
     .select({ count: sql`count(*)` })
     .from(apps)
-    .where(eq(apps.ownerId, user.id));
+    .where(and(eq(apps.ownerId, user.id), isNull(apps.deletedAt)));
 
   const appsP = db
     .select({ id, appName, name, createdAt, techStack })
     .from(apps)
-    .where(eq(apps.ownerId, user.id))
+    .where(and(eq(apps.ownerId, user.id), isNull(apps.deletedAt)))
     .orderBy(desc(apps.createdAt))
     .limit(pagesize)
     .offset(offset);

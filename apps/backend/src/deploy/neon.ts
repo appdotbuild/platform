@@ -83,3 +83,27 @@ async function getNeonProjectConnectionString({
 
   return connectionString.data.uri;
 }
+
+export async function deleteNeonProject({ projectId }: { projectId: string }) {
+  try {
+    logger.info('Deleting Neon project', { projectId });
+
+    await neonClient.deleteProject(projectId);
+
+    logger.info('Successfully deleted Neon project', { projectId });
+    return { deleted: true, alreadyDeleted: false };
+  } catch (error: any) {
+    // Don't throw on 404 - project might already be deleted
+    if (error.status === 404 || error.statusCode === 404) {
+      logger.info('Neon project already deleted or not found', { projectId });
+      return { deleted: true, alreadyDeleted: true };
+    }
+
+    logger.error('Failed to delete Neon project', {
+      projectId,
+      error: error.message || error,
+      status: error.status || error.statusCode,
+    });
+    throw new Error(`Failed to delete Neon project: ${error.message || error}`);
+  }
+}

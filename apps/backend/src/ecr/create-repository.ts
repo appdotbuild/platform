@@ -2,6 +2,9 @@ import {
   ECRClient,
   CreateRepositoryCommand,
   GetAuthorizationTokenCommand,
+  BatchDeleteImageCommand,
+  ListImagesCommand,
+  DeleteRepositoryCommand,
 } from '@aws-sdk/client-ecr';
 import { STSClient, AssumeRoleCommand } from '@aws-sdk/client-sts';
 
@@ -101,4 +104,110 @@ export async function generateScopedPullToken(username: string) {
     expiresAt: token.expiresAt!,
     repo: repoName,
   };
+}
+
+export async function deleteECRImages({
+  appId,
+  githubUsername,
+}: {
+  appId: string;
+  githubUsername: string;
+}) {
+  const repositoryName = `${process.env.AWS_ECR_NAMESPACE}-${githubUsername}/${appId}`;
+
+  try {
+    logger.info('Deleting ECR images', { repositoryName, appId });
+
+    // First, list all images in the repository
+    const listImagesResponse = await ecrClient.send(
+      new ListImagesCommand({
+        repositoryName,
+      }),
+    );
+
+    const imageIds = listImagesResponse.imageIds;
+
+    if (!imageIds || imageIds.length === 0) {
+      logger.info('No ECR images to delete', { repositoryName, appId });
+      return { deleted: true, imageCount: 0 };
+    }
+
+    // Delete all images
+    await ecrClient.send(
+      new BatchDeleteImageCommand({
+        repositoryName,
+        imageIds,
+      }),
+    );
+
+    logger.info('Successfully deleted ECR images', {
+      repositoryName,
+      appId,
+      imageCount: imageIds.length,
+    });
+
+    return { deleted: true, imageCount: imageIds.length };
+  } catch (error: any) {
+    // Don't throw on repository not found
+    if (error.name === 'RepositoryNotFoundException') {
+      logger.info('ECR repository not found (already deleted)', {
+        repositoryName,
+        appId,
+      });
+      return { deleted: true, imageCount: 0, alreadyDeleted: true };
+    }
+
+    logger.error('Failed to delete ECR images', {
+      repositoryName,
+      appId,
+      error: error.message || error,
+    });
+    throw new Error(`Failed to delete ECR images: ${error.message || error}`);
+  }
+}
+
+export async function deleteECRRepository({
+  appId,
+  githubUsername,
+}: {
+  appId: string;
+  githubUsername: string;
+}) {
+  const repositoryName = `${process.env.AWS_ECR_NAMESPACE}-${githubUsername}/${appId}`;
+
+  try {
+    logger.info('Deleting ECR repository', { repositoryName, appId });
+
+    await ecrClient.send(
+      new DeleteRepositoryCommand({
+        repositoryName,
+        force: true, // Delete even if it contains images
+      }),
+    );
+
+    logger.info('Successfully deleted ECR repository', {
+      repositoryName,
+      appId,
+    });
+
+    return { deleted: true };
+  } catch (error: any) {
+    // Don't throw on repository not found
+    if (error.name === 'RepositoryNotFoundException') {
+      logger.info('ECR repository not found (already deleted)', {
+        repositoryName,
+        appId,
+      });
+      return { deleted: true, alreadyDeleted: true };
+    }
+
+    logger.error('Failed to delete ECR repository', {
+      repositoryName,
+      appId,
+      error: error.message || error,
+    });
+    throw new Error(
+      `Failed to delete ECR repository: ${error.message || error}`,
+    );
+  }
 }

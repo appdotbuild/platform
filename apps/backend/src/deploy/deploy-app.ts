@@ -2,7 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { exec as execNative } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { createApiClient } from '@neondatabase/api-client';
 import { apps, db, deployments } from '../db';
 import { logger } from '../logger';
@@ -81,7 +81,12 @@ async function deployToKoyeb({
       koyebOrgEcrSecretId: deployments.koyebOrgEcrSecretId,
     })
     .from(deployments)
-    .where(eq(deployments.ownerId, currentApp.ownerId!));
+    .where(
+      and(
+        eq(deployments.ownerId, currentApp.ownerId!),
+        isNull(deployments.deletedAt),
+      ),
+    );
 
   // Check if we already have a deployment for this specific app
   const existingAppDeployment = userDeployments.find((d) => d.appId === appId);
@@ -180,7 +185,12 @@ async function deployToKoyeb({
     .set({
       koyebOrgEcrSecretId,
     })
-    .where(eq(deployments.ownerId, currentApp.ownerId!));
+    .where(
+      and(
+        eq(deployments.ownerId, currentApp.ownerId!),
+        isNull(deployments.deletedAt),
+      ),
+    );
 
   if (!koyebAppId) {
     ({ koyebAppId } = await createKoyebApp({

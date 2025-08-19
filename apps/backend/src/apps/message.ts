@@ -26,7 +26,7 @@ import {
 } from '@appdotbuild/core';
 import { nodeEventSource } from '@llm-eaf/node-event-source';
 import { createSession, type Session } from 'better-sse';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, sql, isNull } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { v4 as uuidv4, validate } from 'uuid';
 import { app } from '../app';
@@ -290,7 +290,13 @@ export async function postMessage(
         const application = await db
           .select()
           .from(apps)
-          .where(and(eq(apps.id, applicationId), eq(apps.ownerId, userId)));
+          .where(
+            and(
+              eq(apps.id, applicationId),
+              eq(apps.ownerId, userId),
+              isNull(apps.deletedAt),
+            ),
+          );
 
         if (application.length === 0) {
           streamLog(
