@@ -7,6 +7,7 @@ import { sendIdentify } from '~/external/segment';
 import { isAppPage } from '~/utils/router-checker';
 import { cn } from '~/lib/utils';
 import { useLayout } from '~/hooks/useLayout';
+import { Toaster } from 'sonner';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const user = useUser();
@@ -32,6 +33,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         {children}
       </main>
+      <Toaster richColors />
       <Footer isHidden={hideFooter} />
     </>
   );

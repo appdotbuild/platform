@@ -21,7 +21,6 @@ export function ApplicationItem({ app }: ApplicationItemProps) {
     });
   };
 
-
   return (
     <div
       className="h-full bg-background border border-input rounded-lg p-4 hover:bg-muted/50 transition-colors duration-150 cursor-pointer"
@@ -41,9 +40,11 @@ export function ApplicationItem({ app }: ApplicationItemProps) {
               <h3 className="text-base font-medium text-foreground line-clamp-2 flex-1">
                 {app.appName || app.name}
               </h3>
-              <DeleteAppButton 
-                appId={app.id} 
-                appName={app.appName || app.name} 
+              <DeleteAppButton
+                appId={app.id}
+                appName={app.appName || app.name}
+                techStack={app.techStack}
+                createdDate={new Date(app.createdAt).toLocaleDateString()}
               />
             </div>
           </div>
