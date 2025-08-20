@@ -388,7 +388,12 @@ const resourceHandlers = {
         field: 'createdAt',
         order: 'DESC',
       };
-      const { q: search, ownerId } = params.filter || {};
+      const {
+        q: search,
+        ownerId,
+        showDeleted,
+        appStatus,
+      } = params.filter || {};
 
       const queryParams = new URLSearchParams({
         page: page.toString(),
@@ -397,6 +402,8 @@ const resourceHandlers = {
         ...(field && { sort: field }),
         ...(order && { order: order.toLowerCase() }),
         ...(ownerId && { ownerId: ownerId.toString() }),
+        ...(showDeleted && { showDeleted: showDeleted.toString() }),
+        ...(appStatus && { appStatus: appStatus.toString() }),
       });
 
       const response = await apiClient.get<Paginated<App>>(
@@ -509,6 +516,12 @@ const resourceHandlers = {
         data: params.ids,
       };
     },
+
+    // Custom restore action for apps
+    restore: async (id: string): Promise<AppRecord> => {
+      const response = await apiClient.post<App>(`/admin/apps/${id}/restore`);
+      return convertAppToRecord(response.data);
+    },
   },
   users: {
     getList: async (
@@ -620,6 +633,7 @@ const resourceHandlers = {
 export interface ExtendedDataProvider extends DataProvider {
   getLogMetadata: (appId: string) => Promise<AgentSnapshotMetadata[]>;
   getLogFolders: (appId: string) => Promise<AgentSnapshotFolder[]>;
+  restoreApp: (appId: string) => Promise<AppRecord>;
 }
 
 // Main data provider implementation
@@ -791,6 +805,20 @@ export const dataProvider: ExtendedDataProvider = {
       console.error('Error loading log folders:', error);
       throw new Error(
         error instanceof Error ? error.message : 'Failed to load log folders',
+      );
+    }
+  },
+
+  restoreApp: async (appId: string): Promise<AppRecord> => {
+    try {
+      const response = await apiClient.post<App>(
+        `/admin/apps/${appId}/restore`,
+      );
+      return convertAppToRecord(response.data);
+    } catch (error) {
+      console.error('Error restoring app:', error);
+      throw new Error(
+        error instanceof Error ? error.message : 'Failed to restore app',
       );
     }
   },

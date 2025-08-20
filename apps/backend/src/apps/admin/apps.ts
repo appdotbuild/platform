@@ -55,6 +55,8 @@ export async function listAllAppsForAdmin(
     order = 'desc',
     search = '',
     ownerId,
+    showDeleted = 'false',
+    appStatus,
   } = request.query as {
     limit?: number;
     page?: number;
@@ -62,6 +64,8 @@ export async function listAllAppsForAdmin(
     order?: string;
     search?: string;
     ownerId?: string;
+    showDeleted?: string;
+    appStatus?: string;
   };
 
   if (limit > 100) {
@@ -94,7 +98,28 @@ export async function listAllAppsForAdmin(
   if (ownerId) {
     ownerConditions = eq(apps.ownerId, ownerId);
   }
-  const filterConditions = [searchConditions, ownerConditions];
+
+  // Build deletion status conditions based on appStatus
+  let deletionConditions = undefined;
+  if (appStatus === 'active') {
+    // Only show active apps (not deleted)
+    deletionConditions = sql`${apps.deletedAt} IS NULL`;
+  } else if (appStatus === 'deleted') {
+    // Only show deleted apps
+    deletionConditions = sql`${apps.deletedAt} IS NOT NULL`;
+  } else if (appStatus === 'all' || showDeleted === 'true') {
+    // Show all apps (both deleted and active) - no filter needed
+    deletionConditions = undefined;
+  } else {
+    // Default: only show active apps
+    deletionConditions = sql`${apps.deletedAt} IS NULL`;
+  }
+
+  const filterConditions = [
+    searchConditions,
+    ownerConditions,
+    deletionConditions,
+  ].filter(Boolean);
 
   const countQuery = db
     .select({ count: sql`count(*)` })
@@ -120,5 +145,55 @@ export async function listAllAppsForAdmin(
       limit: pagesize,
       totalPages: Math.ceil(totalCount / pagesize),
     },
+  };
+}
+
+export async function restoreAppForAdmin(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<{ success: boolean; message: string }> {
+  const { id } = request.params as { id: string };
+
+  if (!id) {
+    return reply.status(400).send({
+      error: 'App ID is required',
+    });
+  }
+
+  // Check if app exists and is deleted
+  const appResult = await db
+    .select({
+      id: apps.id,
+      deletedAt: apps.deletedAt,
+    })
+    .from(apps)
+    .where(eq(apps.id, id))
+    .limit(1);
+
+  const app = appResult[0];
+
+  if (!app) {
+    return reply.status(404).send({
+      error: 'App not found',
+    });
+  }
+
+  if (!app.deletedAt) {
+    return reply.status(400).send({
+      error: 'App is not deleted',
+    });
+  }
+
+  // Restore the app by setting deletedAt to null
+  await db
+    .update(apps)
+    .set({
+      deletedAt: null,
+    })
+    .where(eq(apps.id, id));
+
+  return {
+    success: true,
+    message: 'App restored successfully',
   };
 }

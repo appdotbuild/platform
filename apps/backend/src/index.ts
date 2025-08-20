@@ -9,6 +9,7 @@ import {
   listAllAppsForAdmin,
   listApps,
   postMessage,
+  restoreAppForAdmin,
 } from './apps';
 import { sendAnalyticsEvent } from './apps/analytics-events';
 import { appHistory } from './apps/app-history';
@@ -49,6 +50,11 @@ app.get(
   '/admin/apps/:id',
   { onRequest: [app.authenticate, requirePrivilegedUser] },
   getAppByIdForAdmin,
+);
+app.post(
+  '/admin/apps/:id/restore',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  restoreAppForAdmin,
 );
 
 app.get(
