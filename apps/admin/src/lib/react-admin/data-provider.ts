@@ -633,7 +633,6 @@ const resourceHandlers = {
 export interface ExtendedDataProvider extends DataProvider {
   getLogMetadata: (appId: string) => Promise<AgentSnapshotMetadata[]>;
   getLogFolders: (appId: string) => Promise<AgentSnapshotFolder[]>;
-  restoreApp: (appId: string) => Promise<AppRecord>;
 }
 
 // Main data provider implementation
@@ -805,20 +804,6 @@ export const dataProvider: ExtendedDataProvider = {
       console.error('Error loading log folders:', error);
       throw new Error(
         error instanceof Error ? error.message : 'Failed to load log folders',
-      );
-    }
-  },
-
-  restoreApp: async (appId: string): Promise<AppRecord> => {
-    try {
-      const response = await apiClient.post<App>(
-        `/admin/apps/${appId}/restore`,
-      );
-      return convertAppToRecord(response.data);
-    } catch (error) {
-      console.error('Error restoring app:', error);
-      throw new Error(
-        error instanceof Error ? error.message : 'Failed to restore app',
       );
     }
   },
