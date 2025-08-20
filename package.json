@@ -31,7 +31,7 @@
     "e2e:ui": "bun --env-file=./apps/web/.env --filter './apps/web' e2e:ui",
     "lint": "bun --filter '*' lint",
     "lint:fix": "bun --filter '*' lint:fix",
-    "otp": "bun --filter './apps/web' otp",
+    "otp": "bun --env-file=./apps/web/.env --filter './apps/web' otp",
     "prepare": "husky",
     "setup": "sh ./scripts/setup.sh",
     "test": "bun --filter '*' test",
