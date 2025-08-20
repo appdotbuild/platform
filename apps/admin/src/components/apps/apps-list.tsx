@@ -11,7 +11,7 @@ import { HashAvatar } from '@appdotbuild/design';
 import { Badge } from '@appdotbuild/design';
 import type { VariantProps } from 'class-variance-authority';
 import { Button } from '@appdotbuild/design';
-import { ExternalLink, FileText, Eye } from 'lucide-react';
+import { ExternalLink, FileText } from 'lucide-react';
 import { format } from 'timeago.js';
 import {
   Dialog,
@@ -105,7 +105,13 @@ function AppListContent() {
 function MyAppsFilter() {
   const user = stackClientApp.useUser({ or: 'redirect' });
 
-  return <ToggleFilterButton label="My Apps" value={{ ownerId: user.id }} />;
+  return (
+    <ToggleFilterButton
+      label="My Apps"
+      value={{ ownerId: user.id }}
+      size="default"
+    />
+  );
 }
 
 function AppStatusFilterWrapper() {
@@ -118,7 +124,6 @@ const appsFilters = [
     filterLabels={{
       q: 'Search',
       ownerId: 'My Apps',
-      showDeleted: 'Show Deleted',
       appStatus: 'Status',
     }}
   >
@@ -129,7 +134,7 @@ const appsFilters = [
         label="Search"
       />
     </div>
-    <div className="flex items-end gap-3 flex-shrink-0 pb-1">
+    <div className="flex items-end gap-3 flex-shrink-0">
       <MyAppsFilter />
       <AppStatusFilterWrapper />
     </div>
