@@ -69,11 +69,15 @@ jobs:
           AWS_ASSUMED_ROLE: ${{ secrets.AWS_ASSUMED_ROLE }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-bun
+      
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
       - name: Install Playwright and browsers
         run: npx playwright install --with-deps
 
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-bun
       - name: Run E2E tests
         run: bun run e2e:test:ci
         env:
