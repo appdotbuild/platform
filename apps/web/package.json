@@ -13,7 +13,7 @@
     "e2e:ui": "playwright test --ui",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
-    "otp": "bun --env-file=./apps/web/.env run tools/get-otp.ts",
+    "otp": "bun tools/get-otp.ts",
     "preview": "vite preview",
     "types:check": "tsc --noEmit"
   },
