@@ -61,6 +61,7 @@ import { MessageHandlerQueue } from './message-queue';
 import {
   DAILY_APPS_LIMIT,
   getAppsDailyLimitResetTime,
+  checkPersonalAppsLimit,
   userReachedPlatformLimit,
 } from './apps-limit';
 
@@ -159,26 +160,41 @@ export async function postMessage(
   const requestBody = request.body as RequestBody;
   let applicationId = requestBody.applicationId;
   let isPermanentApp = await appExistsInDb(applicationId);
-  const hasReachedPlatformLimit = await userReachedPlatformLimit(request);
-  if (!isPermanentApp && hasReachedPlatformLimit) {
-    app.log.error({
-      message: 'Daily apps limit reached.',
-      userId,
-    });
-    Instrumentation.captureError(new Error('Daily apps limit reached'), {
-      userId,
-      context: API_ERROR_CODE.DAILY_APPS_LIMIT_REACHED,
-    });
+  const [hasReachedPlatformLimit, { isPersonalAppsLimitReached }] =
+    await Promise.all([
+      userReachedPlatformLimit(request),
+      checkPersonalAppsLimit(request),
+    ]);
+  if (!isPermanentApp) {
+    if (hasReachedPlatformLimit) {
+      app.log.error({
+        message: 'Daily apps limit reached.',
+        userId,
+      });
+      Instrumentation.captureError(new Error('Daily apps limit reached'), {
+        userId,
+        context: API_ERROR_CODE.DAILY_APPS_LIMIT_REACHED,
+      });
 
-    const platformAppsLimitHeaders: PlatformAppsLimitHeaders = {
-      'x-daily-apps-limit': DAILY_APPS_LIMIT,
-      'x-daily-apps-reset': getAppsDailyLimitResetTime().toISOString(),
-    };
-    reply.headers(platformAppsLimitHeaders);
-    return reply.status(429).send({
-      code: API_ERROR_CODE.DAILY_APPS_LIMIT_REACHED,
-      message: 'Platform daily apps limit reached. Please try again tomorrow.',
-    });
+      const platformAppsLimitHeaders: PlatformAppsLimitHeaders = {
+        'x-daily-apps-limit': DAILY_APPS_LIMIT,
+        'x-daily-apps-reset': getAppsDailyLimitResetTime().toISOString(),
+      };
+      reply.headers(platformAppsLimitHeaders);
+      return reply.status(429).send({
+        code: API_ERROR_CODE.DAILY_APPS_LIMIT_REACHED,
+        message:
+          'Platform daily apps limit reached. Please try again tomorrow.',
+      });
+    }
+
+    if (isPersonalAppsLimitReached) {
+      return reply.status(429).send({
+        code: API_ERROR_CODE.PERSONAL_APPS_LIMIT_REACHED,
+        message:
+          'Personal apps limit reached. You can try deleting some apps to create new ones.',
+      });
+    }
   }
 
   const userLimitHeader: MessageLimitHeaders = {

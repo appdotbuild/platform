@@ -36,6 +36,16 @@ export type Paginated<T> = {
   pagination: Pagination;
 };
 
+export type ListAppsResponse = Paginated<
+  Pick<App, 'id' | 'appName' | 'name' | 'techStack' | 'createdAt'>
+> & {
+  limits: {
+    maxApps: number;
+    currentApps: number;
+    remainingApps: number;
+  };
+};
+
 export type AppPrompts = {
   id: string;
   appId: string;
@@ -65,7 +75,7 @@ export type App = {
   repositoryUrl?: string | null;
   appName?: string | null;
   appUrl?: string | null;
-  techStack: TemplateId;
+  techStack: string;
 };
 
 export type User = {

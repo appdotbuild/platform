@@ -1,6 +1,7 @@
 export const API_ERROR_CODE = {
   DAILY_APPS_LIMIT_REACHED: 'daily_apps_limit_reached',
   DAILY_MESSAGE_LIMIT_REACHED: 'daily_message_limit_reached',
+  PERSONAL_APPS_LIMIT_REACHED: 'personal_apps_limit_reached',
 } as const;
 
 export class RateLimitError extends Error {

@@ -2,6 +2,7 @@ import type {
   App,
   AppPrompts,
   DeploymentState,
+  ListAppsResponse,
   TemplateId,
   UserMessageLimit,
 } from '@appdotbuild/core';
@@ -16,16 +17,6 @@ export type SendMessageInput = {
   templateId?: TemplateId;
 };
 
-export type PaginatedResponse<T> = {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-};
-
 export type DeploymentStatusResponse = {
   message: string;
   isDeployed: boolean;
@@ -34,7 +25,7 @@ export type DeploymentStatusResponse = {
 
 export const appsService = {
   fetchApps: (page = 1, limit = 10) =>
-    apiClient.get<PaginatedResponse<App>>(`/apps?page=${page}&limit=${limit}`),
+    apiClient.get<ListAppsResponse>(`/apps?page=${page}&limit=${limit}`),
   fetchApp: (appId: string) => apiClient.get<App>(`/apps/${appId}`),
   fetchAppMessages: (appId: string) =>
     apiClient.get<AppPrompts[]>(`/apps/${appId}/history`),

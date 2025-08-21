@@ -1,16 +1,15 @@
-import type { Paginated } from '@appdotbuild/core';
+import type { ListAppsResponse, Paginated } from '@appdotbuild/core';
 import { desc, eq, getTableColumns, sql, and, isNull } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { apps, db } from '../db';
 import type { App } from '../db/schema';
 import { checkMessageUsageLimit } from './message-limit';
+import { checkPersonalAppsLimit } from './apps-limit';
 
 export async function listApps(
   request: FastifyRequest,
   reply: FastifyReply,
-): Promise<
-  Paginated<Pick<App, 'id' | 'appName' | 'name' | 'techStack' | 'createdAt'>>
-> {
+): Promise<ListAppsResponse> {
   const user = request.user;
 
   const { dailyMessageLimit, nextResetTime, remainingMessages, currentUsage } =
@@ -53,7 +52,11 @@ export async function listApps(
     .limit(pagesize)
     .offset(offset);
 
-  const [countResult, appsList] = await Promise.all([countResultP, appsP]);
+  const [countResult, appsList, { userAppsLimit }] = await Promise.all([
+    countResultP,
+    appsP,
+    checkPersonalAppsLimit(request),
+  ]);
 
   const totalCount = Number(countResult[0]?.count || 0);
   return {
@@ -63,6 +66,11 @@ export async function listApps(
       page: pageNum,
       limit: pagesize,
       totalPages: Math.ceil(totalCount / pagesize),
+    },
+    limits: {
+      maxApps: userAppsLimit,
+      currentApps: totalCount,
+      remainingApps: userAppsLimit - totalCount,
     },
   };
 }

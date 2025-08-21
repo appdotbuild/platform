@@ -100,5 +100,18 @@ export const customMessageLimits = pgTable('custom_message_limits', {
     .defaultNow(),
 });
 
+export const customUserLimits = pgTable('custom_user_limits', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('userId').notNull().unique(),
+  dailyMessageLimit: integer('dailyMessageLimit'),
+  userAppsLimit: integer('userAppsLimit'),
+  createdAt: timestamp('createdAt', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export type AppPrompts = typeof appPrompts.$inferSelect;
 export type App = typeof apps.$inferSelect;

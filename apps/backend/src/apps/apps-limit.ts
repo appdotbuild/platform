@@ -1,9 +1,15 @@
-import { and, count, gt } from 'drizzle-orm';
+import { and, count, eq, gt, isNull } from 'drizzle-orm';
 import { app } from '../app';
 import { apps, db } from '../db';
-import type { FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
-export const DAILY_APPS_LIMIT = Number(process.env.DAILY_APPS_LIMIT) || 50;
+export const DAILY_APPS_LIMIT = Number(process.env.DAILY_APPS_LIMIT) || 100;
+
+type UserAppsLimit = {
+  userAppsLimit: number;
+  isPersonalAppsLimitReached: boolean;
+};
+
 const getCurrentDayStart = (): Date => {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
@@ -29,6 +35,15 @@ async function platformHasReachedDailyAppsLimit(): Promise<boolean> {
   return createdAppsTodayCount >= DAILY_APPS_LIMIT;
 }
 
+async function getUserAppsCustomLimit(userId: string): Promise<number> {
+  const appsCountResult = await db
+    .select({ count: count() })
+    .from(apps)
+    .where(and(eq(apps.ownerId, userId), isNull(apps.deletedAt)));
+
+  return appsCountResult[0]?.count || 0;
+}
+
 export async function userReachedPlatformLimit(
   request: FastifyRequest,
 ): Promise<boolean> {
@@ -45,5 +60,37 @@ export async function userReachedPlatformLimit(
       `Error checking platform daily apps limit: ${JSON.stringify(error)}`,
     );
     return false;
+  }
+}
+
+export async function checkPersonalAppsLimit(
+  request: FastifyRequest,
+): Promise<UserAppsLimit> {
+  const DEFAULT_USER_APPS_LIMIT = Number(process.env.USER_APPS_LIMIT) || 10;
+  const userId = request.user.id;
+
+  try {
+    const customUserAppsLimit = await getUserAppsCustomLimit(userId);
+    const userAppsLimit = customUserAppsLimit ?? DEFAULT_USER_APPS_LIMIT;
+
+    const appsCountResult = await db
+      .select({ count: count() })
+      .from(apps)
+      .where(and(eq(apps.ownerId, userId), isNull(apps.deletedAt)));
+
+    const createdAppsCount = appsCountResult[0]?.count || 0;
+
+    return {
+      isPersonalAppsLimitReached: createdAppsCount >= userAppsLimit,
+      userAppsLimit,
+    };
+  } catch (error) {
+    app.log.error(
+      `Error checking user personal apps limit: ${JSON.stringify(error)}`,
+    );
+    return {
+      isPersonalAppsLimitReached: false,
+      userAppsLimit: DEFAULT_USER_APPS_LIMIT,
+    };
   }
 }

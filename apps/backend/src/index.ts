@@ -23,6 +23,7 @@ import {
   getAppSingleIterationJsonData,
 } from './apps/admin/app-agent-snaphots';
 import { dockerLoginIfNeeded } from './docker';
+import { checkPersonalAppsLimit } from './apps/apps-limit';
 
 config({ path: '.env' });
 validateEnv();
