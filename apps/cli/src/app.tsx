@@ -11,6 +11,18 @@ import { AppRouter } from './routes';
 
 const queryClient = new QueryClient();
 
+function WebLinkButton() {
+  return (
+    <Box>
+      <Text dimColor>Please use </Text>
+      <Text underline color="blueBright">
+        https://app.build
+      </Text>
+      <Text dimColor> (web version) instead for all future projects.</Text>
+    </Box>
+  );
+}
+
 // refresh the app every 100ms
 const useKeepAlive = () =>
   useEffect(() => {
@@ -71,8 +83,17 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     <Box flexDirection="column" gap={1}>
       <Static items={['banner']}>
         {() => (
-          <Banner key="banner" title="Welcome to app.build CLI">
-            Create, deploy, and manage your applications with ease
+          <Banner key="banner" title="⚠️  DEPRECATION NOTICE" borderColor="red">
+            <Box flexDirection="column">
+              <Text color="red" bold>
+                This CLI will be{' '}
+                <Text color="red" bold inverse>
+                  DEPRECATED
+                </Text>{' '}
+                soon!
+              </Text>
+              <WebLinkButton />
+            </Box>
           </Banner>
         )}
       </Static>
