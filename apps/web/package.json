@@ -34,7 +34,7 @@
     "motion": "^12.23.9",
     "react": "catalog:",
     "react-dom": "^19.1.0",
-    "react-hook-form": "^7.62.0",
+    "react-hook-form": "7.62.0",
     "react-markdown": "^10.1.0",
     "ua-parser-js": "^2.0.4",
     "uuid": "^11.1.0",

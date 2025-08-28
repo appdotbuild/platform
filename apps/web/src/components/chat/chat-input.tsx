@@ -25,7 +25,7 @@ export function ChatInput({ deploymentConfig, disabled }: ChatInputProps) {
   const [inputValue, setInputValue] = useState('');
   const { userLimit, isLoading: isLoadingMessageLimit } =
     useFetchMessageLimit();
-  const { currentAppTemplateId } = useCurrentApp();
+  const { currentAppTemplateId, currentAppDeploymentConfig } = useCurrentApp();
   const [selectedStack, setSelectedStack] =
     useState<TemplateId>(currentAppTemplateId);
 
@@ -49,6 +49,10 @@ export function ChatInput({ deploymentConfig, disabled }: ChatInputProps) {
       if (isHomePage(pathname) && !user) {
         localStorage.setItem('pendingMessage', inputValue);
         localStorage.setItem('pendingTemplateId', selectedStack);
+        localStorage.setItem(
+          'pendingDeploymentConfig',
+          JSON.stringify(deploymentConfig),
+        );
         navigate({ to: '/handler/sign-in' });
         return;
       }
@@ -63,7 +67,7 @@ export function ChatInput({ deploymentConfig, disabled }: ChatInputProps) {
         await sendMessage({
           message: inputValue,
           templateId: selectedStack,
-          deploymentConfig,
+          deploymentConfig: currentAppDeploymentConfig || deploymentConfig,
         });
       }
 
@@ -79,6 +83,7 @@ export function ChatInput({ deploymentConfig, disabled }: ChatInputProps) {
     isLoading,
     selectedStack,
     deploymentConfig,
+    currentAppDeploymentConfig,
   ]);
 
   const handleChange = useCallback(

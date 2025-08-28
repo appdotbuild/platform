@@ -8,12 +8,17 @@ import {
 import { useAppsList } from './useAppsList';
 import { useCurrentApp } from './useCurrentApp';
 import { useSSEMessageHandler, useSSEQuery } from './useSSE';
-import type { TemplateId } from '@appdotbuild/core';
-import type { DeploymentConfig } from '~/types/deployment';
+import type { MessageSSERequest, TemplateId, TraceId } from '@appdotbuild/core';
+import type { DeploymentConfig } from '~/components/chat/deployment/deployment-target-selector';
 
 // main chat logic
 export function useChat() {
-  const { setMessageBeforeCreation, setCurrentAppTemplateId } = useCurrentApp();
+  const {
+    setMessageBeforeCreation,
+    setCurrentAppTemplateId,
+    setCurrentAppDeploymentConfig,
+    currentAppDeploymentConfig,
+  } = useCurrentApp();
   const navigate = useNavigate();
   const params = useParams({ from: '/apps/$appId', shouldThrow: false });
   const appId = params?.appId || undefined;
@@ -51,6 +56,9 @@ export function useChat() {
 
     setMessageBeforeCreation(message);
     setCurrentAppTemplateId(templateId);
+    if (deploymentConfig) {
+      setCurrentAppDeploymentConfig(deploymentConfig);
+    }
 
     navigate({
       to: '/apps/$appId',
@@ -105,19 +113,28 @@ export function useChat() {
     const app = apps.find((a) => a.id === sendChatId);
     const traceId = app?.traceId || `app-${sendChatId}.req-${Date.now()}`;
 
+    // Use provided deploymentConfig or fall back to stored one
+    const effectiveDeploymentConfig =
+      deploymentConfig || currentAppDeploymentConfig;
+
+    let databricksApiKey: string | undefined;
+    let databricksHost: string | undefined;
+    if (effectiveDeploymentConfig?.selectedTarget === 'databricks') {
+      databricksApiKey =
+        effectiveDeploymentConfig?.databricksConfig?.personalAccessToken;
+      databricksHost = effectiveDeploymentConfig?.databricksConfig?.hostUrl;
+    }
+
     // Add deployment context to the payload
-    const payload: any = {
+    const payload: MessageSSERequest = {
       applicationId: isNewApp ? null : appId,
       message: message.trim(),
       clientSource: 'web',
-      traceId: isNewApp ? undefined : traceId,
+      traceId: isNewApp ? undefined : (traceId as TraceId),
       templateId: app?.techStack ?? templateId,
+      databricksApiKey,
+      databricksHost,
     };
-
-    // Include deployment configuration if provided
-    if (deploymentConfig) {
-      payload.deploymentConfig = deploymentConfig;
-    }
 
     sendMessageAsync(payload);
   };

@@ -3,11 +3,12 @@ import {
   agentSseEventSchema,
   PlatformMessageType,
   isRateLimitError,
+  type MessageSSERequest,
 } from '@appdotbuild/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { appsService, type SendMessageInput } from '~/external/api/services';
+import { appsService } from '~/external/api/services';
 import { queryClient } from '~/lib/queryClient';
 import {
   MESSAGE_ROLES,
@@ -85,7 +86,7 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
 
   // mutation to send new messages
   const mutation = useMutation({
-    mutationFn: async (data: SendMessageInput) => {
+    mutationFn: async (data: MessageSSERequest) => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }

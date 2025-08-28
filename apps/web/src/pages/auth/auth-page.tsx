@@ -29,11 +29,18 @@ export function AuthPage() {
       const pendingMessage = localStorage.getItem('pendingMessage');
       const pendingTemplateId =
         localStorage.getItem('pendingTemplateId') || 'trpc_agent';
+      const pendingDeploymentConfigStr = localStorage.getItem(
+        'pendingDeploymentConfig',
+      );
+      const pendingDeploymentConfig = pendingDeploymentConfigStr
+        ? JSON.parse(pendingDeploymentConfigStr)
+        : { selectedTarget: 'koyeb' };
 
       if (pendingMessage) {
         // remove the pending message
         localStorage.removeItem('pendingMessage');
         localStorage.removeItem('pendingTemplateId');
+        localStorage.removeItem('pendingDeploymentConfig');
         setIsProcessing(true);
 
         // redirect to the app creation flow
@@ -41,6 +48,7 @@ export function AuthPage() {
           createNewApp({
             firstInput: pendingMessage,
             templateId: pendingTemplateId as TemplateId,
+            deploymentConfig: pendingDeploymentConfig,
           });
         }, 100);
       } else if (!pathname.includes('cli-auth-confirm')) {

@@ -51,8 +51,7 @@ export function AuthenticatedHome() {
                 }
               }
               disabled={
-                deploymentSelectorRef.current?.deployInformationIsValid() ??
-                true
+                !deploymentSelectorRef.current?.deployInformationIsValid()
               }
             />
             <div className="absolute left-0 right-0 top-full mt-2">

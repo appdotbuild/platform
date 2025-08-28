@@ -94,7 +94,7 @@
         "ra-language-english": "^5.9.1",
         "react": "catalog:",
         "react-dom": "catalog:",
-        "react-hook-form": "^7.60.0",
+        "react-hook-form": "7.62.0",
         "react-json-view": "^1.21.3",
         "react-router": "catalog:",
         "sonner": "^2.0.6",
@@ -236,7 +236,7 @@
         "motion": "^12.23.9",
         "react": "catalog:",
         "react-dom": "^19.1.0",
-        "react-hook-form": "^7.62.0",
+        "react-hook-form": "7.62.0",
         "react-markdown": "^10.1.0",
         "ua-parser-js": "^2.0.4",
         "uuid": "^11.1.0",
@@ -314,7 +314,7 @@
         "cmdk": "1.0.0",
         "immer": "10.1.1",
         "lucide-react": "0.525.0",
-        "react-hook-form": "7.53.0",
+        "react-hook-form": "7.62.0",
         "react-markdown": "10.1.0",
         "react-responsive": "10.0.0",
         "react-syntax-highlighter": "15.6.1",
@@ -3883,8 +3883,6 @@
     "@appdotbuild/design/eslint": ["eslint@9.18.0", "", { "dependencies": { "@eslint-community/eslint-utils": "^4.2.0", "@eslint-community/regexpp": "^4.12.1", "@eslint/config-array": "^0.19.0", "@eslint/core": "^0.10.0", "@eslint/eslintrc": "^3.2.0", "@eslint/js": "9.18.0", "@eslint/plugin-kit": "^0.2.5", "@humanfs/node": "^0.16.6", "@humanwhocodes/module-importer": "^1.0.1", "@humanwhocodes/retry": "^0.4.1", "@types/estree": "^1.0.6", "@types/json-schema": "^7.0.15", "ajv": "^6.12.4", "chalk": "^4.0.0", "cross-spawn": "^7.0.6", "debug": "^4.3.2", "escape-string-regexp": "^4.0.0", "eslint-scope": "^8.2.0", "eslint-visitor-keys": "^4.2.0", "espree": "^10.3.0", "esquery": "^1.5.0", "esutils": "^2.0.2", "fast-deep-equal": "^3.1.3", "file-entry-cache": "^8.0.0", "find-up": "^5.0.0", "glob-parent": "^6.0.2", "ignore": "^5.2.0", "imurmurhash": "^0.1.4", "is-glob": "^4.0.0", "json-stable-stringify-without-jsonify": "^1.0.1", "lodash.merge": "^4.6.2", "minimatch": "^3.1.2", "natural-compare": "^1.4.0", "optionator": "^0.9.3" }, "peerDependencies": { "jiti": "*" }, "optionalPeers": ["jiti"], "bin": { "eslint": "bin/eslint.js" } }, "sha512-+waTfRWQlSbpt3KWE+CjrPPYnbq9kfZIYUqapc0uBXyjTp8aYXZDsUH16m39Ryq3NjAVP4tjuF7KaukeqoCoaA=="],
 
     "@appdotbuild/design/postcss": ["postcss@8.5.1", "", { "dependencies": { "nanoid": "^3.3.8", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-6oz2beyjc5VMn/KV1pPw8fliQkhBXrVn1Z3TVyqZxU8kZpzEKhBdmCFqI6ZbmGtamQvQGuU1sgPTk8ZrXDD7jQ=="],
-
-    "@appdotbuild/design/react-hook-form": ["react-hook-form@7.53.0", "", { "peerDependencies": { "react": "^16.8.0 || ^17 || ^18 || ^19" } }, "sha512-M1n3HhqCww6S2hxLxciEXy2oISPnAzxY7gvwVPrtlczTM/1dDadXgUxDpHMrMTblDOcm/AXtXxHwZ3jpg1mqKQ=="],
 
     "@appdotbuild/design/typescript": ["typescript@5.7.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-i5t66RHxDvVN40HfDd1PsEThGNnlMCMT3jMUuoh9/0TaqWevNontacunWyN02LA9/fIbEWlcHZcgTKb9QoaLfg=="],
 

@@ -52,7 +52,7 @@
     "ra-language-english": "^5.9.1",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-hook-form": "^7.60.0",
+    "react-hook-form": "7.62.0",
     "react-json-view": "^1.21.3",
     "react-router": "catalog:",
     "sonner": "^2.0.6",

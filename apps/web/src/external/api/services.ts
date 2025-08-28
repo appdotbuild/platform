@@ -2,19 +2,11 @@ import type {
   App,
   AppPrompts,
   DeploymentState,
-  TemplateId,
+  MessageSSERequest,
   UserMessageLimit,
 } from '@appdotbuild/core';
 
 import { apiClient } from '../api/adapter';
-
-export type SendMessageInput = {
-  applicationId: string;
-  message: string;
-  clientSource?: string;
-  traceId?: string;
-  templateId?: TemplateId;
-};
 
 export type PaginatedResponse<T> = {
   data: T[];
@@ -38,7 +30,7 @@ export const appsService = {
   fetchApp: (appId: string) => apiClient.get<App>(`/apps/${appId}`),
   fetchAppMessages: (appId: string) =>
     apiClient.get<AppPrompts[]>(`/apps/${appId}/history`),
-  sendMessage: (data: SendMessageInput, options: Record<string, unknown>) =>
+  sendMessage: (data: MessageSSERequest, options: Record<string, unknown>) =>
     apiClient.postSSE({
       endpoint: '/message',
       data,

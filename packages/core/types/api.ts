@@ -2,6 +2,7 @@ import type {
   DeployStatusType,
   MessageKind,
   PromptKindType,
+  TraceId,
 } from '../agent-message';
 
 export type UserMessageLimit = {
@@ -87,3 +88,15 @@ export const DEPLOYMENT_STATE = {
 } as const;
 export type DeploymentState =
   (typeof DEPLOYMENT_STATE)[keyof typeof DEPLOYMENT_STATE];
+
+export type MessageSSERequest = {
+  message: string;
+  clientSource: string;
+  environment?: 'staging' | 'production';
+  settings?: Record<string, any>;
+  applicationId?: string;
+  traceId?: TraceId;
+  databricksApiKey?: string;
+  databricksHost?: string;
+  templateId?: TemplateId;
+};
