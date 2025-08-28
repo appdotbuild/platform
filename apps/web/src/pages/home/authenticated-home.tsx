@@ -1,15 +1,22 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { ChatInput } from '~/components/chat/chat-input';
 import { ChatMessageLimit } from '~/components/chat/chat-message-limit';
 import { ChatList } from '~/components/chat/list/chat-list';
+import {
+  DeploymentTargetSelector,
+  type DeploymentTargetSelectorHandle,
+} from '~/components/chat/deployment/deployment-target-selector';
 import { DecoratedInputContainer } from '~/components/shared/decorations';
 import { HeroTitle } from '~/components/shared/title';
 import { AnalyticsEvents, sendPageView } from '~/external/segment';
 import { useCurrentApp } from '~/hooks/useCurrentApp';
 import { messagesStore } from '~/stores/messages-store';
+import { useIsStaff } from '~/hooks/use-is-staff';
 
 export function AuthenticatedHome() {
   const clearCurrentApp = useCurrentApp((state) => state.clearCurrentApp);
+  const deploymentSelectorRef = useRef<DeploymentTargetSelectorHandle>(null);
+  const isStaff = useIsStaff();
 
   useEffect(() => {
     sendPageView(AnalyticsEvents.PAGE_VIEW_HOME);
@@ -25,7 +32,7 @@ export function AuthenticatedHome() {
     <section className="hero relative grow overflow-x-hidden overflow-y-auto">
       <div
         data-testid="authenticated-home"
-        className="w-full h-full flex flex-col gap-12 lg:gap-20 pt-20 md:pt-24 lg:pt-48 xl:pt-56 items-center"
+        className="w-full h-full flex flex-col gap-8 lg:gap-12 pt-20 md:pt-24 lg:pt-48 xl:pt-56 items-center"
       >
         <HeroTitle>
           An open-source <br className="block md:hidden xl:block" />
@@ -33,12 +40,26 @@ export function AuthenticatedHome() {
           full-stack apps
         </HeroTitle>
 
-        <DecoratedInputContainer>
-          <ChatInput />
-          <div className="absolute left-0 right-0 top-full mt-2">
-            <ChatMessageLimit />
-          </div>
-        </DecoratedInputContainer>
+        <div className="w-full max-w-2xl px-4 lg:px-6 space-y-8">
+          {isStaff && <DeploymentTargetSelector ref={deploymentSelectorRef} />}
+
+          <DecoratedInputContainer>
+            <ChatInput
+              deploymentConfig={
+                deploymentSelectorRef.current?.getDeploymentConfig() ?? {
+                  selectedTarget: 'koyeb',
+                }
+              }
+              disabled={
+                deploymentSelectorRef.current?.deployInformationIsValid() ??
+                true
+              }
+            />
+            <div className="absolute left-0 right-0 top-full mt-2">
+              <ChatMessageLimit />
+            </div>
+          </DecoratedInputContainer>
+        </div>
         <ChatList />
       </div>
     </section>

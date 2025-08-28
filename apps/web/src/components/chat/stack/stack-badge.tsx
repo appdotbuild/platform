@@ -1,6 +1,6 @@
 import type { TemplateId } from '@appdotbuild/core';
 import { Badge } from '@appdotbuild/design';
-import { cn } from '~/lib/utils';
+import { cn } from '@design/lib';
 import { createElement, useMemo } from 'react';
 import { STACK_OPTIONS } from '~/components/chat/stack/stack-options';
 

@@ -3,7 +3,7 @@ import { Info, MessageSquare } from 'lucide-react';
 import { Badge } from '@appdotbuild/design';
 import { Popover, PopoverContent, PopoverTrigger } from '@appdotbuild/design';
 import { useFetchMessageLimit } from '~/hooks/userMessageLimit';
-import { cn } from '~/lib/utils';
+import { cn } from '@design/lib';
 import { useState } from 'react';
 
 export function ChatMessageLimit() {

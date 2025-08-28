@@ -10,7 +10,7 @@ import {
 } from '~/components/shared/carousel';
 import { sendEvent } from '~/external/segment';
 import { useAppsList } from '~/hooks/useAppsList';
-import { cn } from '~/lib/utils';
+import { cn } from '@design/lib';
 import { ApplicationItem } from './chat-item';
 
 export function ChatList() {
@@ -55,7 +55,7 @@ export function ChatList() {
   const renderContent = () => {
     if (isLoadingApps && !hasLoadedOnce) {
       return (
-        <div className="flex gap-2 md:gap-4">
+        <div className="flex gap-3 md:gap-6">
           {[1, 2, 3].map((index) => (
             <div
               key={index}
@@ -115,11 +115,11 @@ export function ChatList() {
             slidesToScroll: 1,
           }}
         >
-          <CarouselContent className="-ml-2 md:-ml-4">
+          <CarouselContent className="-ml-3 md:-ml-6">
             {apps.map((app) => (
               <CarouselItem
                 key={app.id}
-                className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
+                className="pl-3 md:pl-6 basis-full sm:basis-1/2 lg:basis-1/3"
               >
                 <div className="h-32">
                   <ApplicationItem app={app} />
@@ -127,7 +127,7 @@ export function ChatList() {
               </CarouselItem>
             ))}
             {isFetchingNextPage && (
-              <CarouselItem className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
+              <CarouselItem className="pl-3 md:pl-6 basis-full sm:basis-1/2 lg:basis-1/3">
                 <div className="h-32 flex items-center justify-center bg-background border border-input rounded-lg">
                   <div className="text-sm text-muted-foreground">
                     Loading...
@@ -147,7 +147,7 @@ export function ChatList() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div
           data-testid="my-apps-header"
           className="flex items-center gap-2 px-4 py-3 bg-background border border-input rounded-lg"

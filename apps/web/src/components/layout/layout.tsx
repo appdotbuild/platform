@@ -5,7 +5,7 @@ import { useLocation } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { sendIdentify } from '~/external/segment';
 import { isAppPage } from '~/utils/router-checker';
-import { cn } from '~/lib/utils';
+import { cn } from '@design/lib';
 import { useLayout } from '~/hooks/useLayout';
 import { Toaster } from 'sonner';
 

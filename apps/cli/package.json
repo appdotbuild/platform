@@ -45,7 +45,7 @@
     "react": "catalog:",
     "react-markdown": "^10.1.0",
     "react-router": "catalog:",
-    "zod": "3.22.4",
+    "zod": "4.1.4",
     "zustand": "5.0.3"
   },
   "devDependencies": {

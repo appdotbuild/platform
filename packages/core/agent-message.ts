@@ -84,7 +84,7 @@ export type PlatformMessageMetadata = {
 export const agentSseEventMessageSchema = z.object({
   kind: messageKindSchema,
   messages: z.array(conversationMessageSchema),
-  agentState: z.record(z.unknown()).nullish(),
+  agentState: z.record(z.string(), z.unknown()).nullish(),
   unifiedDiff: z.string().nullish(),
   app_name: z.string().nullish(),
   commit_message: z.string().nullish(),
@@ -122,8 +122,8 @@ export const agentRequestSchema = z.object({
   allMessages: z.array(conversationMessageSchema),
   applicationId: z.string(),
   traceId: z.string(),
-  agentState: z.record(z.unknown()).optional(),
-  settings: z.record(z.unknown()).optional(),
+  agentState: z.record(z.string(), z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
 });
 
 // Type inference helpers

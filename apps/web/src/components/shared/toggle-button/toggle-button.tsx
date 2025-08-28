@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { ChevronDown } from 'lucide-react';
 import { Button } from '~/components/shared/button';
-import { cn } from '~/lib/utils';
+import { cn } from '@design/lib';
 
 interface ToggleButtonProps {
   isOpen: boolean;

@@ -19,8 +19,7 @@ const badgeVariants = cva(
           'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         highlighted:
           'border-2 border-primary/60 bg-primary/5 text-primary font-semibold [a&]:hover:bg-primary/10 [a&]:hover:border-primary/80',
-        beta:
-          'text-orange-600 bg-orange-50 border-orange-200 font-medium [a&]:hover:bg-orange-100 [a&]:hover:border-orange-300',
+        beta: 'text-orange-600 bg-orange-50 border-orange-200 font-medium [a&]:hover:bg-orange-100 [a&]:hover:border-orange-300',
       },
     },
     defaultVariants: {

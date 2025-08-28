@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useRef } from 'react';
-import { cn } from '~/lib/utils';
+import { cn } from '@design/lib';
 
 interface TextareaProps extends React.ComponentProps<'textarea'> {
   maxHeight?: number;

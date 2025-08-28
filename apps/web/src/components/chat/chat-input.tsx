@@ -3,15 +3,21 @@ import { StackPicker } from '~/components/chat/stack/stack-picker';
 import { Textarea } from '~/components/shared/text-area';
 import { useUser } from '@stackframe/react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useChat } from '~/hooks/useChat';
 import { useFetchMessageLimit } from '~/hooks/userMessageLimit';
-import { cn } from '~/lib/utils';
 import { isAppPage, isHomePage } from '~/utils/router-checker';
 import type { TemplateId } from '@appdotbuild/core';
+import type { DeploymentConfig } from '~/components/chat/deployment/deployment-target-selector';
 import { useCurrentApp } from '~/hooks/useCurrentApp';
+import { cn } from '@design/lib';
 
-export function ChatInput() {
+interface ChatInputProps {
+  deploymentConfig: DeploymentConfig;
+  disabled?: boolean;
+}
+
+export function ChatInput({ deploymentConfig, disabled }: ChatInputProps) {
   const user = useUser();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -25,7 +31,17 @@ export function ChatInput() {
 
   const isUserLimitReached = userLimit?.isUserLimitReached;
   const buttonDisabled =
-    isUserLimitReached || isLoadingMessageLimit || isLoading;
+    isUserLimitReached || isLoadingMessageLimit || isLoading || disabled;
+
+  // Auto-select NiceGUI when Databricks is selected
+  useEffect(() => {
+    if (
+      deploymentConfig.selectedTarget === 'databricks' &&
+      selectedStack !== 'nicegui_agent'
+    ) {
+      setSelectedStack('nicegui_agent');
+    }
+  }, [deploymentConfig.selectedTarget, selectedStack]);
 
   const handleSubmit = useCallback(async () => {
     if (inputValue.trim() && !isLoading) {
@@ -38,9 +54,17 @@ export function ChatInput() {
       }
 
       if (isHomePage(pathname)) {
-        createNewApp({ firstInput: inputValue, templateId: selectedStack });
+        createNewApp({
+          firstInput: inputValue,
+          templateId: selectedStack,
+          deploymentConfig,
+        });
       } else {
-        await sendMessage({ message: inputValue, templateId: selectedStack });
+        await sendMessage({
+          message: inputValue,
+          templateId: selectedStack,
+          deploymentConfig,
+        });
       }
 
       setInputValue('');
@@ -54,6 +78,7 @@ export function ChatInput() {
     sendMessage,
     isLoading,
     selectedStack,
+    deploymentConfig,
   ]);
 
   const handleChange = useCallback(
@@ -65,16 +90,19 @@ export function ChatInput() {
 
   const showStackPicker = isHomePage(pathname);
 
+  const getPlaceholderText = () => {
+    if (isAppPage(pathname)) {
+      return 'Type your message...';
+    }
+    return 'Describe the app you want to build...';
+  };
+
   return (
     <div className="flex-col py-4.5 w-full border border-dashed border-input bg-background text-black flex items-center relative px-4 lg:px-6 gap-2 md:gap-4">
       <div className="flex justify-between w-full">
         <Textarea
           className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-sm md:placeholder:text-base resize-none"
-          placeholder={
-            isAppPage(pathname)
-              ? 'Type your message...'
-              : 'Describe the app you want to build...'
-          }
+          placeholder={getPlaceholderText()}
           value={inputValue}
           onChange={handleChange}
           onKeyDown={(e) => {
@@ -116,6 +144,7 @@ export function ChatInput() {
             selectedStack={selectedStack}
             onStackChange={setSelectedStack}
             disabled={isLoading}
+            deploymentTarget={deploymentConfig.selectedTarget}
           />
         </div>
       )}

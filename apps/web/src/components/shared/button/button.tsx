@@ -1,5 +1,5 @@
 import React, { type ComponentProps } from 'react';
-import { cn } from '~/lib/utils';
+import { cn } from '@design/lib';
 import { Button as ButtonBase, buttonVariants } from '@appdotbuild/design';
 
 export interface ButtonProps

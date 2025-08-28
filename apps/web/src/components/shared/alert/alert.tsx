@@ -1,4 +1,4 @@
-import { cn } from '~/lib/utils';
+import { cn } from '@design/lib';
 
 interface AlertProps {
   children: React.ReactNode;

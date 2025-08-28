@@ -173,6 +173,7 @@ export function useSafeSearchParams<T extends RoutePath>(route: T) {
     ) => {
       let searchParamsObj: SearchParamsObject<T>;
       if (typeof searchParamsArg === 'function') {
+        // @ts-expect-error - not worth it to fix
         searchParamsObj = searchParamsArg(safeSearchParams);
       } else {
         searchParamsObj = searchParamsArg;

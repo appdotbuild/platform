@@ -9,6 +9,7 @@ import { useAppsList } from './useAppsList';
 import { useCurrentApp } from './useCurrentApp';
 import { useSSEMessageHandler, useSSEQuery } from './useSSE';
 import type { TemplateId } from '@appdotbuild/core';
+import type { DeploymentConfig } from '~/types/deployment';
 
 // main chat logic
 export function useChat() {
@@ -30,9 +31,11 @@ export function useChat() {
   const createNewApp = ({
     firstInput,
     templateId,
+    deploymentConfig,
   }: {
     firstInput: string;
     templateId: TemplateId;
+    deploymentConfig?: DeploymentConfig;
   }) => {
     const message = firstInput.trim();
     if (!message) return;
@@ -55,17 +58,24 @@ export function useChat() {
       replace: true,
     });
 
-    sendMessage({ message: message, isNewApp: true, templateId });
+    sendMessage({
+      message: message,
+      isNewApp: true,
+      templateId,
+      deploymentConfig,
+    });
   };
 
   const sendMessage = async ({
     message,
     isNewApp,
     templateId,
+    deploymentConfig,
   }: {
     message: string;
     isNewApp?: boolean;
     templateId?: TemplateId;
+    deploymentConfig?: DeploymentConfig;
   }) => {
     const sendChatId = isNewApp ? 'new' : appId;
     if (!sendChatId || !message.trim()) return;
@@ -95,13 +105,21 @@ export function useChat() {
     const app = apps.find((a) => a.id === sendChatId);
     const traceId = app?.traceId || `app-${sendChatId}.req-${Date.now()}`;
 
-    sendMessageAsync({
+    // Add deployment context to the payload
+    const payload: any = {
       applicationId: isNewApp ? null : appId,
       message: message.trim(),
       clientSource: 'web',
       traceId: isNewApp ? undefined : traceId,
       templateId: app?.techStack ?? templateId,
-    });
+    };
+
+    // Include deployment configuration if provided
+    if (deploymentConfig) {
+      payload.deploymentConfig = deploymentConfig;
+    }
+
+    sendMessageAsync(payload);
   };
 
   return {
