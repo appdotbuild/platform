@@ -9,6 +9,7 @@ import {
   deleteKoyebOrganization,
   getOrganizationToken,
 } from '../deploy/koyeb';
+import { cleanupDatabricksResources } from '../deploy/databricks';
 import { deleteNeonProject } from '../deploy/neon';
 import { deleteECRImages, deleteECRRepository } from '../ecr';
 import { DEFAULT_OWNER, GithubEntity } from '../github/entity';
@@ -39,6 +40,8 @@ export async function deleteApp(
         neonProjectId: apps.neonProjectId,
         githubUsername: apps.githubUsername,
         repositoryUrl: apps.repositoryUrl,
+        databricksHost: apps.databricksHost,
+        databricksApiKey: apps.databricksApiKey,
         deletedAt: apps.deletedAt,
       })
       .from(apps)
@@ -97,15 +100,39 @@ export async function deleteApp(
       .where(eq(apps.id, id));
     logger.info('Soft deleted main app record', { appId: id });
 
-    await cleanupKoyebResources({
-      appId: id,
-      ownerId: user.id,
-      koyebServiceId: appData.koyebServiceId,
-      koyebDomainId: appData.koyebDomainId,
-      koyebAppId: appData.koyebAppId,
-      koyebOrgId: koyebOrgId,
-      isLastActiveDeployment: isLastActiveDeployment,
-    });
+    // Databricks resource cleanup
+    if (appData.databricksHost && appData.databricksApiKey) {
+      try {
+        await cleanupDatabricksResources({
+          appId: id,
+          databricksHost: appData.databricksHost,
+          databricksApiKey: appData.databricksApiKey,
+        });
+        logger.info('Databricks resource cleanup completed', { appId: id });
+      } catch (error) {
+        logger.error('Failed to cleanup Databricks resources', {
+          appId: id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    } else {
+      try {
+        await cleanupKoyebResources({
+          appId: id,
+          ownerId: user.id,
+          koyebServiceId: appData.koyebServiceId,
+          koyebDomainId: appData.koyebDomainId,
+          koyebAppId: appData.koyebAppId,
+          koyebOrgId: koyebOrgId,
+          isLastActiveDeployment: isLastActiveDeployment,
+        });
+      } catch (error) {
+        logger.error('Failed to cleanup Koyeb resources', {
+          appId: id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
 
     await cleanupNeonResources({
       appId: id,

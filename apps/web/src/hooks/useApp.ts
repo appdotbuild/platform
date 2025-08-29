@@ -45,9 +45,6 @@ export function useAppDelete() {
   return useMutation({
     mutationFn: appsService.deleteApp,
     onSuccess: (_, appId) => {
-      console.log('onSuccess', appId);
-      const oldApps = queryClient.getQueryData(APPS_QUERY_KEY);
-      console.log('oldApps', oldApps);
       queryClient.setQueryData(
         APPS_QUERY_KEY,
         (old: { pages: PaginatedResponse<App>[] }) => {

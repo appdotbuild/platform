@@ -425,3 +425,182 @@ function createDatabricksAppFile(
 
   return databricksAppFile;
 }
+
+export async function deleteDatabricksApp({
+  appName,
+  databricksHost,
+  databricksApiKey,
+}: {
+  appName: string;
+  databricksHost: string;
+  databricksApiKey: string;
+}) {
+  const databricksEnv = {
+    ...process.env,
+    DATABRICKS_HOST: databricksHost,
+    DATABRICKS_TOKEN: databricksApiKey,
+  };
+
+  try {
+    // Check if app exists before trying to delete
+    const appExists = await checkDatabricksAppExists({
+      appName,
+      databricksHost,
+      databricksApiKey,
+    });
+
+    if (!appExists) {
+      logger.info(
+        `Databricks app ${appName} does not exist, skipping deletion`,
+      );
+      return;
+    }
+
+    logger.info(`Deleting Databricks app: ${appName}`);
+    await exec(`databricks apps delete ${appName}`, {
+      env: databricksEnv,
+    });
+
+    logger.info(`Successfully deleted Databricks app: ${appName}`);
+  } catch (error) {
+    logger.error(`Failed to delete Databricks app ${appName}`, {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
+
+export async function deleteDatabricksSecretScope({
+  scopeName,
+  databricksHost,
+  databricksApiKey,
+}: {
+  scopeName: string;
+  databricksHost: string;
+  databricksApiKey: string;
+}) {
+  const databricksEnv = {
+    ...process.env,
+    DATABRICKS_HOST: databricksHost,
+    DATABRICKS_TOKEN: databricksApiKey,
+  };
+
+  try {
+    // Check if scope exists before trying to delete
+    const scopeExists = await checkIfScopeAlreadyExists({
+      scopeName,
+      databricksHost,
+      databricksApiKey,
+      secretName: DATABASE_URL_ENV_KEY,
+    });
+
+    if (!scopeExists) {
+      logger.info(
+        `Databricks scope ${scopeName} does not exist, skipping deletion`,
+      );
+      return;
+    }
+
+    logger.info(`Deleting Databricks secret scope: ${scopeName}`);
+    await exec(`databricks secrets delete-scope ${scopeName}`, {
+      env: databricksEnv,
+    });
+
+    logger.info(`Successfully deleted Databricks scope: ${scopeName}`);
+  } catch (error) {
+    logger.error(`Failed to delete Databricks scope ${scopeName}`, {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
+
+export async function deleteDatabricksWorkspaceDirectory({
+  appName,
+  databricksHost,
+  databricksApiKey,
+}: {
+  appName: string;
+  databricksHost: string;
+  databricksApiKey: string;
+}) {
+  const databricksEnv = {
+    ...process.env,
+    DATABRICKS_HOST: databricksHost,
+    DATABRICKS_TOKEN: databricksApiKey,
+  };
+
+  const workspacePath = `/${appName}`;
+
+  try {
+    logger.info(`Deleting Databricks workspace directory: ${workspacePath}`);
+    await exec(`databricks workspace delete ${workspacePath} --recursive`, {
+      env: databricksEnv,
+    });
+
+    logger.info(
+      `Successfully deleted Databricks workspace directory: ${workspacePath}`,
+    );
+  } catch (error) {
+    // Don't fail if directory doesn't exist or deletion fails
+    logger.warn(
+      `Failed to delete Databricks workspace directory ${workspacePath}`,
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
+    // Don't throw - workspace cleanup is optional and shouldn't block app deletion
+  }
+}
+
+export async function cleanupDatabricksResources({
+  appId,
+  databricksHost,
+  databricksApiKey,
+}: {
+  appId: string;
+  databricksHost: string;
+  databricksApiKey: string;
+}) {
+  validateAppId(appId);
+
+  const shortAppId = appId.slice(0, 8);
+  const appName = `app-${shortAppId}`;
+  const scopeName = appName; // Same as app name
+
+  logger.info(`Starting Databricks cleanup for app: ${appName}`, {
+    appId,
+    databricksHost,
+  });
+
+  try {
+    // 1. Delete the Databricks app first
+    await deleteDatabricksApp({
+      appName,
+      databricksHost,
+      databricksApiKey,
+    });
+
+    // 2. Delete the secret scope (this is destructive and cannot be undone)
+    await deleteDatabricksSecretScope({
+      scopeName,
+      databricksHost,
+      databricksApiKey,
+    });
+
+    // 3. Delete the workspace directory (optional - won't fail if it doesn't exist)
+    await deleteDatabricksWorkspaceDirectory({
+      appName,
+      databricksHost,
+      databricksApiKey,
+    });
+
+    logger.info(`Completed Databricks cleanup for app: ${appName}`);
+  } catch (error) {
+    logger.error(`Databricks cleanup failed for app: ${appName}`, {
+      appId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
