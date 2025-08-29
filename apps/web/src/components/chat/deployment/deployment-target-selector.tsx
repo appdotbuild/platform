@@ -43,6 +43,31 @@ type DeploymentFormData = z.infer<typeof deploymentFormSchema>;
 export type DeploymentTarget = DeploymentFormData['selectedTarget'];
 export type DeploymentConfig = z.infer<typeof deploymentFormSchema>;
 
+const deploymentOptions = [
+  {
+    id: 'koyeb' as const,
+    name: 'Koyeb',
+    subtitle: 'Default Cloud Platform',
+    icon: Server,
+    features: ['Fast deployment', 'Managed infrastructure', 'Auto-scaling'],
+    description:
+      'Default cloud platform with fast deployment and managed infrastructure',
+  },
+  {
+    id: 'databricks' as const,
+    name: 'Databricks Apps',
+    subtitle: 'Enterprise Platform',
+    icon: Database,
+    features: [
+      'Enterprise-grade security',
+      'Custom workspace integration',
+      'Advanced analytics support',
+    ],
+    description:
+      'Enterprise platform with advanced security and custom workspace integration',
+  },
+] as const;
+
 export interface DeploymentTargetSelectorHandle {
   validateConfiguration: () => Promise<
     | {
@@ -101,7 +126,7 @@ export const DeploymentTargetSelector = forwardRef<
 
   return (
     <FormProvider {...formMethods}>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex items-center gap-3">
           <h3 className="text-base font-semibold">Deployment Platform</h3>
           <Badge variant="outline" className="text-xs font-medium">
@@ -110,157 +135,83 @@ export const DeploymentTargetSelector = forwardRef<
         </div>
 
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
-          {/* Koyeb Card */}
-          <Card
-            className={cn(
-              'group relative cursor-pointer transition-colors duration-200',
-              'hover:bg-muted/20',
-              'border-2 focus-within:ring-2 focus-within:ring-primary/20',
-              watchedTarget === 'koyeb'
-                ? [
-                    'border-primary bg-gradient-to-br from-primary/5 to-primary/10',
-                    'shadow-lg shadow-primary/10',
-                  ]
-                : 'border-border hover:border-primary/30',
-            )}
-            onClick={() => handleTargetClick('koyeb')}
-            tabIndex={0}
-            role="radio"
-            aria-checked={watchedTarget === 'koyeb'}
-            aria-describedby="koyeb-description"
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-background to-muted/50 shadow-inner">
-                    <Server
-                      className={cn(
-                        'w-6 h-6 transition-colors duration-200',
-                        watchedTarget === 'koyeb'
-                          ? 'text-primary'
-                          : 'text-muted-foreground group-hover:text-primary',
-                      )}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-lg">Koyeb</h4>
+          {deploymentOptions.map((option) => {
+            const IconComponent = option.icon;
+            const isSelected = watchedTarget === option.id;
+
+            return (
+              <Card
+                key={option.id}
+                className={cn(
+                  'group relative cursor-pointer transition-colors duration-200',
+                  'hover:bg-muted/20',
+                  'border-2 focus-within:ring-2 focus-within:ring-primary/20',
+                  isSelected
+                    ? [
+                        'border-primary bg-gradient-to-br from-primary/5 to-primary/10',
+                        'shadow-lg shadow-primary/10',
+                      ]
+                    : 'border-border hover:border-primary/30',
+                )}
+                onClick={() => handleTargetClick(option.id)}
+                tabIndex={0}
+                role="radio"
+                aria-checked={isSelected}
+                aria-describedby={`${option.id}-description`}
+              >
+                <CardContent className="p-6 py-0">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-background to-muted/50 shadow-inner">
+                        <IconComponent
+                          className={cn(
+                            'w-6 h-6 transition-colors duration-200',
+                            isSelected
+                              ? 'text-primary'
+                              : 'text-muted-foreground group-hover:text-primary',
+                          )}
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-md">
+                            {option.name}
+                          </h4>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {option.subtitle}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Default Cloud Platform
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className={cn(
-                    'w-5 h-5 rounded-full border-2 transition-all duration-200',
-                    watchedTarget === 'koyeb'
-                      ? 'bg-primary border-primary shadow-lg'
-                      : 'border-muted-foreground/30 group-hover:border-primary/50',
-                  )}
-                >
-                  {watchedTarget === 'koyeb' && (
-                    <Check className="w-3 h-3 text-primary-foreground m-0.5" />
-                  )}
-                </div>
-              </div>
-
-              <ul className="space-y-1 text-xs text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <Check className="w-3 h-3 text-primary" />
-                  Fast deployment
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-3 h-3 text-primary" />
-                  Managed infrastructure
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-3 h-3 text-primary" />
-                  Auto-scaling
-                </li>
-              </ul>
-              <p id="koyeb-description" className="sr-only">
-                Default cloud platform with fast deployment and managed
-                infrastructure
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Databricks Card */}
-          <Card
-            className={cn(
-              'group relative cursor-pointer transition-colors duration-200',
-              'hover:bg-muted/20',
-              'border-2 focus-within:ring-2 focus-within:ring-primary/20',
-              watchedTarget === 'databricks'
-                ? [
-                    'border-primary bg-gradient-to-br from-primary/5 to-primary/10',
-                    'shadow-lg shadow-primary/10',
-                  ]
-                : 'border-border hover:border-primary/30',
-            )}
-            onClick={() => handleTargetClick('databricks')}
-            tabIndex={0}
-            role="radio"
-            aria-checked={watchedTarget === 'databricks'}
-            aria-describedby="databricks-description"
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-background to-muted/50 shadow-inner">
-                    <Database
+                    <div
                       className={cn(
-                        'w-6 h-6 transition-colors duration-200',
-                        watchedTarget === 'databricks'
-                          ? 'text-primary'
-                          : 'text-muted-foreground group-hover:text-primary',
+                        'w-5 h-5 rounded-full border-2 transition-all duration-200',
+                        isSelected
+                          ? 'bg-primary border-primary shadow-lg'
+                          : 'border-muted-foreground/30 group-hover:border-primary/50',
                       )}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-lg">Databricks Apps</h4>
+                    >
+                      {isSelected && (
+                        <Check className="w-3 h-3 text-primary-foreground m-0.5" />
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Enterprise Platform
-                    </p>
                   </div>
-                </div>
-                <div
-                  className={cn(
-                    'w-5 h-5 rounded-full border-2 transition-all duration-200',
-                    watchedTarget === 'databricks'
-                      ? 'bg-primary border-primary shadow-lg'
-                      : 'border-muted-foreground/30 group-hover:border-primary/50',
-                  )}
-                >
-                  {watchedTarget === 'databricks' && (
-                    <Check className="w-3 h-3 text-primary-foreground m-0.5" />
-                  )}
-                </div>
-              </div>
 
-              <ul className="space-y-1 text-xs text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <Check className="w-3 h-3 text-primary" />
-                  Enterprise-grade security
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-3 h-3 text-primary" />
-                  Custom workspace integration
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-3 h-3 text-primary" />
-                  Advanced analytics support
-                </li>
-              </ul>
-              <p id="databricks-description" className="sr-only">
-                Enterprise platform with advanced security and custom workspace
-                integration
-              </p>
-            </CardContent>
-          </Card>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
+                    {option.features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-2">
+                        <Check className="w-3 h-3 text-primary" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <p id={`${option.id}-description`} className="sr-only">
+                    {option.description}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {watchedTarget === 'databricks' && (
