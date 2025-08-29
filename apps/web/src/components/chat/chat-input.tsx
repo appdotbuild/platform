@@ -8,16 +8,23 @@ import { useChat } from '~/hooks/useChat';
 import { useFetchMessageLimit } from '~/hooks/userMessageLimit';
 import { isAppPage, isHomePage } from '~/utils/router-checker';
 import type { TemplateId } from '@appdotbuild/core';
-import type { DeploymentConfig } from '~/components/chat/deployment/deployment-target-selector';
+import type {
+  DeploymentTarget,
+  DeploymentTargetSelectorHandle,
+  DeploymentConfig,
+} from '~/components/chat/deployment/deployment-target-selector';
 import { useCurrentApp } from '~/hooks/useCurrentApp';
 import { cn } from '@design/lib';
 
 interface ChatInputProps {
-  deploymentConfig: DeploymentConfig;
-  disabled?: boolean;
+  deploymentTarget: DeploymentTarget;
+  validateBeforeSubmit?: DeploymentTargetSelectorHandle['validateConfiguration'];
 }
 
-export function ChatInput({ deploymentConfig, disabled }: ChatInputProps) {
+export function ChatInput({
+  deploymentTarget,
+  validateBeforeSubmit,
+}: ChatInputProps) {
   const user = useUser();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -31,33 +38,47 @@ export function ChatInput({ deploymentConfig, disabled }: ChatInputProps) {
 
   const isUserLimitReached = userLimit?.isUserLimitReached;
   const buttonDisabled =
-    isUserLimitReached || isLoadingMessageLimit || isLoading || disabled;
+    isUserLimitReached || isLoadingMessageLimit || isLoading;
 
   // Auto-select NiceGUI when Databricks is selected
   useEffect(() => {
-    if (
-      deploymentConfig.selectedTarget === 'databricks' &&
-      selectedStack !== 'nicegui_agent'
-    ) {
+    if (deploymentTarget === 'databricks') {
       setSelectedStack('nicegui_agent');
+    } else {
+      setSelectedStack(currentAppTemplateId);
     }
-  }, [deploymentConfig.selectedTarget, selectedStack]);
+  }, [deploymentTarget, currentAppTemplateId]);
 
   const handleSubmit = useCallback(async () => {
     if (inputValue.trim() && !isLoading) {
+      let deploymentConfig: DeploymentConfig | undefined;
+      // Validate before submit if validation function is provided
+      if (validateBeforeSubmit) {
+        const validationResult = await validateBeforeSubmit();
+        if (!validationResult.success) {
+          return;
+        }
+        deploymentConfig = validationResult.config;
+      }
+
       // if not logged, store the message and use it later to continue
       if (isHomePage(pathname) && !user) {
         localStorage.setItem('pendingMessage', inputValue);
         localStorage.setItem('pendingTemplateId', selectedStack);
         localStorage.setItem(
           'pendingDeploymentConfig',
-          JSON.stringify(deploymentConfig),
+          JSON.stringify(deploymentConfig ?? {}),
         );
         navigate({ to: '/handler/sign-in' });
         return;
       }
 
       if (isHomePage(pathname)) {
+        console.log('createNewApp', {
+          firstInput: inputValue,
+          templateId: selectedStack,
+          deploymentConfig,
+        });
         createNewApp({
           firstInput: inputValue,
           templateId: selectedStack,
@@ -82,8 +103,8 @@ export function ChatInput({ deploymentConfig, disabled }: ChatInputProps) {
     sendMessage,
     isLoading,
     selectedStack,
-    deploymentConfig,
     currentAppDeploymentConfig,
+    validateBeforeSubmit,
   ]);
 
   const handleChange = useCallback(
@@ -149,7 +170,7 @@ export function ChatInput({ deploymentConfig, disabled }: ChatInputProps) {
             selectedStack={selectedStack}
             onStackChange={setSelectedStack}
             disabled={isLoading}
-            deploymentTarget={deploymentConfig.selectedTarget}
+            deploymentTarget={deploymentTarget}
           />
         </div>
       )}

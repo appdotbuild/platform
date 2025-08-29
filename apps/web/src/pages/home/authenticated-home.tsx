@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChatInput } from '~/components/chat/chat-input';
 import { ChatMessageLimit } from '~/components/chat/chat-message-limit';
 import { ChatList } from '~/components/chat/list/chat-list';
 import {
   DeploymentTargetSelector,
   type DeploymentTargetSelectorHandle,
+  type DeploymentTarget,
 } from '~/components/chat/deployment/deployment-target-selector';
 import { DecoratedInputContainer } from '~/components/shared/decorations';
 import { HeroTitle } from '~/components/shared/title';
@@ -17,6 +18,19 @@ export function AuthenticatedHome() {
   const clearCurrentApp = useCurrentApp((state) => state.clearCurrentApp);
   const deploymentSelectorRef = useRef<DeploymentTargetSelectorHandle>(null);
   const isStaff = useIsStaff();
+
+  // We don't need to store the deployment target, we just need to trigger the re-render
+  const [deploymentTarget, setDeploymentTarget] =
+    useState<DeploymentTarget>('koyeb');
+
+  const validateDeploymentConfig = useCallback(async () => {
+    return (
+      (await deploymentSelectorRef.current?.validateConfiguration()) ?? {
+        success: true,
+        config: { selectedTarget: 'koyeb' },
+      }
+    );
+  }, []);
 
   useEffect(() => {
     sendPageView(AnalyticsEvents.PAGE_VIEW_HOME);
@@ -41,18 +55,17 @@ export function AuthenticatedHome() {
         </HeroTitle>
 
         <div className="w-full max-w-2xl px-4 lg:px-6 space-y-8">
-          {isStaff && <DeploymentTargetSelector ref={deploymentSelectorRef} />}
+          {isStaff && (
+            <DeploymentTargetSelector
+              ref={deploymentSelectorRef}
+              onChange={setDeploymentTarget}
+            />
+          )}
 
           <DecoratedInputContainer>
             <ChatInput
-              deploymentConfig={
-                deploymentSelectorRef.current?.getDeploymentConfig() ?? {
-                  selectedTarget: 'koyeb',
-                }
-              }
-              disabled={
-                !deploymentSelectorRef.current?.deployInformationIsValid()
-              }
+              deploymentTarget={deploymentTarget}
+              validateBeforeSubmit={validateDeploymentConfig}
             />
             <div className="absolute left-0 right-0 top-full mt-2">
               <ChatMessageLimit />

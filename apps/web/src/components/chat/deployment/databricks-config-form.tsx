@@ -7,21 +7,19 @@ import {
   TooltipContent,
   Form,
   FormField,
+  FormItem,
+  FormControl,
+  FormMessage,
 } from '@appdotbuild/design';
-import { Link2, Key, Info, Globe } from 'lucide-react';
-import { cn } from '@appdotbuild/design';
+import { Link2, Key, Info, Globe, Shield } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 
-type DatabricksConfigFormProps = {
-  className?: string;
-};
-
-export function DatabricksConfigForm({ className }: DatabricksConfigFormProps) {
+export function DatabricksConfigForm() {
   const formMethods = useFormContext();
 
   return (
     <Form {...formMethods}>
-      <div className={cn('space-y-6', className)}>
+      <div className={'space-y-6'}>
         <div className="space-y-3">
           <Label
             htmlFor="workspace-url"
@@ -45,22 +43,27 @@ export function DatabricksConfigForm({ className }: DatabricksConfigFormProps) {
             </TooltipProvider>
           </Label>
 
-          <div className="relative">
-            <FormField
-              control={formMethods.control}
-              name="databricksConfig.hostUrl"
-              render={({ field }) => (
-                <Input
-                  id="workspace-url"
-                  type="url"
-                  placeholder="https://workspace.cloud.databricks.com"
-                  className="pl-10 transition-all duration-200"
-                  {...field}
-                />
-              )}
-            />
-            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          </div>
+          <FormField
+            control={formMethods.control}
+            name="databricksConfig.hostUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      id="workspace-url"
+                      type="url"
+                      placeholder="https://workspace.cloud.databricks.com"
+                      className="pl-10 transition-all duration-200"
+                      {...field}
+                    />
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
             <div className="flex items-start gap-2">
@@ -101,22 +104,27 @@ export function DatabricksConfigForm({ className }: DatabricksConfigFormProps) {
             </TooltipProvider>
           </Label>
 
-          <div className="relative">
-            <FormField
-              control={formMethods.control}
-              name="databricksConfig.personalAccessToken"
-              render={({ field }) => (
-                <Input
-                  id="access-token"
-                  type="password"
-                  placeholder="dapi••••••••••••••••••••••••••••••"
-                  className="pl-10 font-mono text-sm tracking-wider"
-                  {...field}
-                />
-              )}
-            />
-            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          </div>
+          <FormField
+            control={formMethods.control}
+            name="databricksConfig.personalAccessToken"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      id="access-token"
+                      type="password"
+                      placeholder="dapi••••••••••••••••••••••••••••••"
+                      className="pl-10 font-mono text-sm tracking-wider"
+                      {...field}
+                    />
+                    <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
             <div className="flex items-start gap-2">
@@ -129,13 +137,9 @@ export function DatabricksConfigForm({ className }: DatabricksConfigFormProps) {
                   <li>Go to your Databricks workspace</li>
                   <li>Click on your profile icon in the top right corner</li>
                   <li>
-                    Navigate to "User Settings" {'>'} "Developer" {'>'} "Access
-                    Tokens"
+                    Navigate to "User Settings" → "Developer" → "Access Tokens"
                   </li>
-                  <li>Click on "Create New Token"</li>
-                  <li>
-                    Select "Databricks SQL" as the scope and click "Create"
-                  </li>
+                  <li>Generate a new token</li>
                   <li>Copy the token</li>
                 </ol>
               </div>

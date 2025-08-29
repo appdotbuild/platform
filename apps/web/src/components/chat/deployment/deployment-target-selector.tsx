@@ -43,20 +43,26 @@ type DeploymentFormData = z.infer<typeof deploymentFormSchema>;
 export type DeploymentTarget = DeploymentFormData['selectedTarget'];
 export type DeploymentConfig = z.infer<typeof deploymentFormSchema>;
 
-// Imperative handle interface
 export interface DeploymentTargetSelectorHandle {
-  getDeploymentConfig: () => DeploymentConfig;
-  deployInformationIsValid: () => boolean;
+  validateConfiguration: () => Promise<
+    | {
+        success: true;
+        config: DeploymentConfig;
+      }
+    | {
+        success: false;
+      }
+  >;
 }
 
 type DeploymentTargetSelectorProps = {
-  className?: string;
+  onChange?: (target: DeploymentTarget) => void;
 };
 
 export const DeploymentTargetSelector = forwardRef<
   DeploymentTargetSelectorHandle,
   DeploymentTargetSelectorProps
->(({ className }, ref) => {
+>(({ onChange }, ref) => {
   const formMethods = useForm<DeploymentFormData>({
     resolver: zodResolver(deploymentFormSchema),
     defaultValues: {
@@ -64,36 +70,38 @@ export const DeploymentTargetSelector = forwardRef<
     },
   });
 
-  const { setValue, watch, getValues, formState } = formMethods;
+  const { setValue, watch, trigger, getValues } = formMethods;
   const watchedTarget = watch('selectedTarget');
 
   // Expose methods via imperative handle
   useImperativeHandle(
     ref,
     () => ({
-      getDeploymentConfig: (): DeploymentConfig => {
-        if (getValues('selectedTarget') === 'databricks') {
+      validateConfiguration: async () => {
+        const isValid = await trigger();
+        if (!isValid) {
           return {
-            selectedTarget: 'databricks',
-            databricksConfig: getValues('databricksConfig'),
+            success: false,
           };
         }
-        return { selectedTarget: 'koyeb' };
-      },
-      deployInformationIsValid: (): boolean => {
-        return formState.isValid;
+
+        return {
+          success: true,
+          config: getValues(),
+        };
       },
     }),
-    [formState.isValid, getValues],
+    [trigger, getValues],
   );
 
   const handleTargetClick = (target: DeploymentTarget) => {
     setValue('selectedTarget', target);
+    onChange?.(target);
   };
 
   return (
     <FormProvider {...formMethods}>
-      <div className={cn('space-y-6', className)}>
+      <div className="space-y-6">
         <div className="flex items-center gap-3">
           <h3 className="text-base font-semibold">Deployment Platform</h3>
           <Badge variant="outline" className="text-xs font-medium">
