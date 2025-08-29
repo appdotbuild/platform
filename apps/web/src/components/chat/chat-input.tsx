@@ -17,7 +17,7 @@ import { useCurrentApp } from '~/hooks/useCurrentApp';
 import { cn } from '@design/lib';
 
 interface ChatInputProps {
-  deploymentTarget: DeploymentTarget;
+  deploymentTarget?: DeploymentTarget;
   validateBeforeSubmit?: DeploymentTargetSelectorHandle['validateConfiguration'];
 }
 
