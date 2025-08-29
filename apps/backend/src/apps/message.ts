@@ -825,6 +825,10 @@ export async function postMessage(
                   appURL: deployResult.appURL,
                 });
 
+                const platformMessageText =
+                  deployResult.deployStatus === DeployStatus.DEPLOYING
+                    ? `Your application is being deployed:`
+                    : `Your application has been deployed:`;
                 await pushAndSavePlatformMessage(
                   session,
                   applicationId,
@@ -832,12 +836,15 @@ export async function postMessage(
                     AgentStatus.IDLE,
                     traceId!,
                     applicationId,
-                    `Your application is being deployed:`,
+                    platformMessageText,
                     {
-                      type: PlatformMessageType.DEPLOYMENT_IN_PROGRESS,
+                      type:
+                        deployResult.deployStatus === DeployStatus.DEPLOYING
+                          ? PlatformMessageType.DEPLOYMENT_IN_PROGRESS
+                          : PlatformMessageType.DEPLOYMENT_COMPLETE,
                       deploymentId: deployResult.deploymentId,
                       deploymentUrl: deployResult.appURL,
-                      deployStatus: DeployStatus.DEPLOYING,
+                      deployStatus: deployResult.deployStatus,
                       githubUrl: githubEntity.repositoryUrl,
                       deploymentType: requestBody.databricksHost
                         ? 'databricks'

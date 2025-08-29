@@ -9,6 +9,7 @@ import {
   DEPLOYMENT_STATE_TO_DEPLOY_STATUS,
   type DeployStatusType,
 } from '@appdotbuild/core';
+import { useCurrentApp } from '~/hooks/useCurrentApp';
 
 interface DeploymentStatusState {
   deploymentStatus: DeployStatusType | null;
@@ -31,6 +32,8 @@ export function useDeploymentStatus(
     onError?: (error: Error) => void;
   },
 ) {
+  const currentApp = useCurrentApp();
+
   return useQuery({
     queryKey: DEPLOYMENT_STATUS_QUERY_KEY(deploymentId!),
     queryFn: async () => {
@@ -49,7 +52,9 @@ export function useDeploymentStatus(
 
       return response;
     },
-    enabled: Boolean(deploymentId && options?.enabled !== false),
+    enabled:
+      Boolean(deploymentId && options?.enabled !== false) &&
+      currentApp.currentAppDeploymentConfig?.selectedTarget === 'koyeb',
     refetchInterval: (query) => {
       const data = query.state.data;
       const error = query.state.error;

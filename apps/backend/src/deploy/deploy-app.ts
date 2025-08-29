@@ -261,7 +261,7 @@ async function deployToKoyeb({
       koyebAppId,
       koyebServiceId,
       koyebDomainId,
-      deployStatus: DeployStatus.DEPLOYED,
+      deployStatus: DeployStatus.DEPLOYING,
     })
     .where(eq(apps.id, appId));
 
@@ -290,7 +290,7 @@ async function deployToKoyeb({
     }
   }
 
-  return { appURL: appUrl, deploymentId };
+  return { appURL: appUrl, deploymentId, deployStatus: DeployStatus.DEPLOYING };
 }
 
 export async function deployApp({

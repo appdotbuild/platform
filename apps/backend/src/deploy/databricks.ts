@@ -183,6 +183,7 @@ export async function deployToDatabricks({
     return {
       appURL: appUrl,
       deploymentId: `databricks-${appId}`,
+      deployStatus: DeployStatus.DEPLOYED,
     };
   } catch (error) {
     logger.error('Databricks deployment failed', {
