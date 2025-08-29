@@ -74,11 +74,6 @@ export function ChatInput({
       }
 
       if (isHomePage(pathname)) {
-        console.log('createNewApp', {
-          firstInput: inputValue,
-          templateId: selectedStack,
-          deploymentConfig,
-        });
         createNewApp({
           firstInput: inputValue,
           templateId: selectedStack,
