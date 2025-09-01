@@ -18,3 +18,4 @@ export * from './types/utils';
 export * from './types/analytics';
 export * from './types/agent-snapshots';
 export * from './platform-api/error';
+export * from './platform-api/user';

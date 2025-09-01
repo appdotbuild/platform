@@ -8,6 +8,7 @@ import { isAppPage } from '~/utils/router-checker';
 import { cn } from '@design/lib';
 import { useLayout } from '~/hooks/useLayout';
 import { Toaster } from 'sonner';
+import { FloatingStaffModeToggle } from '~/components/shared/floating-staff-mode-toggle';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const user = useUser();
@@ -34,6 +35,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <Toaster richColors />
+      <FloatingStaffModeToggle />
       <Footer isHidden={hideFooter} />
     </>
   );

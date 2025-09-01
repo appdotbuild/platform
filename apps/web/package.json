@@ -38,7 +38,8 @@
     "react-markdown": "^10.1.0",
     "ua-parser-js": "^2.0.4",
     "uuid": "^11.1.0",
-    "zod": "4.1.4"
+    "zod": "4.1.4",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

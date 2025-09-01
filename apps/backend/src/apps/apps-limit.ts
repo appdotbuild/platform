@@ -2,6 +2,7 @@ import { and, count, gt } from 'drizzle-orm';
 import { app } from '../app';
 import { apps, db } from '../db';
 import type { FastifyRequest } from 'fastify';
+import { isStaffUser } from '@appdotbuild/core';
 
 export const DAILY_APPS_LIMIT = Number(process.env.DAILY_APPS_LIMIT) || 50;
 const getCurrentDayStart = (): Date => {
@@ -33,7 +34,7 @@ export async function userReachedPlatformLimit(
   request: FastifyRequest,
 ): Promise<boolean> {
   const user = request.user;
-  if (user.clientReadOnlyMetadata?.role === 'staff') {
+  if (isStaffUser(user)) {
     return false;
   }
 

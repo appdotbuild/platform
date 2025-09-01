@@ -4,6 +4,7 @@ import * as jose from 'jose';
 import { logger } from './logger';
 import { getUserData } from './github';
 import { generateUserRole, isPrivilegedUser } from './users';
+import { getUserRole } from '@appdotbuild/core';
 
 type AuthError = {
   error: string;
@@ -94,7 +95,7 @@ export async function validateAuth(request: FastifyRequest): Promise<
     const githubUsername = userData.data.login;
 
     // 'platform_admin' | 'staff' | 'member'
-    const existingRole = user.clientReadOnlyMetadata?.role;
+    const existingRole = getUserRole(user);
     const newRole = await generateUserRole({
       githubUsername,
       githubAccessToken: githubAccessToken?.accessToken as string,

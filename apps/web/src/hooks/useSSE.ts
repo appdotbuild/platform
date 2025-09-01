@@ -21,6 +21,7 @@ import { useCurrentApp } from './useCurrentApp';
 import z from 'zod';
 import { EventSourceController, EventSourcePlus } from 'event-source-plus';
 import { useUser } from '@stackframe/react';
+import { useStaffMode } from './use-staff-mode';
 
 interface UseSSEQueryOptions {
   onMessage?: (event: AgentSseEvent) => void;
@@ -78,7 +79,7 @@ export function useSSEQuery(options: UseSSEQueryOptions = {}) {
   const lastAppIdRef = useRef<string | undefined>(undefined);
   const queryClient = useQueryClient();
   const user = useUser();
-  const isStaff = user?.clientReadOnlyMetadata?.role === 'staff';
+  const isStaff = useStaffMode(user);
   const shouldRetryOnErrorRef = useRef(true);
   const MAX_RETRY_COUNT = 3;
 

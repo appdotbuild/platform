@@ -1,5 +1,6 @@
 import { AuthProvider } from 'ra-core';
 import { stackClientApp } from '@/stack';
+import { isStaffUser } from '@appdotbuild/core';
 
 export const authProvider: AuthProvider = {
   logout: async () => {
@@ -9,13 +10,11 @@ export const authProvider: AuthProvider = {
     }
   },
   async checkAuth() {
-    await stackClientApp.getUser({ or: 'throw' });
+    const user = await stackClientApp.getUser({ or: 'throw' });
 
-    // TODO: let's enable this about 2 weeks after we deploy this
-    // const NEON_EMPLOYEE_GROUP = 'neon';
-    // if (user.clientReadOnlyMetadata?.user_group !== NEON_EMPLOYEE_GROUP) {
-    //   throw new Error('Unauthorized');
-    // }
+    if (!isStaffUser(user)) {
+      throw new Error('Unauthorized');
+    }
   },
   login: async () => {},
   checkError: async () => {},

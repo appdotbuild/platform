@@ -12,12 +12,12 @@ import { HeroTitle } from '~/components/shared/title';
 import { AnalyticsEvents, sendPageView } from '~/external/segment';
 import { useCurrentApp } from '~/hooks/useCurrentApp';
 import { messagesStore } from '~/stores/messages-store';
-import { useIsStaff } from '~/hooks/use-is-staff';
+import { useStaffMode } from '~/hooks/use-staff-mode';
 
 export function AuthenticatedHome() {
   const clearCurrentApp = useCurrentApp((state) => state.clearCurrentApp);
   const deploymentSelectorRef = useRef<DeploymentTargetSelectorHandle>(null);
-  const isStaff = useIsStaff();
+  const { isStaffMode } = useStaffMode();
 
   // We don't need to store the deployment target, we just need to trigger the re-render
   const [deploymentTarget, setDeploymentTarget] =
@@ -55,7 +55,7 @@ export function AuthenticatedHome() {
         </HeroTitle>
 
         <div className="w-full max-w-3xl px-4 lg:px-6 space-y-8">
-          {isStaff && (
+          {isStaffMode && (
             <DeploymentTargetSelector
               ref={deploymentSelectorRef}
               onChange={setDeploymentTarget}
