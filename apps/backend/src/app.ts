@@ -1,11 +1,19 @@
 import type { ServerUser } from '@stackframe/stack';
-import fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
+import fastify, {
+  type FastifyReply,
+  type FastifyRequest,
+  type RouteGenericInterface,
+} from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { validateAuth } from './auth-strategy';
 import { Instrumentation } from './instrumentation';
 
 // must be called before app creation
 Instrumentation.initialize();
+
+export interface AppResponse<T> extends RouteGenericInterface {
+  Reply: T;
+}
 
 declare module 'fastify' {
   interface FastifyRequest {

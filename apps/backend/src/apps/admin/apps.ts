@@ -1,4 +1,4 @@
-import type { Paginated } from '@appdotbuild/core';
+import type { DeleteAppResponse, Paginated } from '@appdotbuild/core';
 import {
   asc,
   desc,
@@ -17,6 +17,7 @@ import type { App } from '../../db/schema';
 import { executeAppDeletion } from '../delete-app-shared';
 import { logger } from '../../logger';
 import { Instrumentation } from '../../instrumentation';
+import type { AppResponse } from '../../app';
 
 export async function getAppByIdForAdmin(
   request: FastifyRequest,
@@ -152,13 +153,13 @@ export async function listAllAppsForAdmin(
 
 export async function deleteAppForAdmin(
   request: FastifyRequest,
-  reply: FastifyReply,
-): Promise<void> {
+  reply: FastifyReply<AppResponse<DeleteAppResponse>>,
+) {
   const user = request.user;
   const { id } = request.params as { id: string };
 
   if (!validate(id)) {
-    return reply.status(400).send({ error: 'Invalid app ID' });
+    return reply.status(400).send({ error: 'Invalid app ID', id });
   }
 
   try {
@@ -183,6 +184,7 @@ export async function deleteAppForAdmin(
     if (!app || app.length === 0) {
       return reply.status(404).send({
         error: 'App not found',
+        id: id,
       });
     }
 
@@ -198,7 +200,7 @@ export async function deleteAppForAdmin(
 
     return reply.status(200).send({
       message: 'App deleted successfully by admin',
-      appId: id,
+      id: appData.id,
       ownerId: appData.ownerId,
     });
   } catch (error) {
@@ -216,6 +218,7 @@ export async function deleteAppForAdmin(
 
     return reply.status(500).send({
       error: 'Internal server error while deleting app',
+      id: id,
     });
   }
 }

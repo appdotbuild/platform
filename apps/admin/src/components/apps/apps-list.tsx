@@ -23,6 +23,7 @@ import {
 import ReactJson from 'react-json-view';
 import { useTheme } from '@/components/admin/theme-provider';
 import { ShowButton } from '@/components/admin/show-button';
+import { DeleteButton } from '@/components/admin/delete-button';
 import { useRecordContext, useListContext } from 'ra-core';
 import {
   DeployStatus,
@@ -471,5 +472,10 @@ function TechStackCell({ source }: { source: string }) {
 }
 
 function ActionsCell() {
-  return <ShowButton />;
+  return (
+    <div className="flex items-center gap-2">
+      <ShowButton />
+      <DeleteButton size="sm" />
+    </div>
+  );
 }

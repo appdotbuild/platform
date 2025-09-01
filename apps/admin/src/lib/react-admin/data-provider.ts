@@ -27,6 +27,7 @@ import type {
   AgentSnapshotMetadata,
   AgentSnapshotIterationJsonData,
   AgentSnapshotFolder,
+  DeleteAppResponse,
 } from '@appdotbuild/core';
 
 const PLATFORM_API_URL = import.meta.env.VITE_PLATFORM_API_URL;
@@ -500,16 +501,15 @@ const resourceHandlers = {
       };
     },
 
-    delete: async (params: DeleteParams): Promise<DeleteResult<AppRecord>> => {
-      const response = await apiClient.delete<App>(`/apps/${params.id}`);
-      return {
-        data: convertAppToRecord(response.data),
-      };
+    delete: async (
+      params: DeleteParams,
+    ): Promise<DeleteResult<DeleteAppResponse>> => {
+      return apiClient.delete<DeleteAppResponse>(`/admin/apps/${params.id}`);
     },
 
     deleteMany: async (params: DeleteManyParams): Promise<DeleteManyResult> => {
       await Promise.all(
-        params.ids.map((id) => apiClient.delete(`/apps/${id}`)),
+        params.ids.map((id) => apiClient.delete(`/admin/apps/${id}`)),
       );
 
       return {

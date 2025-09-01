@@ -28,7 +28,7 @@ export const DeleteButton = ({
       resource,
       { id: record.id },
       {
-        mutationMode: 'undoable',
+        mutationMode: 'pessimistic',
         onSuccess: () => {
           notify(`resources.${resource}.notifications.deleted`, {
             type: 'info',
@@ -39,9 +39,14 @@ export const DeleteButton = ({
                 _: 'Element deleted',
               }),
             },
-            undoable: true,
+            undoable: false,
           });
           redirect('list', resource);
+        },
+        onError: () => {
+          notify('Error deleting element', {
+            type: 'error',
+          });
         },
       },
     );

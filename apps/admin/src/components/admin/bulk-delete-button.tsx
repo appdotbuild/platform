@@ -21,7 +21,7 @@ export const BulkDeleteButton = () => {
       resource,
       { ids: selectedIds },
       {
-        mutationMode: 'undoable',
+        mutationMode: 'pessimistic',
         onSuccess: () => {
           onUnselectItems();
           notify(`resources.${resource}.notifications.deleted`, {
