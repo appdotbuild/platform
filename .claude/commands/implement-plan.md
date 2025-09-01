@@ -7,6 +7,7 @@ You are tasked with implementing an approved technical plan from `thoughts/share
 When given a plan path:
 - Read the plan completely and check for any existing checkmarks (- [x])
 - Read the original ticket and all files mentioned in the plan
+- **Always read CLAUDE.md** in the repository root for codebase guidelines and standards
 - **Read files fully** - never use limit/offset parameters, you need complete context
 - Think deeply about how the pieces fit together
 - Create a todo list to track your progress
@@ -14,11 +15,22 @@ When given a plan path:
 
 If no plan path provided, ask for one.
 
+## Codebase Guidelines
+
+Before implementing any code changes:
+- **Always reference CLAUDE.md** files in the repository for project-specific standards
+- Follow the established file naming conventions, architecture patterns, and tech stack guidelines
+- Adhere to the coding standards and development workflows outlined in the codebase documentation
+- Use the recommended libraries, components, and patterns specified in CLAUDE.md
+- Ensure all code changes align with the project's established conventions
+- Keep code comments to the minimum
+
 ## Implementation Philosophy
 
 Plans are carefully designed, but reality can be messy. Your job is to:
 - Follow the plan's intent while adapting to what you find
 - Implement each phase fully before moving to the next
+- **Adhere to codebase standards** from CLAUDE.md throughout implementation
 - Verify your work makes sense in the broader codebase context
 - Update checkboxes in the plan as you complete sections
 

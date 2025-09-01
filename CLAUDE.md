@@ -59,6 +59,7 @@ cd apps/backend && bun run db:migrate   # Run migrations
 - Prefer `type` over `interface` (CLI-specific rule)
 - Use functional components: `export default function MyComponent({ myProp }: { myProp: string }) { ... }`
 - Use named exports for components
+- Don't export variables/types that are imported from other files
 
 **React Components:**
 
@@ -91,6 +92,19 @@ cd apps/backend && bun run db:migrate   # Run migrations
 - Generate migrations: `bun drizzle-kit generate`
 - Apply migrations: `bun drizzle-kit migrate`
 
+**Error Handling:**
+- Prioritize error handling with early returns and guard clauses
+- Use Zod for form validation
+- Model expected errors as return values in Server Actions
+- Use error boundaries for unexpected errors
+- Implement proper error logging with user-friendly messages
+
+
+**Types:**
+
+- any shared types should go in `@appdotbuild/types`
+- derive as much as possible from zod schemas or from the database schema, don't duplicate types
+
 ## Development Setup
 
 **Requirements:**
@@ -119,10 +133,3 @@ cd apps/backend && bun run db:migrate   # Run migrations
 - To skip pre-commit hooks, set `SKIP_PRECOMMIT_HOOKS=true` in your `.env` file or use: `SKIP_PRECOMMIT_HOOKS=true git commit -m "message"`
 - Use sparingly - only for emergency fixes or work-in-progress commits
 
-## Error Handling
-
-- Prioritize error handling with early returns and guard clauses
-- Use Zod for form validation
-- Model expected errors as return values in Server Actions
-- Use error boundaries for unexpected errors
-- Implement proper error logging with user-friendly messages

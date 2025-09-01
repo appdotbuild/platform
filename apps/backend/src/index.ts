@@ -4,6 +4,7 @@ import { app } from './app';
 import {
   appById,
   deleteApp,
+  deleteAppForAdmin,
   getAppByIdForAdmin,
   getUserMessageLimit,
   listAllAppsForAdmin,
@@ -49,6 +50,11 @@ app.get(
   '/admin/apps/:id',
   { onRequest: [app.authenticate, requirePrivilegedUser] },
   getAppByIdForAdmin,
+);
+app.delete(
+  '/admin/apps/:id',
+  { onRequest: [app.authenticate, requirePrivilegedUser] },
+  deleteAppForAdmin,
 );
 
 app.get(
