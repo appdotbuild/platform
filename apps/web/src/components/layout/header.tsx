@@ -3,6 +3,8 @@ import { Link } from '@tanstack/react-router';
 import { GithubButton } from '~/components/shared/github-button';
 import { AGENT_GITHUB_REPO_URL } from '~/lib/constants';
 import { useIsSmallScreen } from '@appdotbuild/design';
+import { stackClientApp } from '~/lib/auth';
+import { AppLink } from '~/components/shared/app-link/app-link';
 
 export function Header() {
   const user = useUser();
@@ -26,21 +28,20 @@ export function Header() {
         </Link>
 
         <div className="flex items-center gap-3">
-          <a
-            href="/blog"
-            className="text-sm font-medium transition-colors text-muted-foreground hover:text-secondary-foreground active:text-foreground"
-            style={{ letterSpacing: '-0.025em' }}
-          >
-            Blog
-          </a>
-
           <GithubButton
             label={isMobile ? '' : 'Star on GitHub'}
             variant="outline"
             repoUrl={AGENT_GITHUB_REPO_URL}
           />
 
-          {user && <UserButton />}
+          <AppLink to="/blog">Blog</AppLink>
+          {user ? (
+            <UserButton />
+          ) : (
+            <AppLink className="text-unset" to={stackClientApp.urls.signIn}>
+              Login
+            </AppLink>
+          )}
         </div>
       </nav>
     </header>
