@@ -11,6 +11,7 @@ When given a plan path:
 - **Read files fully** - never use limit/offset parameters, you need complete context
 - Think deeply about how the pieces fit together
 - Create a todo list to track your progress
+- **Note any "Design Review Checkpoint" sections** in the plan for UI-related phases
 - Start implementing if you understand what needs to be done
 
 If no plan path provided, ask for one.
@@ -30,6 +31,7 @@ Before implementing any code changes:
 Plans are carefully designed, but reality can be messy. Your job is to:
 - Follow the plan's intent while adapting to what you find
 - Implement each phase fully before moving to the next
+- **Run design reviews when checkpoints are reached** - never skip this step for UI changes
 - **Adhere to codebase standards** from CLAUDE.md throughout implementation
 - Verify your work makes sense in the broader codebase context
 - Update checkboxes in the plan as you complete sections
@@ -52,6 +54,11 @@ If you encounter a mismatch:
 
 After implementing a phase:
 - Run the success criteria checks (usually `make check test` covers everything)
+- **Check for UI changes and run design review if needed**:
+  - If phase involved UI files (.tsx, .css in apps/web or apps/admin), run `/design-review`
+  - Address all [Blocker] and [High-Priority] issues before proceeding
+  - Document [Medium-Priority] issues for follow-up
+  - Only proceed to next phase after design review passes
 - Fix any issues before proceeding
 - Update your progress in both the plan and your todos
 - Check off completed items in the plan file itself using Edit
@@ -69,7 +76,7 @@ Use sub-tasks sparingly - mainly for targeted debugging or exploring unfamiliar 
 
 ## Resuming Work
 
-If the plan has existing checkmarks:
+If the plan has existing check marks:
 - Trust that completed work is done
 - Pick up from the first unchecked item
 - Verify previous work only if something seems off

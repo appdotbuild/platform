@@ -47,7 +47,7 @@ Then wait for the user's input.
    - Use the **codebase-locator** agent to find all files related to the ticket/task
    - Use the **codebase-analyzer** agent to understand how the current implementation works
    - If relevant, use the **thoughts-locator** agent to find any existing thoughts documents about this feature
-   - If UI changes are required, use the **ui-analyzer** agent to understand the current UI and how it works
+   - If UI changes are required, use the **ui-agent** agent to analyze the current UI implementation and patterns
 
    These agents will:
    - Find relevant source files, configs, and tests
@@ -215,6 +215,12 @@ After structure approval:
 - [ ] Linting passes: `make lint`
 - [ ] Integration tests pass: `make test-integration`
 
+#### Design Review Checkpoint (if UI changes):
+- [ ] Run `/design-review` after implementation
+- [ ] Address all [Blocker] issues found in review
+- [ ] Address all [High-Priority] issues found in review
+- [ ] Document [Medium-Priority] issues for follow-up
+
 #### Manual Verification:
 - [ ] Feature works as expected when tested via UI
 - [ ] Performance is acceptable under load
@@ -297,24 +303,30 @@ After structure approval:
    - Allow course corrections
    - Work collaboratively
 
-3. **Be Thorough**:
+3. **Include Design Review Checkpoints**:
+   - For any phase involving UI changes (.tsx, .css files in apps/web or apps/admin)
+   - Add "Design Review Checkpoint" section to Success Criteria
+   - Ensure blockers and high-priority issues must be addressed before proceeding
+   - Document medium-priority issues for follow-up
+
+4. **Be Thorough**:
    - Read all context files COMPLETELY before planning
    - Research actual code patterns using parallel sub-tasks
    - Include specific file paths and line numbers
    - Write measurable success criteria with clear automated vs manual distinction
 
-4. **Be Practical**:
+5. **Be Practical**:
    - Focus on incremental, testable changes
    - Consider migration and rollback
    - Think about edge cases
    - Include "what we're NOT doing"
 
-5. **Track Progress**:
+6. **Track Progress**:
    - Use TodoWrite to track planning tasks
    - Update todos as you complete research
    - Mark planning tasks complete when done
 
-6. **No Open Questions in Final Plan**:
+7. **No Open Questions in Final Plan**:
    - If you encounter open questions during planning, STOP
    - Research or ask for clarification immediately
    - Do NOT write the plan with unresolved questions
