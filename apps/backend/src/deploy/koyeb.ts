@@ -667,6 +667,7 @@ function getKoyebServiceBody({
   databaseUrl: string;
   customEnvs?: KoyebEnv[];
 }) {
+  const SLEEP_IDLE_DELAY_SECONDS = 12 * 60 * 60;
   return {
     name: 'service',
     type: 'WEB',
@@ -687,7 +688,22 @@ function getKoyebServiceBody({
       })) ?? []),
     ],
     regions: ['was'],
-    scalings: [{ scopes: ['region:was'], min: 1, max: 1, targets: [] }],
+    scalings: [
+      {
+        scopes: ['region:was'],
+        min: 0,
+        max: 1,
+        targets: [
+          {
+            sleep_idle_delay: {
+              value: SLEEP_IDLE_DELAY_SECONDS,
+              deep_sleep_value: SLEEP_IDLE_DELAY_SECONDS,
+              light_sleep_value: SLEEP_IDLE_DELAY_SECONDS,
+            },
+          },
+        ],
+      },
+    ],
     instance_types: [{ scopes: ['region:was'], type: 'nano' }],
     health_checks: [],
     volumes: [],
